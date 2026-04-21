@@ -536,32 +536,30 @@
         window.imprimirRelatorio = () => {
             const conteudo = document.getElementById('relatorio-conteudo').innerHTML;
             const janela = window.open('', '_blank');
-            janela.document.write(`
-                <!DOCTYPE html>
-                <html lang="pt-BR">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Relatório de Saldos</title>
-                    <script src="https://cdn.tailwindcss.com"></script>
-                    <style>
-                        @media print {
-                            body { margin: 0; padding: 10px; }
-                            .no-print { display: none; }
-                        }
-                        body { font-family: 'Inter', sans-serif; }
-                    </style>
-                </head>
-                <body class="p-4 bg-white">
-                    <div class="max-w-a4 mx-auto">
-                        ${conteudo}
-                    </div>
-                    <div class="text-center mt-6 no-print">
-                        <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold">Imprimir</button>
-                    </div>
-                </body>
-                </html>
-            `);
+            const docHTML = [
+                '<!DOCTYPE html><html lang="pt-BR"><head>',
+                '<meta charset="UTF-8">',
+                '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+                '<title>Relatório de Saldos</title>',
+                '<' + 'script src="https://cdn.tailwindcss.com"><' + '/script>',
+                '<style>',
+                '@page { size: A4; margin: 10mm; }',
+                '@media print { .no-print { display: none; } body { margin: 0; } }',
+                'body { font-family: Arial, sans-serif; font-size: 11px; }',
+                'table { width: 100%; border-collapse: collapse; }',
+                'th, td { border: 1px solid #ccc; padding: 3px 5px; }',
+                'th { background: #e2e8f0; font-weight: bold; }',
+                'tfoot td { background: #f1f5f9; font-weight: bold; }',
+                '</style>',
+                '</head><body style="padding:10px; background:white">',
+                conteudo,
+                '<div class="no-print" style="text-align:center;margin-top:16px">',
+                '<' + 'button onclick="window.print()" style="background:#2563eb;color:white;padding:8px 20px;border:none;border-radius:4px;font-weight:bold;cursor:pointer">',
+                'Imprimir / Salvar PDF</' + 'button>',
+                '</div>',
+                '</body></html>'
+            ].join('');
+            janela.document.write(docHTML);
             janela.document.close();
         };
 
