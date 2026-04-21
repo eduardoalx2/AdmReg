@@ -91,16 +91,27 @@
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ordenar por</label>
                     <select id="filtro-ordem" onchange="aplicarFiltros()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
                         <option value="recentes">Mais Recentes</option>
+                        <option value="alfabetica">Igreja (A-Z)</option>
+                        <option value="periodo">Período</option>
+                        <option value="maior_entrada">Maior Total de Entradas</option>
+                        <option value="menor_entrada">Menor Total de Entradas</option>
                         <option value="maior_saldo">Maior Saldo Total</option>
                         <option value="menor_saldo">Menor Saldo Total</option>
-                        <option value="alfabetica">Igreja (A-Z)</option>
+                        <option value="santa_ceia">Santa Ceia (↓)</option>
+                        <option value="batismos">Batismos (↓)</option>
+                        <option value="celulas">Células (↓)</option>
                     </select>
                 </div>
             </div>
             <div class="flex justify-between items-center border-t border-slate-100 pt-3">
-                <button onclick="limparFiltros()" class="text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
-                    <i data-lucide="filter-x" class="w-3.5 h-3.5"></i> Limpar Filtros
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="limparFiltros()" class="text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+                        <i data-lucide="filter-x" class="w-3.5 h-3.5"></i> Limpar Filtros
+                    </button>
+                    <button onclick="abrirRelatorio()" class="text-[11px] font-bold text-green-600 hover:text-green-700 transition-colors flex items-center gap-1 bg-green-50 px-2.5 py-1 rounded border border-green-200">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Gerar Relatório
+                    </button>
+                </div>
                 <div class="text-right">
                     <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Lançamentos encontrados: </span>
                     <span id="total-lancamentos" class="text-lg font-black text-blue-600">0</span>
@@ -126,6 +137,30 @@
                         <tr><td colspan="6" class="text-center py-6 text-slate-400">Carregando dados do Firebase...</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Modal de Relatório -->
+        <div id="modal-relatorio" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden">
+                <div class="bg-slate-800 px-5 py-4 flex justify-between items-center sticky top-0 z-10">
+                    <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Relatório de Saldos
+                    </h2>
+                    <button onclick="fecharRelatorio()" class="text-slate-400 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 max-h-[80vh] overflow-y-auto">
+                    <div id="relatorio-conteudo" class="text-sm space-y-4"></div>
+                    <div class="pt-6 border-t border-slate-200 flex gap-3">
+                        <button onclick="imprimirRelatorio()" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded uppercase text-[11px] hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
+                        </button>
+                        <button onclick="fecharRelatorio()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded uppercase text-[11px] hover:bg-slate-200 transition-colors">Fechar</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -324,12 +359,24 @@
                     const dateA = a.createdAt?.seconds || 0;
                     const dateB = b.createdAt?.seconds || 0;
                     return dateB - dateA;
+                } else if (filtroOrdem === 'alfabetica') {
+                    return (a.igrejaFormatada || '').localeCompare(b.igrejaFormatada || '');
+                } else if (filtroOrdem === 'periodo') {
+                    return (b.periodo || '').localeCompare(a.periodo || '');
+                } else if (filtroOrdem === 'maior_entrada') {
+                    return (b.totalEntradas || 0) - (a.totalEntradas || 0);
+                } else if (filtroOrdem === 'menor_entrada') {
+                    return (a.totalEntradas || 0) - (b.totalEntradas || 0);
                 } else if (filtroOrdem === 'maior_saldo') {
                     return (b.saldoTotal || 0) - (a.saldoTotal || 0);
                 } else if (filtroOrdem === 'menor_saldo') {
                     return (a.saldoTotal || 0) - (b.saldoTotal || 0);
-                } else if (filtroOrdem === 'alfabetica') {
-                    return (a.igrejaFormatada || '').localeCompare(b.igrejaFormatada || '');
+                } else if (filtroOrdem === 'santa_ceia') {
+                    return (b.santaCeia || 0) - (a.santaCeia || 0);
+                } else if (filtroOrdem === 'batismos') {
+                    return (b.batismos || 0) - (a.batismos || 0);
+                } else if (filtroOrdem === 'celulas') {
+                    return (b.celulas || 0) - (a.celulas || 0);
                 }
                 return 0;
             });
@@ -404,6 +451,129 @@
                     console.error(e);
                 }
             }
+        };
+
+        window.abrirRelatorio = () => {
+            const filtroIgreja = document.getElementById('filtro-igreja').value.toLowerCase();
+            const filtroPeriodo = document.getElementById('filtro-periodo').value;
+            const filtroValorMinStr = document.getElementById('filtro-valor-min').value;
+            const filtroValorMin = filtroValorMinStr ? window.parseMoeda(filtroValorMinStr) : null;
+
+            const filtrados = saldosList.filter(s => {
+                const matchIgreja = !filtroIgreja || (s.igrejaFormatada || '').toLowerCase().includes(filtroIgreja);
+                const matchPeriodo = !filtroPeriodo || s.periodo === filtroPeriodo;
+                const matchValorMin = filtroValorMin === null || (s.saldoTotal >= filtroValorMin);
+                return matchIgreja && matchPeriodo && matchValorMin;
+            });
+
+            const totaisCeia = filtrados.reduce((sum, s) => sum + (s.santaCeia || 0), 0);
+            const totaisBatismos = filtrados.reduce((sum, s) => sum + (s.batismos || 0), 0);
+            const totaisCelulas = filtrados.reduce((sum, s) => sum + (s.celulas || 0), 0);
+            const totalEntradas = filtrados.reduce((sum, s) => sum + (s.totalEntradas || 0), 0);
+            const totalSaldo = filtrados.reduce((sum, s) => sum + (s.saldoTotal || 0), 0);
+
+            let html = `
+                <div class="text-center mb-6 pb-4 border-b border-slate-300">
+                    <h3 class="font-bold text-lg text-slate-900">RELATÓRIO DE SALDOS - REGIÃO 655</h3>
+                    <p class="text-xs text-slate-600 mt-1">Londrina/PR</p>
+                    <p class="text-xs text-slate-500 mt-2">
+                        ${filtroPeriodo ? 'Período: <strong>' + filtroPeriodo + '</strong>' : 'Todos os períodos'}
+                        ${filtroIgreja ? ' | Igreja: <strong>' + filtroIgreja + '</strong>' : ''}
+                    </p>
+                    <p class="text-xs text-slate-500">Gerado em: <strong>${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</strong></p>
+                </div>
+
+                <div class="mb-4">
+                    <table class="w-full border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-200 border border-slate-300">
+                                <th class="border border-slate-300 p-1 text-left font-bold">Igreja</th>
+                                <th class="border border-slate-300 p-1 text-left font-bold">Período</th>
+                                <th class="border border-slate-300 p-1 text-right font-bold">Entradas</th>
+                                <th class="border border-slate-300 p-1 text-right font-bold">Saldo</th>
+                                <th class="border border-slate-300 p-1 text-center font-bold">SC</th>
+                                <th class="border border-slate-300 p-1 text-center font-bold">Bat</th>
+                                <th class="border border-slate-300 p-1 text-center font-bold">Cel</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            filtrados.forEach(s => {
+                html += `
+                    <tr class="border border-slate-300">
+                        <td class="border border-slate-300 p-1 font-semibold">${s.igrejaFormatada}</td>
+                        <td class="border border-slate-300 p-1">${s.periodo}</td>
+                        <td class="border border-slate-300 p-1 text-right">${window.formatMoeda(s.totalEntradas)}</td>
+                        <td class="border border-slate-300 p-1 text-right font-bold">${window.formatMoeda(s.saldoTotal)}</td>
+                        <td class="border border-slate-300 p-1 text-center">${s.santaCeia || 0}</td>
+                        <td class="border border-slate-300 p-1 text-center">${s.batismos || 0}</td>
+                        <td class="border border-slate-300 p-1 text-center">${s.celulas || 0}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-slate-100 font-bold border border-slate-300">
+                                <td class="border border-slate-300 p-1" colspan="2">TOTAL (${filtrados.length} igrejas)</td>
+                                <td class="border border-slate-300 p-1 text-right">${window.formatMoeda(totalEntradas)}</td>
+                                <td class="border border-slate-300 p-1 text-right">${window.formatMoeda(totalSaldo)}</td>
+                                <td class="border border-slate-300 p-1 text-center">${totaisCeia}</td>
+                                <td class="border border-slate-300 p-1 text-center">${totaisBatismos}</td>
+                                <td class="border border-slate-300 p-1 text-center">${totaisCelulas}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-900">
+                    <p class="font-semibold mb-1">ESTATÍSTICAS DO PERÍODO:</p>
+                    <p>Santa Ceia: <strong>${totaisCeia}</strong> participantes</p>
+                    <p>Batismos: <strong>${totaisBatismos}</strong></p>
+                    <p>Células: <strong>${totaisCelulas}</strong></p>
+                </div>
+            `;
+
+            document.getElementById('relatorio-conteudo').innerHTML = html;
+            document.getElementById('modal-relatorio').classList.remove('hidden');
+        };
+
+        window.fecharRelatorio = () => {
+            document.getElementById('modal-relatorio').classList.add('hidden');
+        };
+
+        window.imprimirRelatorio = () => {
+            const conteudo = document.getElementById('relatorio-conteudo').innerHTML;
+            const janela = window.open('', '_blank');
+            janela.document.write(`
+                <!DOCTYPE html>
+                <html lang="pt-BR">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Relatório de Saldos</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <style>
+                        @media print {
+                            body { margin: 0; padding: 10px; }
+                            .no-print { display: none; }
+                        }
+                        body { font-family: 'Inter', sans-serif; }
+                    </style>
+                </head>
+                <body class="p-4 bg-white">
+                    <div class="max-w-a4 mx-auto">
+                        ${conteudo}
+                    </div>
+                    <div class="text-center mt-6 no-print">
+                        <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold">Imprimir</button>
+                    </div>
+                </body>
+                </html>
+            `);
+            janela.document.close();
         };
 
         form.addEventListener('submit', async (e) => {
