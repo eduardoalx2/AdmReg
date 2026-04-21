@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pastores - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        .table-custom {
+            font-size: 0.8rem;
+        }
+        
+        .table-custom th {
+            padding: 8px 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        .table-custom td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .nome-style {
+            font-weight: 700;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CABEÇALHO -->
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-5xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                    <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
+                </a>
+            </div>
+        </div>
+
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-5xl mx-auto flex justify-between items-center">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase">
+                    Lista de Pastores
+                </h1>
+                <button onclick="abrirModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] md:text-xs font-bold px-3 py-1.5 rounded flex items-center gap-1 transition-colors uppercase shadow-md">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Novo Pastor
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto py-6 px-4">
+        
+        <!-- RESUMO -->
+        <div class="flex gap-2 mb-4">
+            <div class="flex-1 bg-white p-3 rounded-lg shadow-sm border border-slate-100 flex items-center justify-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span id="total-pastores" class="text-xl font-black text-slate-800 leading-none block">0</span>
+                    <span class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Cadastrados</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar por Nome</label>
+                <input type="text" id="filtro-nome" oninput="aplicarFiltros()" placeholder="Pesquisar pastor..." class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Igreja</label>
+                <select id="filtro-igreja" onchange="aplicarFiltros()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <option value="">Todas as Igrejas</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Função</label>
+                <select id="filtro-funcao" onchange="aplicarFiltros()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <option value="">Todas as Funções</option>
+                    <option value="Pastor Titular">Pastor Titular</option>
+                    <option value="Auxiliar">Auxiliar</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Categoria</label>
+                <select id="filtro-categoria" onchange="aplicarFiltros()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <option value="">Todas as Categorias</option>
+                    <option value="Obreiro(a)">Obreiro(a)</option>
+                    <option value="Aspirante">Aspirante</option>
+                    <option value="Ministro(a)">Ministro(a)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabela de Pastores -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse table-custom whitespace-nowrap">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Prontuário</th>
+                            <th>E-mail</th>
+                            <th class="w-16 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-pastores" class="divide-y divide-slate-100">
+                        <tr><td colspan="5" class="text-center py-6 text-slate-400">Carregando pastores...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal de Cadastro/Edição -->
+        <div id="modal-pastor" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                <div class="bg-slate-800 px-5 py-4 flex justify-between items-center">
+                    <h2 id="modal-titulo" class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> Novo Pastor
+                    </h2>
+                    <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <form id="form-pastor" class="p-6 space-y-4">
+                    <input type="hidden" id="pastor-id">
+                    
+                    <!-- Apenas Nome Obrigatório -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nome Completo <span class="text-red-500">*</span></label>
+                        <input type="text" id="pastor-nome" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-bold text-slate-800" placeholder="Ex: REV. VALDIR ÁVILA RAMOS">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Igreja(s)</label>
+                        <div class="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+                            <input type="text" id="search-igreja-modal" oninput="filtrarIgrejasModal()" class="w-full p-2.5 border-b border-slate-200 outline-none text-xs bg-white focus:bg-slate-50 font-medium" placeholder="Pesquisar igreja...">
+                            <div id="lista-igrejas-checkboxes" class="max-h-36 overflow-y-auto p-2 space-y-1 text-sm font-semibold bg-slate-50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Função</label>
+                            <select id="pastor-funcao" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                <option value="">Selecione...</option>
+                                <option value="Pastor Titular">Pastor Titular</option>
+                                <option value="Auxiliar">Auxiliar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Categoria Ministerial</label>
+                            <select id="pastor-categoria" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                <option value="">Selecione...</option>
+                                <option value="Obreiro(a)">Obreiro(a)</option>
+                                <option value="Aspirante">Aspirante</option>
+                                <option value="Ministro(a)">Ministro(a)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Telefone</label>
+                            <input type="tel" id="pastor-telefone" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" placeholder="(43) 99999-9999">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Prontuário</label>
+                            <input type="text" id="pastor-prontuario" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" placeholder="Ex: 12345">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">CPF</label>
+                            <input type="text" id="pastor-cpf" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" placeholder="000.000.000-00">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">E-mail</label>
+                            <input type="email" id="pastor-email" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm" placeholder="email@exemplo.com">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Endereço</label>
+                        <input type="text" id="pastor-endereco" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm" placeholder="Rua, Número, Bairro, Cidade">
+                    </div>
+
+                    <div class="pt-5 flex gap-3">
+                        <button type="button" onclick="fecharModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded uppercase text-[11px] hover:bg-slate-200 transition-colors">Cancelar</button>
+                        <button type="submit" id="btn-salvar" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded uppercase text-[11px] hover:bg-blue-700 transition-colors shadow-md">Salvar Pastor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        window.abrirModal = () => {
+            document.getElementById('form-pastor').reset();
+            document.querySelectorAll('input[name="pastor-igrejas-cb"]').forEach(cb => cb.checked = false);
+            document.getElementById('pastor-id').value = '';
+            document.getElementById('search-igreja-modal').value = '';
+            filtrarIgrejasModal();
+            document.getElementById('modal-titulo').innerHTML = '<i data-lucide="user-plus" class="w-4 h-4"></i> Novo Pastor';
+            document.getElementById('modal-pastor').classList.remove('hidden');
+            if (window.lucide) window.lucide.createIcons();
+        };
+        window.fecharModal = () => {
+            document.getElementById('modal-pastor').classList.add('hidden');
+        };
+    </script>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        let pastoresList = [];
+        let igrejasList = [];
+        
+        if (window.lucide) lucide.createIcons();
+
+        const tabela = document.getElementById('tabela-pastores');
+        const form = document.getElementById('form-pastor');
+        
+        async function carregarIgrejas() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "igrejas"));
+                const container = document.getElementById('lista-igrejas-checkboxes');
+                container.innerHTML = '';
+                
+                const filtroSelect = document.getElementById('filtro-igreja');
+                filtroSelect.innerHTML = '<option value="">Todas as Igrejas</option>';
+
+                igrejasList = [];
+                querySnapshot.forEach((doc) => igrejasList.push(doc.data()));
+                
+                // Ordenar por código numérico
+                igrejasList.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+                
+                igrejasList.forEach(ig => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-start gap-3 cursor-pointer p-2 hover:bg-slate-200/50 rounded-lg transition-colors igreja-checkbox-item border border-transparent hover:border-slate-200';
+                    label.innerHTML = `
+                        <input type="checkbox" name="pastor-igrejas-cb" value="${ig.nome}" class="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                        <span class="text-xs text-slate-700 leading-tight">${ig.codigo} - ${ig.nome}</span>
+                    `;
+                    container.appendChild(label);
+
+                    const optionFiltro = document.createElement('option');
+                    optionFiltro.value = ig.nome;
+                    optionFiltro.textContent = `${ig.codigo} - ${ig.nome}`;
+                    filtroSelect.appendChild(optionFiltro);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar igrejas:", error);
+                document.getElementById('lista-igrejas-checkboxes').innerHTML = '<div class="text-xs text-red-500 text-center py-2">Erro ao carregar</div>';
+            }
+        }
+
+        window.filtrarIgrejasModal = () => {
+            const termo = document.getElementById('search-igreja-modal').value.toLowerCase();
+            const items = document.querySelectorAll('.igreja-checkbox-item');
+            items.forEach(item => {
+                const nome = item.querySelector('span').textContent.toLowerCase();
+                item.style.display = nome.includes(termo) ? 'flex' : 'none';
+            });
+        };
+
+        async function carregarPastores() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "pastores"));
+                pastoresList = [];
+                
+                querySnapshot.forEach((doc) => {
+                    pastoresList.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Ordena por nome
+                pastoresList.sort((a, b) => a.nome.localeCompare(b.nome));
+                renderizarTabela();
+            } catch (error) {
+                console.error("Erro ao carregar pastores:", error);
+                tabela.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-red-500 font-bold">Erro ao carregar dados do servidor.</td></tr>';
+            }
+        }
+
+        window.aplicarFiltros = () => renderizarTabela();
+
+        function renderizarTabela() {
+            const filtroNome = document.getElementById('filtro-nome').value.toLowerCase();
+            const filtroIgreja = document.getElementById('filtro-igreja').value;
+            const filtroFuncao = document.getElementById('filtro-funcao').value;
+            const filtroCategoria = document.getElementById('filtro-categoria').value;
+
+            const filtrados = pastoresList.filter(p => {
+                if (filtroNome && !p.nome.toLowerCase().includes(filtroNome)) return false;
+                const pIgrejas = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                if (filtroIgreja && !pIgrejas.includes(filtroIgreja)) return false;
+                if (filtroFuncao && p.funcao !== filtroFuncao) return false;
+                if (filtroCategoria && p.categoria !== filtroCategoria) return false;
+                return true;
+            });
+
+            document.getElementById('total-pastores').textContent = filtrados.length.toString().padStart(2, '0');
+
+            tabela.innerHTML = '';
+            if (filtrados.length === 0) {
+                tabela.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-slate-400">Nenhum pastor cadastrado.</td></tr>';
+                return;
+            }
+
+            filtrados.forEach(p => {
+                const pIgrejas = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                const igrejasStr = pIgrejas.join(', ');
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50/50 transition-colors group";
+                tr.innerHTML = `
+                    <td class="nome-style">
+                        ${p.nome}
+                        <div class="text-[9px] text-slate-500 font-normal uppercase mt-0.5 tracking-wider">${igrejasStr} ${igrejasStr && (p.funcao || p.categoria) ? '•' : ''} ${p.funcao || ''} ${p.funcao && p.categoria ? '•' : ''} ${p.categoria || ''}</div>
+                    </td>
+                    <td class="text-slate-600 font-medium">${p.telefone || '-'}</td>
+                    <td class="text-slate-500">${p.prontuario || '-'}</td>
+                    <td class="text-slate-500 text-xs">${p.email || '-'}</td>
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="editarPastor('${p.id}')" class="text-blue-500 hover:text-blue-700 transition-colors" title="Editar">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="excluirPastor('${p.id}')" class="text-red-400 hover:text-red-600 transition-colors" title="Excluir">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tabela.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        window.editarPastor = (id) => {
+            const p = pastoresList.find(i => i.id === id);
+            if(!p) return;
+            
+            document.getElementById('pastor-id').value = p.id;
+            document.getElementById('pastor-nome').value = p.nome;
+            document.getElementById('pastor-telefone').value = p.telefone || '';
+            document.getElementById('pastor-prontuario').value = p.prontuario || '';
+            document.getElementById('pastor-cpf').value = p.cpf || '';
+            document.getElementById('pastor-email').value = p.email || '';
+            document.getElementById('pastor-endereco').value = p.endereco || '';
+            document.getElementById('pastor-funcao').value = p.funcao || '';
+            document.getElementById('pastor-categoria').value = p.categoria || '';
+            const pIgrejas = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+            document.querySelectorAll('input[name="pastor-igrejas-cb"]').forEach(cb => {
+                cb.checked = pIgrejas.includes(cb.value);
+            });
+            
+            document.getElementById('search-igreja-modal').value = '';
+            filtrarIgrejasModal();
+            document.getElementById('modal-titulo').innerHTML = '<i data-lucide="edit" class="w-4 h-4"></i> Editar Pastor';
+            document.getElementById('modal-pastor').classList.remove('hidden');
+            if (window.lucide) window.lucide.createIcons();
+        };
+
+        window.excluirPastor = async (id) => {
+            if(confirm("Tem certeza que deseja excluir este pastor? Esta ação não pode ser desfeita.")) {
+                try {
+                    await deleteDoc(doc(db, "pastores", id));
+                    carregarPastores();
+                } catch(e) {
+                    alert("Erro ao excluir!");
+                    console.error(e);
+                }
+            }
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-salvar');
+            btn.textContent = "Salvando...";
+            btn.disabled = true;
+
+            try {
+                const id = document.getElementById('pastor-id').value;
+                const funcao = document.getElementById('pastor-funcao').value;
+                const igrejasSelecionadas = Array.from(document.querySelectorAll('input[name="pastor-igrejas-cb"]:checked')).map(cb => cb.value);
+
+                if (funcao === 'Pastor Titular' && igrejasSelecionadas.length > 0) {
+                    for (const igreja of igrejasSelecionadas) {
+                        const igrejaObj = igrejasList.find(ig => ig.nome === igreja);
+                        const isSedeRegional = igrejaObj && (igrejaObj.tipo === 'Sede Regional' || igrejaObj.tipo === 'Região Eclesiástica');
+                        if (!isSedeRegional) {
+                            const titularExistente = pastoresList.find(p => {
+                                const pIgs = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                                return pIgs.includes(igreja) && p.funcao === 'Pastor Titular' && p.id !== id;
+                            });
+                            if (titularExistente) {
+                                alert(`A igreja ${igreja} já possui um Pastor Titular:\n${titularExistente.nome}.\n\nNão é possível vincular mais de um titular à mesma igreja local.`);
+                                btn.textContent = "Salvar Pastor";
+                                btn.disabled = false;
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                console.log("Iniciando salvamento de Pastor no Firebase...");
+                const payload = {
+                    nome: document.getElementById('pastor-nome').value.trim().toUpperCase(),
+                    telefone: document.getElementById('pastor-telefone').value.trim(),
+                    prontuario: document.getElementById('pastor-prontuario').value.trim(),
+                    cpf: document.getElementById('pastor-cpf').value.trim(),
+                    email: document.getElementById('pastor-email').value.trim().toLowerCase(),
+                    endereco: document.getElementById('pastor-endereco').value.trim(),
+                    funcao: document.getElementById('pastor-funcao').value,
+                    categoria: document.getElementById('pastor-categoria').value,
+                    igreja: igrejasSelecionadas,
+                    updatedAt: serverTimestamp()
+                };
+
+                if(id) {
+                    await updateDoc(doc(db, "pastores", id), payload);
+                } else {
+                    payload.createdAt = serverTimestamp();
+                    await addDoc(collection(db, "pastores"), payload);
+                }
+                window.fecharModal();
+                carregarPastores();
+                console.log("Pastor salvo com sucesso!");
+            } catch (error) {
+                console.error("Erro ao salvar:", error);
+                alert("Erro ao salvar o pastor.");
+            } finally {
+                btn.textContent = "Salvar Pastor";
+                btn.disabled = false;
+            }
+        });
+
+        // Inicia carregando a lista
+        carregarPastores();
+        carregarIgrejas();
+    </script>
+</body>
+</html>

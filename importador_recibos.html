@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importador de Recibos para Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-8 text-slate-800 font-sans">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-black text-blue-700 uppercase tracking-tight">Importador de Histórico de Recibos</h1>
+            <a href="index.html" class="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors">Voltar ao Admin</a>
+        </div>
+        
+        <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-6">
+            <p class="text-sm font-medium text-blue-800 mb-2">Cole os dados da sua planilha do Google Sheets abaixo. A ferramenta cruzará o "CÓDIGO" com o banco de dados para achar o nome da igreja.</p>
+            <p class="text-xs text-blue-600 font-bold uppercase mb-1">A ordem das colunas na planilha deve ser exatamente esta:</p>
+            <ol class="text-xs text-slate-600 list-decimal pl-5 grid grid-cols-2 md:grid-cols-4 gap-x-2 gap-y-1">
+                <li>CÓDIGO</li><li>IGREJA (Ignorado)</li><li>PASTOR</li><li>REFERÊNCIA</li><li>DATA EMISSÃO</li><li>SUBTOTAL ENTRADAS</li><li>TAXA REG. (4%)</li><li>TAXA COORD.</li><li>QTD SEGUROS</li><li>VALOR SEGUROS</li><li>OUTROS (DESC)</li><li>OUTROS (VALOR)</li><li>TOTAL PAGO</li><li>DATA/HORA SISTEMA</li>
+            </ol>
+        </div>
+        
+        <textarea id="csvData" rows="12" class="w-full p-4 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 font-mono text-[10px] whitespace-pre bg-slate-50 leading-relaxed" placeholder="Cole aqui as linhas da sua planilha..."></textarea>
+        
+        <div class="mt-6 flex justify-end gap-4">
+            <button id="btnImportar" class="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider py-3 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95">Iniciar Importação</button>
+        </div>
+        
+        <div id="log" class="mt-6 text-xs font-mono text-slate-600 h-64 overflow-y-auto bg-slate-900 p-4 rounded-xl border border-slate-800 hidden space-y-1"></div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        const btnImportar = document.getElementById('btnImportar');
+        const csvData = document.getElementById('csvData');
+        const logDiv = document.getElementById('log');
+
+        function log(msg, color = 'text-green-400') {
+            logDiv.classList.remove('hidden');
+            const p = document.createElement('p');
+            p.className = color;
+            p.innerText = msg;
+            logDiv.appendChild(p);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        const parseMoeda = (str) => {
+            if (!str) return 0;
+            if (typeof str === 'number') return str;
+            return parseFloat(str.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+        };
+
+        btnImportar.addEventListener('click', async () => {
+            const rawData = csvData.value.trim();
+            if (!rawData) { alert("Nenhum dado colado!"); return; }
+
+            btnImportar.disabled = true;
+            btnImportar.innerText = "IMPORTANDO...";
+            logDiv.innerHTML = '';
+
+            try {
+                log("> Etapa 1: Baixando tabela de Igrejas do Firebase...", "text-blue-400");
+                const igrejasSnap = await getDocs(collection(db, "igrejas"));
+                const igrejasMap = new Map();
+                igrejasSnap.forEach(doc => {
+                    const data = doc.data();
+                    igrejasMap.set(String(data.codigo).padStart(4, '0'), data.nome);
+                });
+                log(`> ${igrejasMap.size} igrejas indexadas para cruzamento de dados.`, "text-blue-400");
+                log("> Etapa 2: Iniciando processamento das linhas...", "text-blue-400");
+                log("--------------------------------------------------", "text-slate-500");
+
+                const rows = rawData.split('\n');
+                let importados = 0; let erros = 0;
+
+                for (let i = 0; i < rows.length; i++) {
+                    if(!rows[i].trim()) continue;
+                    const cols = rows[i].split('\t'); 
+                    if (cols.length < 13) continue; 
+
+                    let codigo = (cols[0] || '').trim().padStart(4, '0');
+                    if (codigo.toLowerCase().includes('cód') || (cols[3]||'').toLowerCase().includes('ref')) continue;
+
+                    let nomeIgreja = igrejasMap.get(codigo) || "IGREJA NÃO CADASTRADA";
+                    let igrejaFormatada = `${codigo} - ${nomeIgreja}`;
+                    let dataSistema = (cols[13] || '').trim();
+
+                    const payload = {
+                        igrejaCodigo: codigo, igrejaNome: nomeIgreja, igrejaFormatada: igrejaFormatada,
+                        pastor: (cols[2] || '').trim(), referenceDate: (cols[3] || '').trim(), dataEmissao: (cols[4] || '').trim(),
+                        incomeValue: parseMoeda(cols[5]), regionalTax: parseMoeda(cols[6]), coordinatorFeeParsed: parseMoeda(cols[7]),
+                        insuranceCount: parseInt(cols[8]) || 0, insuranceTotal: parseMoeda(cols[9]), otherDesc: (cols[10] || '').trim(),
+                        otherValueParsed: parseMoeda(cols[11]), total: parseMoeda(cols[12]),
+                        status: 'Pago', dataHoraRegistro: dataSistema || new Date().toLocaleString('pt-BR'), createdAt: serverTimestamp()
+                    };
+
+                    try {
+                        await addDoc(collection(db, "recibos"), payload);
+                        importados++;
+                        log(`[OK] Linha ${i + 1}: ${igrejaFormatada} -> ${payload.referenceDate}`);
+                    } catch (e) {
+                        erros++;
+                        log(`[ERRO] Linha ${i + 1}: Falha ao salvar no Firebase -> ${e.message}`, 'text-red-400');
+                    }
+                }
+                log("--------------------------------------------------", "text-slate-500");
+                log(`> SUCESSO: ${importados} importados | ERROS: ${erros}`, 'text-emerald-400 font-bold text-sm');
+            } catch (err) { log(`ERRO GERAL: ${err.message}`, 'text-red-500 font-bold'); } 
+            finally { btnImportar.disabled = false; btnImportar.innerText = "INICIAR IMPORTAÇÃO"; }
+        });
+    </script>
+</body>
+</html>

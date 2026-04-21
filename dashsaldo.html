@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro - Igrejas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f1f5f9;
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        .church-card {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .church-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-badge-delivered {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-badge-pending {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn-toggle {
+            transition: all 0.2s;
+        }
+        
+        .btn-toggle.active {
+            background-color: #4f46e5;
+            color: white;
+            border-color: #4338ca;
+        }
+
+        .btn-whatsapp {
+            background-color: #25d366;
+            color: white;
+            border: 1px solid #128c7e;
+            transition: all 0.2s;
+        }
+
+        .btn-whatsapp:hover {
+            background-color: #128c7e;
+            transform: scale(1.02);
+        }
+
+        /* Esconder scrollbar mantendo funcionalidade */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- CABEÇALHO PADRÃO ADMIN -->
+    <header class="w-full shadow-sm bg-white border-b sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                    <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
+                </a>
+            </div>
+        </div>
+
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase">
+                    DashSaldos - Controle de Tesouraria
+                </h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Filtros e Controles -->
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 flex flex-wrap md:flex-nowrap gap-4 items-center justify-between">
+            <div class="w-full md:w-auto flex-1">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pesquisar Igreja</label>
+                <div class="relative">
+                    <input type="text" id="churchSearch" placeholder="Nome da igreja..." 
+                           class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-lg focus:ring-1 focus:ring-blue-500 outline-none block p-2 pl-9 transition-all">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full md:w-auto">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Competência</label>
+                <select id="competenceSelect" class="w-full md:min-w-[150px] bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg focus:ring-1 focus:ring-blue-500 outline-none block p-2 cursor-pointer transition-all">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+
+            <div class="w-full md:w-auto flex flex-wrap items-center gap-2 mt-2 md:mt-0 self-end">
+                <button id="btnOnlyPending" class="btn-toggle flex-1 md:flex-none bg-white border border-slate-200 text-slate-600 text-[10px] font-bold py-2.5 px-3 rounded-lg shadow-sm hover:bg-slate-50 transition-all">
+                    PENDENTES
+                </button>
+                <button id="btnFullReport" class="btn-toggle flex-1 md:flex-none bg-white border border-slate-200 text-slate-600 text-[10px] font-bold py-2.5 px-3 rounded-lg shadow-sm hover:bg-slate-50 transition-all">
+                    COMPLETO
+                </button>
+                <button id="btnWhatsapp" class="btn-whatsapp flex-1 md:flex-none text-[10px] font-bold py-2.5 px-3 rounded-lg shadow-md flex items-center justify-center gap-1.5 transition-all">
+                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.484 8.412 0 6.556-5.338 11.892-11.893 11.892-1.997-.001-3.951-.499-5.688-1.447l-6.309 1.656zm6.224-3.82c1.516.903 3.136 1.379 4.82 1.379 5.176 0 9.389-4.213 9.391-9.389 0-2.507-.977-4.863-2.752-6.638s-4.131-2.752-6.638-2.752c-5.177 0-9.389 4.213-9.391 9.389 0 1.778.498 3.511 1.44 5.011l-.924 3.376 3.454-.906zm12.72-6.033c-.304-.152-1.8-.888-2.077-.989-.278-.101-.48-.152-.683.152-.202.304-.785.989-.962 1.191-.177.202-.354.228-.658.076-.304-.152-1.284-.474-2.447-1.512-.903-.806-1.512-1.802-1.689-2.105-.177-.304-.019-.468.133-.619.136-.136.304-.354.456-.531.152-.177.202-.304.304-.506.101-.202.051-.38-.025-.531-.076-.152-.683-1.643-.936-2.251-.247-.592-.499-.511-.683-.521-.177-.009-.38-.01-.582-.01-.202 0-.531.076-.809.38-.278.304-1.062 1.037-1.062 2.529 0 1.491 1.087 2.933 1.239 3.136.152.202 2.139 3.268 5.182 4.582.723.313 1.288.499 1.728.639.726.231 1.387.198 1.909.12.582-.087 1.8-.735 2.053-1.442.253-.707.253-1.315.177-1.442-.076-.126-.278-.202-.582-.354z"/></svg>
+                    LEMBRETE
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Stats Cards -->
+        <div id="statsContainer" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total Unidades</p>
+                <span id="statTotalIgrejas" class="text-xl font-extrabold text-slate-900">-</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm border-b-2 border-b-emerald-500">
+                <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Entregues</p>
+                <span id="statEntregues" class="text-xl font-extrabold text-slate-900">-</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm border-b-2 border-b-rose-500">
+                <p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-0.5">Pendentes</p>
+                <span id="statPendentes" class="text-xl font-extrabold text-slate-900">-</span>
+            </div>
+            <div class="bg-indigo-600 p-3 rounded-xl shadow-lg shadow-indigo-200 text-white">
+                <p class="text-[10px] font-bold text-indigo-100 uppercase tracking-wider mb-0.5">Soma de Saldos</p>
+                <span id="statSomaTotal" class="text-xl font-extrabold leading-none tracking-tight">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- Grid of Church Cards -->
+        <div id="churchGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <!-- Loading State -->
+            <div class="col-span-full py-20 flex flex-col items-center">
+                <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-600 border-t-transparent mb-4"></div>
+                <p class="text-slate-500 text-sm font-medium">Sincronizando dados...</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { db } from '../firebase-config.js';
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        let rawData = [];
+        let masterChurches = new Map(); 
+        let competencies = new Set();
+        let showOnlyPending = false;
+        let showFullReport = false;
+
+        function normalizeString(str) {
+            if (!str) return "";
+            return str.normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "")
+                      .toUpperCase()
+                      .replace(/\s+/g, ' ')
+                      .trim();
+        }
+
+        // Função para converter qualquer formato para "MM/AAAA" referente ao destino
+        function extractMonthYear(compStr) {
+            if (!compStr) return "S/D";
+            if (compStr.match(/^\d{2}\/\d{4}$/)) return compStr;
+
+            const parts = compStr.split(/➔|>/).map(s => s.trim());
+            let target = parts.length === 2 ? parts[1] : parts[0];
+            
+            const mapMonth = {
+                'JAN': '01', 'JANEIRO': '01', 'FEV': '02', 'FEVEREIRO': '02',
+                'MAR': '03', 'MARÇO': '03', 'ABR': '04', 'ABRIL': '04',
+                'MAI': '05', 'MAIO': '05', 'JUN': '06', 'JUNHO': '06',
+                'JUL': '07', 'JULHO': '07', 'AGO': '08', 'AGOSTO': '08',
+                'SET': '09', 'SETEMBRO': '09', 'OUT': '10', 'OUTUBRO': '10',
+                'NOV': '11', 'NOVEMBRO': '11', 'DEZ': '12', 'DEZEMBRO': '12'
+            };
+
+            const match = target.match(/([a-zA-ZçÇ]+)\/?(\d{2,4})/i);
+            if (match) {
+                let mText = match[1].toUpperCase();
+                let year = match[2];
+                if (year.length === 2) year = "20" + year;
+                let mNum = mapMonth[mText];
+                if (mNum) return `${mNum}/${year}`;
+            }
+            return target;
+        }
+
+        async function init() {
+            try {
+                const igrejasSnapshot = await getDocs(collection(db, "igrejas"));
+                igrejasSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const cod = String(data.codigo).padStart(4, '0');
+                    const originalName = `${cod} - ${data.nome}`;
+                    const normName = normalizeString(originalName);
+                    masterChurches.set(normName, originalName);
+                });
+
+                // Garante que o mês atual sempre exista na lista
+                const now = new Date();
+                const currentPeriod = `${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                competencies.add(currentPeriod);
+
+                const saldosSnapshot = await getDocs(collection(db, "saldos_virada"));
+                const data = [];
+                saldosSnapshot.forEach(doc => {
+                    const s = doc.data();
+                    const originalName = s.igrejaFormatada || s.igrejaNome || `Igreja ${s.igrejaCodigo || '-'}`;
+                    const normName = normalizeString(originalName);
+                    const rawComp = s.mesReferencia || s.periodo;
+                    const comp = extractMonthYear(rawComp);
+                    
+                    if (originalName && originalName !== 'Igreja -') {
+                        if (!masterChurches.has(normName)) masterChurches.set(normName, originalName);
+                        if (comp !== 'S/D') competencies.add(comp);
+                        data.push({
+                            nomeOriginal: originalName,
+                            normNome: normName,
+                            subEntradas: s.entradasTaxadas || 0,
+                            missoes: s.missoes || 0,
+                            totEntradas: s.totalEntradas || 0,
+                            cc: s.saldoBanco || 0,
+                            din: s.saldoDinheiro || 0,
+                            total: s.saldoTotal || 0,
+                            dataEnvio: s.dataHoraRegistro || '-',
+                            competencia: comp,
+                            santaCeia: s.santaCeia || 0,
+                            batismos: s.batismos || 0,
+                            celulas: s.celulas || 0
+                        });
+                    }
+                });
+                rawData = data;
+
+                setupFilters();
+                renderReport();
+
+                document.getElementById('churchSearch').addEventListener('input', renderReport);
+                document.getElementById('competenceSelect').addEventListener('change', renderReport);
+                
+                document.getElementById('btnOnlyPending').addEventListener('click', function() {
+                    showOnlyPending = !showOnlyPending;
+                    this.classList.toggle('active', showOnlyPending);
+                    renderReport();
+                });
+
+                document.getElementById('btnFullReport').addEventListener('click', function() {
+                    showFullReport = !showFullReport;
+                    this.classList.toggle('active', showFullReport);
+                    renderReport();
+                });
+
+                document.getElementById('btnWhatsapp').addEventListener('click', sendWhatsappReminder);
+
+            } catch (error) {
+                console.error("Erro:", error);
+                document.getElementById('churchGrid').innerHTML = `
+                    <div class="col-span-full bg-rose-50 border border-rose-100 p-6 rounded-xl text-center">
+                        <p class="text-rose-600 font-bold mb-1">Erro de Sincronização</p>
+                        <p class="text-rose-500 text-xs">Não foi possível carregar os dados.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function setupFilters() {
+            const select = document.getElementById('competenceSelect');
+            const sortedComp = Array.from(competencies).sort((a, b) => {
+                const partA = a.split('/');
+                const partB = b.split('/');
+                if (partA.length === 2 && partB.length === 2) {
+                    return new Date(partB[1], partB[0] - 1) - new Date(partA[1], partA[0] - 1);
+                }
+                return b.localeCompare(a);
+            });
+            
+            let options = '<option value="TODOS">Visão Global</option>';
+            options += sortedComp.map(c => `<option value="${c}">${c}</option>`).join('');
+            select.innerHTML = options;
+            
+            const now = new Date();
+            const currentPeriod = `${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+            select.value = currentPeriod;
+        }
+
+        function cleanNumericString(val) {
+            if (typeof val === 'number') return val.toString();
+            if (!val || val === '-' || val === '0') return "0";
+            let cleaned = val.replace(/[^\d.,-]/g, '');
+            if (cleaned.includes(',') && cleaned.includes('.')) cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+            else cleaned = cleaned.replace(',', '.');
+            return cleaned;
+        }
+
+        function formatCurrency(val) {
+            const num = typeof val === 'number' ? val : (parseFloat(cleanNumericString(val)) || 0);
+            return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function getNumericValue(val) { 
+            return typeof val === 'number' ? val : (parseFloat(cleanNumericString(val)) || 0); 
+        }
+
+        function sendWhatsappReminder() {
+            const selectedComp = document.getElementById('competenceSelect').value;
+            if (selectedComp === 'TODOS') {
+                alert('Selecione uma competência específica (Mês/Ano) para enviar o lembrete.');
+                return;
+            }
+
+            const submissions = rawData.filter(d => d.competencia === selectedComp);
+            const submissionMap = new Map();
+            submissions.forEach(s => submissionMap.set(s.normNome, s));
+
+            const excludeList = ["655 - REGIÃO", "0252 - IEQ CENTRAL"];
+
+            let pendingChurches = [];
+            masterChurches.forEach((originalName, normName) => {
+                if (!submissionMap.has(normName)) {
+                    const isExcluded = excludeList.some(ex => normName.includes(ex));
+                    if (!isExcluded) {
+                        pendingChurches.push(originalName);
+                    }
+                }
+            });
+
+            if (pendingChurches.length === 0) {
+                alert('Todas as igrejas já entregaram os relatórios desta competência! 🚀');
+                return;
+            }
+
+            pendingChurches.sort();
+
+            const messageHeader = `Paz, Pastores! \n\nSegue a lista das igrejas com o *Relatório de Saldos* ainda *PENDENTE* referente ao mês de *${selectedComp}*:\n\n`;
+            const messageBody = pendingChurches.map(name => `• ${name}`).join('\n');
+            const messageFooter = `\n\nPedimos a gentileza de regularizarem o envio o quanto antes para o fechamento do mês. Deus abençoe.`;
+
+            const fullMessage = encodeURIComponent(messageHeader + messageBody + messageFooter);
+            window.open(`https://wa.me/?text=${fullMessage}`, '_blank');
+        }
+
+        function generateCardHtml(churchName, comp, status, dataEnvio, cc, din, total, extraData) {
+            const isDelivered = status === 'Entregue';
+            
+            let fullReportHtml = '';
+            if (showFullReport && isDelivered) {
+                fullReportHtml = `
+                    <div class="mt-2 pt-2 border-t border-slate-100 space-y-2">
+                        <!-- Financeiro Detalhado -->
+                        <div class="grid grid-cols-1 gap-0.5 text-[9px]">
+                            <div class="flex justify-between text-slate-400">
+                                <span>Sub-Entradas:</span>
+                                <span class="font-medium">${formatCurrency(extraData.subEntradas)}</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Missões:</span>
+                                <span class="font-medium">${formatCurrency(extraData.missoes)}</span>
+                            </div>
+                            <div class="flex justify-between text-indigo-700 font-bold bg-indigo-50/50 px-1 rounded mb-1">
+                                <span>TOTAL ENTRADAS:</span>
+                                <span>${formatCurrency(extraData.totEntradas)}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Estatísticas Novas -->
+                        <div class="bg-slate-50 p-1.5 rounded border border-slate-100">
+                            <p class="text-[8px] font-bold text-slate-500 uppercase mb-1 border-b border-slate-200 pb-0.5">Estatísticas</p>
+                            <div class="grid grid-cols-3 gap-1 text-[9px] text-center">
+                                <div>
+                                    <p class="text-slate-400 font-medium text-[7px] uppercase">Santa Ceia</p>
+                                    <p class="font-bold text-slate-700 leading-none">${extraData.santaCeia || 0}</p>
+                                </div>
+                                <div>
+                                    <p class="text-slate-400 font-medium text-[7px] uppercase">Batismos</p>
+                                    <p class="font-bold text-slate-700 leading-none">${extraData.batismos || 0}</p>
+                                </div>
+                                <div>
+                                    <p class="text-slate-400 font-medium text-[7px] uppercase">Células</p>
+                                    <p class="font-bold text-slate-700 leading-none">${extraData.celulas || 0}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="church-card bg-white rounded-xl border border-slate-200 p-4 shadow-sm relative overflow-hidden flex flex-col h-full">
+                    <div class="absolute top-0 left-0 w-1 h-full ${isDelivered ? 'bg-emerald-500' : 'bg-rose-500'}"></div>
+                    
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="overflow-hidden">
+                            <h3 class="font-bold text-slate-900 text-sm leading-tight truncate pr-1" title="${churchName}">${churchName}</h3>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${comp}</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider whitespace-nowrap ${isDelivered ? 'status-badge-delivered' : 'status-badge-pending'}">
+                            ${status === 'Entregue' ? 'OK' : 'Pendente'}
+                        </span>
+                    </div>
+
+                    <div class="flex-grow space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase mb-0.5 leading-none">C. Corrente</p>
+                                <p class="text-[10px] font-bold text-slate-700 leading-none truncate">${formatCurrency(cc)}</p>
+                            </div>
+                            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase mb-0.5 leading-none">Dinheiro</p>
+                                <p class="text-[10px] font-bold text-slate-700 leading-none truncate">${formatCurrency(din)}</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-1.5 border-t border-slate-50">
+                            <p class="text-[9px] font-bold text-indigo-600 uppercase mb-0.5 leading-none">Saldo Total</p>
+                            <p class="text-base font-black text-slate-900 tracking-tight leading-none truncate">${formatCurrency(total)}</p>
+                        </div>
+
+                        ${fullReportHtml}
+                    </div>
+
+                    <div class="mt-3 flex items-center gap-1 text-slate-400">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <span class="text-[9px] font-medium truncate">${isDelivered ? dataEnvio : 'Pendente'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderReport() {
+            const selectedComp = document.getElementById('competenceSelect').value;
+            const searchTerm = document.getElementById('churchSearch').value.toLowerCase();
+            const grid = document.getElementById('churchGrid');
+            const isAll = selectedComp === 'TODOS';
+            let listItems = [];
+            let countEntregue = 0;
+            let countPendente = 0;
+            let totalGeralSoma = 0;
+
+            if (isAll) {
+                const filteredData = rawData.filter(d => !searchTerm || d.nomeOriginal.toLowerCase().includes(searchTerm));
+                filteredData.forEach(sub => {
+                    countEntregue++;
+                    totalGeralSoma += getNumericValue(sub.total);
+                    listItems.push({
+                        html: generateCardHtml(sub.nomeOriginal, sub.competencia, 'Entregue', sub.dataEnvio, sub.cc, sub.din, sub.total, sub),
+                        status: 'Entregue',
+                        nome: sub.nomeOriginal
+                    });
+                });
+            } else {
+                const submissions = rawData.filter(d => d.competencia === selectedComp);
+                const submissionMap = new Map();
+                submissions.forEach(s => submissionMap.set(s.normNome, s));
+                const sortedMaster = Array.from(masterChurches.entries());
+
+                sortedMaster.forEach(([normName, originalName]) => {
+                    if (searchTerm && !originalName.toLowerCase().includes(searchTerm)) return;
+                    const sub = submissionMap.get(normName);
+                    if (!!sub) {
+                        countEntregue++;
+                        totalGeralSoma += getNumericValue(sub.total);
+                        if (!showOnlyPending) {
+                            listItems.push({
+                                html: generateCardHtml(originalName, selectedComp, 'Entregue', sub.dataEnvio, sub.cc, sub.din, sub.total, sub),
+                                status: 'Entregue',
+                                nome: originalName
+                            });
+                        }
+                    } else {
+                        countPendente++;
+                        listItems.push({
+                            html: generateCardHtml(originalName, selectedComp, 'Pendente', '--', 0, 0, 0, {}),
+                            status: 'Pendente',
+                            nome: originalName
+                        });
+                    }
+                });
+            }
+
+            listItems.sort((a, b) => {
+                if (a.status === b.status) return a.nome.localeCompare(b.nome);
+                return a.status === 'Entregue' ? -1 : 1;
+            });
+
+            grid.innerHTML = listItems.map(item => item.html).join('') || `
+                <div class="col-span-full py-20 text-center opacity-40">
+                    <p class="text-lg font-bold">Nenhum registo encontrado</p>
+                </div>
+            `;
+
+            document.getElementById('statTotalIgrejas').innerText = isAll ? countEntregue : masterChurches.size;
+            document.getElementById('statEntregues').innerText = countEntregue;
+            document.getElementById('statPendentes').innerText = countPendente;
+            document.getElementById('statSomaTotal').innerText = totalGeralSoma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

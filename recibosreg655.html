@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Emissor de Recibos - Região 655</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        @media print {
+            body { -webkit-print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        .input-focus { transition: all 0.2s; }
+        .input-focus:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .scale-in-center { animation: scale-in-center 0.4s cubic-bezier(0.250, 0.460, 0.450, 0.940) both; }
+        @keyframes scale-in-center { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #ffffff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .footer-regional {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eeeeee;
+            text-align: center;
+            font-size: 12px;
+            color: #777777;
+            line-height: 1.6;
+        }
+        .footer-regional b {
+            color: #444444;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Ponte entre Firebase e React -->
+    <script type="module">
+        import { db } from '../firebase-config.js';
+        import { collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        window.firebaseGlobal = { db, collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, query, orderBy, limit, where };
+    </script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const Icon = ({ name, size = 24, className = "" }) => {
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        const CurrencyInput = ({ label, value, onChange, placeholder = "0,00", className = "" }) => {
+            const formatDisplay = (val) => {
+                if (!val && val !== 0) return '';
+                return new Intl.NumberFormat('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(val);
+            };
+
+            const handleChange = (e) => {
+                let rawValue = e.target.value.replace(/\D/g, '');
+                if (rawValue === '') {
+                    onChange('');
+                    return;
+                }
+                const numericValue = parseFloat(rawValue) / 100;
+                onChange(numericValue.toString());
+            };
+
+            const displayValue = value ? formatDisplay(parseFloat(value)) : '';
+
+            return (
+                <div className={`space-y-1 ${className}`}>
+                    {label && <label className="text-sm font-medium">{label}</label>}
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-gray-400">R$</span>
+                        <input 
+                            type="text"
+                            inputMode="numeric"
+                            className="w-full p-3 pl-10 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-semibold"
+                            value={displayValue}
+                            onChange={handleChange}
+                            placeholder={placeholder}
+                        />
+                    </div>
+                </div>
+            );
+        };
+
+        const numeroPorExtenso = (v) => {
+            if (v === 0) return "zero reais";
+            const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+            const dezenas = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+            const dezenasEspeciais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenouve"];
+            const centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+            const converterGrupo = (n) => {
+                if (n === 0) return "";
+                if (n === 100) return "cem";
+                let c = Math.floor(n / 100), d = Math.floor((n % 100) / 10), u = n % 10;
+                let texto = "";
+                if (c > 0) texto += centenas[c];
+                if (d === 1) { if (texto) texto += " e "; texto += dezenasEspeciais[u]; return texto; }
+                if (d > 1) { if (texto) texto += " e "; texto += dezenas[d]; }
+                if (u > 0) { if (texto) texto += " e "; texto += unidades[u]; }
+                return texto;
+            };
+
+            let inteiro = Math.floor(v), centavos = Math.round((v - inteiro) * 100);
+            let extenso = "";
+
+            if (inteiro > 0) {
+                if (inteiro >= 1000) {
+                    let milhar = Math.floor(inteiro / 1000);
+                    inteiro = inteiro % 1000;
+                    if (milhar === 1) extenso += "mil"; else extenso += converterGrupo(milhar) + " mil";
+                    if (inteiro > 0) { if (inteiro < 100 || (inteiro % 100 === 0)) extenso += " e "; else extenso += " "; }
+                }
+                if (inteiro > 0) extenso += converterGrupo(inteiro);
+                extenso += inteiro === 1 ? " real" : " reais";
+            }
+
+            if (centavos > 0) {
+                if (extenso) extenso += " e ";
+                extenso += converterGrupo(centavos);
+                extenso += centavos === 1 ? " centavo" : " centavos";
+            }
+            return extenso.charAt(0).toUpperCase() + extenso.slice(1);
+        };
+
+        const getPreviousMonthMMYYYY = () => {
+            const date = new Date();
+            date.setMonth(date.getMonth() - 1);
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${month}/${year}`;
+        };
+
+        const formatReferenceExtenso = (refString) => {
+            if (!refString || refString.length !== 7) return refString;
+            const parts = refString.split('/');
+            if (parts.length !== 2) return refString;
+            const monthIndex = parseInt(parts[0], 10) - 1;
+            const year = parts[1];
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            if (monthIndex >= 0 && monthIndex < 12) return `${monthNames[monthIndex]}/${year}`;
+            return refString;
+        };
+
+        const App = () => {
+            const [churches, setChurches] = useState([]);
+            const [isLoadingChurches, setIsLoadingChurches] = useState(true);
+            
+            const [selectedChurch, setSelectedChurch] = useState('');
+            const [otherChurchName, setOtherChurchName] = useState('');
+            const [otherChurchCode, setOtherChurchCode] = useState('');
+            const [otherChurchPastor, setOtherChurchPastor] = useState('');
+            const [referenceDate, setReferenceDate] = useState(getPreviousMonthMMYYYY());
+            const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
+            
+            const [showPreview, setShowPreview] = useState(false);
+            const [showSettings, setShowSettings] = useState(false);
+            const [showConfirmModal, setShowConfirmModal] = useState(false);
+            const [isSaving, setIsSaving] = useState(false);
+            const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+            
+            const [customLogo, setCustomLogo] = useState(() => localStorage.getItem('customLogo') || './logo.png');
+            const [customSignature, setCustomSignature] = useState(() => localStorage.getItem('customSignature') || './assinatura.png');
+            const [insuranceUnitValueStr, setInsuranceUnitValueStr] = useState(() => localStorage.getItem('insuranceUnitValue') || "45");
+            
+            const [income, setIncome] = useState('');
+            const [coordinatorFee, setCoordinatorFee] = useState('100');
+            const [hasCoordinatorFee, setHasCoordinatorFee] = useState(false);
+            const [insuranceCount, setInsuranceCount] = useState(0);
+            const [otherDesc, setOtherDesc] = useState('');
+            const [otherValue, setOtherValue] = useState('');
+
+            const [recentReceipts, setRecentReceipts] = useState([]);
+            const fileInputRef = useRef(null);
+
+            const [autoFillState, setAutoFillState] = useState('normal'); 
+
+            // Lógica para transformar "DEZ/2025 > JAN/2026" em "01/2026"
+            const extractFirstMonthYear = (compStr) => {
+                if (!compStr) return "S/D";
+                if (compStr.match(/^\d{2}\/\d{4}$/)) return compStr;
+
+                const parts = compStr.split(/➔|>/).map(s => s.trim());
+                let target = parts[0]; 
+                
+                const mapMonth = {
+                    'JAN': '01', 'JANEIRO': '01', 'FEV': '02', 'FEVEREIRO': '02',
+                    'MAR': '03', 'MARÇO': '03', 'ABR': '04', 'ABRIL': '04',
+                    'MAI': '05', 'MAIO': '05', 'JUN': '06', 'JUNHO': '06',
+                    'JUL': '07', 'JULHO': '07', 'AGO': '08', 'AGOSTO': '08',
+                    'SET': '09', 'SETEMBRO': '09', 'OUT': '10', 'OUTUBRO': '10',
+                    'NOV': '11', 'NOVEMBRO': '11', 'DEZ': '12', 'DEZEMBRO': '12'
+                };
+
+                const match = target.match(/([a-zA-ZçÇ]+)\/?(\d{2,4})/i);
+                if (match) {
+                    let mText = match[1].toUpperCase();
+                    let year = match[2];
+                    if (year.length === 2) year = "20" + year;
+                    let mNum = mapMonth[mText];
+                    if (mNum) return `${mNum}/${year}`;
+                }
+                return target;
+            };
+
+            // Observa as mudanças de Igreja e Mês para Autocompletar e mudar de cor
+            useEffect(() => {
+                async function checkData() {
+                    if (!selectedChurch || referenceDate.length !== 7 || !window.firebaseGlobal) {
+                        if (autoFillState !== 'normal') { setAutoFillState('normal'); }
+                        return;
+                    }
+
+                    try {
+                        const { db, collection, getDocs, query, where } = window.firebaseGlobal;
+                        
+                        const currentChurchData = churches.find(c => c.code === selectedChurch);
+                        const defaultSeguros = currentChurchData ? (currentChurchData.seguros || 0) : 0;
+
+                        setInsuranceCount(defaultSeguros);
+
+                        // 2. Verificar se existe "Saldo de Virada" para copiar Entradas
+                        const qSaldo = query(collection(db, "saldos_virada"), where("igrejaCodigo", "==", selectedChurch));
+                        const snapSaldo = await getDocs(qSaldo);
+                        
+                        let foundSaldo = null;
+                        snapSaldo.forEach(doc => {
+                            const data = doc.data();
+                            const ref = extractFirstMonthYear(data.periodo || data.mesReferencia);
+                            if (ref === referenceDate) foundSaldo = data;
+                        });
+
+                        if (foundSaldo) {
+                            setIncome(foundSaldo.entradasTaxadas.toString());
+                            setIssueDate(new Date().toISOString().split('T')[0]);
+                            setAutoFillState('draft_saldo');
+                        } else {
+                            if (autoFillState !== 'normal') { setAutoFillState('normal'); }
+                        }
+                    } catch (error) { console.error("Erro ao verificar automações:", error); }
+                }
+                if (churches.length > 0) checkData();
+            }, [selectedChurch, referenceDate, churches]);
+
+            useEffect(() => { 
+                if (customLogo) localStorage.setItem('customLogo', customLogo);
+                if (customSignature) localStorage.setItem('customSignature', customSignature);
+                localStorage.setItem('insuranceUnitValue', insuranceUnitValueStr);
+            }, [customLogo, customSignature, insuranceUnitValueStr]);
+
+            const fetchRecentReceipts = async () => {
+                if (!window.firebaseGlobal) return;
+                setIsLoadingHistory(true);
+                try {
+                    const { db, collection, getDocs, query, orderBy, limit } = window.firebaseGlobal;
+                    const q = query(collection(db, "recibos"), orderBy("createdAt", "desc"), limit(5));
+                    const snaps = await getDocs(q);
+                    const recs = [];
+                    snaps.forEach(doc => recs.push({ id: doc.id, ...doc.data() }));
+                    setRecentReceipts(recs);
+                } catch (error) { console.error("Erro ao buscar histórico:", error); } 
+                finally { setIsLoadingHistory(false); }
+            };
+
+            useEffect(() => {
+                async function initFirebaseData() {
+                    while (!window.firebaseGlobal) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                    const { db, collection, getDocs, query, orderBy, limit } = window.firebaseGlobal;
+
+                    // 1. Buscar Igrejas
+                    try {
+                        const [igrejasSnap, pastoresSnap] = await Promise.all([
+                            getDocs(collection(db, "igrejas")),
+                            getDocs(collection(db, "pastores"))
+                        ]);
+                        const pastores = [];
+                        pastoresSnap.forEach(d => pastores.push(d.data()));
+                        const list = [];
+                        igrejasSnap.forEach((doc) => {
+                            const d = doc.data();
+                            const titular = pastores.find(p => {
+                                const pIgs = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                                return pIgs.includes(d.nome) && p.funcao === 'Pastor Titular';
+                            });
+                            list.push({ code: d.codigo, name: d.nome, pastor: titular ? titular.nome : "Não informado", seguros: d.seguros || 0 });
+                        });
+                        list.sort((a, b) => parseInt(a.code) - parseInt(b.code));
+                        setChurches(list);
+                    } catch (e) { console.error("Erro ao carregar igrejas:", e); } 
+                    finally { setIsLoadingChurches(false); }
+
+                    // 2. Buscar Histórico Recente (Últimos 5)
+                    fetchRecentReceipts();
+                }
+                initFirebaseData();
+            }, []);
+
+            const incomeValue = parseFloat(income) || 0;
+            const regionalTax = incomeValue * 0.04;
+            const insuranceUnitValue = parseFloat(insuranceUnitValueStr) || 0;
+            const insuranceTotal = insuranceCount * insuranceUnitValue;
+            const otherValueParsed = parseFloat(otherValue) || 0;
+            const coordinatorFeeParsed = hasCoordinatorFee ? (parseFloat(coordinatorFee) || 0) : 0;
+            const totalPayable = regionalTax + coordinatorFeeParsed + insuranceTotal + otherValueParsed;
+
+            const selectedChurchData = otherChurchName ? { code: otherChurchCode, name: otherChurchName, pastor: otherChurchPastor || 'Pastor não informado' } : churches.find(c => c.code === selectedChurch);
+            const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+            const formatDate = (dateString) => {
+                if (!dateString) return '';
+                const [year, month, day] = dateString.split('-');
+                return `${day}/${month}/${year}`;
+            };
+            
+            const getMonthValue = () => {
+                if(!referenceDate || referenceDate.length !== 7) return "";
+                const [m, y] = referenceDate.split('/');
+                return `${y}-${m}`;
+            };
+            const handleMonthChange = (e) => {
+                const val = e.target.value;
+                if(!val) { setReferenceDate(""); return; }
+                const [y, m] = val.split('-');
+                setReferenceDate(`${m}/${y}`);
+            };
+
+            const handleClearForm = () => {
+                if(confirm("Deseja limpar todos os campos?")) {
+                    setIncome(''); setCoordinatorFee('100'); setHasCoordinatorFee(false); setInsuranceCount(0); setOtherDesc(''); setOtherValue(''); setSelectedChurch(''); setOtherChurchName(''); setOtherChurchCode(''); setOtherChurchPastor('');
+                    setReferenceDate(getPreviousMonthMMYYYY());
+                    setIssueDate(new Date().toISOString().split('T')[0]);
+                    setAutoFillState('normal');
+                }
+            };
+
+            const handleClosePreview = () => { setShowPreview(false); };
+
+            const handlePreSave = () => {
+                if ((!selectedChurch && (!otherChurchName || !otherChurchCode)) || !referenceDate) { alert("Preencha igreja e mês."); return; }
+                if (otherChurchName && !otherChurchPastor) {
+                    const pastor = prompt("Deseja lançar o nome do Pastor?");
+                    if (pastor !== null) {
+                        setOtherChurchPastor(pastor || 'Pastor não informado');
+                    }
+                }
+                setShowConfirmModal(true);
+            };
+
+            const handleConfirmSave = async () => {
+                setIsSaving(true);
+                const [y, m, d] = issueDate.split('-');
+                const formattedDateBR = `${d}/${m}/${y}`;
+                
+                const churchToSave = selectedChurchData?.name || otherChurchName;
+                const codeToSave = selectedChurch || otherChurchCode;
+                const pastorToSave = selectedChurchData?.pastor || otherChurchPastor;
+
+                const newRecord = {
+                    dataEmissao: formattedDateBR,
+                    igrejaNome: churchToSave,
+                    igrejaCodigo: codeToSave,
+                    igrejaFormatada: `${codeToSave} - ${churchToSave}`,
+                    pastor: pastorToSave,
+                    referenceDate, 
+                    total: totalPayable, 
+                    incomeValue, 
+                    regionalTax, 
+                    coordinatorFeeParsed, 
+                    insuranceCount, 
+                    insuranceTotal, 
+                    otherDesc, 
+                    otherValueParsed,
+                    status: "Pago",
+                    dataHoraRegistro: new Date().toLocaleString('pt-BR')
+                };
+
+                try {
+                    const { db, collection, addDoc, serverTimestamp } = window.firebaseGlobal;
+                    
+                    await addDoc(collection(db, "recibos"), { ...newRecord, createdAt: serverTimestamp() });
+                    
+                    // Redireciona diretamente para a tela de gerenciar recibos
+                    window.location.href = "editarrecibos.html";
+                } catch (error) {
+                    console.error(error);
+                    alert("Erro ao gravar o recibo no servidor.");
+                } finally {
+                    setIsSaving(false);
+                }
+            };
+
+            const handleViewReceipt = () => {
+                if ((!selectedChurch && (!otherChurchName || !otherChurchCode)) || !referenceDate) { alert("Preencha os dados."); return; }
+                if (otherChurchName && !otherChurchPastor) {
+                    const pastor = prompt("Deseja lançar o nome do Pastor?");
+                    if (pastor !== null) {
+                        setOtherChurchPastor(pastor || 'Pastor não informado');
+                    }
+                }
+                setShowPreview(true);
+            };
+
+            const handleDownloadPdf = () => {
+                const element = document.getElementById('receipt-content');
+                if (!window.html2pdf) { alert("Carregando PDF..."); return; }
+                const safeDate = referenceDate.replace('/', '-');
+                const customFileName = `${selectedChurch} - REC REG REF(${safeDate}).pdf`;
+
+                const opt = { 
+                    margin: 0, 
+                    filename: customFileName, 
+                    image: { type: 'jpeg', quality: 0.98 }, 
+                    html2canvas: { 
+                        scale: 2, 
+                        useCORS: true, 
+                        allowTaint: true,
+                        scrollY: 0,
+                        scrollX: 0
+                    }, 
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: 'avoid-all' }
+                };
+                window.html2pdf().set(opt).from(element).save();
+            };
+
+            const handleResetApp = () => { if(confirm("Isso apagará todas as configurações salvas (incluindo links de imagem) e resetará para o padrão da pasta. Continuar?")) { localStorage.clear(); window.location.reload(); } };
+            const handleImageUpload = (e, type) => { const file = e.target.files[0]; if(file) { const reader = new FileReader(); reader.onloadend = () => { if(type==='logo') setCustomLogo(reader.result); if(type==='signature') setCustomSignature(reader.result); }; reader.readAsDataURL(file); }};
+
+            const DefaultIEQLogo = () => (<svg viewBox="0 0 100 100" className="w-full h-full"><rect x="2" y="2" width="96" height="96" fill="none" stroke="#1e3a8a" strokeWidth="2"/><line x1="50" y1="2" x2="50" y2="98" stroke="#1e3a8a" strokeWidth="2"/><line x1="2" y1="50" x2="98" y2="50" stroke="#1e3a8a" strokeWidth="2"/><path d="M25 10 v30 M10 20 h30" stroke="#dc2626" strokeWidth="6" fill="none"/><path d="M60 30 c0-5 5-8 10-8 s8 5 5 10 c5 0 8 3 8 8 c0 5-5 8-10 8 h-15 z" fill="#fbbf24"/><circle cx="78" cy="28" r="1.5" fill="#000"/><path d="M15 60 q0 15 10 15 q10 0 10 -15 h-20 M25 75 v15 M15 90 h20" fill="none" stroke="#2563eb" strokeWidth="4"/><path d="M60 65 l5 20 h20 l5-20 l-10 10 l-5-15 l-5 15 z" fill="#7c3aed" stroke="#7c3aed" strokeWidth="2"/></svg>);
+            
+            let cardBgClass = "bg-white";
+            let cardBorderClass = "border-slate-200";
+            let iconColorClass = "text-emerald-500";
+            let bannerHtml = null;
+            let buttonStateClass = "bg-blue-600 hover:bg-blue-500 shadow-blue-900/50";
+            let buttonText = "2 - Gravar no Sistema";
+            let mainBgColor = "bg-slate-800";
+            let titleColor = "text-emerald-400";
+
+            if (autoFillState === 'draft_saldo') {
+                cardBgClass = "bg-amber-50/40";
+                cardBorderClass = "border-amber-300";
+                iconColorClass = "text-amber-500";
+                buttonStateClass = "bg-amber-500 hover:bg-amber-400 shadow-amber-900/50 text-amber-950";
+                buttonText = "2 - Confirmar e Gravar";
+                mainBgColor = "bg-amber-900";
+                titleColor = "text-amber-400";
+                bannerHtml = (
+                    <div className="bg-amber-100 text-amber-800 text-[10px] font-bold px-4 py-2 border-b border-amber-200 flex items-center gap-2">
+                        <Icon name="alert-triangle" size={14}/>
+                        <span>Valores importados automaticamente do Saldo de Virada.</span>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gray-50 selection:bg-blue-100 pb-20">
+                    {showConfirmModal && (<div className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm"><div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 animate-fade-in"><h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><Icon name="check-circle" className="text-blue-600"/> Confirmar Gravação</h3><div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4 text-center"><p className="text-xs text-blue-600 uppercase tracking-wider font-semibold">Igreja Selecionada</p><div className="text-xl font-bold text-blue-900 mt-1">{selectedChurch || otherChurchCode} - {selectedChurchData?.name}</div><p className="text-sm text-blue-700 mt-1">{selectedChurchData?.pastor}</p></div><div className="space-y-2 bg-gray-50 p-4 rounded-lg border text-sm"><div className="flex justify-between items-center pb-2 border-b border-gray-200"><span className="text-gray-600">Referência</span><span className="font-bold text-gray-900">{referenceDate}</span></div><div className="flex justify-between items-center pt-2"><span className="font-bold text-gray-800 text-lg">Total a Pagar</span><span className="font-black text-2xl text-blue-700">{formatCurrency(totalPayable)}</span></div></div><div className="mt-6 flex gap-3"><button onClick={() => setShowConfirmModal(false)} className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">Voltar</button><button onClick={handleConfirmSave} disabled={isSaving} className="flex-1 py-3 bg-green-600 text-white rounded-lg font-bold flex justify-center items-center gap-2 hover:bg-green-500 shadow-lg">{isSaving ? <div className="spinner"></div> : <Icon name="save" size={20}/>} {isSaving ? " Gravando..." : " Confirmar Gravação"}</button></div></div></div>)}
+                    
+                    {showSettings && (<div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4"><div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-6"><div className="flex justify-between border-b pb-4"><h3 className="text-lg font-bold flex gap-2"><Icon name="settings" className="text-blue-600"/> Configurações</h3><button onClick={() => setShowSettings(false)}><Icon name="x"/></button></div><div className="space-y-4"><div><label className="block text-sm font-medium mb-1">Valor do Seguro Unitário (R$)</label><CurrencyInput value={insuranceUnitValueStr} onChange={setInsuranceUnitValueStr} placeholder="45,00"/></div><hr className="border-slate-100"/><div><label className="block text-sm font-medium mb-1">Logo Personalizada</label><input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'logo')} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>{customLogo && <button onClick={() => {setCustomLogo(null); localStorage.removeItem('customLogo')}} className="text-xs text-red-500 mt-1">Remover/Resetar para Padrão</button>}</div><div><label className="block text-sm font-medium mb-1">Assinatura</label><input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'signature')} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>{customSignature && <button onClick={() => {setCustomSignature(null); localStorage.removeItem('customSignature')}} className="text-xs text-red-500 mt-1">Remover/Resetar para Padrão</button>}</div></div><hr/><button onClick={handleResetApp} className="w-full text-red-600 text-sm py-2 hover:bg-red-50 rounded border border-red-200">Resetar Aplicativo</button><button onClick={() => setShowSettings(false)} className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700">Concluir</button></div></div>)}
+                    
+                    {showPreview && (<div className="fixed inset-0 z-[90] bg-black/80 flex justify-center p-4 overflow-y-auto print:p-0 print:bg-white print:block"><div className="bg-white rounded-lg shadow-2xl w-full max-w-[21cm] min-h-[29.7cm] flex flex-col print:shadow-none print:w-full"><div className="bg-gray-100 p-4 border-b flex justify-between items-center print:hidden"><h3 className="font-bold flex gap-2"><Icon name="file-text" className="text-blue-600"/> Recibo</h3><div className="flex gap-2"><button onClick={handleClosePreview} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded font-medium text-sm">Fechar</button><button onClick={() => window.print()} className="px-4 py-2 bg-gray-800 text-white rounded font-medium flex gap-2 items-center hover:bg-gray-700 text-sm"><Icon name="printer" size={16}/> Imprimir</button><button onClick={handleDownloadPdf} className="px-4 py-2 bg-blue-600 text-white rounded font-medium flex gap-2 items-center hover:bg-blue-700 shadow text-sm"><Icon name="download" size={16}/> Baixar PDF</button></div></div><div id="receipt-content" className="p-10 flex-1 bg-white relative"><div className="border-2 border-gray-800 p-8 h-full flex flex-col relative"><div className="flex justify-center items-center gap-6 mb-8"><div className="w-24 h-24 flex items-center justify-center">{customLogo ? <img src={customLogo} className="max-w-full max-h-full object-contain" onError={(e) => { e.target.style.display = 'none'; alert('Logo não encontrada na pasta local: ./logo.png'); }}/> : <DefaultIEQLogo/>}</div><div><h1 className="text-3xl font-bold text-blue-900 uppercase leading-none">Igreja do Evangelho</h1><h1 className="text-4xl font-black text-blue-900 uppercase leading-none tracking-wide">Quadrangular</h1><p className="text-gray-600 font-bold tracking-widest text-lg mt-1 border-t-2 border-gray-300 inline-block pt-1">REGIÃO 655</p></div></div><h2 className="text-center text-2xl font-black border-b-4 border-gray-100 pb-4 mb-8 uppercase">Recibo</h2><div className="space-y-4 text-lg flex-1"><div className="grid grid-cols-[180px_1fr]"><span className="font-bold text-gray-600 uppercase text-sm">Data Emissão</span><span>{formatDate(issueDate)}</span></div><div className="grid grid-cols-[180px_1fr]"><span className="font-bold text-gray-600 uppercase text-sm">Referência</span><span>{formatReferenceExtenso(referenceDate)}</span></div><div className="grid grid-cols-[180px_1fr]"><span className="font-bold text-gray-600 uppercase text-sm">Igreja</span><span className="font-bold">{selectedChurch || otherChurchCode} - {selectedChurchData?.name}</span></div><div className="grid grid-cols-[180px_1fr]"><span className="font-bold text-gray-600 uppercase text-sm">Pastor</span><span>{selectedChurchData?.pastor}</span></div><hr className="border-dashed my-6"/><div className="flex justify-between py-1 px-2 bg-gray-50"><span>Subtotal Entradas</span><span className="font-mono font-bold">{formatCurrency(incomeValue)}</span></div><div className="flex justify-between py-1 px-2"><span>Taxa Regional (4%)</span><span className="font-mono font-bold">{formatCurrency(regionalTax)}</span></div><div className="flex justify-between py-1 px-2 bg-gray-50"><span>Taxa Coordenadoria</span><span className="font-mono font-bold">{formatCurrency(coordinatorFeeParsed)}</span></div><div className="flex justify-between py-1 px-2"><span>Seguro de Vida ({insuranceCount})</span><span className="font-mono font-bold">{formatCurrency(insuranceTotal)}</span></div>{otherValueParsed > 0 && <div className="flex justify-between py-1 px-2 bg-gray-50"><span>Outros ({otherDesc})</span><span className="font-mono font-bold">{formatCurrency(otherValueParsed)}</span></div>}<div className="mt-8 flex flex-col bg-gray-900 text-white p-4 rounded"><div className="flex justify-between items-center text-2xl"><span className="font-bold uppercase text-lg">Total Pago</span><span className="font-bold font-mono">{formatCurrency(totalPayable)}</span></div><div className="text-sm text-gray-400 mt-2 border-t border-gray-700 pt-2 text-right italic uppercase">{numeroPorExtenso(totalPayable)}</div></div></div><div className="mt-16 flex justify-end items-end"><div className="text-center relative min-w-[300px]">{customSignature ? <div className="absolute -top-16 left-0 right-0 flex justify-center"><img src={customSignature} className="h-24 object-contain mix-blend-multiply opacity-90" onError={(e) => { e.target.style.display = 'none'; alert('Assinatura não encontrada na pasta local: ./assinatura.png'); }}/></div> : <div className="absolute -top-14 left-0 right-0 text-5xl text-blue-900 opacity-90" style={{fontFamily: 'cursive'}}>Eduardo Silva</div>}<div className="border-t-2 border-gray-800 pt-2 mt-4"><p className="font-bold uppercase text-sm">Pr. Eduardo Silva</p><p className="text-xs uppercase text-gray-500">Região 655</p></div></div></div><div className="absolute bottom-2 left-0 w-full text-center text-[10px] text-gray-400 uppercase">Documento gerado eletronicamente - IEQ REG655 - v.2.1/20226</div></div></div></div></div>)}
+
+                    <div className={`print:hidden ${showPreview ? 'hidden' : 'block'}`}>
+                        {/* NOVO CABEÇALHO PADRÃO ADMIN */}
+                        <header className="w-full shadow-sm bg-white border-b sticky top-0 z-50">
+                            <div className="max-w-6xl mx-auto px-4 py-1.5 flex justify-between items-center">
+                                <a href="index.html" className="flex items-center gap-2">
+                                    <img src="logo.png" alt="Logo IEQ" className="h-8 w-auto object-contain" onError={(e)=>{e.target.src='https://via.placeholder.com/32?text=IEQ'}} />
+                                    <div className="border-l border-gray-200 pl-2">
+                                        <div className="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                                        <div className="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                                    </div>
+                                </a>
+                                <div className="flex items-center gap-3">
+                                    <a href="dashreg655.html" className="hidden sm:flex text-blue-600 hover:text-blue-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors items-center gap-1 uppercase tracking-wider">
+                                        <Icon name="bar-chart-2" size={14}/> Entradas
+                                    </a>
+                                    <a href="editarrecibos.html" className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-1 uppercase tracking-wider">
+                                        <Icon name="table" size={14}/> Gerenciar
+                                    </a>
+                                    <a href="index.html" className="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                                        <Icon name="arrow-left" size={12} /> Admin
+                                    </a>
+                                </div>
+                            </div>
+                            <div className="header-gradient py-3 px-4">
+                                <div className="max-w-6xl mx-auto flex justify-between items-center">
+                                    <h1 className="text-sm md:text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
+                                        <Icon name="receipt" size={18} /> Emissor de Recibos
+                                    </h1>
+                                    <button onClick={() => setShowSettings(true)} className="text-white hover:text-blue-200 transition-colors" title="Configurações"><Icon name="settings" size={18}/></button>
+                                </div>
+                            </div>
+                        </header>
+
+                        <main className="max-w-6xl mx-auto px-4 py-8 pb-10 space-y-6">
+                            <div className="grid gap-6 lg:grid-cols-3">
+                                <div className="lg:col-span-2 space-y-6">
+                                    <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                                        <div className="bg-gray-50 px-6 py-3 border-b flex items-center gap-2">
+                                            <Icon name="building-2" size={18} className="text-blue-600"/>
+                                            <h2 className="font-semibold text-gray-700">Identificação</h2>
+                                        </div>
+                                        <div className="p-6 space-y-4">
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium">Igreja</label>
+                                                <select value={selectedChurch} onChange={(e) => { setSelectedChurch(e.target.value); setOtherChurchName(''); }} disabled={isLoadingChurches} className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white input-focus">
+                                                    <option value="">{isLoadingChurches ? 'Carregando...' : 'Selecione...'}</option>
+                                                    {churches.map(c => <option key={c.code} value={c.code}>{c.code} - {c.name}</option>)}
+                                                </select>
+                                                {selectedChurch && !otherChurchName && <p className="text-xs text-blue-600 mt-1 font-semibold">Pastor: {selectedChurchData?.pastor}</p>}
+                                                <div className="mt-3 pt-3 border-t">
+                                                    <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Ou insira outra igreja externa</label>
+                                                    <div className="flex gap-2 mt-1">
+                                                        <input type="text" placeholder="Código" maxLength="5" value={otherChurchCode} onChange={(e) => { setOtherChurchCode(e.target.value); if(e.target.value) setSelectedChurch(''); }} className="w-20 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 font-medium"/>
+                                                        <input type="text" placeholder="Nome da outra igreja..." value={otherChurchName} onChange={(e) => { setOtherChurchName(e.target.value); if(e.target.value) setSelectedChurch(''); }} className="flex-1 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 font-medium"/>
+                                                    </div>
+                                                    {otherChurchName && otherChurchCode && <p className="text-xs text-amber-600 mt-1 font-semibold">⚠ Digitada: {otherChurchCode} - {otherChurchName}</p>}
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="text-sm font-medium">Referência (Mês/Ano)</label>
+                                                    <input type="month" value={getMonthValue()} onChange={handleMonthChange} className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50 text-center font-bold text-blue-600 uppercase tracking-widest"/>
+                                                </div>
+                                                <div>
+                                                    <label className="text-sm font-medium">Data Emissão</label>
+                                                    <input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium text-slate-700"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className={`rounded-2xl shadow-sm border overflow-hidden transition-colors duration-300 ${cardBgClass} ${cardBorderClass}`}>
+                                        {bannerHtml}
+                                        <div className="bg-gray-50/70 px-6 py-3 border-b border-slate-100 flex items-center gap-2">
+                                            <Icon name="dollar-sign" size={18} className={iconColorClass}/>
+                                            <h2 className="font-semibold text-gray-700">Valores</h2>
+                                        </div>
+                                        <div className="p-6 space-y-4">
+                                            <CurrencyInput label="Subtotal Entradas" value={income} onChange={setIncome} />
+                                            <div className="bg-blue-50 p-4 rounded-xl flex justify-between items-center border border-blue-100">
+                                                <span className="text-sm font-bold text-blue-800 uppercase">Taxa Regional (4%)</span>
+                                                <span className="font-black text-blue-700 text-lg">{formatCurrency(regionalTax)}</span>
+                                            </div>
+                                            <div className="grid sm:grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="flex items-center gap-2 text-sm font-medium mb-1 cursor-pointer text-gray-700">
+                                                        <input type="checkbox" checked={hasCoordinatorFee} onChange={(e) => setHasCoordinatorFee(e.target.checked)} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                                                        Aplicar Taxa Coord.
+                                                    </label>
+                                                    {hasCoordinatorFee ? (
+                                                        <CurrencyInput value={coordinatorFee} onChange={setCoordinatorFee} placeholder="100,00" />
+                                                    ) : (
+                                                        <div className="p-3 border border-slate-200 rounded-xl bg-gray-100 text-gray-400 font-semibold text-center cursor-not-allowed">Isento</div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label className="text-sm font-medium">Seguros (R$ {formatCurrency(insuranceUnitValue)} un)</label>
+                                                    <input type="number" min="0" value={insuranceCount} onChange={(e) => setInsuranceCount(parseInt(e.target.value) || 0)} className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500 font-semibold"/>
+                                                </div>
+                                            </div>
+                                            <div className="border-t border-slate-100 pt-4">
+                                                <label className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-widest">
+                                                    <Icon name="plus-circle" size={14}/> Outros Valores (Opcional)
+                                                </label>
+                                                <div className="flex flex-col sm:flex-row gap-2 mt-1">
+                                                    <input type="text" placeholder="Descrição" value={otherDesc} onChange={(e) => setOtherDesc(e.target.value)} className="flex-1 p-3 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 font-medium"/>
+                                                    <CurrencyInput value={otherValue} onChange={setOtherValue} className="w-full sm:w-40"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className={`${mainBgColor} text-white rounded-3xl shadow-xl p-6 transition-colors duration-300`}>
+                                        <h3 className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total a Pagar</h3>
+                                        <div className={`text-4xl font-black tracking-tighter mb-6 mt-1 ${titleColor}`}>{formatCurrency(totalPayable)}</div>
+                                        <div className="space-y-2 text-sm font-medium text-slate-300 border-t border-white/20 pt-4 mb-6"><div className="flex justify-between"><span>Regional</span><span className="font-bold text-white">{formatCurrency(regionalTax)}</span></div><div className="flex justify-between"><span>Coord.</span><span className="font-bold text-white">{formatCurrency(coordinatorFeeParsed)}</span></div><div className="flex justify-between"><span>Seguros</span><span className="font-bold text-white">{formatCurrency(insuranceTotal)}</span></div><div className="flex justify-between"><span>Outros</span><span className="font-bold text-white">{formatCurrency(otherValueParsed)}</span></div></div>
+                                        <div className="space-y-3">
+                                            <button onClick={handleViewReceipt} className="w-full py-3 bg-white text-gray-900 hover:bg-gray-100 rounded-lg font-medium flex justify-center items-center gap-2 transition-colors"><Icon name="file-text" size={20}/> 1 - Visualizar Recibo</button>
+                                            <button onClick={handlePreSave} className={`w-full py-3 rounded-lg font-bold flex justify-center items-center gap-2 transition-colors text-white shadow-lg ${buttonStateClass}`}><Icon name="save" size={20}/> {buttonText}</button>
+                                            <button onClick={handleClearForm} className="w-full py-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg font-medium flex justify-center items-center gap-2 transition-colors text-white border border-slate-600"><Icon name="trash-2" size={20}/> 3 - Limpar Formulário</button>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-[11px] uppercase tracking-wider text-slate-500 flex items-center gap-2"><Icon name="history" size={14}/> Últimos Recibos (5)</h3></div>
+                                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                                            {isLoadingHistory ? <p className="text-center text-xs font-bold text-blue-400 animate-pulse">Sincronizando Banco de Dados...</p> : recentReceipts.length === 0 ? <p className="text-xs font-medium text-slate-400 text-center py-4">Nenhum registro encontrado no sistema.</p> : recentReceipts.map((item, index) => (<div key={index} className="p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors"><div className="flex justify-between items-start mb-1"><span className="font-bold text-xs text-slate-800 leading-tight">{item.igrejaFormatada}</span><span className="font-black text-sm text-emerald-600">{formatCurrency(item.total)}</span></div><div className="flex justify-between items-center mt-2"><span className="text-[9px] font-bold text-slate-400 uppercase">{item.referenceDate}</span><span className="text-[8px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-black uppercase tracking-wider">PAGO</span></div></div>))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <footer className="footer-regional">
+                                <p>Desenvolvido por: <b>Escritório Regional | Região 655 - Londrina/PR |</b></p>
+                                <p>Superintendente: <b>Rev. Valdir Ávila Ramos</b></p>
+                                <p>Secretário Regional: <b>Pr. Eduardo Silva</b></p>
+                            </footer>
+                        </main>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

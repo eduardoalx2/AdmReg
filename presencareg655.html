@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presença de Pastores - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .loader {
+            border-top-color: #3498db;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer-regional {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eeeeee;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 12px;
+            color: #777777;
+            line-height: 1.6;
+        }
+
+        .footer-regional b {
+            color: #444444;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="bg-white p-6 md:p-10 rounded-[2rem] shadow-2xl w-full max-w-lg border border-slate-100">
+        <!-- Logo do Topo -->
+        <div class="flex justify-center mb-6 relative">
+            <a href="index.html" class="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
+                ← Voltar
+            </a>
+            <img src="logo.png" alt="Logo da Região" class="h-20 w-auto object-contain" onerror="this.src='https://via.placeholder.com/150x80?text=LOGO+REGIAO'">
+        </div>
+
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Registro de Presença</h1>
+            <div class="h-1 w-12 bg-blue-600 mx-auto mt-2 rounded-full"></div>
+        </div>
+
+        <form id="presenceForm" class="space-y-5">
+            <!-- Nome do Pastor(a) / Obreiro(a) -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Nome do Pastor(a) / Obreiro(a)</label>
+                <select id="pastorName" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    <option value="" disabled selected>CARREGANDO PASTORES...</option>
+                </select>
+            </div>
+
+            <!-- Igreja / Congregação -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Igreja / Congregação</label>
+                <select id="church" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    <option value="" disabled selected>CARREGANDO IGREJAS...</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Data do Evento -->
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Data do Evento</label>
+                    <input type="date" id="eventDate" required 
+                        class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Status</label>
+                    <select id="status" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
+                        <option value="Presente">PRESENTE</option>
+                        <option value="Ausente">AUSENTE</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tipo de Evento -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Tipo de Evento</label>
+                <select id="eventType" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    <option value="" disabled selected>SELECIONE O TIPO DE EVENTO</option>
+                    <option value="EVENTO REGIONAL">EVENTO REGIONAL</option>
+                    <option value="EVENTO DISTRITAL">EVENTO DISTRITAL</option>
+                    <option value="CONVOCAÇÃO REGIONAL">CONVOCAÇÃO REGIONAL</option>
+                    <option value="CONVOCAÇÃO CED">CONVOCAÇÃO CED</option>
+                    <option value="CONVOCAÇÃO CND">CONVOCAÇÃO CND</option>
+                </select>
+            </div>
+
+            <!-- Motivo da Ausência -->
+            <div id="motivoContainer" class="hidden">
+                <label class="block text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1 ml-1">Motivo da Ausência (Obrigatório)</label>
+                <textarea id="motivo" rows="3" placeholder="Justifique detalhadamente sua ausência..." 
+                    class="w-full p-3 bg-red-50 border border-red-100 rounded-xl focus:ring-2 focus:ring-red-500 outline-none resize-none text-sm"></textarea>
+            </div>
+
+            <!-- Declaração -->
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <label class="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" id="declaration" required class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <span class="text-[11px] font-bold text-slate-600 leading-tight uppercase">
+                        Declaro que esta resposta é verdadeira
+                    </span>
+                </label>
+            </div>
+
+            <!-- Botão Enviar -->
+            <button type="submit" id="submitBtn" class="w-full bg-slate-900 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-xl transform active:scale-95 transition-all flex items-center justify-center gap-2 text-sm tracking-widest">
+                CONFIRMAR E ENVIAR
+            </button>
+        </form>
+
+        <div id="feedback" class="hidden mt-6 p-4 rounded-xl text-center text-[10px] font-black uppercase tracking-widest"></div>
+
+        <footer class="footer-regional">
+            <p>Desenvolvido por: <b>Escritório Regional | Região 655 - Londrina/PR |</b></p>
+            <p>Superintendente: <b>Rev. Valdir Ávila Ramos</b></p>
+            <p>Secretário Regional: <b>Pr. Eduardo Silva</b></p>
+        </footer>
+    </div>
+
+    <!-- Overlay de Carregamento -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-3xl flex flex-col items-center shadow-2xl">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-100 h-10 w-10 mb-3"></div>
+            <p class="text-[10px] font-black text-slate-800 tracking-widest uppercase">Gravando e Gerando Mensagem...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        const WHATSAPP_NUMBER = "554333562718";
+
+        const form = document.getElementById('presenceForm');
+        const churchSelect = document.getElementById('church');
+        const pastorSelect = document.getElementById('pastorName');
+        const statusSelect = document.getElementById('status');
+        const motivoContainer = document.getElementById('motivoContainer');
+        const motivoTextarea = document.getElementById('motivo');
+        const feedback = document.getElementById('feedback');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const eventDateInput = document.getElementById('eventDate');
+
+        window.onload = async function() {
+            const hoje = new Date().toISOString().split('T')[0];
+            eventDateInput.value = hoje;
+
+            try {
+                const [igrejasSnapshot, pastoresSnapshot] = await Promise.all([
+                    getDocs(collection(db, "igrejas")),
+                    getDocs(collection(db, "pastores"))
+                ]);
+
+                const igrejas = [];
+                igrejasSnapshot.forEach(doc => igrejas.push(doc.data()));
+                igrejas.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+                
+                churchSelect.innerHTML = '<option value="" disabled selected>SELECIONE A IGREJA</option>';
+                igrejas.forEach(ig => {
+                    const option = document.createElement('option');
+                    const cod = String(ig.codigo).padStart(4, '0');
+                    option.value = `${cod} - ${ig.nome}`;
+                    option.textContent = `${cod} - ${ig.nome}`;
+                    churchSelect.appendChild(option);
+                });
+
+                const pastores = [];
+                pastoresSnapshot.forEach(doc => pastores.push(doc.data().nome));
+                pastores.sort(); // Em ordem alfabética
+
+                pastorSelect.innerHTML = '<option value="" disabled selected>SELECIONE O NOME</option>';
+                pastores.forEach(nome => {
+                    const option = document.createElement('option');
+                    option.value = nome;
+                    option.textContent = nome;
+                    pastorSelect.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error("Erro ao carregar dados do Firebase:", error);
+                churchSelect.innerHTML = '<option value="" disabled selected>ERRO AO CARREGAR</option>';
+                pastorSelect.innerHTML = '<option value="" disabled selected>ERRO AO CARREGAR</option>';
+            }
+        };
+
+        statusSelect.addEventListener('change', () => {
+            if (statusSelect.value === 'Ausente') {
+                motivoContainer.classList.remove('hidden');
+                motivoTextarea.required = true;
+            } else {
+                motivoContainer.classList.add('hidden');
+                motivoTextarea.required = false;
+                motivoTextarea.value = "";
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (statusSelect.value === 'Ausente' && !motivoTextarea.value.trim()) {
+                showFeedback("POR FAVOR, INFORME O MOTIVO DA AUSÊNCIA!", "error");
+                return;
+            }
+
+            const nome = document.getElementById('pastorName').value.trim();
+            const igreja = document.getElementById('church').value;
+            const dataEvento = eventDateInput.value;
+            const tipoEvento = document.getElementById('eventType').value;
+            const status = statusSelect.value;
+            const motivo = motivoTextarea.value.trim();
+            const dataPostagem = new Date().toLocaleString('pt-BR');
+
+            const payload = {
+                nome,
+                igreja,
+                dataEvento,
+                tipoEvento,
+                status,
+                motivo,
+                declaracao: document.getElementById('declaration').checked ? "Sim" : "Não",
+                dataPostagem,
+                createdAt: serverTimestamp()
+            };
+
+            loadingOverlay.classList.remove('hidden');
+
+            try {
+                // Salva diretamente na coleção 'presencas' no Firebase Firestore
+                await addDoc(collection(db, "presencas"), payload);
+
+                const dataFormatada = dataEvento.split('-').reverse().join('/');
+                
+                let mensagemZap = `*REGISTRO DE PRESENÇA - REGIÃO 655*%0A%0A`;
+                mensagemZap += `*Pastor:* ${nome}%0A`;
+                mensagemZap += `*Igreja:* ${igreja}%0A`;
+                mensagemZap += `*Evento:* ${tipoEvento}%0A`;
+                mensagemZap += `*Data do Evento:* ${dataFormatada}%0A`;
+                mensagemZap += `*Status:* ${status === 'Presente' ? '✅ PRESENTE' : '❌ AUSENTE'}%0A`;
+                
+                if (status === 'Ausente') {
+                    mensagemZap += `*Motivo:* ${motivo}%0A`;
+                }
+                
+                mensagemZap += `%0A_Enviado via Sistema em: ${dataPostagem}_`;
+
+                const zapUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${mensagemZap}`;
+                
+                showFeedback("DADOS GRAVADOS! REDIRECIONANDO PARA WHATSAPP...", "success");
+                
+                setTimeout(() => {
+                    window.location.href = zapUrl;
+                }, 1500);
+
+            } catch (error) {
+                console.error("Erro:", error);
+                showFeedback("ERRO AO GRAVAR. TENTE NOVAMENTE.", "error");
+                loadingOverlay.classList.add('hidden');
+            }
+        });
+
+        function showFeedback(message, type) {
+            feedback.textContent = message;
+            feedback.classList.remove('hidden', 'bg-green-50', 'text-green-600', 'bg-red-50', 'text-red-600');
+            feedback.classList.add(type === 'success' ? 'bg-green-50' : 'bg-red-50');
+            feedback.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
+        }
+    </script>
+</body>
+</html>

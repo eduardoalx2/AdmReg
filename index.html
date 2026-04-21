@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { 
+            transform: translateY(-4px); 
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.15), 0 8px 10px -6px rgba(37, 99, 235, 0.1); 
+            border-color: #bfdbfe;
+        }
+    </style>
+</head>
+<body>
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-5xl mx-auto px-4 py-2 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                <div class="border-l border-gray-200 pl-2">
+                    <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                    <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                </div>
+            </div>
+            <a href="../index.html" class="text-[10px] font-bold text-slate-500 hover:text-red-500 flex items-center gap-1 transition-colors uppercase tracking-wider">
+                <i data-lucide="log-out" class="w-3 h-3"></i> Sair para o Portal
+            </a>
+        </div>
+        <div class="header-gradient py-6 px-4">
+            <div class="max-w-5xl mx-auto">
+                <h1 class="text-xl md:text-2xl font-black text-white tracking-wide uppercase flex items-center gap-2">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6 text-blue-400"></i>
+                    Painel de Administração
+                </h1>
+                <p class="text-slate-300 text-xs mt-1 font-medium">Gestão centralizada de sistemas da Região 655</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto py-8 px-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            
+            <a href="s_pastores.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Pastores</h2>
+                <p class="text-xs text-slate-500 font-medium">Cadastro e gestão de Obreiros, Aspirantes e Ministros.</p>
+            </a>
+
+            <a href="s_igrejas.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    <i data-lucide="church" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Igrejas</h2>
+                <p class="text-xs text-slate-500 font-medium">Gestão das Unidades Locais e vinculação de Pastores.</p>
+            </a>
+
+            <a href="saldodeviradareg655.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                    <i data-lucide="circle-dollar-sign" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Saldo de Virada</h2>
+                <p class="text-xs text-slate-500 font-medium">Lançador financeiro e estatístico de virada de mês.</p>
+            </a>
+
+            <a href="recibosreg655.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+                    <i data-lucide="receipt" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Recibos</h2>
+                <p class="text-xs text-slate-500 font-medium">Emissor de recibos e controle financeiro.</p>
+            </a>
+
+            <a href="editarrecibos.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-slate-800 text-white flex items-center justify-center mb-4 group-hover:bg-slate-900 transition-colors">
+                    <i data-lucide="table-properties" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Gerenciar Recibos</h2>
+                <p class="text-xs text-slate-500 font-medium">Edição e visualização geral de todos os recibos lançados.</p>
+            </a>
+
+            <a href="dashreg655.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center mb-4 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                    <i data-lucide="pie-chart" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Dash Recibos</h2>
+                <p class="text-xs text-slate-500 font-medium">Dashboard analítico financeiro de arrecadações.</p>
+            </a>
+
+            <a href="presencareg655.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                    <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Presença</h2>
+                <p class="text-xs text-slate-500 font-medium">Registro de presença de pastores nas convocações.</p>
+            </a>
+
+            <a href="dashsaldonovo.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                    <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">DashSaldos</h2>
+                <p class="text-xs text-slate-500 font-medium">Dashboard financeiro e estatístico consolidado.</p>
+            </a>
+
+            <a href="gerenciar_saldos.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                    <i data-lucide="settings-2" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Gerenciar Saldos</h2>
+                <p class="text-xs text-slate-500 font-medium">Edição e exclusão de lançamentos da virada de mês.</p>
+            </a>
+
+            <a href="corrigir_nomes_saldos.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                    <i data-lucide="database-zap" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Corrigir Nomes</h2>
+                <p class="text-xs text-slate-500 font-medium">Ferramenta para unificar nomes de igrejas no histórico.</p>
+            </a>
+
+            <a href="importador_recibos.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                    <i data-lucide="sheet" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Importar Recibos</h2>
+                <p class="text-xs text-slate-500 font-medium">Ferramenta para unificar histórico via planilhas.</p>
+            </a>
+
+            <a href="dashsaldo.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group opacity-80 hover:opacity-100">
+                <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4 group-hover:bg-slate-600 group-hover:text-white transition-colors">
+                    <i data-lucide="bar-chart" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">DashSaldos (Antigo)</h2>
+                <p class="text-xs text-slate-500 font-medium">Dashboard financeiro histórico (Planilha Google).</p>
+            </a>
+
+            <a href="agendareg655.html" class="card-hover bg-white rounded-2xl p-6 border border-slate-200 block group">
+                <div class="w-12 h-12 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center mb-4 group-hover:bg-pink-600 group-hover:text-white transition-colors">
+                    <i data-lucide="calendar-days" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-black text-slate-800 text-lg mb-1 tracking-tight">Agenda Regional</h2>
+                <p class="text-xs text-slate-500 font-medium">Cronograma de eventos CED e CND.</p>
+            </a>
+
+        </div>
+    </main>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>

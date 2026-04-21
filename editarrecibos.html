@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Recibos - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        .table-custom {
+            font-size: 0.8rem;
+        }
+        
+        .table-custom th {
+            padding: 8px 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        .table-custom td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .nome-style {
+            font-weight: 700;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CABEÇALHO -->
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-6xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <div class="flex items-center gap-3">
+                    <a href="dashreg655.html" class="hidden sm:flex text-blue-600 hover:text-blue-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Entradas
+                    </a>
+                    <a href="recibosreg655.html" class="text-blue-600 hover:text-blue-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Novo Recibo
+                    </a>
+                    <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase">
+                    Gerenciar Recibos (Entradas)
+                </h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto py-6 px-4">
+        
+        <!-- Filtro e Busca -->
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar por Igreja</label>
+                    <input type="text" id="filtro-igreja" oninput="aplicarFiltros()" placeholder="Nome da igreja..." class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Referência</label>
+                    <select id="filtro-periodo" onchange="aplicarFiltros()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        <option value="">Todas as referências</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ordenar por</label>
+                    <select id="filtro-ordem" onchange="aplicarFiltros()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        <option value="recentes">Mais Recentes</option>
+                        <option value="maior_valor">Maior Valor</option>
+                        <option value="menor_valor">Menor Valor</option>
+                        <option value="alfabetica">Igreja (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-between items-center border-t border-slate-100 pt-3">
+                <button onclick="limparFiltros()" class="text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+                    <i data-lucide="filter-x" class="w-3.5 h-3.5"></i> Limpar Filtros
+                </button>
+                <div class="text-right">
+                    <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Recibos encontrados: </span>
+                    <span id="total-lancamentos" class="text-lg font-black text-blue-600">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Recibos -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse table-custom whitespace-nowrap">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                            <th>Data e Igreja</th>
+                            <th>Referência</th>
+                            <th>Tx. Reg. (4%)</th>
+                            <th>Tx. Coord.</th>
+                            <th>Seguros</th>
+                            <th>Outros</th>
+                            <th>Total Pago</th>
+                            <th>Status</th>
+                            <th class="w-16 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-recibos" class="divide-y divide-slate-100">
+                        <tr><td colspan="9" class="text-center py-6 text-slate-400">Carregando dados do Firebase...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal de Edição -->
+        <div id="modal-recibo" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden my-auto">
+                <div class="bg-slate-800 px-5 py-4 flex justify-between items-center sticky top-0 z-10">
+                    <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                        <i data-lucide="edit" class="w-4 h-4"></i> Editar Recibo
+                    </h2>
+                    <button type="button" onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <form id="form-recibo" class="p-6 space-y-5">
+                    <input type="hidden" id="recibo-id">
+                    
+                    <!-- Header Info (Readonly) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div class="md:col-span-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Igreja</label>
+                            <div id="info-igreja" class="font-bold text-slate-800 text-sm truncate mt-2">-</div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Referência (Mês/Ano)</label>
+                            <input type="month" id="recibo-referencia" required class="w-full p-1.5 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-bold text-blue-600 uppercase tracking-widest">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Data Emissão</label>
+                            <input type="date" id="recibo-emissao" required class="w-full p-1.5 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Coluna 1: Valores -->
+                        <div class="space-y-4">
+                            <h3 class="text-xs font-bold text-slate-800 uppercase border-b pb-1">Valores</h3>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Subtotal Entradas</label>
+                                    <input type="text" id="recibo-entradas" required class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" oninput="mascaraMoeda(this); autoCalcRegional(this); updateTotal()">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-blue-600 uppercase mb-1">Taxa Reg. (4%)</label>
+                                    <input type="text" id="recibo-regional" required class="w-full p-2 bg-white border border-blue-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-bold text-blue-700" oninput="mascaraMoeda(this); updateTotal()">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Taxa Coord. (R$)</label>
+                                    <input type="text" id="recibo-coord" required class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" oninput="mascaraMoeda(this); updateTotal()">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Seguros (Qtd)</label>
+                                    <select id="recibo-seguros" onchange="updateTotal()" class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option><option value="2">2</option>
+                                        <option value="3">3</option><option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna 2: Outros e Status -->
+                        <div class="space-y-4">
+                            <h3 class="text-xs font-bold text-slate-800 uppercase border-b pb-1">Outros / Situação</h3>
+                            
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Outros (Desc)</label>
+                                    <input type="text" id="recibo-outros-desc" class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" placeholder="Ex: Doação">
+                                </div>
+                                <div class="w-28">
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor (R$)</label>
+                                    <input type="text" id="recibo-outros-valor" class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" oninput="mascaraMoeda(this); updateTotal()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50 text-emerald-800 text-xs p-3 rounded border border-emerald-100 font-medium
+                        </div>
+                        <div id="modal-data-registro" class="text-[9px] text-emerald-600/60 font-bold uppercase text-right tracking-wider" title="Data em que foi gerado no sistema"></div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-100">
+                        <div class="flex justify-between items-center bg-slate-800 text-white p-4 rounded-xl">
+                            <span class="font-bold uppercase text-base">Total a Pagar</span>
+                            <span id="modal-total" class="font-black text-2xl">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex gap-3">
+                        <button type="button" onclick="fecharModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded uppercase text-[11px] hover:bg-slate-200 transition-colors">Cancelar</button>
+                        <button type="submit" id="btn-salvar" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded uppercase text-[11px] hover:bg-blue-700 transition-colors shadow-md">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Container Oculto para Geração de PDF -->
+        <div style="position: absolute; left: -9999px; top: 0; z-index: -9999;">
+            <div id="receipt-content" class="p-6 bg-white relative w-[21cm] h-[29cm] overflow-hidden flex flex-col text-gray-800" style="font-family: 'Inter', sans-serif;">
+                <div class="border-2 border-gray-800 p-6 h-full flex flex-col relative">
+                    <div class="flex justify-center items-center gap-6 mb-8">
+                        <div class="w-24 h-24 flex items-center justify-center">
+                            <img id="pdf-logo" src="logo.png" class="max-w-full max-h-full object-contain">
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold text-blue-900 uppercase leading-none">Igreja do Evangelho</h1>
+                            <h1 class="text-4xl font-black text-blue-900 uppercase leading-none tracking-wide">Quadrangular</h1>
+                            <p class="text-gray-600 font-bold tracking-widest text-lg mt-1 border-t-2 border-gray-300 inline-block pt-1">REGIÃO 655</p>
+                        </div>
+                    </div>
+                    <h2 class="text-center text-2xl font-black border-b-4 border-gray-100 pb-4 mb-8 uppercase">Recibo</h2>
+                    <div class="space-y-4 text-lg flex-1">
+                        <div class="grid grid-cols-[180px_1fr]">
+                            <span class="font-bold text-gray-600 uppercase text-sm">Data Emissão</span>
+                            <span id="pdf-data-emissao" class="font-medium"></span>
+                        </div>
+                        <div class="grid grid-cols-[180px_1fr]">
+                            <span class="font-bold text-gray-600 uppercase text-sm">Referência</span>
+                            <span id="pdf-referencia" class="font-medium"></span>
+                        </div>
+                        <div class="grid grid-cols-[180px_1fr]">
+                            <span class="font-bold text-gray-600 uppercase text-sm">Igreja</span>
+                            <span id="pdf-igreja" class="font-bold"></span>
+                        </div>
+                        <div class="grid grid-cols-[180px_1fr]">
+                            <span class="font-bold text-gray-600 uppercase text-sm">Pastor</span>
+                            <span id="pdf-pastor" class="font-medium"></span>
+                        </div>
+                        <hr class="border-dashed my-6 border-gray-300">
+                        <div class="flex justify-between py-1 px-2 bg-gray-50">
+                            <span>Subtotal Entradas</span>
+                            <span id="pdf-entradas" class="font-mono font-bold"></span>
+                        </div>
+                        <div class="flex justify-between py-1 px-2">
+                            <span>Taxa Regional (4%)</span>
+                            <span id="pdf-regional" class="font-mono font-bold"></span>
+                        </div>
+                        <div class="flex justify-between py-1 px-2 bg-gray-50">
+                            <span>Taxa Coordenadoria</span>
+                            <span id="pdf-coord" class="font-mono font-bold"></span>
+                        </div>
+                        <div class="flex justify-between py-1 px-2">
+                            <span id="pdf-label-seguros">Seguro de Vida</span>
+                            <span id="pdf-seguros" class="font-mono font-bold"></span>
+                        </div>
+                        <div id="pdf-outros-container" class="flex justify-between py-1 px-2 bg-gray-50 hidden">
+                            <span id="pdf-label-outros">Outros</span>
+                            <span id="pdf-outros" class="font-mono font-bold"></span>
+                        </div>
+                        <div class="mt-8 flex flex-col bg-gray-900 text-white p-4 rounded">
+                            <div class="flex justify-between items-center text-2xl">
+                                <span class="font-bold uppercase text-lg">Total Pago</span>
+                                <span id="pdf-total" class="font-bold font-mono"></span>
+                            </div>
+                            <div id="pdf-extenso" class="text-sm text-gray-400 mt-2 border-t border-gray-700 pt-2 text-right italic uppercase"></div>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-end items-end">
+                        <div class="text-center relative min-w-[300px]">
+                            <div class="absolute -top-16 left-0 right-0 flex justify-center">
+                                <img id="pdf-assinatura" src="assinatura.png" class="h-24 object-contain mix-blend-multiply opacity-90">
+                            </div>
+                            <div id="pdf-assinatura-texto" class="absolute -top-14 left-0 right-0 text-5xl text-blue-900 opacity-90 hidden" style="font-family: cursive;">Eduardo Silva</div>
+                            <div class="border-t-2 border-gray-800 pt-2 mt-4">
+                                <p class="font-bold uppercase text-sm">Pr. Eduardo Silva</p>
+                                <p class="text-xs uppercase text-gray-500">Região 655</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-2 left-0 w-full text-center text-[10px] text-gray-400 uppercase">
+                        Documento gerado eletronicamente - IEQ REG655
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        window.fecharModal = () => {
+            document.getElementById('modal-recibo').classList.add('hidden');
+        };
+
+        window.autoCalcRegional = (input) => {
+            const income = window.parseMoeda(input.value);
+            const regional = income * 0.04;
+            const regInput = document.getElementById('recibo-regional');
+            regInput.value = window.formatMoeda(regional);
+        };
+
+        window.updateTotal = () => {
+            const regionalTax = window.parseMoeda(document.getElementById('recibo-regional').value);
+            const coordinatorFeeParsed = window.parseMoeda(document.getElementById('recibo-coord').value);
+            const insuranceCount = parseInt(document.getElementById('recibo-seguros').value) || 0;
+            const otherValueParsed = window.parseMoeda(document.getElementById('recibo-outros-valor').value);
+
+            const insuranceUnitValue = parseFloat(localStorage.getItem('insuranceUnitValue')) || 45;
+            const insuranceTotal = insuranceCount * insuranceUnitValue;
+
+            const total = regionalTax + coordinatorFeeParsed + insuranceTotal + otherValueParsed;
+
+            document.getElementById('modal-total').innerText = window.formatMoeda(total);
+        };
+
+        window.mascaraMoeda = (input) => {
+            let value = input.value.replace(/\D/g, '');
+            if (value === '') value = '0';
+            value = (parseInt(value) / 100).toFixed(2);
+            value = value.replace('.', ',');
+            value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+            input.value = 'R$ ' + value;
+        };
+        
+        window.parseMoeda = (str) => {
+            if(typeof str === 'number') return str;
+            if(!str) return 0;
+            return parseFloat(str.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+        };
+
+        window.formatMoeda = (val) => {
+            return (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        };
+    </script>
+
+    <script type="module">
+        import { db } from '../firebase-config.js';
+        import { collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        let recibosList = [];
+        let periodosSet = new Set();
+        
+        if (window.lucide) lucide.createIcons();
+        
+        const tabela = document.getElementById('tabela-recibos');
+        const form = document.getElementById('form-recibo');
+
+        async function carregarRecibos() {
+            try {
+                tabela.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-slate-400"><div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div>Carregando...</td></tr>';
+                
+                const querySnapshot = await getDocs(collection(db, "recibos"));
+                recibosList = [];
+                periodosSet.clear();
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    recibosList.push({ id: doc.id, ...data });
+                    if(data.referenceDate) periodosSet.add(data.referenceDate);
+                });
+
+                const selectPeriodo = document.getElementById('filtro-periodo');
+                const valorAtual = selectPeriodo.value;
+                
+                const periodosArr = Array.from(periodosSet).sort((a,b) => {
+                    const [mA, yA] = a.split('/');
+                    const [mB, yB] = b.split('/');
+                    return new Date(yB, mB-1) - new Date(yA, mA-1);
+                });
+                let optionsHTML = '<option value="">Todas as referências</option>';
+                periodosArr.forEach(p => {
+                    optionsHTML += `<option value="${p}">${p}</option>`;
+                });
+                selectPeriodo.innerHTML = optionsHTML;
+                selectPeriodo.value = valorAtual;
+
+                renderizarTabela();
+            } catch (error) {
+                console.error("Erro ao carregar recibos:", error);
+                tabela.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-500 font-bold">Erro ao carregar dados do servidor.</td></tr>';
+            }
+        }
+
+        window.aplicarFiltros = () => renderizarTabela();
+
+        // Função auxiliar de Número por Extenso
+        const numeroPorExtenso = (v) => {
+            if (v === 0) return "zero reais";
+            const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+            const dezenas = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+            const dezenasEspeciais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenouve"];
+            const centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+            const converterGrupo = (n) => {
+                if (n === 0) return "";
+                if (n === 100) return "cem";
+                let c = Math.floor(n / 100), d = Math.floor((n % 100) / 10), u = n % 10;
+                let texto = "";
+                if (c > 0) texto += centenas[c];
+                if (d === 1) { if (texto) texto += " e "; texto += dezenasEspeciais[u]; return texto; }
+                if (d > 1) { if (texto) texto += " e "; texto += dezenas[d]; }
+                if (u > 0) { if (texto) texto += " e "; texto += unidades[u]; }
+                return texto;
+            };
+
+            let inteiro = Math.floor(v), centavos = Math.round((v - inteiro) * 100);
+            let extenso = "";
+
+            if (inteiro > 0) {
+                if (inteiro >= 1000) {
+                    let milhar = Math.floor(inteiro / 1000);
+                    inteiro = inteiro % 1000;
+                    if (milhar === 1) extenso += "mil"; else extenso += converterGrupo(milhar) + " mil";
+                    if (inteiro > 0) { if (inteiro < 100 || (inteiro % 100 === 0)) extenso += " e "; else extenso += " "; }
+                }
+                if (inteiro > 0) extenso += converterGrupo(inteiro);
+                extenso += inteiro === 1 ? " real" : " reais";
+            }
+
+            if (centavos > 0) {
+                if (extenso) extenso += " e ";
+                extenso += converterGrupo(centavos);
+                extenso += centavos === 1 ? " centavo" : " centavos";
+            }
+            return extenso.charAt(0).toUpperCase() + extenso.slice(1);
+        };
+
+        // Função que aciona a geração do PDF baseada num Recibo Específico
+        window.gerarPdfRecibo = (id) => {
+            const r = recibosList.find(i => i.id === id);
+            if(!r) return;
+
+            const formatReferenceExtenso = (refString) => {
+                if (!refString || refString.length !== 7) return refString;
+                const parts = refString.split('/');
+                if (parts.length !== 2) return refString;
+                const monthIndex = parseInt(parts[0], 10) - 1;
+                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                if (monthIndex >= 0 && monthIndex < 12) return `${monthNames[monthIndex]}/${parts[1]}`;
+                return refString;
+            };
+
+            document.getElementById('pdf-data-emissao').textContent = r.dataEmissao || 'S/D';
+            document.getElementById('pdf-referencia').textContent = formatReferenceExtenso(r.referenceDate);
+            document.getElementById('pdf-igreja').textContent = r.igrejaFormatada || 'Não informada';
+            document.getElementById('pdf-pastor').textContent = r.pastor || 'Não informado';
+            
+            document.getElementById('pdf-entradas').textContent = window.formatMoeda(r.incomeValue);
+            document.getElementById('pdf-regional').textContent = window.formatMoeda(r.regionalTax);
+            document.getElementById('pdf-coord').textContent = window.formatMoeda(r.coordinatorFeeParsed);
+            
+            document.getElementById('pdf-label-seguros').textContent = `Seguro de Vida (${r.insuranceCount || 0})`;
+            document.getElementById('pdf-seguros').textContent = window.formatMoeda(r.insuranceTotal);
+
+            const containerOutros = document.getElementById('pdf-outros-container');
+            if (r.otherValueParsed > 0) {
+                document.getElementById('pdf-label-outros').textContent = `Outros (${r.otherDesc || ''})`;
+                document.getElementById('pdf-outros').textContent = window.formatMoeda(r.otherValueParsed);
+                containerOutros.classList.remove('hidden');
+            } else {
+                containerOutros.classList.add('hidden');
+            }
+
+            document.getElementById('pdf-total').textContent = window.formatMoeda(r.total);
+            document.getElementById('pdf-extenso').textContent = numeroPorExtenso(r.total);
+
+            const customLogo = localStorage.getItem('customLogo');
+            const customSignature = localStorage.getItem('customSignature');
+            
+            if(customLogo) {
+                document.getElementById('pdf-logo').src = customLogo;
+            } else {
+                document.getElementById('pdf-logo').src = "logo.png";
+            }
+
+            if(customSignature) {
+                document.getElementById('pdf-assinatura').src = customSignature;
+                document.getElementById('pdf-assinatura').style.display = 'block';
+                document.getElementById('pdf-assinatura-texto').style.display = 'none';
+            } else {
+                document.getElementById('pdf-assinatura').src = "assinatura.png";
+            }
+
+            const element = document.getElementById('receipt-content');
+            const safeDate = (r.referenceDate || '').replace('/', '-');
+            const safeChurch = (r.igrejaCodigo || 'UNID');
+            const customFileName = `${safeChurch} - REC REG REF(${safeDate}).pdf`;
+
+            const opt = { 
+                margin: 0, 
+                filename: customFileName, 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true, 
+                    allowTaint: true,
+                    scrollY: 0,
+                    scrollX: 0
+                }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: 'avoid-all' }
+            };
+            
+            html2pdf().set(opt).from(element).save();
+        };
+
+        window.limparFiltros = () => {
+            document.getElementById('filtro-igreja').value = '';
+            document.getElementById('filtro-periodo').value = '';
+            document.getElementById('filtro-ordem').value = 'recentes';
+            renderizarTabela();
+        };
+
+        function renderizarTabela() {
+            const filtroIgreja = document.getElementById('filtro-igreja').value.toLowerCase();
+            const filtroPeriodo = document.getElementById('filtro-periodo').value;
+            const filtroOrdem = document.getElementById('filtro-ordem').value;
+
+            const filtrados = recibosList.filter(r => {
+                const matchIgreja = !filtroIgreja || (r.igrejaFormatada || '').toLowerCase().includes(filtroIgreja);
+                const matchPeriodo = !filtroPeriodo || r.referenceDate === filtroPeriodo;
+                return matchIgreja && matchPeriodo;
+            });
+            
+            filtrados.sort((a,b) => {
+                if (filtroOrdem === 'recentes') {
+                    const dateA = a.createdAt?.seconds || 0;
+                    const dateB = b.createdAt?.seconds || 0;
+                    return dateB - dateA;
+                } else if (filtroOrdem === 'maior_valor') {
+                    return (b.total || 0) - (a.total || 0);
+                } else if (filtroOrdem === 'menor_valor') {
+                    return (a.total || 0) - (b.total || 0);
+                } else if (filtroOrdem === 'alfabetica') {
+                    return (a.igrejaFormatada || '').localeCompare(b.igrejaFormatada || '');
+                }
+                return 0;
+            });
+
+            document.getElementById('total-lancamentos').textContent = filtrados.length.toString().padStart(2, '0');
+            tabela.innerHTML = '';
+            
+            if (filtrados.length === 0) {
+                tabela.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-slate-400">Nenhum recibo encontrado.</td></tr>';
+                return;
+            }
+
+            filtrados.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50/50 transition-colors group";
+                
+                let dataHoraSys = r.dataHoraRegistro || '';
+                if (!dataHoraSys && r.createdAt && r.createdAt.seconds) {
+                    dataHoraSys = new Date(r.createdAt.seconds * 1000).toLocaleString('pt-BR');
+                }
+
+                tr.innerHTML = `
+                    <td class="nome-style">
+                        ${r.igrejaFormatada}
+                        <div class="text-[9px] text-slate-400 font-normal uppercase mt-0.5">Emissão: ${r.dataEmissao || 'S/D'}</div>
+                        <div class="text-[8px] text-slate-300 font-normal uppercase mt-0.5" title="Registro no Sistema">Sis: ${dataHoraSys || 'S/D'}</div>
+                    </td>
+                    <td class="text-xs font-bold text-blue-600">${r.referenceDate}</td>
+                    <td class="text-slate-600 text-sm font-semibold">${window.formatMoeda(r.regionalTax)}</td>
+                    <td class="text-slate-600 text-sm font-semibold">${window.formatMoeda(r.coordinatorFeeParsed)}</td>
+                    <td class="text-slate-600 text-sm font-semibold">${window.formatMoeda(r.insuranceTotal)}</td>
+                    <td class="text-slate-600 text-sm font-semibold">${window.formatMoeda(r.otherValueParsed)}</td>
+                    <td class="text-slate-800 text-sm font-black">${window.formatMoeda(r.total)}</td>
+                    <td>
+                        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">
+                            PAGO
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="enviarWhatsapp('${r.id}')" class="text-emerald-500 hover:text-emerald-700 transition-colors" title="Enviar WhatsApp">
+                                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="gerarPdfRecibo('${r.id}')" class="text-amber-500 hover:text-amber-700 transition-colors" title="Gerar PDF">
+                                <i data-lucide="file-down" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="editarRecibo('${r.id}')" class="text-blue-500 hover:text-blue-700 transition-colors" title="Editar">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="excluirRecibo('${r.id}')" class="text-red-400 hover:text-red-600 transition-colors" title="Excluir">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tabela.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        window.enviarWhatsapp = (id) => {
+            const r = recibosList.find(i => i.id === id);
+            if(!r) return;
+            
+            const formatReferenceExtenso = (refString) => {
+                if (!refString || refString.length !== 7) return refString;
+                const parts = refString.split('/');
+                if (parts.length !== 2) return refString;
+                const monthIndex = parseInt(parts[0], 10) - 1;
+                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                if (monthIndex >= 0 && monthIndex < 12) return `${monthNames[monthIndex]}/${parts[1]}`;
+                return refString;
+            };
+            
+            let texto = `*RECIBO DE ENTRADAS - IEQ*\n`;
+            texto += `---------------------------------------\n`;
+            texto += `*Igreja:* ${r.igrejaFormatada || 'Não informada'}\n`;
+            texto += `*Referência:* ${formatReferenceExtenso(r.referenceDate)}\n`;
+            texto += `*Emissão:* ${r.dataEmissao || 'S/D'}\n\n`;
+            texto += `*Subtotal:* ${window.formatMoeda(r.incomeValue)}\n`;
+            texto += `*Taxa Regional (4%):* ${window.formatMoeda(r.regionalTax)}\n`;
+            if(r.coordinatorFeeParsed > 0) texto += `*Taxa Coord.:* ${window.formatMoeda(r.coordinatorFeeParsed)}\n`;
+            if(r.insuranceCount > 0) texto += `*Seguros (${r.insuranceCount}):* ${window.formatMoeda(r.insuranceTotal)}\n`;
+            if(r.otherValueParsed > 0) texto += `*Outros (${r.otherDesc || 'Taxas'}):* ${window.formatMoeda(r.otherValueParsed)}\n`;
+            texto += `\n*TOTAL PAGO:* ${window.formatMoeda(r.total)}\n`;
+            texto += `---------------------------------------\n`;
+            texto += `_Documento gerado eletronicamente._`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+        };
+
+        window.editarRecibo = (id) => {
+            const r = recibosList.find(i => i.id === id);
+            if(!r) return;
+            
+            document.getElementById('recibo-id').value = r.id;
+            document.getElementById('info-igreja').innerText = r.igrejaFormatada;
+            
+            const refParts = (r.referenceDate || '').split('/');
+            if (refParts.length === 2) document.getElementById('recibo-referencia').value = `${refParts[1]}-${refParts[0]}`;
+            else document.getElementById('recibo-referencia').value = '';
+            
+            const emParts = (r.dataEmissao || '').split('/');
+            if (emParts.length === 3) document.getElementById('recibo-emissao').value = `${emParts[2]}-${emParts[1]}-${emParts[0]}`;
+            else document.getElementById('recibo-emissao').value = '';
+
+            document.getElementById('recibo-entradas').value = window.formatMoeda(r.incomeValue || 0);
+            document.getElementById('recibo-regional').value = window.formatMoeda(r.regionalTax || 0);
+            document.getElementById('recibo-coord').value = window.formatMoeda(r.coordinatorFeeParsed || 0);
+            document.getElementById('recibo-seguros').value = r.insuranceCount || 0;
+            document.getElementById('recibo-outros-desc').value = r.otherDesc || '';
+            document.getElementById('recibo-outros-valor').value = window.formatMoeda(r.otherValueParsed || 0);
+            
+            let dataHoraSys = r.dataHoraRegistro || '';
+            if (!dataHoraSys && r.createdAt && r.createdAt.seconds) {
+                dataHoraSys = new Date(r.createdAt.seconds * 1000).toLocaleString('pt-BR');
+            }
+            const modalReg = document.getElementById('modal-data-registro');
+            if(modalReg) modalReg.innerText = dataHoraSys ? `Sis: ${dataHoraSys}` : '';
+
+            document.getElementById('modal-recibo').classList.remove('hidden');
+
+            updateTotal();
+        };
+
+        window.excluirRecibo = async (id) => {
+            if(confirm("Tem certeza que deseja excluir este recibo permanentemente?")) {
+                try {
+                    await deleteDoc(doc(db, "recibos", id));
+                    carregarRecibos();
+                } catch(e) {
+                    alert("Erro ao excluir!");
+                    console.error(e);
+                }
+            }
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-salvar');
+            btn.textContent = "Salvando...";
+            btn.disabled = true;
+
+            try {
+                const id = document.getElementById('recibo-id').value;
+                
+                const incomeValue = window.parseMoeda(document.getElementById('recibo-entradas').value);
+                const regionalTax = window.parseMoeda(document.getElementById('recibo-regional').value);
+                const coordinatorFeeParsed = window.parseMoeda(document.getElementById('recibo-coord').value);
+                const insuranceCount = parseInt(document.getElementById('recibo-seguros').value) || 0;
+                const otherValueParsed = window.parseMoeda(document.getElementById('recibo-outros-valor').value);
+                const otherDesc = document.getElementById('recibo-outros-desc').value;
+                
+                const refVal = document.getElementById('recibo-referencia').value;
+                const referenceDate = refVal ? `${refVal.split('-')[1]}/${refVal.split('-')[0]}` : '';
+                
+                const emVal = document.getElementById('recibo-emissao').value;
+                const dataEmissao = emVal ? `${emVal.split('-')[2]}/${emVal.split('-')[1]}/${emVal.split('-')[0]}` : '';
+
+                const insuranceUnitValue = parseFloat(localStorage.getItem('insuranceUnitValue')) || 45;
+                const insuranceTotal = insuranceCount * insuranceUnitValue;
+                const total = regionalTax + coordinatorFeeParsed + insuranceTotal + otherValueParsed;
+
+                const payload = {
+                    incomeValue,
+                    coordinatorFeeParsed,
+                    insuranceCount,
+                    insuranceTotal,
+                    otherDesc,
+                    otherValueParsed,
+                    regionalTax,
+                    total,
+                    status: 'Pago',
+                    referenceDate,
+                    dataEmissao
+                };
+
+                await updateDoc(doc(db, "recibos", id), payload);
+                
+                window.fecharModal();
+                carregarRecibos();
+                
+            } catch (error) {
+                console.error("Erro ao atualizar:", error);
+                alert("Erro ao salvar as alterações.");
+            } finally {
+                btn.textContent = "Salvar Alterações";
+                btn.disabled = false;
+            }
+        });
+
+        carregarRecibos();
+    </script>
+</body>
+</html>

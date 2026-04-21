@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e40af">
+    <title>Virada de Mês - Admin - R655</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.321.0/dist/umd/lucide.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .input-focus { transition: all 0.2s; }
+        .input-focus:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .spinner { border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 2px solid #ffffff; width: 18px; height: 18px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-check { animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        .scale-in-center { animation: scale-in-center 0.4s cubic-bezier(0.250, 0.460, 0.450, 0.940) both; }
+        @keyframes scale-in-center { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+    
+    <!-- Ponte entre Firebase Modules (nativo) e o React/Babel -->
+    <script type="module">
+        import { db } from '../firebase-config.js';
+        import { collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        window.firebaseGlobal = {
+            db,
+            collection,
+            getDocs,
+            addDoc,
+            serverTimestamp
+        };
+    </script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        const LOGO_URL = "../logo.png";
+
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (window.lucide && iconRef.current) {
+                    iconRef.current.innerHTML = '';
+                    const iconElement = document.createElement('i');
+                    iconElement.setAttribute('data-lucide', name);
+                    iconElement.style.width = `${size}px`;
+                    iconElement.style.height = `${size}px`;
+                    iconRef.current.appendChild(iconElement);
+                    window.lucide.createIcons({
+                        attrs: { class: className, width: size, height: size },
+                        nameAttr: 'data-lucide',
+                        icons: window.lucide.icons
+                    });
+                }
+            }, [name, size, className]);
+            return <span ref={iconRef} className="inline-flex items-center justify-center"></span>;
+        };
+
+        const CurrencyInput = ({ label, value, onChange, placeholder = "0,00", required = false }) => {
+            const formatDisplay = (val) => {
+                if (!val && val !== 0) return '';
+                return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+            };
+            const handleChange = (e) => {
+                let rawValue = e.target.value.replace(/\D/g, '');
+                if (rawValue === '') { onChange(''); return; }
+                const numericValue = parseFloat(rawValue) / 100;
+                onChange(numericValue.toString());
+            };
+            const displayValue = value ? formatDisplay(parseFloat(value)) : '';
+            return (
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase">
+                        {label} {required && <span className="text-red-500">*</span>}
+                    </label>
+                    <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">R$</span>
+                        <input type="text" inputMode="numeric" className="w-full p-3 pl-11 bg-slate-50 border rounded-xl outline-none input-focus font-semibold text-lg" value={displayValue} onChange={handleChange} placeholder={placeholder} />
+                    </div>
+                </div>
+            );
+        };
+
+        const SimpleNumericInput = ({ label, value, onChange, placeholder = "0", required = false }) => {
+            const handleChange = (e) => {
+                let rawValue = e.target.value.replace(/\D/g, '');
+                onChange(rawValue);
+            };
+            return (
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase">
+                        {label} {required && <span className="text-red-500">*</span>}
+                    </label>
+                    <input type="text" inputMode="numeric" className="w-full p-3 bg-slate-50 border rounded-xl outline-none input-focus font-semibold text-lg" value={value} onChange={handleChange} placeholder={placeholder} />
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [churches, setChurches] = useState([]);
+            const [isLoadingChurches, setIsLoadingChurches] = useState(true);
+
+            useEffect(() => {
+                async function fetchChurches() {
+                    try {
+                        // Loop de espera para garantir que o Firebase Global carregou
+                        while (!window.firebaseGlobal) {
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                        }
+                        
+                        const { db, collection, getDocs } = window.firebaseGlobal;
+                        
+                        const [igrejasSnapshot, pastoresSnapshot] = await Promise.all([
+                            getDocs(collection(db, "igrejas")),
+                            getDocs(collection(db, "pastores"))
+                        ]);
+                        
+                        const pastores = [];
+                        pastoresSnapshot.forEach(doc => pastores.push(doc.data()));
+
+                        const list = [];
+                        igrejasSnapshot.forEach((doc) => {
+                            const data = doc.data();
+                            const titular = pastores.find(p => {
+                                const pIgs = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                                return pIgs.includes(data.nome) && p.funcao === 'Pastor Titular';
+                            });
+                            list.push({
+                                code: data.codigo,
+                                name: data.nome,
+                                pastor: titular ? titular.nome : "Não informado"
+                            });
+                        });
+                        list.sort((a, b) => parseInt(a.code) - parseInt(b.code));
+                        setChurches(list);
+                    } catch (error) {
+                        console.error("Erro ao carregar igrejas do Firebase:", error);
+                    } finally {
+                        setIsLoadingChurches(false);
+                    }
+                }
+                fetchChurches();
+            }, []);
+
+            const periods = [
+                "Dezembro/25 ➔ Janeiro/26", "Janeiro/26 ➔ Fevereiro/26", "Fevereiro/26 ➔ Março/26",
+                "Março/26 ➔ Abril/26", "Abril/26 ➔ Maio/26", "Maio/26 ➔ Junho/26",
+                "Junho/26 ➔ Julho/26", "Julho/26 ➔ Agosto/26", "Agosto/26 ➔ Setembro/26",
+                "Setembro/26 ➔ Outubro/26", "Outubro/26 ➔ Novembro/26", "Novembro/26 ➔ Dezembro/26"
+            ];
+
+            const [selectedChurchCode, setSelectedChurchCode] = useState('');
+            const [selectedPeriod, setSelectedPeriod] = useState('');
+            const [incomeTaxed, setIncomeTaxed] = useState('');
+            const [incomeMissions, setIncomeMissions] = useState('');
+            const [balanceBank, setBalanceBank] = useState('');
+            const [balanceCash, setBalanceCash] = useState('');
+            
+            const [santaCeia, setSantaCeia] = useState('');
+            const [batismos, setBatismos] = useState('');
+            const [celulas, setCelulas] = useState('');
+
+            const [isConfirmed, setIsConfirmed] = useState(false);
+            const [isSaving, setIsSaving] = useState(false);
+            const [showPreview, setShowPreview] = useState(false);
+            const [showSuccess, setShowSuccess] = useState(false);
+            
+            const totalIncome = useMemo(() => (parseFloat(incomeTaxed) || 0) + (parseFloat(incomeMissions) || 0), [incomeTaxed, incomeMissions]);
+            const totalBalance = useMemo(() => (parseFloat(balanceBank) || 0) + (parseFloat(balanceCash) || 0), [balanceBank, balanceCash]);
+            const selectedChurch = churches.find(c => c.code === selectedChurchCode);
+
+            const isFormValid = useMemo(() => {
+                return (
+                    selectedChurchCode !== '' &&
+                    selectedPeriod !== '' &&
+                    incomeTaxed !== '' &&
+                    incomeMissions !== '' &&
+                    santaCeia !== '' &&
+                    batismos !== '' &&
+                    celulas !== '' &&
+                    isConfirmed === true
+                );
+            }, [selectedChurchCode, selectedPeriod, incomeTaxed, incomeMissions, santaCeia, batismos, celulas, isConfirmed]);
+
+            const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+            const resetForm = () => {
+                setSelectedChurchCode(''); setSelectedPeriod(''); setIncomeTaxed(''); setIncomeMissions(''); setBalanceBank(''); setBalanceCash('');
+                setSantaCeia(''); setBatismos(''); setCelulas('');
+                setIsConfirmed(false); setShowSuccess(false); setShowPreview(false);
+            };
+
+            const handleSave = async (showModal = true) => {
+                if (!isFormValid) return false;
+                setIsSaving(true);
+                const now = new Date();
+                const mesReferencia = `${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+                
+                const payload = {
+                    igrejaFormatada: `${selectedChurch.code} - ${selectedChurch.name}`,
+                    igrejaCodigo: selectedChurch.code,
+                    igrejaNome: selectedChurch.name,
+                    pastor: selectedChurch.pastor,
+                    periodo: selectedPeriod,
+                    entradasTaxadas: parseFloat(incomeTaxed) || 0,
+                    missoes: parseFloat(incomeMissions) || 0,
+                    totalEntradas: totalIncome,
+                    saldoBanco: parseFloat(balanceBank) || 0,
+                    saldoDinheiro: parseFloat(balanceCash) || 0,
+                    saldoTotal: totalBalance,
+                    confirmacao: "Sim - Resposta Verdadeira",
+                    dataHoraRegistro: now.toLocaleString('pt-BR'),
+                    mesReferencia: mesReferencia,
+                    santaCeia: parseInt(santaCeia) || 0,
+                    batismos: parseInt(batismos) || 0,
+                    celulas: parseInt(celulas) || 0
+                };
+
+                try {
+                    const { db, collection, addDoc, serverTimestamp } = window.firebaseGlobal;
+                    await addDoc(collection(db, "saldos_virada"), { ...payload, createdAt: serverTimestamp() });
+
+                    if (showModal) setShowSuccess(true);
+                    return true;
+                } catch (e) { 
+                    console.error("Erro ao gravar:", e); 
+                    alert("Ocorreu um erro ao salvar o lançamento. Verifique sua conexão e tente novamente.");
+                    return false; 
+                } finally { 
+                    setIsSaving(false); 
+                }
+            };
+
+            const handleSaveAndSend = async () => {
+                const saved = await handleSave(false);
+                if (saved) {
+                    const message = `*Resumo de Virada de Mês - R655*
+---------------------------------------
+*Igreja:* ${selectedChurch.code} - ${selectedChurch.name}
+*Pastor:* ${selectedChurch?.pastor}
+*Período:* ${selectedPeriod}
+
+*FINANCEIRO*
+Entradas Taxadas: ${formatCurrency(parseFloat(incomeTaxed) || 0)}
+Missões: ${formatCurrency(parseFloat(incomeMissions) || 0)}
+*Total Entradas:* ${formatCurrency(totalIncome)}
+
+*ESTATÍSTICAS*
+Santa Ceia: ${santaCeia || 0}
+Batismos: ${batismos || 0}
+Células: ${celulas || 0}
+
+*SALDOS*
+Saldo em Conta: ${formatCurrency(parseFloat(balanceBank) || 0)}
+Saldo em Dinheiro: ${formatCurrency(parseFloat(balanceCash) || 0)}
+*SALDO TOTAL:* ${formatCurrency(totalBalance)}
+---------------------------------------
+_Gerado em: ${new Date().toLocaleString('pt-BR')}_`;
+
+                    window.open(`https://wa.me/554333562718?text=${encodeURIComponent(message)}`, '_blank');
+                    setShowSuccess(true);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col pb-10">
+                    <header className="w-full shadow-sm bg-white border-b">
+                        <div className="max-w-4xl mx-auto px-4 py-1.5">
+                            <div className="flex justify-between items-center">
+                                <a href="index.html" className="flex items-center gap-2">
+                                    <img src={LOGO_URL} alt="Logo IEQ" className="h-8 w-auto object-contain" onError={(e) => e.target.src='https://via.placeholder.com/32?text=IEQ'} />
+                                    <div className="border-l border-gray-200 pl-2">
+                                        <div className="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                                        <div className="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                                    </div>
+                                </a>
+                                <a href="index.html" className="text-[10px] font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                                    <Icon name="arrow-left" size={12} /> Painel Admin
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="header-gradient py-3 px-4">
+                            <div className="max-w-4xl mx-auto flex justify-between items-center">
+                                <h1 className="text-sm md:text-base font-bold text-white tracking-wide uppercase">
+                                    Saldo de Virada de Mês
+                                </h1>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-8">
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <section className="bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+                                <div className="flex items-center gap-2 border-b pb-2 mb-4">
+                                    <Icon name="church" className="text-blue-600" />
+                                    <h2 className="font-bold text-slate-700">Identificação</h2>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Igreja <span className="text-red-500">*</span></label>
+                                    <select className="w-full p-3 bg-slate-50 border rounded-xl outline-none input-focus appearance-none" value={selectedChurchCode} onChange={(e) => setSelectedChurchCode(e.target.value)} disabled={isLoadingChurches}>
+                                        <option value="">{isLoadingChurches ? "Carregando igrejas..." : "Selecione a Igreja..."}</option>
+                                        {churches.map(c => <option key={c.code} value={c.code}>{c.code} - {c.name}</option>)}
+                                    </select>
+                                    {selectedChurch && <p className="mt-2 text-sm font-medium text-blue-600">Pastor: {selectedChurch.pastor}</p>}
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Período <span className="text-red-500">*</span></label>
+                                    <select className="w-full p-3 bg-slate-50 border rounded-xl outline-none input-focus appearance-none" value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)}>
+                                        <option value="">Selecione o período...</option>
+                                        {periods.map(p => <option key={p} value={p}>{p}</option>)}
+                                    </select>
+                                </div>
+                            </section>
+
+                            <section className="bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+                                <div className="flex items-center gap-2 border-b pb-2 mb-4">
+                                    <Icon name="users" className="text-indigo-600" />
+                                    <h2 className="font-bold text-slate-700">Estatísticas do Mês</h2>
+                                </div>
+                                <div className="grid grid-cols-1 gap-4">
+                                    <SimpleNumericInput label="Santa Ceia (Participantes)" value={santaCeia} onChange={setSantaCeia} required={true} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <SimpleNumericInput label="Batismos" value={batismos} onChange={setBatismos} required={true} />
+                                        <SimpleNumericInput label="Células" value={celulas} onChange={setCelulas} required={true} />
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+                                <div className="flex items-center gap-2 border-b pb-2 mb-4">
+                                    <Icon name="trending-up" className="text-green-600" />
+                                    <h2 className="font-bold text-slate-700">Entradas do Mês</h2>
+                                </div>
+                                <CurrencyInput label="Sub-total Taxadas" value={incomeTaxed} onChange={setIncomeTaxed} required={true} />
+                                <CurrencyInput label="Missões" value={incomeMissions} onChange={setIncomeMissions} required={true} />
+                                <div className="pt-4 border-t flex justify-between items-center bg-green-50/50 p-2 rounded-lg">
+                                    <span className="text-xs font-bold text-slate-500">TOTAL ENTRADAS</span>
+                                    <span className="text-lg font-black text-green-700">{formatCurrency(totalIncome)}</span>
+                                </div>
+                            </section>
+
+                            <section className="bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+                                <div className="flex items-center gap-2 border-b pb-2 mb-4">
+                                    <Icon name="wallet" className="text-amber-500" />
+                                    <h2 className="font-bold text-slate-700">Saldos Finais (Virada)</h2>
+                                </div>
+                                <CurrencyInput label="Saldo em Conta Corrente" value={balanceBank} onChange={setBalanceBank} required={false} />
+                                <CurrencyInput label="Saldo em Dinheiro (Caixa)" value={balanceCash} onChange={setBalanceCash} required={false} />
+                                <div className="pt-4 border-t flex justify-between items-center bg-blue-50/50 p-2 rounded-lg">
+                                    <span className="text-xs font-bold text-slate-500 uppercase">SALDO TOTAL</span>
+                                    <span className="text-xl font-black text-blue-700">{formatCurrency(totalBalance)}</span>
+                                </div>
+                            </section>
+
+                            <section className="md:col-span-2 flex flex-col gap-3">
+                                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <input type="checkbox" className="mt-1 w-5 h-5 rounded border-blue-300 text-blue-600" checked={isConfirmed} onChange={e => setIsConfirmed(e.target.checked)} />
+                                        <span className="text-sm font-medium text-blue-900 leading-tight">Confirmo que esta resposta é verdadeira.</span>
+                                    </label>
+                                </div>
+                                <button disabled={!isFormValid} onClick={() => setShowPreview(true)} className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-md transition-all ${isFormValid ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
+                                    <Icon name="eye" /> Ver Resumo e Enviar
+                                </button>
+                                {!isFormValid && (
+                                    <p className="text-center text-[10px] text-slate-400 font-medium">* Preencha os campos obrigatórios (marcados com *) para continuar.</p>
+                                )}
+                            </section>
+                        </div>
+                    </main>
+
+                    {showSuccess && (
+                        <div className="fixed inset-0 z-[100] bg-blue-900/95 flex items-center justify-center p-6 backdrop-blur-md">
+                            <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-in-center">
+                                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Icon name="check" size={40} className="animate-check" />
+                                </div>
+                                <h2 className="text-2xl font-black text-slate-800 mb-2">Concluído!</h2>
+                                <p className="text-slate-600 mb-8">Informações gravadas com sucesso na planilha e preparadas para o WhatsApp.</p>
+                                <button onClick={resetForm} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold">Fazer outro lançamento</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {showPreview && (
+                        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
+                            <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+                                <div className="p-4 border-b flex flex-wrap justify-between items-center bg-slate-50 gap-2">
+                                    <h3 className="font-bold flex items-center gap-2 text-sm sm:text-base"><Icon name="file-text" className="text-blue-600"/> Resumo do Lançamento</h3>
+                                    <div className="flex gap-2">
+                                        <button onClick={handleSaveAndSend} className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-2 hover:bg-green-700 transition-colors">
+                                            {isSaving ? <div className="spinner"></div> : <Icon name="share-2" size={14}/>} Gravar e Enviar WhatsApp
+                                        </button>
+                                        <button onClick={() => setShowPreview(false)} className="bg-slate-200 text-slate-700 px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold">Cancelar</button>
+                                    </div>
+                                </div>
+                                <div className="p-6 sm:p-10 bg-white space-y-6 sm:space-y-8 overflow-y-auto">
+                                    <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 flex items-center justify-center bg-blue-900 p-1 rounded">
+                                                <img src={LOGO_URL} alt="R655 Logo" className="w-full h-full object-contain brightness-0 invert" />
+                                            </div>
+                                            <div>
+                                                <h1 className="text-lg sm:text-2xl font-black text-blue-900 uppercase leading-none">Região 655</h1>
+                                                <p className="text-[10px] font-bold text-slate-500 uppercase">Londrina/PR</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <h2 className="text-sm sm:text-xl font-black uppercase">Virada de Mês</h2>
+                                            <p className="text-xs sm:text-sm font-bold text-blue-600">{selectedPeriod}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 text-sm uppercase">
+                                        <div><p className="text-[10px] text-slate-400 font-bold">Igreja</p><p className="font-bold">{selectedChurch?.code} - {selectedChurch?.name}</p></div>
+                                        <div><p className="text-[10px] text-slate-400 font-bold">Pastor</p><p className="font-bold">{selectedChurch?.pastor}</p></div>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div className="bg-slate-100 p-3 rounded-lg text-center">
+                                            <p className="text-[9px] font-bold text-slate-500 uppercase">Santa Ceia</p>
+                                            <p className="text-lg font-black">{santaCeia || 0}</p>
+                                        </div>
+                                        <div className="bg-slate-100 p-3 rounded-lg text-center">
+                                            <p className="text-[9px] font-bold text-slate-500 uppercase">Batismos</p>
+                                            <p className="text-lg font-black">{batismos || 0}</p>
+                                        </div>
+                                        <div className="bg-slate-100 p-3 rounded-lg text-center">
+                                            <p className="text-[9px] font-bold text-slate-500 uppercase">Células</p>
+                                            <p className="text-lg font-black">{celulas || 0}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-50 p-4 sm:p-6 rounded-xl border space-y-3">
+                                        <div className="flex justify-between text-xs sm:text-sm"><span>Entradas Taxadas</span><span className="font-bold">{formatCurrency(parseFloat(incomeTaxed) || 0)}</span></div>
+                                        <div className="flex justify-between text-xs sm:text-sm"><span>Missões</span><span className="font-bold">{formatCurrency(parseFloat(incomeMissions) || 0)}</span></div>
+                                        <div className="flex justify-between font-black border-t pt-2 text-sm sm:text-base"><span>TOTAL ENTRADAS</span><span className="text-blue-900">{formatCurrency(totalIncome)}</span></div>
+                                    </div>
+                                    <div className="bg-blue-900 p-4 sm:p-6 rounded-xl text-white space-y-3 shadow-lg">
+                                        <div className="flex justify-between text-xs sm:text-sm"><span>Conta Corrente</span><span className="font-bold">{formatCurrency(parseFloat(balanceBank) || 0)}</span></div>
+                                        <div className="flex justify-between text-xs sm:text-sm"><span>Dinheiro</span><span className="font-bold">{formatCurrency(parseFloat(balanceCash) || 0)}</span></div>
+                                        <div className="flex justify-between text-lg sm:text-xl font-black border-t pt-2 border-blue-700"><span>Saldo total na virada do mês</span><span className="text-amber-400">{formatCurrency(totalBalance)}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
