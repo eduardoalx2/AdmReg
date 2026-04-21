@@ -472,69 +472,58 @@
             const totalEntradas = filtrados.reduce((sum, s) => sum + (s.totalEntradas || 0), 0);
             const totalSaldo = filtrados.reduce((sum, s) => sum + (s.saldoTotal || 0), 0);
 
-            let html = `
-                <div class="text-center mb-6 pb-4 border-b border-slate-300">
-                    <h3 class="font-bold text-lg text-slate-900">RELATÓRIO DE SALDOS - REGIÃO 655</h3>
-                    <p class="text-xs text-slate-600 mt-1">Londrina/PR</p>
-                    <p class="text-xs text-slate-500 mt-2">
-                        ${filtroPeriodo ? 'Período: <strong>' + filtroPeriodo + '</strong>' : 'Todos os períodos'}
-                        ${filtroIgreja ? ' | Igreja: <strong>' + filtroIgreja + '</strong>' : ''}
-                    </p>
-                    <p class="text-xs text-slate-500">Gerado em: <strong>${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</strong></p>
-                </div>
+            const hoje = new Date();
+            const dataStr = hoje.toLocaleDateString('pt-BR');
+            const horaStr = hoje.toLocaleTimeString('pt-BR');
+            const periodoTxt = filtroPeriodo ? 'Período: <strong>' + filtroPeriodo + '</strong>' : 'Todos os períodos';
+            const igrejaTxt = filtroIgreja ? ' | Igreja: <strong>' + filtroIgreja + '</strong>' : '';
 
-                <div class="mb-4">
-                    <table class="w-full border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-slate-200 border border-slate-300">
-                                <th class="border border-slate-300 p-1 text-left font-bold">Igreja</th>
-                                <th class="border border-slate-300 p-1 text-left font-bold">Período</th>
-                                <th class="border border-slate-300 p-1 text-right font-bold">Entradas</th>
-                                <th class="border border-slate-300 p-1 text-right font-bold">Saldo</th>
-                                <th class="border border-slate-300 p-1 text-center font-bold">SC</th>
-                                <th class="border border-slate-300 p-1 text-center font-bold">Bat</th>
-                                <th class="border border-slate-300 p-1 text-center font-bold">Cel</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
+            let html = '<div class="text-center mb-6 pb-4 border-b border-slate-300">';
+            html += '<h3 class="font-bold text-lg text-slate-900">RELATÓRIO DE SALDOS - REGIÃO 655</h3>';
+            html += '<p class="text-xs text-slate-600 mt-1">Londrina/PR</p>';
+            html += '<p class="text-xs text-slate-500 mt-2">' + periodoTxt + igrejaTxt + '</p>';
+            html += '<p class="text-xs text-slate-500">Gerado em: <strong>' + dataStr + ' às ' + horaStr + '</strong></p>';
+            html += '</div>';
+
+            html += '<div class="mb-4"><table class="w-full border-collapse text-xs">';
+            html += '<thead><tr class="bg-slate-200 border border-slate-300">';
+            html += '<th class="border border-slate-300 p-1 text-left font-bold">Igreja</th>';
+            html += '<th class="border border-slate-300 p-1 text-left font-bold">Período</th>';
+            html += '<th class="border border-slate-300 p-1 text-right font-bold">Entradas</th>';
+            html += '<th class="border border-slate-300 p-1 text-right font-bold">Saldo</th>';
+            html += '<th class="border border-slate-300 p-1 text-center font-bold">SC</th>';
+            html += '<th class="border border-slate-300 p-1 text-center font-bold">Bat</th>';
+            html += '<th class="border border-slate-300 p-1 text-center font-bold">Cel</th>';
+            html += '</tr></thead><tbody>';
 
             filtrados.forEach(s => {
-                html += `
-                    <tr class="border border-slate-300">
-                        <td class="border border-slate-300 p-1 font-semibold">${s.igrejaFormatada}</td>
-                        <td class="border border-slate-300 p-1">${s.periodo}</td>
-                        <td class="border border-slate-300 p-1 text-right">${window.formatMoeda(s.totalEntradas)}</td>
-                        <td class="border border-slate-300 p-1 text-right font-bold">${window.formatMoeda(s.saldoTotal)}</td>
-                        <td class="border border-slate-300 p-1 text-center">${s.santaCeia || 0}</td>
-                        <td class="border border-slate-300 p-1 text-center">${s.batismos || 0}</td>
-                        <td class="border border-slate-300 p-1 text-center">${s.celulas || 0}</td>
-                    </tr>
-                `;
+                html += '<tr class="border border-slate-300">';
+                html += '<td class="border border-slate-300 p-1 font-semibold">' + s.igrejaFormatada + '</td>';
+                html += '<td class="border border-slate-300 p-1">' + s.periodo + '</td>';
+                html += '<td class="border border-slate-300 p-1 text-right">' + window.formatMoeda(s.totalEntradas) + '</td>';
+                html += '<td class="border border-slate-300 p-1 text-right font-bold">' + window.formatMoeda(s.saldoTotal) + '</td>';
+                html += '<td class="border border-slate-300 p-1 text-center">' + (s.santaCeia || 0) + '</td>';
+                html += '<td class="border border-slate-300 p-1 text-center">' + (s.batismos || 0) + '</td>';
+                html += '<td class="border border-slate-300 p-1 text-center">' + (s.celulas || 0) + '</td>';
+                html += '</tr>';
             });
 
-            html += `
-                        </tbody>
-                        <tfoot>
-                            <tr class="bg-slate-100 font-bold border border-slate-300">
-                                <td class="border border-slate-300 p-1" colspan="2">TOTAL (${filtrados.length} igrejas)</td>
-                                <td class="border border-slate-300 p-1 text-right">${window.formatMoeda(totalEntradas)}</td>
-                                <td class="border border-slate-300 p-1 text-right">${window.formatMoeda(totalSaldo)}</td>
-                                <td class="border border-slate-300 p-1 text-center">${totaisCeia}</td>
-                                <td class="border border-slate-300 p-1 text-center">${totaisBatismos}</td>
-                                <td class="border border-slate-300 p-1 text-center">${totaisCelulas}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+            html += '</tbody><tfoot>';
+            html += '<tr class="bg-slate-100 font-bold border border-slate-300">';
+            html += '<td class="border border-slate-300 p-1" colspan="2">TOTAL (' + filtrados.length + ' igrejas)</td>';
+            html += '<td class="border border-slate-300 p-1 text-right">' + window.formatMoeda(totalEntradas) + '</td>';
+            html += '<td class="border border-slate-300 p-1 text-right">' + window.formatMoeda(totalSaldo) + '</td>';
+            html += '<td class="border border-slate-300 p-1 text-center">' + totaisCeia + '</td>';
+            html += '<td class="border border-slate-300 p-1 text-center">' + totaisBatismos + '</td>';
+            html += '<td class="border border-slate-300 p-1 text-center">' + totaisCelulas + '</td>';
+            html += '</tr></tfoot></table></div>';
 
-                <div class="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-900">
-                    <p class="font-semibold mb-1">ESTATÍSTICAS DO PERÍODO:</p>
-                    <p>Santa Ceia: <strong>${totaisCeia}</strong> participantes</p>
-                    <p>Batismos: <strong>${totaisBatismos}</strong></p>
-                    <p>Células: <strong>${totaisCelulas}</strong></p>
-                </div>
-            `;
+            html += '<div class="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-900">';
+            html += '<p class="font-semibold mb-1">ESTATÍSTICAS DO PERÍODO:</p>';
+            html += '<p>Santa Ceia: <strong>' + totaisCeia + '</strong> participantes</p>';
+            html += '<p>Batismos: <strong>' + totaisBatismos + '</strong></p>';
+            html += '<p>Células: <strong>' + totaisCelulas + '</strong></p>';
+            html += '</div>';
 
             document.getElementById('relatorio-conteudo').innerHTML = html;
             document.getElementById('modal-relatorio').classList.remove('hidden');
