@@ -464,7 +464,7 @@
                 const matchPeriodo = !filtroPeriodo || s.periodo === filtroPeriodo;
                 const matchValorMin = filtroValorMin === null || (s.saldoTotal >= filtroValorMin);
                 return matchIgreja && matchPeriodo && matchValorMin;
-            });
+            }).sort((a, b) => (a.igrejaFormatada || '').localeCompare(b.igrejaFormatada || ''));
 
             const totaisCeia = filtrados.reduce((sum, s) => sum + (s.santaCeia || 0), 0);
             const totaisBatismos = filtrados.reduce((sum, s) => sum + (s.batismos || 0), 0);
