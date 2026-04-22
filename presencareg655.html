@@ -53,9 +53,8 @@
             <!-- Nome do Pastor(a) / Obreiro(a) -->
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Nome do Pastor(a) / Obreiro(a)</label>
-                <select id="pastorName" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
-                    <option value="" disabled selected>CARREGANDO PASTORES...</option>
-                </select>
+                <input type="text" id="pastorName" list="pastoresList" required oninput="this.value = this.value.toUpperCase()" autocomplete="off" placeholder="DIGITE OU SELECIONE O NOME" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold uppercase">
+                <datalist id="pastoresList"></datalist>
             </div>
 
             <!-- Igreja / Congregação -->
@@ -67,11 +66,12 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Data do Evento -->
+                <!-- Evento Ativo -->
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Data do Evento</label>
-                    <input type="date" id="eventDate" required 
-                        class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Evento Ativo</label>
+                    <select id="activeEvent" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                        <option value="" disabled selected>CARREGANDO EVENTOS...</option>
+                    </select>
                 </div>
 
                 <!-- Status -->
@@ -82,19 +82,6 @@
                         <option value="Ausente">AUSENTE</option>
                     </select>
                 </div>
-            </div>
-
-            <!-- Tipo de Evento -->
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Tipo de Evento</label>
-                <select id="eventType" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
-                    <option value="" disabled selected>SELECIONE O TIPO DE EVENTO</option>
-                    <option value="EVENTO REGIONAL">EVENTO REGIONAL</option>
-                    <option value="EVENTO DISTRITAL">EVENTO DISTRITAL</option>
-                    <option value="CONVOCAÇÃO REGIONAL">CONVOCAÇÃO REGIONAL</option>
-                    <option value="CONVOCAÇÃO CED">CONVOCAÇÃO CED</option>
-                    <option value="CONVOCAÇÃO CND">CONVOCAÇÃO CND</option>
-                </select>
             </div>
 
             <!-- Motivo da Ausência -->
@@ -139,28 +126,26 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         const WHATSAPP_NUMBER = "554333562718";
 
         const form = document.getElementById('presenceForm');
         const churchSelect = document.getElementById('church');
-        const pastorSelect = document.getElementById('pastorName');
+        const pastoresList = document.getElementById('pastoresList');
+        const activeEventSelect = document.getElementById('activeEvent');
         const statusSelect = document.getElementById('status');
         const motivoContainer = document.getElementById('motivoContainer');
         const motivoTextarea = document.getElementById('motivo');
         const feedback = document.getElementById('feedback');
         const loadingOverlay = document.getElementById('loadingOverlay');
-        const eventDateInput = document.getElementById('eventDate');
 
         window.onload = async function() {
-            const hoje = new Date().toISOString().split('T')[0];
-            eventDateInput.value = hoje;
-
             try {
-                const [igrejasSnapshot, pastoresSnapshot] = await Promise.all([
+                const [igrejasSnapshot, pastoresSnapshot, eventosSnapshot] = await Promise.all([
                     getDocs(collection(db, "igrejas")),
-                    getDocs(collection(db, "pastores"))
+                    getDocs(collection(db, "pastores")),
+                    getDocs(query(collection(db, "eventos"), where("status", "==", "Ativo")))
                 ]);
 
                 const igrejas = [];
@@ -180,18 +165,31 @@
                 pastoresSnapshot.forEach(doc => pastores.push(doc.data().nome));
                 pastores.sort(); // Em ordem alfabética
 
-                pastorSelect.innerHTML = '<option value="" disabled selected>SELECIONE O NOME</option>';
                 pastores.forEach(nome => {
                     const option = document.createElement('option');
                     option.value = nome;
-                    option.textContent = nome;
-                    pastorSelect.appendChild(option);
+                    pastoresList.appendChild(option);
                 });
 
+                activeEventSelect.innerHTML = '<option value="" disabled selected>SELECIONE O EVENTO</option>';
+                if (eventosSnapshot.empty) {
+                    activeEventSelect.innerHTML = '<option value="" disabled selected>NENHUM EVENTO ATIVO</option>';
+                } else {
+                    eventosSnapshot.forEach(doc => {
+                        const ev = doc.data();
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        const dataFormatada = ev.data.split('-').reverse().join('/');
+                        option.textContent = `${ev.nome} - ${dataFormatada}`;
+                        option.dataset.nome = ev.nome;
+                        option.dataset.data = ev.data;
+                        activeEventSelect.appendChild(option);
+                    });
+                }
             } catch (error) {
                 console.error("Erro ao carregar dados do Firebase:", error);
                 churchSelect.innerHTML = '<option value="" disabled selected>ERRO AO CARREGAR</option>';
-                pastorSelect.innerHTML = '<option value="" disabled selected>ERRO AO CARREGAR</option>';
+                activeEventSelect.innerHTML = '<option value="" disabled selected>ERRO AO CARREGAR</option>';
             }
         };
 
@@ -216,8 +214,10 @@
 
             const nome = document.getElementById('pastorName').value.trim();
             const igreja = document.getElementById('church').value;
-            const dataEvento = eventDateInput.value;
-            const tipoEvento = document.getElementById('eventType').value;
+            const eventoOption = activeEventSelect.options[activeEventSelect.selectedIndex];
+            const eventoId = eventoOption.value;
+            const tipoEvento = eventoOption.dataset.nome;
+            const dataEvento = eventoOption.dataset.data;
             const status = statusSelect.value;
             const motivo = motivoTextarea.value.trim();
             const dataPostagem = new Date().toLocaleString('pt-BR');
@@ -225,6 +225,7 @@
             const payload = {
                 nome,
                 igreja,
+                eventoId,
                 dataEvento,
                 tipoEvento,
                 status,

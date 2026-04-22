@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Eventos - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Cabeçalho -->
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4 relative w-full md:w-auto">
+                <a href="index.html" class="absolute left-0 top-1/2 -translate-y-1/2 md:static md:translate-y-0 text-slate-400 hover:text-blue-600 transition-colors font-bold uppercase tracking-wider text-[10px]">
+                    ← Voltar
+                </a>
+                <img src="logo.png" alt="Logo da Região" class="h-12 w-auto object-contain mx-auto md:mx-0" onerror="this.src='https://via.placeholder.com/150x80?text=LOGO'">
+                <div class="hidden md:block">
+                    <h1 class="text-xl font-black text-slate-800 uppercase tracking-tighter">Gestão de Eventos</h1>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Controle para Registro de Presenças</p>
+                </div>
+            </div>
+            <div class="md:hidden text-center">
+                <h1 class="text-lg font-black text-slate-800 uppercase tracking-tighter">Gestão de Eventos</h1>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Formulário -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 md:col-span-1 h-fit">
+                <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-4">Novo Evento</h2>
+                <form id="eventoForm" class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Nome / Tipo do Evento</label>
+                        <input type="text" id="nome" required placeholder="Ex: CONVOCAÇÃO REGIONAL" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Data do Evento</label>
+                        <input type="date" id="data" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Status Inicial</label>
+                        <select id="status" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
+                            <option value="Ativo" selected>ATIVO (Aparece na Presença)</option>
+                            <option value="Inativo">INATIVO</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-lg transition-all text-xs tracking-widest uppercase">
+                        Salvar Evento
+                    </button>
+                </form>
+                <div id="feedback" class="hidden mt-4 p-3 rounded-xl text-center text-[10px] font-black uppercase tracking-widest"></div>
+            </div>
+
+            <!-- Lista de Eventos -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 md:col-span-2">
+                <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-4">Eventos Cadastrados</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                <th class="pb-3 px-2">Evento</th>
+                                <th class="pb-3 px-2">Data</th>
+                                <th class="pb-3 px-2 text-center">Status</th>
+                                <th class="pb-3 px-2 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaEventos" class="text-sm">
+                            <tr>
+                                <td colspan="4" class="text-center py-8 text-slate-400 text-xs font-bold uppercase tracking-wider">CARREGANDO EVENTOS...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        const form = document.getElementById('eventoForm');
+        const tabelaEventos = document.getElementById('tabelaEventos');
+        const feedback = document.getElementById('feedback');
+
+        // Formatar data para YYYY-MM-DD local
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('data').value = hoje;
+
+        // Forçar uppercase no input
+        document.getElementById('nome').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        async function carregarEventos() {
+            try {
+                const q = query(collection(db, "eventos"), orderBy("data", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                tabelaEventos.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    tabelaEventos.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400 text-[10px] font-bold uppercase tracking-widest">NENHUM EVENTO CADASTRADO</td></tr>`;
+                    return;
+                }
+
+                querySnapshot.forEach((documento) => {
+                    const ev = documento.data();
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b border-slate-50 hover:bg-slate-50 transition-colors group';
+                    
+                    const dataFormatada = ev.data.split('-').reverse().join('/');
+                    const badgeClass = ev.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500';
+
+                    tr.innerHTML = `
+                        <td class="py-3 px-2 font-bold text-slate-700 text-xs uppercase">${ev.nome}</td>
+                        <td class="py-3 px-2 font-semibold text-slate-500 text-xs">${dataFormatada}</td>
+                        <td class="py-3 px-2 text-center">
+                            <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider cursor-pointer select-none transition-colors hover:opacity-70 ${badgeClass}" onclick="window.alternarStatus('${documento.id}', '${ev.status}')">
+                                ${ev.status}
+                            </span>
+                        </td>
+                        <td class="py-3 px-2 text-right">
+                            <button onclick="window.excluirEvento('${documento.id}')" class="text-red-400 hover:text-red-600 transition-colors p-1 opacity-0 group-hover:opacity-100" title="Excluir Evento">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </td>
+                    `;
+                    tabelaEventos.appendChild(tr);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar eventos:", error);
+                tabelaEventos.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-500 text-[10px] font-bold uppercase tracking-widest">ERRO AO CARREGAR EVENTOS</td></tr>`;
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = form.querySelector('button');
+            btn.textContent = 'SALVANDO...';
+            btn.disabled = true;
+
+            const payload = {
+                nome: document.getElementById('nome').value.trim(),
+                data: document.getElementById('data').value,
+                status: document.getElementById('status').value,
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                await addDoc(collection(db, "eventos"), payload);
+                showFeedback("Evento cadastrado com sucesso!", "success");
+                form.reset();
+                document.getElementById('data').value = hoje;
+                carregarEventos();
+            } catch (error) {
+                console.error("Erro:", error);
+                showFeedback("Erro ao cadastrar evento.", "error");
+            } finally {
+                btn.textContent = 'SALVAR EVENTO';
+                btn.disabled = false;
+            }
+        });
+
+        window.alternarStatus = async function(id, statusAtual) {
+            const novoStatus = statusAtual === 'Ativo' ? 'Inativo' : 'Ativo';
+            try {
+                const eventoRef = doc(db, "eventos", id);
+                await updateDoc(eventoRef, { status: novoStatus });
+                carregarEventos();
+            } catch (error) {
+                console.error("Erro ao atualizar status:", error);
+                alert("Erro ao alterar o status do evento.");
+            }
+        };
+
+        window.excluirEvento = async function(id) {
+            if (confirm("Tem certeza que deseja EXCLUIR este evento? A lista de presença ficará órfã (as presenças já cadastradas não serão deletadas, mas o evento deixará de existir).")) {
+                try {
+                    await deleteDoc(doc(db, "eventos", id));
+                    carregarEventos();
+                } catch (error) {
+                    console.error("Erro ao excluir:", error);
+                    alert("Erro ao excluir o evento.");
+                }
+            }
+        };
+
+        function showFeedback(message, type) {
+            feedback.textContent = message;
+            feedback.classList.remove('hidden', 'bg-green-50', 'text-green-600', 'bg-red-50', 'text-red-600');
+            feedback.classList.add(type === 'success' ? 'bg-green-50' : 'bg-red-50');
+            feedback.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
+            setTimeout(() => feedback.classList.add('hidden'), 4000);
+        }
+
+        // Inicializa
+        carregarEventos();
+    </script>
+</body>
+</html>
