@@ -353,11 +353,17 @@
 
                 const zapUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${mensagemZap}`;
                 
-                showFeedback("DADOS GRAVADOS! REDIRECIONANDO PARA WHATSAPP...", "success");
-                
-                setTimeout(() => {
-                    window.location.href = zapUrl;
-                }, 1500);
+                loadingOverlay.classList.add('hidden');
+                showFeedback("DADOS GRAVADOS! ABRINDO WHATSAPP...", "success");
+                window.open(zapUrl, '_blank');
+
+                form.reset();
+                document.getElementById('declaration').checked = false;
+                motivoContainer.classList.add('hidden');
+                motivoTextarea.required = false;
+                formResto.classList.add('hidden');
+                publicoBadge.classList.add('hidden');
+                activeEventSelect.value = '';
 
             } catch (error) {
                 console.error("Erro:", error);
