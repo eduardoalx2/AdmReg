@@ -412,6 +412,8 @@
                 selectPeriodo.innerHTML = optionsHTML;
                 selectPeriodo.value = valorAtual;
 
+                const _uj = localStorage.getItem('userIgreja');
+                if (_uj) { const el = document.getElementById('filtro-igreja'); el.value = _uj; el.readOnly = true; }
                 renderizarTabela();
             } catch (error) {
                 console.error("Erro ao carregar recibos:", error);

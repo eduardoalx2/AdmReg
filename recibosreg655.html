@@ -339,6 +339,15 @@
                 initFirebaseData();
             }, []);
 
+            // Auto-selecionar igreja do usuário logado
+            useEffect(() => {
+                const uj = localStorage.getItem('userIgreja');
+                if (uj && churches.length > 0 && !selectedChurch) {
+                    const found = churches.find(c => c.name.toLowerCase() === uj.toLowerCase());
+                    if (found) setSelectedChurch(found.code);
+                }
+            }, [churches]);
+
             const incomeValue = parseFloat(income) || 0;
             const regionalTax = incomeValue * 0.04;
             const insuranceUnitValue = parseFloat(insuranceUnitValueStr) || 0;

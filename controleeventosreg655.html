@@ -148,6 +148,12 @@
                     option.textContent = desc;
                     filtroIgreja.appendChild(option);
                 });
+                const _uj = localStorage.getItem('userIgreja');
+                if (_uj) {
+                    const opts = Array.from(filtroIgreja.options);
+                    const match = opts.find(o => o.textContent.toLowerCase().includes(_uj.toLowerCase()));
+                    if (match) { filtroIgreja.value = match.value; filtroIgreja.disabled = true; }
+                }
 
                 // 3. Busca Presenças
                 const q = query(collection(db, "presencas"), orderBy("createdAt", "desc"));

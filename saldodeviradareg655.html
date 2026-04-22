@@ -164,6 +164,15 @@
                 fetchChurches();
             }, []);
 
+            // Auto-selecionar igreja do usuário logado
+            useEffect(() => {
+                const uj = localStorage.getItem('userIgreja');
+                if (uj && churches.length > 0 && !selectedChurchCode) {
+                    const found = churches.find(c => c.name.toLowerCase() === uj.toLowerCase());
+                    if (found) setSelectedChurchCode(found.code);
+                }
+            }, [churches]);
+
             const periods = [
                 "Dezembro/25 ➔ Janeiro/26", "Janeiro/26 ➔ Fevereiro/26", "Fevereiro/26 ➔ Março/26",
                 "Março/26 ➔ Abril/26", "Abril/26 ➔ Maio/26", "Maio/26 ➔ Junho/26",

@@ -154,6 +154,14 @@
                         </div>
                     </div>
 
+                    <!-- Igreja Vinculada -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Igreja Vinculada <span class="text-slate-400 normal-case font-normal">(opcional — restringe acesso aos dados dessa igreja)</span></label>
+                        <select id="usuario-igreja" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                            <option value="">— Sem restrição de igreja (vê tudo) —</option>
+                        </select>
+                    </div>
+
                     <!-- Senha (só para novos usuários) -->
                     <div id="bloco-senha">
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Senha de Acesso</label>
@@ -271,6 +279,24 @@
 
         const tabela = document.getElementById('tabela-usuarios');
         const form = document.getElementById('form-usuario');
+
+        // Carregar igrejas no select
+        async function carregarIgrejasSelect() {
+            const sel = document.getElementById('usuario-igreja');
+            try {
+                const snap = await getDocs(collection(db, "igrejas"));
+                const igrejas = [];
+                snap.forEach(d => igrejas.push(d.data()));
+                igrejas.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+                igrejas.forEach(ig => {
+                    const opt = document.createElement('option');
+                    opt.value = ig.nome;
+                    opt.textContent = `${ig.codigo} - ${ig.nome}`;
+                    sel.appendChild(opt);
+                });
+            } catch(e) { console.error("Erro ao carregar igrejas:", e); }
+        }
+        carregarIgrejasSelect();
         
         const permsLabels = {
             'admin': 'Master',
@@ -354,6 +380,7 @@
             document.getElementById('usuario-email').value = u.email;
             document.getElementById('usuario-email').readOnly = true;
             document.getElementById('usuario-status').value = u.status || 'Ativo';
+            document.getElementById('usuario-igreja').value = u.igrejaNome || '';
 
             document.querySelectorAll('input[name="perm"]').forEach(cb => {
                 cb.checked = u.permissoes && u.permissoes.includes(cb.value);
@@ -406,11 +433,13 @@
                 const email = document.getElementById('usuario-email').value.trim().toLowerCase();
                 const permsArr = Array.from(document.querySelectorAll('input[name="perm"]:checked')).map(cb => cb.value);
 
+                const igrejaNome = document.getElementById('usuario-igreja').value;
                 const payload = {
                     nome: document.getElementById('usuario-nome').value.trim(),
                     email,
                     permissoes: permsArr,
                     status: document.getElementById('usuario-status').value,
+                    igrejaNome: igrejaNome || '',
                     updatedAt: serverTimestamp()
                 };
 

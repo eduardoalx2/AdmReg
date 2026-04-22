@@ -294,6 +294,8 @@
                     optionFiltro.textContent = `${ig.codigo} - ${ig.nome}`;
                     filtroSelect.appendChild(optionFiltro);
                 });
+                const _uj = localStorage.getItem('userIgreja');
+                if (_uj) { filtroSelect.value = _uj; filtroSelect.disabled = true; }
             } catch (error) {
                 console.error("Erro ao carregar igrejas:", error);
                 document.getElementById('lista-igrejas-checkboxes').innerHTML = '<div class="text-xs text-red-500 text-center py-2">Erro ao carregar</div>';

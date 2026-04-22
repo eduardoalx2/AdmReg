@@ -84,7 +84,7 @@
 
                 localStorage.setItem('userEmail', email);
                 localStorage.setItem('userName', userData.nome);
-                localStorage.setItem('userPerms', JSON.stringify(userData.permissoes || []));
+                localStorage.setItem('userPerms', JSON.stringify(userData.permissoes || [])); localStorage.setItem('userIgreja', userData.igrejaNome || '');
                 window.location.href = "index.html";
             } catch (error) {
                 console.error(error);

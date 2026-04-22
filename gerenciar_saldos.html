@@ -278,6 +278,8 @@
                 value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
                 input.value = 'R$ ' + value;
             }
+            const _uj = localStorage.getItem('userIgreja');
+            if (_uj) { const el = document.getElementById('filtro-igreja'); el.value = _uj; el.readOnly = true; }
             window.aplicarFiltros();
         };
         

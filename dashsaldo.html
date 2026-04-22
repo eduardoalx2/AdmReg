@@ -260,6 +260,8 @@
                 rawData = data;
 
                 setupFilters();
+                const _uj = localStorage.getItem('userIgreja');
+                if (_uj) { const el = document.getElementById('churchSearch'); el.value = _uj; el.disabled = true; }
                 renderReport();
 
                 document.getElementById('churchSearch').addEventListener('input', renderReport);
