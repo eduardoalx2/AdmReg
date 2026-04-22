@@ -360,7 +360,7 @@
             </div>
 
             <div class="cards-grid fade-in" style="animation-delay:.32s">
-                <a href="s_pastores.html" class="link-card">
+                <a href="s_pastores.html" class="link-card" id="card-pastores" style="display:none;">
                     <div class="card-icon">👨‍💼</div>
                     <div class="card-texts">
                         <div class="card-title">Pastores</div>
@@ -368,7 +368,7 @@
                     </div>
                     <i class="ph ph-arrow-up-right card-arrow"></i>
                 </a>
-                <a href="s_igrejas.html" class="link-card">
+                <a href="s_igrejas.html" class="link-card" id="card-igrejas" style="display:none;">
                     <div class="card-icon">⛪</div>
                     <div class="card-texts">
                         <div class="card-title">Igrejas</div>
@@ -376,7 +376,7 @@
                     </div>
                     <i class="ph ph-arrow-up-right card-arrow"></i>
                 </a>
-                <a href="coordenadorias.html" class="link-card">
+                <a href="coordenadorias.html" class="link-card" id="card-coordenadorias" style="display:none;">
                     <div class="card-icon">🏛️</div>
                     <div class="card-texts">
                         <div class="card-title">Coordenadorias</div>
@@ -440,7 +440,7 @@
             </div>
 
             <div class="cards-grid fade-in" style="animation-delay:.48s">
-                <a href="dashreg655.html" class="link-card">
+                <a href="dashreg655.html" class="link-card" id="card-dash-recibos" style="display:none;">
                     <div class="card-icon">📊</div>
                     <div class="card-texts">
                         <div class="card-title">Dash Recibos</div>
@@ -448,7 +448,7 @@
                     </div>
                     <i class="ph ph-arrow-up-right card-arrow"></i>
                 </a>
-                <a href="dashsaldo.html" class="link-card">
+                <a href="dashsaldo.html" class="link-card" id="card-dash-saldos" style="display:none;">
                     <div class="card-icon">📈</div>
                     <div class="card-texts">
                         <div class="card-title">Dash Saldos</div>
@@ -557,44 +557,45 @@
         });
 
         function aplicarPermissoes(perms) {
-            const isAdmin = perms.includes('admin');
+            const has = (p) => perms.includes('admin') || perms.includes(p);
 
-            // 1. O que TODOS logados veem:
-            document.getElementById('bloco-eventos').style.display = 'block';
-            document.getElementById('card-lancar-presenca').style.display = 'flex';
-
-            if (isAdmin || perms.includes('agenda')) {
-                document.getElementById('bloco-regional').style.display = 'block'; 
+            // Eventos & Presença
+            if (has('presenca') || has('gestao_eventos') || has('controle_presencas')) {
+                document.getElementById('bloco-eventos').style.display = 'block';
             }
+            if (has('presenca')) document.getElementById('card-lancar-presenca').style.display = 'flex';
+            if (has('gestao_eventos')) document.getElementById('card-gestao-eventos').style.display = 'flex';
+            if (has('controle_presencas')) document.getElementById('card-controle-presenca').style.display = 'flex';
 
-            if (isAdmin || perms.includes('cadastros')) {
+            // Cadastros
+            if (has('pastores') || has('igrejas') || has('coordenadorias')) {
                 document.getElementById('bloco-cadastros').style.display = 'block';
+                if (has('pastores')) document.getElementById('card-pastores').style.display = 'flex';
+                if (has('igrejas')) document.getElementById('card-igrejas').style.display = 'flex';
+                if (has('coordenadorias')) document.getElementById('card-coordenadorias').style.display = 'flex';
             }
 
-            if (isAdmin || perms.includes('fin_lancar') || perms.includes('fin_gerenciar')) {
+            // Financeiro
+            if (has('saldo_virada') || has('recibos') || has('gerenciar_saldos') || has('gerenciar_recibos')) {
                 document.getElementById('bloco-financeiro').style.display = 'block';
-                if (isAdmin || perms.includes('fin_lancar')) {
-                    document.getElementById('card-saldo-virada').style.display = 'flex';
-                    document.getElementById('card-recibos').style.display = 'flex';
-                }
-                if (isAdmin || perms.includes('fin_gerenciar')) {
-                    document.getElementById('card-gerenciar-saldos').style.display = 'flex';
-                    document.getElementById('card-gerenciar-recibos').style.display = 'flex';
-                }
+                if (has('saldo_virada')) document.getElementById('card-saldo-virada').style.display = 'flex';
+                if (has('recibos')) document.getElementById('card-recibos').style.display = 'flex';
+                if (has('gerenciar_saldos')) document.getElementById('card-gerenciar-saldos').style.display = 'flex';
+                if (has('gerenciar_recibos')) document.getElementById('card-gerenciar-recibos').style.display = 'flex';
             }
 
-            if (isAdmin || perms.includes('dashboards')) {
+            // Dashboards
+            if (has('dash_recibos') || has('dash_saldos')) {
                 document.getElementById('bloco-dashboards').style.display = 'block';
+                if (has('dash_recibos')) document.getElementById('card-dash-recibos').style.display = 'flex';
+                if (has('dash_saldos')) document.getElementById('card-dash-saldos').style.display = 'flex';
             }
 
-            if (isAdmin || perms.includes('eventos_gerenciar')) {
-                document.getElementById('card-gestao-eventos').style.display = 'flex';
-                document.getElementById('card-controle-presenca').style.display = 'flex';
-            }
+            // Regional
+            if (has('agenda')) document.getElementById('bloco-regional').style.display = 'block';
 
-            if (isAdmin) {
-                document.getElementById('area-master').style.display = 'block';
-            }
+            // Master
+            if (perms.includes('admin')) document.getElementById('area-master').style.display = 'block';
         }
 
         window.fazerLogout = async () => {

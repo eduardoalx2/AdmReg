@@ -105,15 +105,47 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Módulos Permitidos</label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 border border-slate-200 rounded">
-                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="admin" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Acesso Master (Tudo)</label>
-                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="cadastros" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Aba de Cadastros</label>
-                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="fin_lancar" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Lançar Financeiro</label>
-                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="fin_gerenciar" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Gerenciar Financeiro</label>
-                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="dashboards" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Dashboards</label>
-                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="eventos_gerenciar" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Gestão de Eventos</label>
-                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="agenda" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Agenda Regional</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Páginas Permitidas</label>
+                        <div class="space-y-2 bg-slate-50 p-3 border border-slate-200 rounded">
+
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Administração</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
+                                <label class="flex items-center gap-2 text-xs font-semibold text-red-700 cursor-pointer"><input type="checkbox" name="perm" value="admin" class="w-3.5 h-3.5 rounded text-red-600 focus:ring-red-500"> Acesso Master (Tudo)</label>
+                            </div>
+
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Eventos & Presença</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="presenca" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Lançar Presença</label>
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="gestao_eventos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Gestão de Eventos</label>
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="controle_presencas" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Controle de Presenças</label>
+                            </div>
+
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Cadastros</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="pastores" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Pastores</label>
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="igrejas" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Igrejas</label>
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="coordenadorias" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Coordenadorias</label>
+                            </div>
+
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Financeiro</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="saldo_virada" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Saldo de Virada</label>
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="recibos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Recibos</label>
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="gerenciar_saldos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Gerenciar Saldos</label>
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="gerenciar_recibos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Gerenciar Recibos</label>
+                            </div>
+
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Dashboards</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="dash_recibos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Dash Recibos</label>
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="dash_saldos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Dash Saldos</label>
+                            </div>
+
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Regional</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="agenda" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Agenda Regional</label>
+                            </div>
+
                         </div>
                     </div>
 
@@ -195,9 +227,11 @@
         const form = document.getElementById('form-usuario');
         
         const permsLabels = {
-            'admin': 'Master', 'cadastros': 'Cadastros', 
-            'fin_lancar': 'Fin(Lançar)', 'fin_gerenciar': 'Fin(Gerenciar)', 
-            'dashboards': 'Dash', 'eventos_gerenciar': 'Eventos', 
+            'admin': 'Master',
+            'presenca': 'Presença', 'gestao_eventos': 'Gest.Eventos', 'controle_presencas': 'Ctrl.Presenças',
+            'pastores': 'Pastores', 'igrejas': 'Igrejas', 'coordenadorias': 'Coordenadorias',
+            'saldo_virada': 'Saldo Virada', 'recibos': 'Recibos', 'gerenciar_saldos': 'Ger.Saldos', 'gerenciar_recibos': 'Ger.Recibos',
+            'dash_recibos': 'Dash Recibos', 'dash_saldos': 'Dash Saldos',
             'agenda': 'Agenda'
         };
 

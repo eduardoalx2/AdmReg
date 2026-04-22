@@ -9,7 +9,7 @@
     <script>
         let perms = [];
         try { perms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
-        if (!perms.includes('admin') && !perms.includes('dashboards')) {
+        if (!perms.includes('admin') && !perms.includes('dash_saldos')) {
             window.location.replace('index.html');
         }
     </script>

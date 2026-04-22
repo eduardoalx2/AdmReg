@@ -10,7 +10,7 @@
     <script>
         let perms = [];
         try { perms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
-        if (!perms.includes('admin') && !perms.includes('cadastros')) {
+        if (!perms.includes('admin') && !perms.includes('igrejas')) {
             window.location.replace('index.html');
         }
     </script>

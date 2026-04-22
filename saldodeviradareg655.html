@@ -17,7 +17,7 @@
     <script>
         let perms = [];
         try { perms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
-        if (!perms.includes('admin') && !perms.includes('fin_lancar')) {
+        if (!perms.includes('admin') && !perms.includes('saldo_virada')) {
             window.location.replace('index.html');
         }
     </script>

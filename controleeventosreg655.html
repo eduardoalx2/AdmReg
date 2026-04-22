@@ -8,7 +8,7 @@
     <script>
         let perms = [];
         try { perms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
-        if (!perms.includes('admin') && !perms.includes('eventos_gerenciar')) {
+        if (!perms.includes('admin') && !perms.includes('controle_presencas')) {
             window.location.replace('index.html');
         }
     </script>
