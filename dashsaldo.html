@@ -7,8 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-        const role = localStorage.getItem('userRole');
-        if (!role || (role !== '1_Master' && role !== '2_Superintendente')) {
+        let perms = [];
+        try { perms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
+        if (!perms.includes('admin') && !perms.includes('dashboards')) {
             window.location.replace('index.html');
         }
     </script>

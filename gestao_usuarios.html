@@ -117,6 +117,23 @@
                         </div>
                     </div>
 
+                    <!-- Senha (só para novos usuários) -->
+                    <div id="bloco-senha">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Senha de Acesso</label>
+                        <input type="password" id="usuario-senha" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div id="bloco-confirmar-senha">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Confirmar Senha</label>
+                        <input type="password" id="usuario-confirmar-senha" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" placeholder="Repita a senha">
+                    </div>
+
+                    <!-- Redefinição de senha (só para edição) -->
+                    <div id="bloco-reset-senha" class="hidden">
+                        <button type="button" id="btn-reset-senha" class="w-full bg-slate-100 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-slate-600 hover:text-amber-700 font-bold py-2 rounded text-[11px] uppercase flex items-center justify-center gap-2 transition-colors">
+                            <i data-lucide="mail" class="w-3.5 h-3.5"></i> Enviar Email de Redefinição de Senha
+                        </button>
+                    </div>
+
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
                         <select id="usuario-status" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
@@ -140,6 +157,11 @@
             document.getElementById('usuario-id').value = '';
             document.querySelectorAll('input[name="perm"]').forEach(cb => cb.checked = false);
             document.getElementById('modal-titulo').innerHTML = '<i data-lucide="user-plus" class="w-4 h-4"></i> Novo Usuário';
+            // Exibe campos de senha para novos usuários
+            document.getElementById('bloco-senha').classList.remove('hidden');
+            document.getElementById('bloco-confirmar-senha').classList.remove('hidden');
+            document.getElementById('bloco-reset-senha').classList.add('hidden');
+            document.getElementById('usuario-email').readOnly = false;
             document.getElementById('modal-usuario').classList.remove('hidden');
             if (window.lucide) window.lucide.createIcons();
         };
@@ -151,6 +173,20 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+        // App secundário para criar usuários sem deslogar o admin
+        const firebaseConfig = {
+            apiKey: "AIzaSyBTjxxbYqsSVPN_BhsA__gMtTseSn9_Tr0",
+            authDomain: "regiao655-admin.firebaseapp.com",
+            projectId: "regiao655-admin",
+            storageBucket: "regiao655-admin.firebasestorage.app",
+            messagingSenderId: "739836894724",
+            appId: "1:739836894724:web:b8580a4984c1ba6e781f51"
+        };
+        const secondaryApp = initializeApp(firebaseConfig, "secondaryForUserCreation");
+        const secondaryAuth = getAuth(secondaryApp);
 
         let usuariosList = [];
         if (window.lucide) lucide.createIcons();
@@ -232,16 +268,36 @@
         window.editarUsuario = (id) => {
             const u = usuariosList.find(i => i.id === id);
             if(!u) return;
-            
+
             document.getElementById('usuario-id').value = u.id;
             document.getElementById('usuario-nome').value = u.nome;
             document.getElementById('usuario-email').value = u.email;
+            document.getElementById('usuario-email').readOnly = true;
             document.getElementById('usuario-status').value = u.status || 'Ativo';
-            
+
             document.querySelectorAll('input[name="perm"]').forEach(cb => {
                 cb.checked = u.permissoes && u.permissoes.includes(cb.value);
             });
-            
+
+            // Em edição: esconde senha, exibe botão de reset
+            document.getElementById('bloco-senha').classList.add('hidden');
+            document.getElementById('bloco-confirmar-senha').classList.add('hidden');
+            document.getElementById('bloco-reset-senha').classList.remove('hidden');
+            document.getElementById('usuario-senha').value = '';
+            document.getElementById('usuario-confirmar-senha').value = '';
+
+            // Botão de reset de senha
+            document.getElementById('btn-reset-senha').onclick = async () => {
+                if(!confirm(`Enviar email de redefinição de senha para ${u.email}?`)) return;
+                try {
+                    const { auth: mainAuth } = await import('./firebase-config.js');
+                    await sendPasswordResetEmail(mainAuth, u.email);
+                    alert(`Email de redefinição enviado para ${u.email}!`);
+                } catch(e) {
+                    alert("Erro ao enviar email: " + e.message);
+                }
+            };
+
             document.getElementById('modal-titulo').innerHTML = '<i data-lucide="edit" class="w-4 h-4"></i> Editar Usuário';
             document.getElementById('modal-usuario').classList.remove('hidden');
             if (window.lucide) window.lucide.createIcons();
@@ -267,27 +323,52 @@
 
             try {
                 const id = document.getElementById('usuario-id').value;
+                const email = document.getElementById('usuario-email').value.trim().toLowerCase();
                 const permsArr = Array.from(document.querySelectorAll('input[name="perm"]:checked')).map(cb => cb.value);
 
                 const payload = {
                     nome: document.getElementById('usuario-nome').value.trim(),
-                    email: document.getElementById('usuario-email').value.trim().toLowerCase(),
+                    email,
                     permissoes: permsArr,
                     status: document.getElementById('usuario-status').value,
                     updatedAt: serverTimestamp()
                 };
 
-                if(id) {
+                if (id) {
+                    // Edição: apenas atualiza Firestore
                     await updateDoc(doc(db, "usuarios", id), payload);
                 } else {
+                    // Novo usuário: valida senha e cria no Firebase Auth primeiro
+                    const senha = document.getElementById('usuario-senha').value;
+                    const confirmar = document.getElementById('usuario-confirmar-senha').value;
+
+                    if (!senha || senha.length < 6) {
+                        alert("A senha deve ter no mínimo 6 caracteres.");
+                        return;
+                    }
+                    if (senha !== confirmar) {
+                        alert("As senhas não coincidem.");
+                        return;
+                    }
+
+                    // Cria no Firebase Auth usando app secundário (não desloga o admin)
+                    await createUserWithEmailAndPassword(secondaryAuth, email, senha);
+                    await secondaryAuth.signOut();
+
+                    // Salva no Firestore
                     payload.createdAt = serverTimestamp();
                     await addDoc(collection(db, "usuarios"), payload);
                 }
+
                 window.fecharModal();
                 carregarUsuarios();
             } catch (error) {
                 console.error("Erro ao salvar:", error);
-                alert("Erro ao salvar o usuário.");
+                let msg = "Erro ao salvar o usuário.";
+                if (error.code === 'auth/email-already-in-use') msg = "Este e-mail já possui uma conta cadastrada no sistema.";
+                else if (error.code === 'auth/invalid-email') msg = "E-mail inválido.";
+                else if (error.code === 'auth/weak-password') msg = "Senha muito fraca. Use no mínimo 6 caracteres.";
+                alert(msg);
             } finally {
                 btn.textContent = "Salvar Usuário";
                 btn.disabled = false;
