@@ -140,11 +140,13 @@
                     const badgeClass = ev.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500';
 
                     const publicoCores = { Todos: 'bg-slate-100 text-slate-600', Titulares: 'bg-blue-100 text-blue-700', Coordenadores: 'bg-purple-100 text-purple-700', TitularesECoordenadores: 'bg-indigo-100 text-indigo-700' };
+                    const publicoLabels = { Todos: 'Todos', Titulares: 'Somente Titulares', Coordenadores: 'Somente Coordenadores', TitularesECoordenadores: 'Titulares e Coordenadores' };
                     const pubCor = publicoCores[ev.publico] || publicoCores.Todos;
+                    const pubLabel = publicoLabels[ev.publico] || 'Todos';
                     tr.innerHTML = `
                         <td class="py-3 px-2 font-bold text-slate-700 text-xs uppercase">${ev.nome}</td>
                         <td class="py-3 px-2 font-semibold text-slate-500 text-xs">${dataFormatada}</td>
-                        <td class="py-3 px-2"><span class="px-2 py-1 rounded text-[9px] font-black uppercase ${pubCor}">${ev.publico || 'Todos'}</span></td>
+                        <td class="py-3 px-2"><span class="px-2 py-1 rounded text-[9px] font-black uppercase ${pubCor}">${pubLabel}</span></td>
                         <td class="py-3 px-2 text-center">
                             <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider cursor-pointer select-none transition-colors hover:opacity-70 ${badgeClass}" onclick="window.alternarStatus('${documento.id}', '${ev.status}')">
                                 ${ev.status}

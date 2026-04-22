@@ -271,6 +271,23 @@
             formResto.classList.remove('hidden');
         });
 
+        pastorSelect.addEventListener('change', () => {
+            const nomeSelecionado = pastorSelect.value;
+            const pastor = todosPastores.find(p => p.nome === nomeSelecionado);
+            if (!pastor) return;
+
+            const igrejas = Array.isArray(pastor.igreja) ? pastor.igreja : (pastor.igreja ? [pastor.igreja] : []);
+            if (igrejas.length === 1) {
+                const nomeIgreja = igrejas[0];
+                for (let i = 0; i < churchSelect.options.length; i++) {
+                    if (churchSelect.options[i].value.includes(nomeIgreja)) {
+                        churchSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        });
+
         statusSelect.addEventListener('change', () => {
             if (statusSelect.value === 'Ausente') {
                 motivoContainer.classList.remove('hidden');
