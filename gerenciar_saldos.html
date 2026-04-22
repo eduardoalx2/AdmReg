@@ -315,10 +315,13 @@
                 const selectPeriodo = document.getElementById('filtro-periodo');
                 const valorAtual = selectPeriodo.value;
                 
+                const meses = { 'janeiro':0,'fevereiro':1,'março':2,'abril':3,'maio':4,'junho':5,'julho':6,'agosto':7,'setembro':8,'outubro':9,'novembro':10,'dezembro':11 };
                 const parsePeriodo = (p) => {
-                    const parte = (p || '').split('>').pop().trim();
-                    const [mm, aaaa] = parte.split('/');
-                    return new Date(parseInt(aaaa), parseInt(mm) - 1);
+                    const partes = (p || '').split('➔');
+                    const parte = (partes[1] || partes[0]).trim().toLowerCase();
+                    const [nomeMes, ano] = parte.split('/');
+                    const anoFull = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
+                    return new Date(anoFull, meses[nomeMes.trim()] ?? 0);
                 };
                 const periodosArr = Array.from(periodosSet).sort((a, b) => parsePeriodo(b) - parsePeriodo(a));
                 let optionsHTML = '<option value="">Todos os períodos</option>';
