@@ -70,7 +70,7 @@
 
     <!-- Ponte entre Firebase e React -->
     <script type="module">
-        import { db } from '../firebase-config.js';
+        import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         window.firebaseGlobal = { db, collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, query, orderBy, limit, where };
     </script>

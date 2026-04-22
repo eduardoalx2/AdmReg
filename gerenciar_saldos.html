@@ -295,7 +295,7 @@
     </script>
 
     <script type="module">
-        import { db } from '../firebase-config.js';
+        import { db } from './firebase-config.js';
         import { collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         let saldosList = [];
@@ -350,6 +350,8 @@
                 selectPeriodo.innerHTML = optionsHTML;
                 selectPeriodo.value = valorAtual; // mantém filtro se houver
 
+                const _uj = localStorage.getItem('userIgreja');
+                if (_uj) { const el = document.getElementById('filtro-igreja'); el.value = _uj; el.readOnly = true; }
                 renderizarTabela();
             } catch (error) {
                 console.error("Erro ao carregar saldos:", error);
