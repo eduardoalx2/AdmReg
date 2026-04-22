@@ -315,7 +315,12 @@
                 const selectPeriodo = document.getElementById('filtro-periodo');
                 const valorAtual = selectPeriodo.value;
                 
-                const periodosArr = Array.from(periodosSet).sort((a,b) => b.localeCompare(a));
+                const parsePeriodo = (p) => {
+                    const parte = (p || '').split('>').pop().trim();
+                    const [mm, aaaa] = parte.split('/');
+                    return new Date(parseInt(aaaa), parseInt(mm) - 1);
+                };
+                const periodosArr = Array.from(periodosSet).sort((a, b) => parsePeriodo(b) - parsePeriodo(a));
                 let optionsHTML = '<option value="">Todos os períodos</option>';
                 periodosArr.forEach(p => {
                     optionsHTML += `<option value="${p}">${p}</option>`;
