@@ -373,7 +373,11 @@
             iSel.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
             igrejas.forEach(i => iSel.innerHTML += `<option value="${i}">${i}</option>`);
             const _ujd = localStorage.getItem('userIgreja');
-            if (_ujd) { iSel.value = _ujd; iSel.disabled = true; }
+            if (_ujd) {
+                const matchOpt = Array.from(iSel.options).find(o => o.value.toLowerCase().includes(_ujd.toLowerCase()));
+                if (matchOpt) iSel.value = matchOpt.value;
+                iSel.disabled = true;
+            }
 
             const meses = [...new Set(window.appDb.map(d => d.mesFiltro))].sort((a, b) => {
                 return safeParseDate(a) - safeParseDate(b);

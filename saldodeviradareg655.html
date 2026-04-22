@@ -39,7 +39,7 @@
     
     <!-- Ponte entre Firebase Modules (nativo) e o React/Babel -->
     <script type="module">
-        import { db } from '../firebase-config.js';
+        import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         window.firebaseGlobal = {
@@ -119,6 +119,7 @@
         };
 
         const App = () => {
+            const churchLocked = !!localStorage.getItem('userIgreja');
             const [churches, setChurches] = useState([]);
             const [isLoadingChurches, setIsLoadingChurches] = useState(true);
 
@@ -329,7 +330,7 @@ _Gerado em: ${new Date().toLocaleString('pt-BR')}_`;
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-slate-500 uppercase">Igreja <span className="text-red-500">*</span></label>
-                                    <select className="w-full p-3 bg-slate-50 border rounded-xl outline-none input-focus appearance-none" value={selectedChurchCode} onChange={(e) => setSelectedChurchCode(e.target.value)} disabled={isLoadingChurches}>
+                                    <select className="w-full p-3 bg-slate-50 border rounded-xl outline-none input-focus appearance-none" value={selectedChurchCode} onChange={(e) => setSelectedChurchCode(e.target.value)} disabled={isLoadingChurches || churchLocked}>
                                         <option value="">{isLoadingChurches ? "Carregando igrejas..." : "Selecione a Igreja..."}</option>
                                         {churches.map(c => <option key={c.code} value={c.code}>{c.code} - {c.name}</option>)}
                                     </select>
