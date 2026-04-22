@@ -67,15 +67,13 @@
                     <thead>
                         <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
                             <th>Nome</th>
-                            <th>E-mail</th>
                             <th>Permissões Autorizadas</th>
-                            <th>Igreja Vinculada</th>
                             <th>Status</th>
                             <th class="w-16 text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tabela-usuarios" class="divide-y divide-slate-100">
-                        <tr><td colspan="6" class="text-center py-6 text-slate-400">Carregando usuários...</td></tr>
+                        <tr><td colspan="4" class="text-center py-6 text-slate-400">Carregando usuários...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -277,14 +275,14 @@
                 renderizarTabela();
             } catch (error) {
                 console.error("Erro ao carregar usuários:", error);
-                tabela.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-500 font-bold">Erro ao carregar dados do servidor.</td></tr>';
+                tabela.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-red-500 font-bold">Erro ao carregar dados do servidor.</td></tr>';
             }
         }
 
         function renderizarTabela() {
             tabela.innerHTML = '';
             if (usuariosList.length === 0) {
-                tabela.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-slate-400">Nenhum usuário cadastrado.</td></tr>';
+                tabela.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-slate-400">Nenhum usuário cadastrado.</td></tr>';
                 return;
             }
 
@@ -305,15 +303,15 @@
                     ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded text-[10px] font-bold uppercase tracking-wider">ATIVO</span>' 
                     : '<span class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wider">INATIVO</span>';
 
-                const igrejaHtml = u.igrejaNome
-                    ? `<span class="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">${u.igrejaNome}</span>`
-                    : `<span class="text-[10px] text-slate-400 italic">Sem restrição</span>`;
+                const igrejaTexto = u.igrejaNome || 'sem restrição';
 
                 tr.innerHTML = `
-                    <td class="nome-style">${u.nome}</td>
-                    <td class="text-slate-500 text-xs">${u.email}</td>
+                    <td>
+                        <div class="nome-style leading-tight">${u.nome}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">${u.email}</div>
+                        <div class="text-[10px] text-slate-400 italic mt-0.5">${igrejaTexto}</div>
+                    </td>
                     <td class="max-w-[200px] whitespace-normal">${permsHtml}</td>
-                    <td>${igrejaHtml}</td>
                     <td>${statusBadge}</td>
                     <td class="text-center">
                         <div class="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
