@@ -14,6 +14,12 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@0.321.0/dist/umd/lucide.min.js"></script>
 
+    <script>
+        const role = localStorage.getItem('userRole');
+        if (!role || (role !== '1_Master' && role !== '2_Superintendente' && role !== '3_Pastor_Coordenador')) {
+            window.location.replace('index.html');
+        }
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }

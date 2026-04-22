@@ -84,7 +84,7 @@
 
                 localStorage.setItem('userEmail', email);
                 localStorage.setItem('userName', userData.nome);
-                localStorage.setItem('userRole', userData.nivel);
+                localStorage.setItem('userPerms', JSON.stringify(userData.permissoes || []));
                 window.location.href = "index.html";
             } catch (error) {
                 console.error(error);

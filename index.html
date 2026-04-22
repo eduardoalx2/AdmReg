@@ -7,8 +7,8 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script>
-        // Bloqueio ultra-rápido: Se não tiver os dados básicos do login salvos, expulsa antes da tela piscar
-        if (!localStorage.getItem('userRole') || !localStorage.getItem('userEmail')) {
+        // Bloqueio ultra-rápido via perms
+        if (!localStorage.getItem('userPerms') || !localStorage.getItem('userEmail')) {
             window.location.replace('login.html');
         }
     </script>
@@ -534,58 +534,65 @@
 
         const userEmail = localStorage.getItem('userEmail');
         const userName = localStorage.getItem('userName');
-        const userRole = localStorage.getItem('userRole');
+        let userPerms = [];
+        try {
+            userPerms = JSON.parse(localStorage.getItem('userPerms') || '[]');
+        } catch(e) {}
 
         // Validação profunda com o servidor do Firebase
         onAuthStateChanged(auth, (user) => {
             if (!user || user.email !== userEmail) {
-                // Token inválido ou forçado a deslogar pelo servidor
                 fazerLogout();
             } else {
-                // Preenche o nome e a função no canto superior direito
                 document.getElementById('top-user-name').textContent = userName ? `Olá, ${userName.split(' ')[0]}` : 'Olá!';
                 
-                const roleLabels = {
-                    '1_Master': 'Gestor Master',
-                    '2_Superintendente': 'Superintendente',
-                    '3_Pastor_Coordenador': 'Pastor / Coord.',
-                    '4_Ministerio': 'Ministério'
-                };
-                document.getElementById('top-user-role').textContent = roleLabels[userRole] || 'Usuário';
+                if (userPerms.includes('admin')) {
+                    document.getElementById('top-user-role').textContent = 'GESTOR MASTER';
+                } else {
+                    document.getElementById('top-user-role').textContent = 'ACESSO PERSONALIZADO';
+                }
 
-                // Aciona as restrições
-                aplicarPermissoes(userRole);
+                aplicarPermissoes(userPerms);
             }
         });
 
-        // Lógica de visibilidade dos elementos (MÁGICA DO CONTROLE DE ACESSO)
-        function aplicarPermissoes(nivel) {
-            // 1. O que TODOS veem (Pastor, Coord, Ministério, Super, Master):
-            document.getElementById('bloco-regional').style.display = 'block'; 
+        function aplicarPermissoes(perms) {
+            const isAdmin = perms.includes('admin');
+
+            // 1. O que TODOS logados veem:
             document.getElementById('bloco-eventos').style.display = 'block';
             document.getElementById('card-lancar-presenca').style.display = 'flex';
 
-            // 2. O que Pastores e Coordenadores (e superiores) veem:
-            if (nivel === '1_Master' || nivel === '2_Superintendente' || nivel === '3_Pastor_Coordenador') {
-                document.getElementById('bloco-financeiro').style.display = 'block';
-                document.getElementById('card-saldo-virada').style.display = 'flex';
-                document.getElementById('card-recibos').style.display = 'flex';
+            if (isAdmin || perms.includes('agenda')) {
+                document.getElementById('bloco-regional').style.display = 'block'; 
             }
 
-            // 3. O que Superintendentes (e superiores) veem (Tudo de gestão/edição):
-            if (nivel === '1_Master' || nivel === '2_Superintendente') {
+            if (isAdmin || perms.includes('cadastros')) {
                 document.getElementById('bloco-cadastros').style.display = 'block';
+            }
+
+            if (isAdmin || perms.includes('fin_lancar') || perms.includes('fin_gerenciar')) {
+                document.getElementById('bloco-financeiro').style.display = 'block';
+                if (isAdmin || perms.includes('fin_lancar')) {
+                    document.getElementById('card-saldo-virada').style.display = 'flex';
+                    document.getElementById('card-recibos').style.display = 'flex';
+                }
+                if (isAdmin || perms.includes('fin_gerenciar')) {
+                    document.getElementById('card-gerenciar-saldos').style.display = 'flex';
+                    document.getElementById('card-gerenciar-recibos').style.display = 'flex';
+                }
+            }
+
+            if (isAdmin || perms.includes('dashboards')) {
                 document.getElementById('bloco-dashboards').style.display = 'block';
-                
-                // Revela os cards administrativos dentro dos blocos que já estavam visíveis
-                document.getElementById('card-gerenciar-saldos').style.display = 'flex';
-                document.getElementById('card-gerenciar-recibos').style.display = 'flex';
+            }
+
+            if (isAdmin || perms.includes('eventos_gerenciar')) {
                 document.getElementById('card-gestao-eventos').style.display = 'flex';
                 document.getElementById('card-controle-presenca').style.display = 'flex';
             }
 
-            // 4. O que APENAS o Master vê (Segurança):
-            if (nivel === '1_Master') {
+            if (isAdmin) {
                 document.getElementById('area-master').style.display = 'block';
             }
         }
