@@ -69,8 +69,9 @@
             <!-- Nome do Pastor(a) / Obreiro(a) -->
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Nome do Pastor(a) / Obreiro(a)</label>
-                <input type="text" id="pastorName" list="pastoresList" required oninput="this.value = this.value.toUpperCase()" autocomplete="off" placeholder="DIGITE OU SELECIONE O NOME" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold uppercase">
-                <datalist id="pastoresList"></datalist>
+                <select id="pastorName" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    <option value="" disabled selected>CARREGANDO...</option>
+                </select>
             </div>
 
             <!-- Igreja / Congregação -->
@@ -148,7 +149,7 @@
 
         const form = document.getElementById('presenceForm');
         const churchSelect = document.getElementById('church');
-        const pastoresList = document.getElementById('pastoresList');
+        const pastorSelect = document.getElementById('pastorName');
         const activeEventSelect = document.getElementById('activeEvent');
         const statusSelect = document.getElementById('status');
         const motivoContainer = document.getElementById('motivoContainer');
@@ -178,13 +179,26 @@
                 });
 
                 const pastores = [];
-                pastoresSnapshot.forEach(doc => pastores.push(doc.data().nome));
-                pastores.sort(); // Em ordem alfabética
+                pastoresSnapshot.forEach(doc => pastores.push(doc.data()));
 
-                pastores.forEach(nome => {
+                // Titulares primeiro (alfa), depois demais (alfa)
+                pastores.sort((a, b) => {
+                    const aT = a.funcao === 'Pastor Titular';
+                    const bT = b.funcao === 'Pastor Titular';
+                    if (aT && !bT) return -1;
+                    if (!aT && bT) return 1;
+                    return a.nome.localeCompare(b.nome);
+                });
+
+                pastorSelect.innerHTML = '<option value="" disabled selected>SELECIONE O PASTOR/OBREIRO</option>';
+                pastores.forEach(p => {
                     const option = document.createElement('option');
-                    option.value = nome;
-                    pastoresList.appendChild(option);
+                    option.value = p.nome;
+                    const tags = [];
+                    if (p.funcao === 'Pastor Titular') tags.push('TITULAR');
+                    if (p.coordenador) tags.push('COORDENADOR');
+                    option.textContent = tags.length > 0 ? `${p.nome} (${tags.join(' | ')})` : p.nome;
+                    pastorSelect.appendChild(option);
                 });
 
                 activeEventSelect.innerHTML = '<option value="" disabled selected>SELECIONE O EVENTO</option>';

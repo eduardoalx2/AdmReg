@@ -186,6 +186,13 @@
                         </div>
                     </div>
 
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="pastor-coordenador" class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500">
+                            <span class="text-[10px] font-bold text-purple-700 uppercase tracking-wide">Este pastor também é Coordenador de Coordenadoria</span>
+                        </label>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Telefone</label>
@@ -227,6 +234,7 @@
             document.getElementById('form-pastor').reset();
             document.querySelectorAll('input[name="pastor-igrejas-cb"]').forEach(cb => cb.checked = false);
             document.getElementById('pastor-id').value = '';
+            document.getElementById('pastor-coordenador').checked = false;
             document.getElementById('search-igreja-modal').value = '';
             filtrarIgrejasModal();
             document.getElementById('modal-titulo').innerHTML = '<i data-lucide="user-plus" class="w-4 h-4"></i> Novo Pastor';
@@ -303,8 +311,14 @@
                     pastoresList.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Ordena por nome
-                pastoresList.sort((a, b) => a.nome.localeCompare(b.nome));
+                // Titulares primeiro, depois por nome
+                pastoresList.sort((a, b) => {
+                    const aT = a.funcao === 'Pastor Titular';
+                    const bT = b.funcao === 'Pastor Titular';
+                    if (aT && !bT) return -1;
+                    if (!aT && bT) return 1;
+                    return a.nome.localeCompare(b.nome);
+                });
                 renderizarTabela();
             } catch (error) {
                 console.error("Erro ao carregar pastores:", error);
@@ -344,8 +358,12 @@
                 tr.className = "hover:bg-blue-50/50 transition-colors group";
                 tr.innerHTML = `
                     <td class="nome-style">
-                        ${p.nome}
-                        <div class="text-[9px] text-slate-500 font-normal uppercase mt-0.5 tracking-wider">${igrejasStr} ${igrejasStr && (p.funcao || p.categoria) ? '•' : ''} ${p.funcao || ''} ${p.funcao && p.categoria ? '•' : ''} ${p.categoria || ''}</div>
+                        <div class="flex items-center gap-1 flex-wrap">
+                            ${p.nome}
+                            ${p.funcao === 'Pastor Titular' ? '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[8px] font-bold uppercase">TITULAR</span>' : ''}
+                            ${p.coordenador ? '<span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[8px] font-bold uppercase">COORD.</span>' : ''}
+                        </div>
+                        <div class="text-[9px] text-slate-500 font-normal uppercase mt-0.5 tracking-wider">${igrejasStr} ${igrejasStr && p.categoria ? '•' : ''} ${p.categoria || ''}</div>
                     </td>
                     <td class="text-slate-600 font-medium">${p.telefone || '-'}</td>
                     <td class="text-slate-500">${p.prontuario || '-'}</td>
@@ -379,6 +397,7 @@
             document.getElementById('pastor-endereco').value = p.endereco || '';
             document.getElementById('pastor-funcao').value = p.funcao || '';
             document.getElementById('pastor-categoria').value = p.categoria || '';
+            document.getElementById('pastor-coordenador').checked = p.coordenador || false;
             const pIgrejas = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
             document.querySelectorAll('input[name="pastor-igrejas-cb"]').forEach(cb => {
                 cb.checked = pIgrejas.includes(cb.value);
@@ -443,6 +462,7 @@
                     endereco: document.getElementById('pastor-endereco').value.trim(),
                     funcao: document.getElementById('pastor-funcao').value,
                     categoria: document.getElementById('pastor-categoria').value,
+                    coordenador: document.getElementById('pastor-coordenador').checked,
                     igreja: igrejasSelecionadas,
                     updatedAt: serverTimestamp()
                 };
