@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Layout — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        if (!localStorage.getItem('userPerms') || !localStorage.getItem('userEmail')) window.location.replace('login.html');
+        try { const p = JSON.parse(localStorage.getItem('userPerms')||'[]'); if (!p.includes('admin')) window.location.replace('index.html'); } catch(e) { window.location.replace('login.html'); }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0c0f1a; }
+        .btn-mover { line-height: 1; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+        .btn-mover:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+        .btn-mover:disabled { opacity: 0.2; cursor: not-allowed; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200">
+
+    <!-- TOP BAR -->
+    <div class="sticky top-0 z-40 bg-[#0c0f1a]/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center gap-4">
+        <a href="index.html" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-medium">
+            ← Painel
+        </a>
+        <div class="flex-1">
+            <h1 class="text-sm font-bold text-white">Gerenciar Layout</h1>
+            <p class="text-[10px] text-slate-500">Organize grupos, ordem e links externos do Painel Admin</p>
+        </div>
+        <button onclick="restaurarPadrao()" class="text-xs text-slate-500 hover:text-amber-400 border border-slate-700 hover:border-amber-500/40 px-3 py-1.5 rounded-lg transition-colors">
+            ↺ Restaurar Padrão
+        </button>
+        <button id="btn-salvar" onclick="salvarLayout()" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+            💾 Salvar Layout
+        </button>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading" class="flex items-center justify-center h-64">
+        <div class="flex flex-col items-center gap-3">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p class="text-slate-500 text-sm">Carregando layout...</p>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content" class="hidden max-w-3xl mx-auto px-4 py-6">
+
+        <div class="flex items-center justify-between mb-4">
+            <p class="text-xs text-slate-500">Arraste os grupos para reordenar, ou use as setas ▲▼. Itens ocultos continuam no banco mas não aparecem no painel.</p>
+            <button onclick="adicionarGrupo()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0 ml-4">
+                + Novo Grupo
+            </button>
+        </div>
+
+        <div id="grupos-container"></div>
+
+        <!-- TOAST -->
+        <div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+            <div class="bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2">
+                ✓ Layout salvo com sucesso!
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ITEM -->
+    <div id="modal-item" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="px-5 py-4 border-b border-slate-700 flex items-center justify-between">
+                <h2 id="modal-titulo" class="font-bold text-white text-sm"></h2>
+                <button onclick="fecharModalItem()" class="text-slate-500 hover:text-white text-lg leading-none">×</button>
+            </div>
+            <div class="p-5 space-y-3">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo</label>
+                        <select id="f-tipo" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <option value="sistema">Sistema (página interna)</option>
+                            <option value="externo">Externo (link externo)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ícone (emoji)</label>
+                        <input id="f-icone" type="text" maxlength="4" placeholder="🔗" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Título *</label>
+                    <input id="f-titulo" type="text" placeholder="Ex: Gestão de Usuários" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observação (subtítulo)</label>
+                    <input id="f-obs" type="text" placeholder="Ex: Controle de níveis e permissões" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">URL / Caminho</label>
+                    <input id="f-url" type="text" placeholder="Ex: gestao_usuarios.html  ou  https://..." class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Permissão necessária</label>
+                    <select id="f-perm" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <option value="">Nenhuma (visível a todos os logados)</option>
+                        <option value="admin">admin (somente Gestor Master)</option>
+                        <option value="pastores">pastores</option>
+                        <option value="igrejas">igrejas</option>
+                        <option value="coordenadorias">coordenadorias</option>
+                        <option value="saldo_virada">saldo_virada</option>
+                        <option value="gerenciar_saldos">gerenciar_saldos</option>
+                        <option value="recibos">recibos</option>
+                        <option value="gerenciar_recibos">gerenciar_recibos</option>
+                        <option value="dash_recibos">dash_recibos</option>
+                        <option value="dash_saldos">dash_saldos</option>
+                        <option value="agenda">agenda</option>
+                        <option value="gestao_eventos">gestao_eventos</option>
+                        <option value="presenca">presenca</option>
+                        <option value="controle_presencas">controle_presencas</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input id="f-visivel" type="checkbox" checked class="w-4 h-4 rounded accent-blue-500">
+                    <label for="f-visivel" class="text-sm text-slate-300 cursor-pointer">Visível no painel</label>
+                </div>
+            </div>
+            <div class="px-5 py-4 border-t border-slate-700 flex gap-3 justify-end">
+                <button onclick="fecharModalItem()" class="text-slate-400 hover:text-white text-sm px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-500 transition-colors">Cancelar</button>
+                <button onclick="salvarItem()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_LAYOUT = [
+            {
+                id: 'g-master', nome: 'Segurança & Acessos', ordem: 0,
+                itens: [
+                    { id: 'i-usuarios', tipo: 'sistema', titulo: 'Gestão de Usuários', obs: 'Controle de níveis e permissões', url: 'gestao_usuarios.html', icone: '🔐', perm: 'admin', visivel: true, ordem: 0 },
+                    { id: 'i-layout', tipo: 'sistema', titulo: 'Gerenciar Layout', obs: 'Organizar grupos e links do painel', url: 'gerenciar_layout.html', icone: '🎛️', perm: 'admin', visivel: true, ordem: 1 }
+                ]
+            },
+            {
+                id: 'g-cadastros', nome: 'Cadastros', ordem: 1,
+                itens: [
+                    { id: 'i-pastores', tipo: 'sistema', titulo: 'Pastores', obs: 'Obreiros, Aspirantes e Ministros', url: 's_pastores.html', icone: '👨‍💼', perm: 'pastores', visivel: true, ordem: 0 },
+                    { id: 'i-igrejas', tipo: 'sistema', titulo: 'Igrejas', obs: 'Unidades Locais e vinculação de Pastores', url: 's_igrejas.html', icone: '⛪', perm: 'igrejas', visivel: true, ordem: 1 },
+                    { id: 'i-coord', tipo: 'sistema', titulo: 'Coordenadorias', obs: 'Coordenadores e departamentos regionais', url: 'coordenadorias.html', icone: '🏛️', perm: 'coordenadorias', visivel: true, ordem: 2 }
+                ]
+            },
+            {
+                id: 'g-financeiro', nome: 'Financeiro', ordem: 2,
+                itens: [
+                    { id: 'i-saldo', tipo: 'sistema', titulo: 'Saldo de Virada', obs: 'Lançador financeiro de virada de mês', url: 'saldodeviradareg655.html', icone: '💰', perm: 'saldo_virada', visivel: true, ordem: 0 },
+                    { id: 'i-gersaldos', tipo: 'sistema', titulo: 'Gerenciar Saldos', obs: 'Edição e exclusão de lançamentos', url: 'gerenciar_saldos.html', icone: '⚙️', perm: 'gerenciar_saldos', visivel: true, ordem: 1 },
+                    { id: 'i-recibos', tipo: 'sistema', titulo: 'Recibos', obs: 'Emissor de recibos e controle financeiro', url: 'recibosreg655.html', icone: '🧾', perm: 'recibos', visivel: true, ordem: 2 },
+                    { id: 'i-gerrecibos', tipo: 'sistema', titulo: 'Gerenciar Recibos', obs: 'Edição e visualização de recibos', url: 'editarrecibos.html', icone: '📝', perm: 'gerenciar_recibos', visivel: true, ordem: 3 }
+                ]
+            },
+            {
+                id: 'g-dash', nome: 'Dashboards', ordem: 3,
+                itens: [
+                    { id: 'i-dashrecibos', tipo: 'sistema', titulo: 'Dash Recibos', obs: 'Dashboard analítico de arrecadações', url: 'dashreg655.html', icone: '📊', perm: 'dash_recibos', visivel: true, ordem: 0 },
+                    { id: 'i-dashsaldos', tipo: 'sistema', titulo: 'Dash Saldos', obs: 'Dashboard financeiro consolidado', url: 'dashsaldo.html', icone: '📈', perm: 'dash_saldos', visivel: true, ordem: 1 }
+                ]
+            },
+            {
+                id: 'g-regional', nome: 'Regional', ordem: 4,
+                itens: [
+                    { id: 'i-agenda', tipo: 'sistema', titulo: 'Agenda Regional', obs: 'Cronograma de eventos CED e CND', url: 'agendareg655.html', icone: '📅', perm: 'agenda', visivel: true, ordem: 0 }
+                ]
+            },
+            {
+                id: 'g-eventos', nome: 'Eventos & Presença', ordem: 5,
+                itens: [
+                    { id: 'i-gestaoev', tipo: 'sistema', titulo: 'Gestão de Eventos', obs: 'Criar e gerenciar eventos ativos', url: 'eventosreg655.html', icone: '⚙️', perm: 'gestao_eventos', visivel: true, ordem: 0 },
+                    { id: 'i-presenca', tipo: 'sistema', titulo: 'Lançar Presença', obs: 'Registro individual nas convocações', url: 'presencareg655.html', icone: '✅', perm: 'presenca', visivel: true, ordem: 1 },
+                    { id: 'i-controle', tipo: 'sistema', titulo: 'Controle de Presenças', obs: 'Painel de acompanhamento e faltas', url: 'controleeventosreg655.html', icone: '📋', perm: 'controle_presencas', visivel: true, ordem: 2 }
+                ]
+            }
+        ];
+
+        let grupos = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+        let editingItem = null;
+
+        function uid() { return '_' + Math.random().toString(36).substr(2, 9); }
+
+        function renderGrupos() {
+            const container = document.getElementById('grupos-container');
+            container.innerHTML = '';
+            const sorted = [...grupos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+            sorted.forEach((grupo, gIdx) => {
+                container.appendChild(renderGrupoCard(grupo, gIdx, sorted.length));
+            });
+        }
+
+        function renderGrupoCard(grupo, gIdx, total) {
+            const div = document.createElement('div');
+            div.className = 'bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden mb-3';
+            const itensOrdenados = [...grupo.itens].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+            div.innerHTML = `
+                <div class="flex items-center gap-2 px-4 py-3 bg-slate-800/80">
+                    <div class="flex flex-col">
+                        <button onclick="moverGrupo('${grupo.id}',-1)" ${gIdx===0?'disabled':''} class="btn-mover text-slate-400 hover:text-white">▲</button>
+                        <button onclick="moverGrupo('${grupo.id}',1)" ${gIdx===total-1?'disabled':''} class="btn-mover text-slate-400 hover:text-white">▼</button>
+                    </div>
+                    <span class="text-slate-200 font-bold text-sm flex-1">${esc(grupo.nome)}</span>
+                    <span class="text-[10px] text-slate-600 mr-2">${grupo.itens.length} ${grupo.itens.length===1?'item':'itens'}</span>
+                    <button onclick="editarNomeGrupo('${grupo.id}')" class="text-[11px] text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 px-2 py-1 rounded transition-colors">✏️ Renomear</button>
+                    <button onclick="abrirModalItem('${grupo.id}',null)" class="text-[11px] text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 px-2 py-1 rounded transition-colors">+ Item</button>
+                    <button onclick="excluirGrupo('${grupo.id}')" class="text-[11px] text-slate-500 hover:text-red-400 hover:bg-red-500/10 px-2 py-1 rounded transition-colors">🗑️</button>
+                </div>
+                <div class="px-3 py-2 space-y-1.5">
+                    ${itensOrdenados.map((item, iIdx) => renderItemRow(grupo.id, item, iIdx, itensOrdenados.length)).join('')}
+                    ${grupo.itens.length===0?'<p class="text-slate-700 text-xs text-center py-4">Grupo vazio — clique em "+ Item" para adicionar</p>':''}
+                </div>
+            `;
+            return div;
+        }
+
+        function renderItemRow(grupoId, item, iIdx, total) {
+            const permLabel = !item.perm ? '—' : item.perm === 'admin' ? '🔐 admin' : item.perm;
+            const isExterno = item.tipo === 'externo';
+            const oculto = item.visivel === false;
+            return `
+                <div class="flex items-center gap-2 ${oculto?'opacity-40':''} bg-[#0c0f1a]/60 border border-slate-700/30 rounded-lg px-3 py-2">
+                    <div class="flex flex-col">
+                        <button onclick="moverItem('${grupoId}','${item.id}',-1)" ${iIdx===0?'disabled':''} class="btn-mover text-slate-600 hover:text-slate-300">▲</button>
+                        <button onclick="moverItem('${grupoId}','${item.id}',1)" ${iIdx===total-1?'disabled':''} class="btn-mover text-slate-600 hover:text-slate-300">▼</button>
+                    </div>
+                    <span class="text-lg w-7 text-center flex-shrink-0">${esc(item.icone||'🔗')}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-slate-200 text-xs font-semibold truncate">${esc(item.titulo)}</p>
+                        <p class="text-slate-600 text-[10px] truncate">${esc(item.obs||'')}</p>
+                    </div>
+                    ${isExterno?'<span class="text-[9px] text-amber-400 font-bold flex-shrink-0">EXT</span>':''}
+                    <span class="text-[9px] bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded flex-shrink-0 max-w-[90px] truncate">${esc(permLabel)}</span>
+                    <button onclick="toggleVisivel('${grupoId}','${item.id}')" title="${oculto?'Oculto — clique para mostrar':'Visível — clique para ocultar'}" class="flex-shrink-0 text-base ${oculto?'grayscale opacity-50':''}">👁️</button>
+                    <button onclick="abrirModalItem('${grupoId}','${item.id}')" class="flex-shrink-0 text-slate-600 hover:text-blue-400 text-xs transition-colors">✏️</button>
+                    <button onclick="excluirItem('${grupoId}','${item.id}')" class="flex-shrink-0 text-slate-600 hover:text-red-400 text-xs transition-colors">🗑️</button>
+                </div>
+            `;
+        }
+
+        function esc(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function moverGrupo(grupoId, dir) {
+            const sorted = [...grupos].sort((a, b) => (a.ordem||0) - (b.ordem||0));
+            const idx = sorted.findIndex(g => g.id === grupoId);
+            const newIdx = idx + dir;
+            if (newIdx < 0 || newIdx >= sorted.length) return;
+            [sorted[idx].ordem, sorted[newIdx].ordem] = [sorted[newIdx].ordem, sorted[idx].ordem];
+            sorted.forEach((g, i) => { g.ordem = i; });
+            renderGrupos();
+        }
+
+        function moverItem(grupoId, itemId, dir) {
+            const grupo = grupos.find(g => g.id === grupoId);
+            if (!grupo) return;
+            const sorted = [...grupo.itens].sort((a, b) => (a.ordem||0) - (b.ordem||0));
+            const idx = sorted.findIndex(i => i.id === itemId);
+            const newIdx = idx + dir;
+            if (newIdx < 0 || newIdx >= sorted.length) return;
+            [sorted[idx].ordem, sorted[newIdx].ordem] = [sorted[newIdx].ordem, sorted[idx].ordem];
+            sorted.forEach((it, i) => { it.ordem = i; });
+            renderGrupos();
+        }
+
+        function toggleVisivel(grupoId, itemId) {
+            const grupo = grupos.find(g => g.id === grupoId);
+            const item = grupo?.itens.find(i => i.id === itemId);
+            if (!item) return;
+            item.visivel = item.visivel === false ? true : false;
+            renderGrupos();
+        }
+
+        function excluirGrupo(grupoId) {
+            const grupo = grupos.find(g => g.id === grupoId);
+            if (!confirm(`Excluir o grupo "${grupo?.nome}" e todos os seus ${grupo?.itens.length} itens?`)) return;
+            grupos = grupos.filter(g => g.id !== grupoId);
+            renderGrupos();
+        }
+
+        function excluirItem(grupoId, itemId) {
+            const grupo = grupos.find(g => g.id === grupoId);
+            if (!grupo) return;
+            const item = grupo.itens.find(i => i.id === itemId);
+            if (!confirm(`Excluir "${item?.titulo}"?`)) return;
+            grupo.itens = grupo.itens.filter(i => i.id !== itemId);
+            renderGrupos();
+        }
+
+        function editarNomeGrupo(grupoId) {
+            const grupo = grupos.find(g => g.id === grupoId);
+            if (!grupo) return;
+            const nome = prompt('Nome do grupo:', grupo.nome);
+            if (nome && nome.trim()) { grupo.nome = nome.trim(); renderGrupos(); }
+        }
+
+        function adicionarGrupo() {
+            const nome = prompt('Nome do novo grupo:');
+            if (!nome || !nome.trim()) return;
+            const maxOrdem = grupos.reduce((m, g) => Math.max(m, g.ordem||0), -1);
+            grupos.push({ id: uid(), nome: nome.trim(), ordem: maxOrdem + 1, itens: [] });
+            renderGrupos();
+        }
+
+        function restaurarPadrao() {
+            if (!confirm('Restaurar o layout padrão? Isso descartará todas as suas alterações não salvas.')) return;
+            grupos = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+            renderGrupos();
+        }
+
+        function abrirModalItem(grupoId, itemId) {
+            const grupo = grupos.find(g => g.id === grupoId);
+            if (!grupo) return;
+            const item = itemId ? grupo.itens.find(i => i.id === itemId) : null;
+            editingItem = { grupoId, itemId };
+            document.getElementById('modal-titulo').textContent = item ? 'Editar Item' : 'Novo Item';
+            document.getElementById('f-tipo').value = item?.tipo || 'sistema';
+            document.getElementById('f-titulo').value = item?.titulo || '';
+            document.getElementById('f-obs').value = item?.obs || '';
+            document.getElementById('f-url').value = item?.url || '';
+            document.getElementById('f-icone').value = item?.icone || '🔗';
+            document.getElementById('f-perm').value = item?.perm || '';
+            document.getElementById('f-visivel').checked = item?.visivel !== false;
+            document.getElementById('modal-item').classList.remove('hidden');
+            setTimeout(() => document.getElementById('f-titulo').focus(), 50);
+        }
+
+        function fecharModalItem() {
+            document.getElementById('modal-item').classList.add('hidden');
+            editingItem = null;
+        }
+
+        function salvarItem() {
+            if (!editingItem) return;
+            const { grupoId, itemId } = editingItem;
+            const grupo = grupos.find(g => g.id === grupoId);
+            if (!grupo) return;
+            const titulo = document.getElementById('f-titulo').value.trim();
+            if (!titulo) { document.getElementById('f-titulo').focus(); return; }
+            const data = {
+                tipo: document.getElementById('f-tipo').value,
+                titulo,
+                obs: document.getElementById('f-obs').value.trim(),
+                url: document.getElementById('f-url').value.trim(),
+                icone: document.getElementById('f-icone').value.trim() || '🔗',
+                perm: document.getElementById('f-perm').value || null,
+                visivel: document.getElementById('f-visivel').checked,
+            };
+            if (itemId) {
+                const item = grupo.itens.find(i => i.id === itemId);
+                if (item) Object.assign(item, data);
+            } else {
+                data.id = uid();
+                data.ordem = grupo.itens.length;
+                grupo.itens.push(data);
+            }
+            fecharModalItem();
+            renderGrupos();
+        }
+
+        function showToast() {
+            const t = document.getElementById('toast');
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3000);
+        }
+
+        window.onLayoutLoaded = function(data) {
+            if (data && data.grupos && data.grupos.length > 0) {
+                grupos = data.grupos;
+            }
+            renderGrupos();
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+        };
+
+        window.getLayoutData = () => ({ grupos });
+        window.onSaveSuccess = showToast;
+
+        window.moverGrupo = moverGrupo;
+        window.moverItem = moverItem;
+        window.toggleVisivel = toggleVisivel;
+        window.excluirGrupo = excluirGrupo;
+        window.excluirItem = excluirItem;
+        window.editarNomeGrupo = editarNomeGrupo;
+        window.adicionarGrupo = adicionarGrupo;
+        window.restaurarPadrao = restaurarPadrao;
+        window.abrirModalItem = abrirModalItem;
+        window.fecharModalItem = fecharModalItem;
+        window.salvarItem = salvarItem;
+
+        // Close modal on backdrop click
+        document.getElementById('modal-item').addEventListener('click', function(e) {
+            if (e.target === this) fecharModalItem();
+        });
+        // Close modal on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') fecharModalItem();
+            if (e.key === 'Enter' && !document.getElementById('modal-item').classList.contains('hidden')) {
+                e.preventDefault(); salvarItem();
+            }
+        });
+    </script>
+
+    <script type="module">
+        import { auth, db } from './firebase-config.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        const userEmail = localStorage.getItem('userEmail');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user || user.email !== userEmail) {
+                localStorage.clear(); window.location.replace('login.html'); return;
+            }
+            try {
+                const snap = await getDoc(doc(db, 'configuracoes', 'layout'));
+                window.onLayoutLoaded(snap.exists() ? snap.data() : null);
+            } catch(e) {
+                console.error(e);
+                window.onLayoutLoaded(null);
+            }
+        });
+
+        window.salvarLayout = async () => {
+            const btn = document.getElementById('btn-salvar');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+            try {
+                await setDoc(doc(db, 'configuracoes', 'layout'), window.getLayoutData());
+                window.onSaveSuccess();
+            } catch(e) {
+                console.error(e);
+                alert('Erro ao salvar: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '💾 Salvar Layout';
+            }
+        };
+
+        window.fazerLogout = async () => {
+            await signOut(auth);
+            localStorage.clear();
+            window.location.replace('login.html');
+        };
+    </script>
+</body>
+</html>

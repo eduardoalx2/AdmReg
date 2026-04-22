@@ -329,193 +329,15 @@
         <p class="portal-subtitle fade-in" style="animation-delay:.24s">Gestão Eclesiástica &amp; Administração — Região 655 · Londrina/PR</p>
     </header>
 
-    <main>
-
-        <!-- ÁREA EXCLUSIVA GESTOR MASTER -->
-        <div id="area-master" style="display: none;">
-            <div class="section-label fade-in" style="animation-delay:.25s">
-                <div class="section-label-line"></div>
-                <span><i class="ph ph-shield-check" style="font-size:10px;color:#ef4444;margin-right:4px;"></i> Segurança & Acessos</span>
-                <div class="section-label-line"></div>
-            </div>
-
-            <div class="cards-grid fade-in" style="animation-delay:.28s">
-                <a href="gestao_usuarios.html" class="link-card" style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);">
-                    <div class="card-icon" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.1);">🔐</div>
-                    <div class="card-texts">
-                        <div class="card-title" style="color: #fca5a5;">Gestão de Usuários</div>
-                        <div class="card-obs">Controle de níveis e permissões</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
+    <main id="main-content">
+        <div style="display:flex;align-items:center;justify-content:center;height:200px;">
+            <div style="text-align:center;">
+                <div style="width:32px;height:32px;border:2px solid rgba(99,179,237,0.3);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
+                <p style="color:var(--text-muted);font-size:13px;">Carregando...</p>
             </div>
         </div>
-
-        <!-- BLOCO CADASTROS -->
-        <div id="bloco-cadastros" style="display: none;">
-            <div class="section-label fade-in" style="animation-delay:.28s">
-                <div class="section-label-line"></div>
-                <span><i class="ph ph-users" style="font-size:10px;color:var(--accent);margin-right:4px;"></i> Cadastros</span>
-                <div class="section-label-line"></div>
-            </div>
-
-            <div class="cards-grid fade-in" style="animation-delay:.32s">
-                <a href="s_pastores.html" class="link-card" id="card-pastores" style="display:none;">
-                    <div class="card-icon">👨‍💼</div>
-                    <div class="card-texts">
-                        <div class="card-title">Pastores</div>
-                        <div class="card-obs">Obreiros, Aspirantes e Ministros</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-                <a href="s_igrejas.html" class="link-card" id="card-igrejas" style="display:none;">
-                    <div class="card-icon">⛪</div>
-                    <div class="card-texts">
-                        <div class="card-title">Igrejas</div>
-                        <div class="card-obs">Unidades Locais e vinculação de Pastores</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-                <a href="coordenadorias.html" class="link-card" id="card-coordenadorias" style="display:none;">
-                    <div class="card-icon">🏛️</div>
-                    <div class="card-texts">
-                        <div class="card-title">Coordenadorias</div>
-                        <div class="card-obs">Coordenadores e departamentos regionais</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-            </div>
-        </div>
-
-        <!-- BLOCO FINANCEIRO -->
-        <div id="bloco-financeiro" style="display: none;">
-            <div class="section-label fade-in" style="animation-delay:.36s">
-                <div class="section-label-line"></div>
-                <span><i class="ph ph-currency-dollar" style="font-size:10px;color:var(--accent);margin-right:4px;"></i> Financeiro</span>
-                <div class="section-label-line"></div>
-            </div>
-
-            <div class="cards-grid fade-in" style="animation-delay:.40s">
-                <a href="saldodeviradareg655.html" class="link-card" id="card-saldo-virada" style="display: none;">
-                    <div class="card-icon">💰</div>
-                    <div class="card-texts">
-                        <div class="card-title">Saldo de Virada</div>
-                        <div class="card-obs">Lançador financeiro de virada de mês</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-                <a href="gerenciar_saldos.html" class="link-card" id="card-gerenciar-saldos" style="display: none;">
-                    <div class="card-icon">⚙️</div>
-                    <div class="card-texts">
-                        <div class="card-title">Gerenciar Saldos</div>
-                        <div class="card-obs">Edição e exclusão de lançamentos</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-                <a href="recibosreg655.html" class="link-card" id="card-recibos" style="display: none;">
-                    <div class="card-icon">🧾</div>
-                    <div class="card-texts">
-                        <div class="card-title">Recibos</div>
-                        <div class="card-obs">Emissor de recibos e controle financeiro</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-                <a href="editarrecibos.html" class="link-card" id="card-gerenciar-recibos" style="display: none;">
-                    <div class="card-icon">📝</div>
-                    <div class="card-texts">
-                        <div class="card-title">Gerenciar Recibos</div>
-                        <div class="card-obs">Edição e visualização de recibos</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-            </div>
-        </div>
-
-        <!-- BLOCO DASHBOARDS -->
-        <div id="bloco-dashboards" style="display: none;">
-            <div class="section-label fade-in" style="animation-delay:.44s">
-                <div class="section-label-line"></div>
-                <span><i class="ph ph-chart-bar" style="font-size:10px;color:var(--accent);margin-right:4px;"></i> Dashboards</span>
-                <div class="section-label-line"></div>
-            </div>
-
-            <div class="cards-grid fade-in" style="animation-delay:.48s">
-                <a href="dashreg655.html" class="link-card" id="card-dash-recibos" style="display:none;">
-                    <div class="card-icon">📊</div>
-                    <div class="card-texts">
-                        <div class="card-title">Dash Recibos</div>
-                        <div class="card-obs">Dashboard analítico de arrecadações</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-                <a href="dashsaldo.html" class="link-card" id="card-dash-saldos" style="display:none;">
-                    <div class="card-icon">📈</div>
-                    <div class="card-texts">
-                        <div class="card-title">Dash Saldos</div>
-                        <div class="card-obs">Dashboard financeiro consolidado</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-            </div>
-        </div>
-
-        <!-- BLOCO REGIONAL -->
-        <div id="bloco-regional" style="display: none;">
-            <div class="section-label fade-in" style="animation-delay:.52s">
-                <div class="section-label-line"></div>
-                <span><i class="ph ph-calendar-dots" style="font-size:10px;color:var(--accent);margin-right:4px;"></i> Regional</span>
-                <div class="section-label-line"></div>
-            </div>
-
-            <div class="cards-grid fade-in" style="animation-delay:.56s">
-                <a href="agendareg655.html" class="link-card">
-                    <div class="card-icon">📅</div>
-                    <div class="card-texts">
-                        <div class="card-title">Agenda Regional</div>
-                        <div class="card-obs">Cronograma de eventos CED e CND</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-            </div>
-        </div>
-
-        <!-- BLOCO EVENTOS -->
-        <div id="bloco-eventos" style="display: none;">
-            <div class="section-label fade-in" style="animation-delay:.60s">
-                <div class="section-label-line"></div>
-                <span><i class="ph ph-ticket" style="font-size:10px;color:var(--accent);margin-right:4px;"></i> Eventos &amp; Presença</span>
-                <div class="section-label-line"></div>
-            </div>
-
-            <div class="cards-grid fade-in" style="animation-delay:.64s">
-                <a href="eventosreg655.html" class="link-card" id="card-gestao-eventos" style="display: none;">
-                    <div class="card-icon">⚙️</div>
-                    <div class="card-texts">
-                        <div class="card-title">Gestão de Eventos</div>
-                        <div class="card-obs">Criar e gerenciar eventos ativos</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-                <a href="presencareg655.html" class="link-card" id="card-lancar-presenca" style="display: none;">
-                    <div class="card-icon">✅</div>
-                    <div class="card-texts">
-                        <div class="card-title">Lançar Presença</div>
-                        <div class="card-obs">Registro individual nas convocações</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-                <a href="controleeventosreg655.html" class="link-card" id="card-controle-presenca" style="display: none;">
-                    <div class="card-icon">📋</div>
-                    <div class="card-texts">
-                        <div class="card-title">Controle de Presenças</div>
-                        <div class="card-obs">Painel de acompanhamento e faltas</div>
-                    </div>
-                    <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-            </div>
-        </div>
-
     </main>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
     <footer>
         <div class="footer-inner">
@@ -529,73 +351,138 @@
     </footer>
 
     <script type="module">
-        import { auth } from './firebase-config.js';
+        import { auth, db } from './firebase-config.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        const DEFAULT_LAYOUT = [
+            {
+                id: 'g-master', nome: 'Segurança & Acessos', ordem: 0,
+                itens: [
+                    { id: 'i-usuarios', tipo: 'sistema', titulo: 'Gestão de Usuários', obs: 'Controle de níveis e permissões', url: 'gestao_usuarios.html', icone: '🔐', perm: 'admin', visivel: true, ordem: 0 },
+                    { id: 'i-layout', tipo: 'sistema', titulo: 'Gerenciar Layout', obs: 'Organizar grupos e links do painel', url: 'gerenciar_layout.html', icone: '🎛️', perm: 'admin', visivel: true, ordem: 1 }
+                ]
+            },
+            {
+                id: 'g-cadastros', nome: 'Cadastros', ordem: 1,
+                itens: [
+                    { id: 'i-pastores', tipo: 'sistema', titulo: 'Pastores', obs: 'Obreiros, Aspirantes e Ministros', url: 's_pastores.html', icone: '👨‍💼', perm: 'pastores', visivel: true, ordem: 0 },
+                    { id: 'i-igrejas', tipo: 'sistema', titulo: 'Igrejas', obs: 'Unidades Locais e vinculação de Pastores', url: 's_igrejas.html', icone: '⛪', perm: 'igrejas', visivel: true, ordem: 1 },
+                    { id: 'i-coord', tipo: 'sistema', titulo: 'Coordenadorias', obs: 'Coordenadores e departamentos regionais', url: 'coordenadorias.html', icone: '🏛️', perm: 'coordenadorias', visivel: true, ordem: 2 }
+                ]
+            },
+            {
+                id: 'g-financeiro', nome: 'Financeiro', ordem: 2,
+                itens: [
+                    { id: 'i-saldo', tipo: 'sistema', titulo: 'Saldo de Virada', obs: 'Lançador financeiro de virada de mês', url: 'saldodeviradareg655.html', icone: '💰', perm: 'saldo_virada', visivel: true, ordem: 0 },
+                    { id: 'i-gersaldos', tipo: 'sistema', titulo: 'Gerenciar Saldos', obs: 'Edição e exclusão de lançamentos', url: 'gerenciar_saldos.html', icone: '⚙️', perm: 'gerenciar_saldos', visivel: true, ordem: 1 },
+                    { id: 'i-recibos', tipo: 'sistema', titulo: 'Recibos', obs: 'Emissor de recibos e controle financeiro', url: 'recibosreg655.html', icone: '🧾', perm: 'recibos', visivel: true, ordem: 2 },
+                    { id: 'i-gerrecibos', tipo: 'sistema', titulo: 'Gerenciar Recibos', obs: 'Edição e visualização de recibos', url: 'editarrecibos.html', icone: '📝', perm: 'gerenciar_recibos', visivel: true, ordem: 3 }
+                ]
+            },
+            {
+                id: 'g-dash', nome: 'Dashboards', ordem: 3,
+                itens: [
+                    { id: 'i-dashrecibos', tipo: 'sistema', titulo: 'Dash Recibos', obs: 'Dashboard analítico de arrecadações', url: 'dashreg655.html', icone: '📊', perm: 'dash_recibos', visivel: true, ordem: 0 },
+                    { id: 'i-dashsaldos', tipo: 'sistema', titulo: 'Dash Saldos', obs: 'Dashboard financeiro consolidado', url: 'dashsaldo.html', icone: '📈', perm: 'dash_saldos', visivel: true, ordem: 1 }
+                ]
+            },
+            {
+                id: 'g-regional', nome: 'Regional', ordem: 4,
+                itens: [
+                    { id: 'i-agenda', tipo: 'sistema', titulo: 'Agenda Regional', obs: 'Cronograma de eventos CED e CND', url: 'agendareg655.html', icone: '📅', perm: 'agenda', visivel: true, ordem: 0 }
+                ]
+            },
+            {
+                id: 'g-eventos', nome: 'Eventos & Presença', ordem: 5,
+                itens: [
+                    { id: 'i-gestaoev', tipo: 'sistema', titulo: 'Gestão de Eventos', obs: 'Criar e gerenciar eventos ativos', url: 'eventosreg655.html', icone: '⚙️', perm: 'gestao_eventos', visivel: true, ordem: 0 },
+                    { id: 'i-presenca', tipo: 'sistema', titulo: 'Lançar Presença', obs: 'Registro individual nas convocações', url: 'presencareg655.html', icone: '✅', perm: 'presenca', visivel: true, ordem: 1 },
+                    { id: 'i-controle', tipo: 'sistema', titulo: 'Controle de Presenças', obs: 'Painel de acompanhamento e faltas', url: 'controleeventosreg655.html', icone: '📋', perm: 'controle_presencas', visivel: true, ordem: 2 }
+                ]
+            }
+        ];
 
         const userEmail = localStorage.getItem('userEmail');
         const userName = localStorage.getItem('userName');
         let userPerms = [];
-        try {
-            userPerms = JSON.parse(localStorage.getItem('userPerms') || '[]');
-        } catch(e) {}
+        try { userPerms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
 
-        // Validação profunda com o servidor do Firebase
-        onAuthStateChanged(auth, (user) => {
-            if (!user || user.email !== userEmail) {
-                fazerLogout();
-            } else {
-                document.getElementById('top-user-name').textContent = userName ? `Olá, ${userName.split(' ')[0]}` : 'Olá!';
-                
-                if (userPerms.includes('admin')) {
-                    document.getElementById('top-user-role').textContent = 'GESTOR MASTER';
-                } else {
-                    document.getElementById('top-user-role').textContent = 'ACESSO PERSONALIZADO';
-                }
+        onAuthStateChanged(auth, async (user) => {
+            if (!user || user.email !== userEmail) { fazerLogout(); return; }
 
-                aplicarPermissoes(userPerms);
-            }
+            document.getElementById('top-user-name').textContent = userName ? `Olá, ${userName.split(' ')[0]}` : 'Olá!';
+            document.getElementById('top-user-role').textContent = userPerms.includes('admin') ? 'GESTOR MASTER' : 'ACESSO PERSONALIZADO';
+
+            let grupos = DEFAULT_LAYOUT;
+            try {
+                const snap = await getDoc(doc(db, 'configuracoes', 'layout'));
+                if (snap.exists() && snap.data().grupos?.length) grupos = snap.data().grupos;
+            } catch(e) { console.warn('Layout do Firestore indisponível, usando padrão.', e); }
+
+            renderMain(grupos, userPerms);
         });
 
-        function aplicarPermissoes(perms) {
-            const has = (p) => perms.includes('admin') || perms.includes(p);
+        function renderMain(grupos, perms) {
+            const has = (p) => !p || perms.includes('admin') || perms.includes(p);
+            const main = document.getElementById('main-content');
+            main.innerHTML = '';
 
-            // Eventos & Presença
-            if (has('presenca') || has('gestao_eventos') || has('controle_presencas')) {
-                document.getElementById('bloco-eventos').style.display = 'block';
-            }
-            if (has('presenca')) document.getElementById('card-lancar-presenca').style.display = 'flex';
-            if (has('gestao_eventos')) document.getElementById('card-gestao-eventos').style.display = 'flex';
-            if (has('controle_presencas')) document.getElementById('card-controle-presenca').style.display = 'flex';
+            const sorted = [...grupos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+            let delay = 0.25;
 
-            // Cadastros
-            if (has('pastores') || has('igrejas') || has('coordenadorias')) {
-                document.getElementById('bloco-cadastros').style.display = 'block';
-                if (has('pastores')) document.getElementById('card-pastores').style.display = 'flex';
-                if (has('igrejas')) document.getElementById('card-igrejas').style.display = 'flex';
-                if (has('coordenadorias')) document.getElementById('card-coordenadorias').style.display = 'flex';
-            }
+            sorted.forEach(grupo => {
+                const visibleItems = [...(grupo.itens || [])]
+                    .filter(it => it.visivel !== false && has(it.perm))
+                    .sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
-            // Financeiro
-            if (has('saldo_virada') || has('recibos') || has('gerenciar_saldos') || has('gerenciar_recibos')) {
-                document.getElementById('bloco-financeiro').style.display = 'block';
-                if (has('saldo_virada')) document.getElementById('card-saldo-virada').style.display = 'flex';
-                if (has('recibos')) document.getElementById('card-recibos').style.display = 'flex';
-                if (has('gerenciar_saldos')) document.getElementById('card-gerenciar-saldos').style.display = 'flex';
-                if (has('gerenciar_recibos')) document.getElementById('card-gerenciar-recibos').style.display = 'flex';
-            }
+                if (!visibleItems.length) return;
 
-            // Dashboards
-            if (has('dash_recibos') || has('dash_saldos')) {
-                document.getElementById('bloco-dashboards').style.display = 'block';
-                if (has('dash_recibos')) document.getElementById('card-dash-recibos').style.display = 'flex';
-                if (has('dash_saldos')) document.getElementById('card-dash-saldos').style.display = 'flex';
-            }
+                const isAdmin = grupo.itens.every(it => it.perm === 'admin');
 
-            // Regional
-            if (has('agenda')) document.getElementById('bloco-regional').style.display = 'block';
+                const section = document.createElement('div');
+                section.innerHTML = `
+                    <div class="section-label fade-in" style="animation-delay:${delay.toFixed(2)}s">
+                        <div class="section-label-line"></div>
+                        <span>${escHtml(grupo.nome)}</span>
+                        <div class="section-label-line"></div>
+                    </div>
+                    <div class="cards-grid fade-in" style="animation-delay:${(delay + 0.04).toFixed(2)}s">
+                        ${visibleItems.map(item => renderCard(item, isAdmin)).join('')}
+                    </div>
+                `;
+                main.appendChild(section);
+                delay += 0.08;
+            });
+        }
 
-            // Master
-            if (perms.includes('admin')) document.getElementById('area-master').style.display = 'block';
+        function renderCard(item, adminGroup) {
+            const isExterno = item.tipo === 'externo';
+            const target = isExterno ? ' target="_blank" rel="noopener noreferrer"' : '';
+            const borderStyle = adminGroup
+                ? 'border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);'
+                : '';
+            const iconStyle = adminGroup
+                ? 'color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.1);'
+                : '';
+            const titleStyle = adminGroup ? 'color: #fca5a5;' : '';
+            return `
+                <a href="${escAttr(item.url || '#')}" class="link-card" style="${borderStyle}"${target}>
+                    <div class="card-icon" style="${iconStyle}">${escHtml(item.icone || '🔗')}</div>
+                    <div class="card-texts">
+                        <div class="card-title" style="${titleStyle}">${escHtml(item.titulo)}</div>
+                        <div class="card-obs">${escHtml(item.obs || '')}</div>
+                    </div>
+                    <i class="ph ph-arrow-up-right card-arrow"></i>
+                </a>
+            `;
+        }
+
+        function escHtml(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+        function escAttr(s) {
+            return String(s || '').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
         }
 
         window.fazerLogout = async () => {
