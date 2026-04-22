@@ -7,28 +7,39 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+            body { font-family: 'Inter', sans-serif; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+<body class="bg-slate-50 min-h-screen">
 
-    <div class="max-w-4xl mx-auto space-y-6">
-        <!-- Cabeçalho -->
-        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-4 relative w-full md:w-auto">
-                <a href="index.html" class="absolute left-0 top-1/2 -translate-y-1/2 md:static md:translate-y-0 text-slate-400 hover:text-blue-600 transition-colors font-bold uppercase tracking-wider text-[10px]">
-                    ← Voltar
+    <!-- CABEÇALHO COMPACTO -->
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-5xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
                 </a>
-                <img src="logo.png" alt="Logo da Região" class="h-12 w-auto object-contain mx-auto md:mx-0" onerror="this.src='https://via.placeholder.com/150x80?text=LOGO'">
-                <div class="hidden md:block">
-                    <h1 class="text-xl font-black text-slate-800 uppercase tracking-tighter">Gestão de Eventos</h1>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Controle para Registro de Presenças</p>
-                </div>
-            </div>
-            <div class="md:hidden text-center">
-                <h1 class="text-lg font-black text-slate-800 uppercase tracking-tighter">Gestão de Eventos</h1>
+                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Painel Admin
+                </a>
             </div>
         </div>
+        <div class="header-gradient py-2 px-4">
+            <div class="max-w-5xl mx-auto">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase">Gestão de Eventos</h1>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-4xl mx-auto space-y-6 p-4 md:p-8">
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Formulário -->
@@ -203,5 +214,10 @@
         // Inicializa
         carregarEventos();
     </script>
+    </div> <!-- fecha max-w-4xl -->
+
+    <footer class="py-4 text-center text-slate-400 text-[10px]">
+        &copy; 2024 Região 655 - IEQ Londrina/PR
+    </footer>
 </body>
 </html>

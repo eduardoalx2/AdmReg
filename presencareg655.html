@@ -8,6 +8,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
         .loader {
             border-top-color: #3498db;
             animation: spinner 1.5s linear infinite;
@@ -33,21 +34,36 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-slate-50 min-h-screen">
 
+    <!-- CABEÇALHO COMPACTO -->
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-5xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Painel Admin
+                </a>
+            </div>
+        </div>
+        <div class="header-gradient py-2 px-4">
+            <div class="max-w-5xl mx-auto">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase">Lançar Presença</h1>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-col items-center justify-center p-4 py-8">
     <div class="bg-white p-6 md:p-10 rounded-[2rem] shadow-2xl w-full max-w-lg border border-slate-100">
-        <!-- Logo do Topo -->
-        <div class="flex justify-center mb-6 relative">
-            <a href="index.html" class="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
-                ← Voltar
-            </a>
-            <img src="logo.png" alt="Logo da Região" class="h-20 w-auto object-contain" onerror="this.src='https://via.placeholder.com/150x80?text=LOGO+REGIAO'">
-        </div>
-
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Registro de Presença</h1>
-            <div class="h-1 w-12 bg-blue-600 mx-auto mt-2 rounded-full"></div>
-        </div>
 
         <form id="presenceForm" class="space-y-5">
             <!-- Nome do Pastor(a) / Obreiro(a) -->
@@ -278,5 +294,10 @@
             feedback.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
         }
     </script>
+    </div> <!-- fecha flex container -->
+
+    <footer class="py-4 text-center text-slate-400 text-[10px]">
+        &copy; 2024 Região 655 - IEQ Londrina/PR
+    </footer>
 </body>
 </html>
