@@ -92,7 +92,15 @@
                 </div>
                 <form id="form-usuario" class="p-6 space-y-4">
                     <input type="hidden" id="usuario-id">
-                    
+
+                    <!-- Importar de Pastor (somente novo usuário) -->
+                    <div id="bloco-importar-pastor">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Importar de Pastor <span class="font-normal text-slate-400 normal-case">(opcional)</span></label>
+                        <select id="select-pastor-importar" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                            <option value="">— Preencher manualmente —</option>
+                        </select>
+                    </div>
+
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nome Completo</label>
                         <input type="text" id="usuario-nome" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-bold text-slate-800" placeholder="Nome do usuário">
@@ -196,11 +204,14 @@
             document.getElementById('usuario-id').value = '';
             document.querySelectorAll('input[name="perm"]').forEach(cb => cb.checked = false);
             document.getElementById('modal-titulo').innerHTML = '<i data-lucide="user-plus" class="w-4 h-4"></i> Novo Usuário';
-            // Exibe campos de senha para novos usuários
             document.getElementById('bloco-senha').classList.remove('hidden');
             document.getElementById('bloco-confirmar-senha').classList.remove('hidden');
             document.getElementById('bloco-reset-senha').classList.add('hidden');
             document.getElementById('usuario-email').readOnly = false;
+            // Exibe e popula o seletor de pastor
+            document.getElementById('bloco-importar-pastor').classList.remove('hidden');
+            document.getElementById('select-pastor-importar').value = '';
+            if (window.popularPastorSelect) window.popularPastorSelect();
             document.getElementById('modal-usuario').classList.remove('hidden');
             if (window.lucide) window.lucide.createIcons();
         };
@@ -232,6 +243,43 @@
 
         const tabela = document.getElementById('tabela-usuarios');
         const form = document.getElementById('form-usuario');
+
+        // Pastores para importação no modal
+        let pastoresList = [];
+        async function carregarPastores() {
+            try {
+                const snap = await getDocs(collection(db, "pastores"));
+                pastoresList = [];
+                snap.forEach(d => pastoresList.push({ id: d.id, ...d.data() }));
+                pastoresList.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+            } catch(e) { console.error("Erro ao carregar pastores:", e); }
+        }
+        carregarPastores();
+
+        window.popularPastorSelect = () => {
+            const sel = document.getElementById('select-pastor-importar');
+            sel.innerHTML = '<option value="">— Preencher manualmente —</option>';
+            const emailsUsados = new Set(usuariosList.map(u => (u.email || '').toLowerCase()));
+            const disponiveis = pastoresList.filter(p => !emailsUsados.has((p.email || '').toLowerCase()));
+            disponiveis.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.nome || p.id;
+                sel.appendChild(opt);
+            });
+        };
+
+        document.getElementById('select-pastor-importar').addEventListener('change', function() {
+            if (!this.value) return;
+            const pastor = pastoresList.find(p => p.id === this.value);
+            if (!pastor) return;
+            document.getElementById('usuario-nome').value = pastor.nome || '';
+            document.getElementById('usuario-email').value = pastor.email || '';
+            const cpf = (pastor.cpf || '').replace(/\D/g, '');
+            const senha = cpf.slice(0, 6);
+            document.getElementById('usuario-senha').value = senha;
+            document.getElementById('usuario-confirmar-senha').value = senha;
+        });
 
         // Carregar igrejas no select
         async function carregarIgrejasSelect() {
@@ -332,6 +380,9 @@
         window.editarUsuario = (id) => {
             const u = usuariosList.find(i => i.id === id);
             if(!u) return;
+
+            // Edição não usa o seletor de pastor
+            document.getElementById('bloco-importar-pastor').classList.add('hidden');
 
             document.getElementById('usuario-id').value = u.id;
             document.getElementById('usuario-nome').value = u.nome;
