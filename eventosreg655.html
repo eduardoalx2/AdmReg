@@ -60,6 +60,7 @@
                             <option value="Todos" selected>TODOS</option>
                             <option value="Titulares">SOMENTE TITULARES</option>
                             <option value="Coordenadores">SOMENTE COORDENADORES</option>
+                            <option value="TitularesECoordenadores">TITULARES E COORDENADORES</option>
                         </select>
                     </div>
                     <div>
@@ -138,7 +139,7 @@
                     const dataFormatada = ev.data.split('-').reverse().join('/');
                     const badgeClass = ev.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500';
 
-                    const publicoCores = { Todos: 'bg-slate-100 text-slate-600', Titulares: 'bg-blue-100 text-blue-700', Coordenadores: 'bg-purple-100 text-purple-700' };
+                    const publicoCores = { Todos: 'bg-slate-100 text-slate-600', Titulares: 'bg-blue-100 text-blue-700', Coordenadores: 'bg-purple-100 text-purple-700', TitularesECoordenadores: 'bg-indigo-100 text-indigo-700' };
                     const pubCor = publicoCores[ev.publico] || publicoCores.Todos;
                     tr.innerHTML = `
                         <td class="py-3 px-2 font-bold text-slate-700 text-xs uppercase">${ev.nome}</td>
