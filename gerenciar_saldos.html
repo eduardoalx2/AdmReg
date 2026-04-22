@@ -315,18 +315,26 @@
                 const selectPeriodo = document.getElementById('filtro-periodo');
                 const valorAtual = selectPeriodo.value;
                 
-                const meses = { 'janeiro':0,'fevereiro':1,'março':2,'abril':3,'maio':4,'junho':5,'julho':6,'agosto':7,'setembro':8,'outubro':9,'novembro':10,'dezembro':11 };
+                const mesesNum = { 'janeiro':1,'fevereiro':2,'março':3,'abril':4,'maio':5,'junho':6,'julho':7,'agosto':8,'setembro':9,'outubro':10,'novembro':11,'dezembro':12 };
                 const parsePeriodo = (p) => {
                     const partes = (p || '').split('➔');
                     const parte = (partes[1] || partes[0]).trim().toLowerCase();
                     const [nomeMes, ano] = parte.split('/');
                     const anoFull = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
-                    return new Date(anoFull, meses[nomeMes.trim()] ?? 0);
+                    return new Date(anoFull, (mesesNum[nomeMes.trim()] ?? 1) - 1);
+                };
+                const formatarPeriodo = (p) => {
+                    const partes = (p || '').split('➔');
+                    const parte = (partes[1] || partes[0]).trim().toLowerCase();
+                    const [nomeMes, ano] = parte.split('/');
+                    const mm = String(mesesNum[nomeMes.trim()] ?? 0).padStart(2, '0');
+                    const anoFull = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
+                    return mm + '/' + anoFull;
                 };
                 const periodosArr = Array.from(periodosSet).sort((a, b) => parsePeriodo(b) - parsePeriodo(a));
                 let optionsHTML = '<option value="">Todos os períodos</option>';
                 periodosArr.forEach(p => {
-                    optionsHTML += `<option value="${p}">${p}</option>`;
+                    optionsHTML += '<option value="' + p + '">' + formatarPeriodo(p) + '</option>';
                 });
                 selectPeriodo.innerHTML = optionsHTML;
                 selectPeriodo.value = valorAtual; // mantém filtro se houver
