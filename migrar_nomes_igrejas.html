@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração de Nomes de Igrejas - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #0f172a; }
+    </style>
+</head>
+<body class="min-h-screen p-6">
+
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-slate-800 rounded-2xl p-6 mb-6 border border-slate-700">
+            <h1 class="text-2xl font-bold text-white mb-1">Migração de Nomes de Igrejas</h1>
+            <p class="text-slate-400 text-sm">Corrige os nomes das igrejas em todas as coleções do Firebase</p>
+        </div>
+
+        <!-- Igrejas a corrigir -->
+        <div class="bg-slate-800 rounded-2xl p-6 mb-6 border border-slate-700">
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Correções programadas</h2>
+            <div class="space-y-3">
+                <div class="bg-slate-700 rounded-xl p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-lg">63236</span>
+                        <div>
+                            <p class="text-red-400 text-sm line-through" id="old-63236">Carregando...</p>
+                            <p class="text-green-400 text-sm font-semibold">→ IEQ COLÚMBIA</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-700 rounded-xl p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-lg">63288</span>
+                        <div>
+                            <p class="text-red-400 text-sm line-through" id="old-63288">Carregando...</p>
+                            <p class="text-green-400 text-sm font-semibold">→ IEQ CARNASCIALLI</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumo do que será alterado -->
+        <div class="bg-slate-800 rounded-2xl p-6 mb-6 border border-slate-700" id="resumo" style="display:none">
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">O que será alterado</h2>
+            <div class="grid grid-cols-2 gap-3" id="resumo-grid"></div>
+        </div>
+
+        <!-- Botões -->
+        <div class="flex gap-3 mb-6">
+            <button id="btn-analisar" onclick="analisar()"
+                class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition">
+                1. Analisar banco de dados
+            </button>
+            <button id="btn-migrar" onclick="migrar()" disabled
+                class="flex-1 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition">
+                2. Executar migração
+            </button>
+        </div>
+
+        <!-- Log -->
+        <div class="bg-slate-900 rounded-2xl p-4 border border-slate-700 min-h-40">
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-3">Log</p>
+            <div id="log" class="space-y-1 text-sm font-mono"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBTjxxbYqsSVPN_BhsA__gMtTseSn9_Tr0",
+            authDomain: "regiao655-admin.firebaseapp.com",
+            projectId: "regiao655-admin",
+            storageBucket: "regiao655-admin.firebasestorage.app",
+            messagingSenderId: "739836894724",
+            appId: "1:739836894724:web:b8580a4984c1ba6e781f51"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const CORRECOES = {
+            "63236": { novoNome: "IEQ COLÚMBIA" },
+            "63288": { novoNome: "IEQ CARNASCIALLI" }
+        };
+
+        let dadosAnalisados = null;
+
+        function log(msg, tipo = "info") {
+            const el = document.getElementById("log");
+            const cores = { info: "text-slate-300", ok: "text-green-400", erro: "text-red-400", aviso: "text-yellow-400" };
+            el.innerHTML += `<p class="${cores[tipo] || 'text-slate-300'}">${msg}</p>`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        async function carregarNomesAtuais() {
+            try {
+                const snap = await getDocs(collection(db, "igrejas"));
+                snap.forEach(d => {
+                    const data = d.data();
+                    const cod = String(data.codigo);
+                    if (CORRECOES[cod]) {
+                        CORRECOES[cod].nomeAtual = data.nome;
+                        CORRECOES[cod].docId = d.id;
+                        const el = document.getElementById(`old-${cod}`);
+                        if (el) el.textContent = data.nome || "(sem nome)";
+                    }
+                });
+            } catch (e) {
+                log("Erro ao carregar nomes atuais: " + e.message, "erro");
+            }
+        }
+
+        window.analisar = async function() {
+            document.getElementById("btn-analisar").disabled = true;
+            document.getElementById("log").innerHTML = "";
+            log("Iniciando análise...");
+
+            const resultado = {
+                igrejas: [],
+                presencas: [],
+                recibos: [],
+                saldos: []
+            };
+
+            try {
+                // 1. Igrejas
+                log("Verificando coleção: igrejas...");
+                const igrejasSnap = await getDocs(collection(db, "igrejas"));
+                igrejasSnap.forEach(d => {
+                    const data = d.data();
+                    const cod = String(data.codigo);
+                    if (CORRECOES[cod]) {
+                        resultado.igrejas.push({ id: d.id, cod, nomeAtual: data.nome, novoNome: CORRECOES[cod].novoNome });
+                        log(`  → Igreja ${cod}: "${data.nome}" será "${CORRECOES[cod].novoNome}"`, "aviso");
+                    }
+                });
+
+                // 2. Presenças
+                log("Verificando coleção: presencas...");
+                const presencasSnap = await getDocs(collection(db, "presencas"));
+                presencasSnap.forEach(d => {
+                    const data = d.data();
+                    const igrejaStr = data.igreja || "";
+                    for (const [cod, corr] of Object.entries(CORRECOES)) {
+                        if (igrejaStr.includes(cod) && !igrejaStr.includes(corr.novoNome)) {
+                            resultado.presencas.push({ id: d.id, valorAtual: igrejaStr, cod });
+                        }
+                    }
+                });
+                log(`  → ${resultado.presencas.length} registros de presença para atualizar`, resultado.presencas.length > 0 ? "aviso" : "ok");
+
+                // 3. Recibos
+                log("Verificando coleção: recibos...");
+                const recibosSnap = await getDocs(collection(db, "recibos"));
+                recibosSnap.forEach(d => {
+                    const data = d.data();
+                    const cod = String(data.igrejaCodigo);
+                    if (CORRECOES[cod] && data.igrejaNome !== CORRECOES[cod].novoNome) {
+                        resultado.recibos.push({ id: d.id, cod, nomeAtual: data.igrejaNome });
+                    }
+                });
+                log(`  → ${resultado.recibos.length} recibos para atualizar`, resultado.recibos.length > 0 ? "aviso" : "ok");
+
+                // 4. Saldos virada
+                log("Verificando coleção: saldos_virada...");
+                const saldosSnap = await getDocs(collection(db, "saldos_virada"));
+                saldosSnap.forEach(d => {
+                    const data = d.data();
+                    const cod = String(data.igrejaCodigo);
+                    if (CORRECOES[cod]) {
+                        const nomeAtual = data.igrejaNome || data.igreja || "";
+                        if (nomeAtual && !nomeAtual.includes(CORRECOES[cod].novoNome)) {
+                            resultado.saldos.push({ id: d.id, cod, nomeAtual });
+                        }
+                    }
+                });
+                log(`  → ${resultado.saldos.length} saldos de virada para atualizar`, resultado.saldos.length > 0 ? "aviso" : "ok");
+
+                dadosAnalisados = resultado;
+
+                // Resumo visual
+                const total = resultado.igrejas.length + resultado.presencas.length + resultado.recibos.length + resultado.saldos.length;
+                const grid = document.getElementById("resumo-grid");
+                grid.innerHTML = `
+                    <div class="bg-slate-700 rounded-xl p-4 text-center">
+                        <p class="text-3xl font-bold text-white">${resultado.igrejas.length}</p>
+                        <p class="text-slate-400 text-xs mt-1">Igrejas</p>
+                    </div>
+                    <div class="bg-slate-700 rounded-xl p-4 text-center">
+                        <p class="text-3xl font-bold text-white">${resultado.presencas.length}</p>
+                        <p class="text-slate-400 text-xs mt-1">Presenças</p>
+                    </div>
+                    <div class="bg-slate-700 rounded-xl p-4 text-center">
+                        <p class="text-3xl font-bold text-white">${resultado.recibos.length}</p>
+                        <p class="text-slate-400 text-xs mt-1">Recibos</p>
+                    </div>
+                    <div class="bg-slate-700 rounded-xl p-4 text-center">
+                        <p class="text-3xl font-bold text-white">${resultado.saldos.length}</p>
+                        <p class="text-slate-400 text-xs mt-1">Saldos de Virada</p>
+                    </div>
+                `;
+                document.getElementById("resumo").style.display = "block";
+
+                log(`✓ Análise concluída. Total de ${total} documentos para atualizar.`, "ok");
+                if (total > 0) {
+                    document.getElementById("btn-migrar").disabled = false;
+                    log("Clique em 'Executar migração' para aplicar as correções.", "aviso");
+                } else {
+                    log("Nenhum documento precisa ser atualizado.", "ok");
+                }
+
+            } catch (e) {
+                log("Erro durante análise: " + e.message, "erro");
+            }
+
+            document.getElementById("btn-analisar").disabled = false;
+        };
+
+        window.migrar = async function() {
+            if (!dadosAnalisados) return;
+            document.getElementById("btn-migrar").disabled = true;
+            document.getElementById("btn-analisar").disabled = true;
+            log("--- Iniciando migração ---", "aviso");
+
+            let ok = 0, erros = 0;
+
+            try {
+                // 1. Igrejas
+                for (const ig of dadosAnalisados.igrejas) {
+                    try {
+                        await updateDoc(doc(db, "igrejas", ig.id), { nome: ig.novoNome });
+                        log(`✓ Igreja ${ig.cod}: "${ig.nomeAtual}" → "${ig.novoNome}"`, "ok");
+                        ok++;
+                    } catch (e) { log(`✗ Igreja ${ig.cod}: ${e.message}`, "erro"); erros++; }
+                }
+
+                // 2. Presenças
+                for (const p of dadosAnalisados.presencas) {
+                    try {
+                        const corr = CORRECOES[p.cod];
+                        const novoValor = p.valorAtual.replace(/(\d{4,5}\s*-\s*)(.+)/, (_, prefix, nome) => {
+                            // Troca o nome depois do " - " pelo novo nome
+                            return prefix + corr.novoNome;
+                        });
+                        await updateDoc(doc(db, "presencas", p.id), { igreja: novoValor });
+                        ok++;
+                    } catch (e) { log(`✗ Presença ${p.id}: ${e.message}`, "erro"); erros++; }
+                }
+                if (dadosAnalisados.presencas.length > 0)
+                    log(`✓ ${dadosAnalisados.presencas.length} presenças atualizadas`, "ok");
+
+                // 3. Recibos
+                for (const r of dadosAnalisados.recibos) {
+                    try {
+                        const corr = CORRECOES[r.cod];
+                        const novaFormatada = `${r.cod} - ${corr.novoNome}`;
+                        await updateDoc(doc(db, "recibos", r.id), {
+                            igrejaNome: corr.novoNome,
+                            igrejaFormatada: novaFormatada
+                        });
+                        ok++;
+                    } catch (e) { log(`✗ Recibo ${r.id}: ${e.message}`, "erro"); erros++; }
+                }
+                if (dadosAnalisados.recibos.length > 0)
+                    log(`✓ ${dadosAnalisados.recibos.length} recibos atualizados`, "ok");
+
+                // 4. Saldos virada
+                for (const s of dadosAnalisados.saldos) {
+                    try {
+                        const corr = CORRECOES[s.cod];
+                        const novaFormatada = `${s.cod} - ${corr.novoNome}`;
+                        await updateDoc(doc(db, "saldos_virada", s.id), {
+                            igrejaNome: corr.novoNome,
+                            igrejaFormatada: novaFormatada
+                        });
+                        ok++;
+                    } catch (e) { log(`✗ Saldo ${s.id}: ${e.message}`, "erro"); erros++; }
+                }
+                if (dadosAnalisados.saldos.length > 0)
+                    log(`✓ ${dadosAnalisados.saldos.length} saldos de virada atualizados`, "ok");
+
+                log(`--- Migração concluída: ${ok} atualizados, ${erros} erros ---`, erros > 0 ? "aviso" : "ok");
+
+            } catch (e) {
+                log("Erro crítico durante migração: " + e.message, "erro");
+                document.getElementById("btn-migrar").disabled = false;
+                document.getElementById("btn-analisar").disabled = false;
+            }
+        };
+
+        // Carrega nomes atuais ao iniciar
+        carregarNomesAtuais();
+    </script>
+</body>
+</html>
