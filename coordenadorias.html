@@ -257,7 +257,14 @@
         window.excluirCoord = async (id) => {
             if (confirm("Tem certeza que deseja excluir esta coordenadoria?")) {
                 try {
+                    const c = coordList.find(x => x.id === id);
                     await deleteDoc(doc(db, "coordenadorias", id));
+                    if (c?.coordenadorId) {
+                        const ainda = coordList.filter(x => x.coordenadorId === c.coordenadorId && x.id !== id);
+                        if (ainda.length === 0) {
+                            await updateDoc(doc(db, "pastores", c.coordenadorId), { coordenador: false });
+                        }
+                    }
                     carregarCoordenadorias();
                 } catch (e) {
                     alert("Erro ao excluir!");
@@ -292,12 +299,28 @@
 
             try {
                 const id = document.getElementById('coord-id').value;
+                const oldCoordId = id ? coordList.find(x => x.id === id)?.coordenadorId : null;
+
                 if (id) {
                     await updateDoc(doc(db, "coordenadorias", id), payload);
                 } else {
                     payload.createdAt = serverTimestamp();
                     await addDoc(collection(db, "coordenadorias"), payload);
                 }
+
+                // Marca novo coordenador
+                if (coordenadorId) {
+                    await updateDoc(doc(db, "pastores", coordenadorId), { coordenador: true });
+                }
+
+                // Se trocou o coordenador, verifica se o antigo ainda coordena algo
+                if (oldCoordId && oldCoordId !== coordenadorId) {
+                    const ainda = coordList.filter(x => x.coordenadorId === oldCoordId && x.id !== id);
+                    if (ainda.length === 0) {
+                        await updateDoc(doc(db, "pastores", oldCoordId), { coordenador: false });
+                    }
+                }
+
                 window.fecharModal();
                 carregarCoordenadorias();
             } catch (err) {
