@@ -13,6 +13,8 @@
         const userEmail = localStorage.getItem('userEmail');
         const userName = localStorage.getItem('userName');
         const userIgreja = localStorage.getItem('userIgreja');
+        const _perms = JSON.parse(localStorage.getItem('userPerms') || '[]');
+        const isAdminUser = _perms.includes('admin');
         if (!userEmail) window.location.replace('login.html');
     </script>
     <style>
@@ -52,6 +54,17 @@
             </div>
         </div>
     </header>
+
+    <!-- BARRA ADMIN (visível apenas para admin) -->
+    <div id="barraAdmin" class="hidden bg-amber-50 border-b-2 border-amber-300 px-4 py-2.5 z-30">
+        <div class="max-w-6xl mx-auto flex items-center gap-3">
+            <span class="text-[10px] font-black text-amber-700 uppercase tracking-widest flex-shrink-0">👁️ Visualizando:</span>
+            <select id="selectIgreja" class="flex-1 bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400 max-w-md">
+                <option value="">— Selecione uma Igreja —</option>
+            </select>
+            <a href="index.html" class="text-[11px] text-amber-700 hover:text-amber-900 font-black uppercase tracking-wider flex-shrink-0">← Voltar ao Admin</a>
+        </div>
+    </div>
 
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-8 space-y-6">
         
@@ -226,8 +239,10 @@
 
         lucide.createIcons();
 
-        document.getElementById('lblIgreja').textContent = userIgreja || 'Igreja não vinculada';
-        document.getElementById('lblPastor').textContent = userName ? userName.split(' ')[0] : 'Pastor';
+        let igrejaAtiva = isAdminUser ? '' : (userIgreja || '');
+
+        document.getElementById('lblIgreja').textContent = igrejaAtiva || (isAdminUser ? 'Selecione uma igreja' : 'Igreja não vinculada');
+        document.getElementById('lblPastor').textContent = userName ? userName.split(' ')[0] : (isAdminUser ? 'Admin' : 'Pastor');
 
         let globalRecibos = [];
         let configPainel = {};
@@ -262,10 +277,15 @@
         }
 
         async function inicializarPainel() {
-            if (!userIgreja) {
-                document.getElementById('boxStatusMes').innerHTML = `<p class="text-red-500 font-bold text-sm">Usuário sem igreja vinculada. Contate a secretaria.</p>`;
+            if (!igrejaAtiva) {
+                const msg = isAdminUser
+                    ? '<p class="text-amber-600 font-bold text-sm">Selecione uma igreja na barra acima para visualizar o painel.</p>'
+                    : '<p class="text-red-500 font-bold text-sm">Usuário sem igreja vinculada. Contate a secretaria.</p>';
+                document.getElementById('boxStatusMes').innerHTML = msg;
                 return;
             }
+
+            document.getElementById('boxStatusMes').innerHTML = `<div class="animate-pulse flex flex-col items-center"><div class="h-12 w-12 bg-slate-200 rounded-full mb-3"></div><div class="h-4 bg-slate-200 rounded w-2/3"></div></div>`;
 
             try {
                 // 1. Carregar Configurações Globais
@@ -274,17 +294,17 @@
 
                 renderAvisosELinks();
 
-                // 2. Carregar a Igreja do Pastor (para pegar a quantidade de seguros)
-                const igSnap = await getDocs(query(collection(db, "igrejas"), where("nome", "==", userIgreja)));
+                // 2. Carregar a Igreja (para pegar a quantidade de seguros)
+                const igSnap = await getDocs(query(collection(db, "igrejas"), where("nome", "==", igrejaAtiva)));
                 if(!igSnap.empty) igrejaObj = igSnap.docs[0].data();
 
-                // 3. Buscar todos os registros e filtrar client-side (garante match mesmo com variações de campo)
+                // 3. Buscar todos os registros e filtrar client-side
                 const [saldosSnap, recibosSnap] = await Promise.all([
                     getDocs(collection(db, "saldos_virada")),
                     getDocs(collection(db, "recibos"))
                 ]);
 
-                const lower = userIgreja.toLowerCase();
+                const lower = igrejaAtiva.toLowerCase();
                 function matchIgreja(data) {
                     if ((data.igrejaNome || '').toLowerCase() === lower) return true;
                     const parts = (data.igrejaFormatada || '').split(' - ');
@@ -300,13 +320,9 @@
                 const parseEmissao = s => { const p = (s || '').split('/'); return p.length === 3 ? new Date(+p[2], +p[1]-1, +p[0]).getTime() : 0; };
                 globalRecibos.sort((a, b) => parseEmissao(b.dataEmissao) - parseEmissao(a.dataEmissao));
 
-                // Termômetro recebe todos os registros para análise histórica
                 calcularTermometro(todosSaldos, globalRecibos);
-
-                // Listas exibem apenas os 6 mais recentes
                 renderListas(todosSaldos.slice(0, 6), globalRecibos.slice(0, 6));
 
-                // Presenças da igreja do pastor
                 const presencasSnap = await getDocs(collection(db, "presencas"));
                 const presencasDaIgreja = [];
                 presencasSnap.forEach(d => {
@@ -322,6 +338,31 @@
             } catch(e) {
                 console.error("Erro ao inicializar:", e);
                 document.getElementById('boxStatusMes').innerHTML = `<p class="text-red-500 font-bold text-sm">Erro de comunicação com o servidor.</p>`;
+            }
+        }
+
+        async function inicializarBarraAdmin() {
+            if (!isAdminUser) return;
+            document.getElementById('barraAdmin').classList.remove('hidden');
+            try {
+                const igrejasSnap = await getDocs(collection(db, "igrejas"));
+                const nomes = [];
+                igrejasSnap.forEach(d => { const n = d.data().nome; if (n) nomes.push(n); });
+                nomes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                const select = document.getElementById('selectIgreja');
+                nomes.forEach(nome => {
+                    const opt = document.createElement('option');
+                    opt.value = nome;
+                    opt.textContent = nome;
+                    select.appendChild(opt);
+                });
+                select.addEventListener('change', () => {
+                    igrejaAtiva = select.value;
+                    document.getElementById('lblIgreja').textContent = igrejaAtiva || 'Selecione uma igreja';
+                    inicializarPainel();
+                });
+            } catch(e) {
+                console.error("Erro ao carregar igrejas:", e);
             }
         }
 
@@ -722,7 +763,7 @@
         // Botão Falar com Secretaria
         window.abrirSuporte = () => {
             const num = "554333562718"; // Secretaria R655
-            const txt = `Olá! Sou o pastor da igreja ${userIgreja}, e preciso de ajuda no Painel do Pastor.`;
+            const txt = `Olá! Sou o pastor da igreja ${igrejaAtiva}, e preciso de ajuda no Painel do Pastor.`;
             window.open(`https://wa.me/${num}?text=${encodeURIComponent(txt)}`, '_blank');
         };
 
@@ -733,6 +774,7 @@
         };
 
         // Inicia tudo
+        await inicializarBarraAdmin();
         inicializarPainel();
     </script>
 </body>
