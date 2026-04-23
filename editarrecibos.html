@@ -90,8 +90,10 @@
         <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar por Igreja</label>
-                    <input type="text" id="filtro-igreja" oninput="aplicarFiltros()" placeholder="Nome da igreja..." class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Igreja</label>
+                    <select id="filtro-igreja" onchange="aplicarFiltros()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        <option value="">Todas as Igrejas</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Referência</label>
@@ -392,11 +394,13 @@
                 const querySnapshot = await getDocs(collection(db, "recibos"));
                 recibosList = [];
                 periodosSet.clear();
+                const igrejasSet = new Set();
                 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     recibosList.push({ id: doc.id, ...data });
                     if(data.referenceDate) periodosSet.add(data.referenceDate);
+                    if(data.igrejaFormatada) igrejasSet.add(data.igrejaFormatada);
                 });
 
                 const selectPeriodo = document.getElementById('filtro-periodo');
@@ -414,8 +418,28 @@
                 selectPeriodo.innerHTML = optionsHTML;
                 selectPeriodo.value = valorAtual;
 
+                const selectIgreja = document.getElementById('filtro-igreja');
+                const valorAtualIgreja = selectIgreja.value;
+                
+                const igrejasArr = Array.from(igrejasSet).sort((a,b) => {
+                    const codA = parseInt(a.split(' - ')[0]) || 0;
+                    const codB = parseInt(b.split(' - ')[0]) || 0;
+                    if (codA && codB) return codA - codB;
+                    return a.localeCompare(b);
+                });
+                let optionsIgrejaHTML = '<option value="">Todas as Igrejas</option>';
+                igrejasArr.forEach(ig => {
+                    optionsIgrejaHTML += `<option value="${ig}">${ig}</option>`;
+                });
+                selectIgreja.innerHTML = optionsIgrejaHTML;
+                selectIgreja.value = valorAtualIgreja;
+
                 const _uj = localStorage.getItem('userIgreja');
-                if (_uj) { const el = document.getElementById('filtro-igreja'); el.value = _uj; el.readOnly = true; }
+                if (_uj) { 
+                    const matchOpt = Array.from(selectIgreja.options).find(o => o.value.toLowerCase().includes(_uj.toLowerCase()));
+                    if (matchOpt) selectIgreja.value = matchOpt.value;
+                    selectIgreja.disabled = true; 
+                }
                 renderizarTabela();
             } catch (error) {
                 console.error("Erro ao carregar recibos:", error);
@@ -543,20 +567,26 @@
         };
 
         function renderizarTabela() {
-            const filtroIgreja = document.getElementById('filtro-igreja').value.toLowerCase();
+            const filtroIgreja = document.getElementById('filtro-igreja').value;
             const filtroPeriodo = document.getElementById('filtro-periodo').value;
             const filtroOrdem = document.getElementById('filtro-ordem').value;
 
             const filtrados = recibosList.filter(r => {
-                const matchIgreja = !filtroIgreja || (r.igrejaFormatada || '').toLowerCase().includes(filtroIgreja);
+                const matchIgreja = !filtroIgreja || (r.igrejaFormatada === filtroIgreja);
                 const matchPeriodo = !filtroPeriodo || r.referenceDate === filtroPeriodo;
                 return matchIgreja && matchPeriodo;
             });
             
             filtrados.sort((a,b) => {
                 if (filtroOrdem === 'recentes') {
-                    const dateA = a.createdAt?.seconds || 0;
-                    const dateB = b.createdAt?.seconds || 0;
+                    const parseData = (s) => {
+                        if (!s) return 0;
+                        const parts = s.split('/');
+                        if (parts.length !== 3) return 0;
+                        return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+                    };
+                    const dateA = parseData(a.dataEmissao) || (a.createdAt?.seconds * 1000) || 0;
+                    const dateB = parseData(b.dataEmissao) || (b.createdAt?.seconds * 1000) || 0;
                     return dateB - dateA;
                 } else if (filtroOrdem === 'maior_valor') {
                     return (b.total || 0) - (a.total || 0);
