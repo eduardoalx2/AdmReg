@@ -300,6 +300,27 @@
 
         let saldosList = [];
         let periodosSet = new Set();
+
+        function labelToChave(label) {
+            const meses = {
+                'janeiro':'01','fevereiro':'02','março':'03','abril':'04',
+                'maio':'05','junho':'06','julho':'07','agosto':'08',
+                'setembro':'09','outubro':'10','novembro':'11','dezembro':'12'
+            };
+            const partes = (label || '').split('➔');
+            const dest = (partes[partes.length - 1] || partes[0]).trim();
+            const [mes, ano] = dest.split('/');
+            const mm = meses[(mes || '').toLowerCase().trim()];
+            const yyyy = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
+            return (mm && !isNaN(yyyy)) ? `${yyyy}-${mm}` : null;
+        }
+
+        function chaveParaLabel(chave) {
+            if (!chave || !chave.includes('-')) return chave;
+            const nomes = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const [yyyy, mm] = chave.split('-');
+            return `${nomes[parseInt(mm)] || mm}/${yyyy}`;
+        }
         
         if (window.lucide) lucide.createIcons();
         
@@ -317,35 +338,19 @@
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     saldosList.push({ id: doc.id, ...data });
-                    if(data.periodo) periodosSet.add(data.periodo);
+                    const chave = data.periodoChave || labelToChave(data.periodo);
+                    if (chave) periodosSet.add(chave);
                 });
 
                 // Preencher select de períodos
                 const selectPeriodo = document.getElementById('filtro-periodo');
                 const valorAtual = selectPeriodo.value;
-                
-                const mesesNum = { 'jan':1,'fev':2,'mar':3,'abr':4,'mai':5,'jun':6,'jul':7,'ago':8,'set':9,'out':10,'nov':11,'dez':12 };
-                const extrairUltimaMes = (p) => {
-                    const partes = (p || '').split('>');
-                    const parte = (partes[partes.length - 1] || partes[0]).trim().toLowerCase();
-                    const [nomeMes, ano] = parte.split('/');
-                    return { nomeMes: (nomeMes || '').trim(), ano: (ano || '').trim() };
-                };
-                const parsePeriodo = (p) => {
-                    const { nomeMes, ano } = extrairUltimaMes(p);
-                    const anoFull = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
-                    return new Date(anoFull, (mesesNum[nomeMes] ?? 1) - 1);
-                };
-                const formatarPeriodo = (p) => {
-                    const { nomeMes, ano } = extrairUltimaMes(p);
-                    const mm = String(mesesNum[nomeMes] ?? 0).padStart(2, '0');
-                    const anoFull = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
-                    return mm + '/' + anoFull;
-                };
-                const periodosArr = Array.from(periodosSet).sort((a, b) => parsePeriodo(b) - parsePeriodo(a));
+
+                // Ordena AAAA-MM lexicograficamente (mais recente primeiro)
+                const periodosArr = Array.from(periodosSet).sort((a, b) => b.localeCompare(a));
                 let optionsHTML = '<option value="">Todos os períodos</option>';
-                periodosArr.forEach(p => {
-                    optionsHTML += '<option value="' + p + '">' + formatarPeriodo(p) + '</option>';
+                periodosArr.forEach(chave => {
+                    optionsHTML += '<option value="' + chave + '">' + chaveParaLabel(chave) + '</option>';
                 });
                 selectPeriodo.innerHTML = optionsHTML;
                 selectPeriodo.value = valorAtual; // mantém filtro se houver
@@ -378,11 +383,12 @@
 
             const filtrados = saldosList.filter(s => {
                 const matchIgreja = !filtroIgreja || (s.igrejaFormatada || '').toLowerCase().includes(filtroIgreja);
-                const matchPeriodo = !filtroPeriodo || s.periodo === filtroPeriodo;
+                const chaveS = s.periodoChave || labelToChave(s.periodo);
+                const matchPeriodo = !filtroPeriodo || chaveS === filtroPeriodo;
                 const matchValorMin = filtroValorMin === null || (s.saldoTotal >= filtroValorMin);
                 return matchIgreja && matchPeriodo && matchValorMin;
             });
-            
+
             filtrados.sort((a,b) => {
                 if (filtroOrdem === 'recentes') {
                     const dateA = a.createdAt?.seconds || 0;
@@ -391,7 +397,9 @@
                 } else if (filtroOrdem === 'alfabetica') {
                     return (a.igrejaFormatada || '').localeCompare(b.igrejaFormatada || '');
                 } else if (filtroOrdem === 'periodo') {
-                    return (b.periodo || '').localeCompare(a.periodo || '');
+                    const chA = a.periodoChave || labelToChave(a.periodo) || '';
+                    const chB = b.periodoChave || labelToChave(b.periodo) || '';
+                    return chB.localeCompare(chA);
                 } else if (filtroOrdem === 'maior_entrada') {
                     return (b.totalEntradas || 0) - (a.totalEntradas || 0);
                 } else if (filtroOrdem === 'menor_entrada') {
@@ -490,7 +498,8 @@
 
             const filtrados = saldosList.filter(s => {
                 const matchIgreja = !filtroIgreja || (s.igrejaFormatada || '').toLowerCase().includes(filtroIgreja);
-                const matchPeriodo = !filtroPeriodo || s.periodo === filtroPeriodo;
+                const chaveS = s.periodoChave || labelToChave(s.periodo);
+                const matchPeriodo = !filtroPeriodo || chaveS === filtroPeriodo;
                 const matchValorMin = filtroValorMin === null || (s.saldoTotal >= filtroValorMin);
                 return matchIgreja && matchPeriodo && matchValorMin;
             }).sort((a, b) => (a.igrejaFormatada || '').localeCompare(b.igrejaFormatada || ''));
@@ -504,7 +513,7 @@
             const hoje = new Date();
             const dataStr = hoje.toLocaleDateString('pt-BR');
             const horaStr = hoje.toLocaleTimeString('pt-BR');
-            const periodoTxt = filtroPeriodo ? 'Período: <strong>' + filtroPeriodo + '</strong>' : 'Todos os períodos';
+            const periodoTxt = filtroPeriodo ? 'Período: <strong>' + chaveParaLabel(filtroPeriodo) + '</strong>' : 'Todos os períodos';
             const igrejaTxt = filtroIgreja ? ' | Igreja: <strong>' + filtroIgreja + '</strong>' : '';
 
             let html = '<div class="text-center mb-6 pb-4 border-b border-slate-300">';

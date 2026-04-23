@@ -171,6 +171,27 @@
         let showOnlyPending = false;
         let showFullReport = false;
 
+        function labelToChave(label) {
+            const meses = {
+                'janeiro':'01','fevereiro':'02','março':'03','abril':'04',
+                'maio':'05','junho':'06','julho':'07','agosto':'08',
+                'setembro':'09','outubro':'10','novembro':'11','dezembro':'12'
+            };
+            const partes = (label || '').split('➔');
+            const dest = (partes[partes.length - 1] || partes[0]).trim();
+            const [mes, ano] = dest.split('/');
+            const mm = meses[(mes || '').toLowerCase().trim()];
+            const yyyy = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
+            return (mm && !isNaN(yyyy)) ? `${yyyy}-${mm}` : null;
+        }
+
+        function chaveParaLabel(chave) {
+            if (!chave || !chave.includes('-')) return chave;
+            const nomes = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const [yyyy, mm] = chave.split('-');
+            return `${nomes[parseInt(mm)] || mm}/${yyyy}`;
+        }
+
         function normalizeString(str) {
             if (!str) return "";
             return str.normalize("NFD")
@@ -180,32 +201,9 @@
                       .trim();
         }
 
-        // Função para converter qualquer formato para "MM/AAAA" referente ao destino
-        function extractMonthYear(compStr) {
-            if (!compStr) return "S/D";
-            if (compStr.match(/^\d{2}\/\d{4}$/)) return compStr;
-
-            const parts = compStr.split(/➔|>/).map(s => s.trim());
-            let target = parts.length === 2 ? parts[1] : parts[0];
-            
-            const mapMonth = {
-                'JAN': '01', 'JANEIRO': '01', 'FEV': '02', 'FEVEREIRO': '02',
-                'MAR': '03', 'MARÇO': '03', 'ABR': '04', 'ABRIL': '04',
-                'MAI': '05', 'MAIO': '05', 'JUN': '06', 'JUNHO': '06',
-                'JUL': '07', 'JULHO': '07', 'AGO': '08', 'AGOSTO': '08',
-                'SET': '09', 'SETEMBRO': '09', 'OUT': '10', 'OUTUBRO': '10',
-                'NOV': '11', 'NOVEMBRO': '11', 'DEZ': '12', 'DEZEMBRO': '12'
-            };
-
-            const match = target.match(/([a-zA-ZçÇ]+)\/?(\d{2,4})/i);
-            if (match) {
-                let mText = match[1].toUpperCase();
-                let year = match[2];
-                if (year.length === 2) year = "20" + year;
-                let mNum = mapMonth[mText];
-                if (mNum) return `${mNum}/${year}`;
-            }
-            return target;
+        // Retorna periodoChave (AAAA-MM) do documento; fallback para labelToChave se ainda não migrado
+        function getComp(s) {
+            return s.periodoChave || labelToChave(s.periodo) || 'S/D';
         }
 
         async function init() {
@@ -230,10 +228,8 @@
                     const s = doc.data();
                     const originalName = s.igrejaFormatada || s.igrejaNome || `Igreja ${s.igrejaCodigo || '-'}`;
                     const normName = normalizeString(originalName);
-                    // periodo = período real (ex: "Março/26 ➔ Abril/26"); mesReferencia = data de envio — usar periodo como prioridade
-                    const rawComp = s.periodo || s.mesReferencia;
-                    const comp = extractMonthYear(rawComp);
-                    const periodoDisplay = s.periodo || comp;
+                    const comp = getComp(s);
+                    const periodoDisplay = s.periodo || s.periodoLabel || comp;
 
                     if (originalName && originalName !== 'Igreja -') {
                         if (!masterChurches.has(normName)) masterChurches.set(normName, originalName);
@@ -311,22 +307,18 @@
 
         function setupFilters() {
             const select = document.getElementById('competenceSelect');
-            const sortedComp = Array.from(competencies).sort((a, b) => {
-                const partA = a.split('/');
-                const partB = b.split('/');
-                if (partA.length === 2 && partB.length === 2) {
-                    return new Date(partB[1], partB[0] - 1) - new Date(partA[1], partA[0] - 1);
-                }
-                return b.localeCompare(a);
-            });
-            
+            // AAAA-MM ordena lexicograficamente de forma correta (mais recente primeiro)
+            const sortedComp = Array.from(competencies).filter(c => c !== 'S/D').sort((a, b) => b.localeCompare(a));
+
             let options = '<option value="TODOS">Todos</option>';
-            options += sortedComp.map(c => `<option value="${c}">${c}</option>`).join('');
+            options += sortedComp.map(c => `<option value="${c}">${chaveParaLabel(c)}</option>`).join('');
             select.innerHTML = options;
-            
+
             const now = new Date();
-            const currentPeriod = `${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
-            select.value = currentPeriod;
+            const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            if (select.querySelector(`option[value="${currentPeriod}"]`)) {
+                select.value = currentPeriod;
+            }
         }
 
         function cleanNumericString(val) {
@@ -377,7 +369,7 @@
 
             pendingChurches.sort();
 
-            const messageHeader = `Paz, Pastores! \n\nSegue a lista das igrejas com o *Relatório de Saldos* ainda *PENDENTE* referente ao mês de *${selectedComp}*:\n\n`;
+            const messageHeader = `Paz, Pastores! \n\nSegue a lista das igrejas com o *Relatório de Saldos* ainda *PENDENTE* referente ao mês de *${chaveParaLabel(selectedComp)}*:\n\n`;
             const messageBody = pendingChurches.map(name => `• ${name}`).join('\n');
             const messageFooter = `\n\nPedimos a gentileza de regularizarem o envio o quanto antes para o fechamento do mês. Deus abençoe.`;
 

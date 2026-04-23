@@ -118,6 +118,20 @@
             );
         };
 
+        function labelToChave(label) {
+            const meses = {
+                'janeiro':'01','fevereiro':'02','março':'03','abril':'04',
+                'maio':'05','junho':'06','julho':'07','agosto':'08',
+                'setembro':'09','outubro':'10','novembro':'11','dezembro':'12'
+            };
+            const partes = (label || '').split('➔');
+            const dest = (partes[partes.length - 1] || partes[0]).trim();
+            const [mes, ano] = dest.split('/');
+            const mm = meses[(mes || '').toLowerCase().trim()];
+            const yyyy = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
+            return (mm && !isNaN(yyyy)) ? `${yyyy}-${mm}` : null;
+        }
+
         const App = () => {
             const churchLocked = !!localStorage.getItem('userIgreja');
             const [churches, setChurches] = useState([]);
@@ -241,6 +255,8 @@
                     igrejaNome: selectedChurch.name,
                     pastor: selectedChurch.pastor,
                     periodo: selectedPeriod,
+                    periodoChave: labelToChave(selectedPeriod),
+                    periodoLabel: selectedPeriod,
                     entradasTaxadas: parseFloat(incomeTaxed) || 0,
                     missoes: parseFloat(incomeMissions) || 0,
                     totalEntradas: totalIncome,

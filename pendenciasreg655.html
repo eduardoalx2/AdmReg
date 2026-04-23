@@ -113,13 +113,11 @@
         let dadosOriginais = [];
         window.formatMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        const MESES_ABREV = { JAN:'01', FEV:'02', MAR:'03', ABR:'04', MAI:'05', JUN:'06', JUL:'07', AGO:'08', SET:'09', OUT:'10', NOV:'11', DEZ:'12' };
-        function periodoParaMesRef(periodo) {
-            if (!periodo) return null;
-            const parte = periodo.split('>')[0].trim();
-            const [abrev, ano] = parte.split('/');
-            const num = MESES_ABREV[(abrev || '').toUpperCase()];
-            return num && ano ? `${num}/${ano.trim()}` : null;
+        // Converte "MM/AAAA" → "AAAA-MM" para comparar com periodoChave
+        function mesStrToChave(mesStr) {
+            if (!mesStr) return null;
+            const [mm, yyyy] = mesStr.split('/');
+            return (mm && yyyy) ? `${yyyy}-${mm}` : null;
         }
 
         window.carregarDados = async () => {
@@ -164,7 +162,8 @@
                         const recibo = recibos.find(r => r.referenceDate === mesStr && (r.igrejaCodigo === cod || r.igrejaNome === ig.nome));
                         if (!recibo) {
                             taxasPendentes.push(mesStr);
-                            const saldo = saldos.find(s => (s.igrejaCodigo === cod || s.igrejaNome === ig.nome) && (s.mesReferencia === mesStr || periodoParaMesRef(s.periodo) === mesStr));
+                            const chave = mesStrToChave(mesStr);
+                        const saldo = saldos.find(s => (s.igrejaCodigo === cod || s.igrejaNome === ig.nome) && (s.periodoChave === chave));
                             if (!saldo) {
                                 saldosPendentes.push(mesStr);
                                 valorEmAberto += (100 + ((ig.seguros || 0) * valorSeguro));

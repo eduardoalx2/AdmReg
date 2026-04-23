@@ -251,17 +251,14 @@
         // Função auxiliar de formatação de moeda
         window.formatMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        // Converte periodo "JAN/2026 > FEV/2026" → "01/2026" (mês mais antigo = referência)
-        const MESES_ABREV = { JAN:'01', FEV:'02', MAR:'03', ABR:'04', MAI:'05', JUN:'06', JUL:'07', AGO:'08', SET:'09', OUT:'10', NOV:'11', DEZ:'12' };
-        function periodoParaMesRef(periodo) {
-            if (!periodo) return null;
-            const parte = periodo.split('>')[0].trim(); // "JAN/2026"
-            const [abrev, ano] = parte.split('/');
-            const num = MESES_ABREV[(abrev || '').toUpperCase()];
-            return num && ano ? `${num}/${ano.trim()}` : null;
+        // Converte "MM/AAAA" → "AAAA-MM" para comparar com periodoChave
+        function mesStrToChave(mesStr) {
+            if (!mesStr) return null;
+            const [mm, yyyy] = mesStr.split('/');
+            return (mm && yyyy) ? `${yyyy}-${mm}` : null;
         }
-        function saldoMesRef(s) {
-            return periodoParaMesRef(s.periodo) || s.mesReferencia || null;
+        function saldoMatchMes(s, strMesRef) {
+            return s.periodoChave === mesStrToChave(strMesRef);
         }
 
         // Função utilitária para os 5 dias úteis
@@ -440,8 +437,7 @@
             const quintoDia = calcularQuintoDiaUtil(anoAtual, mesAtualNum);
             const atrasado = hoje > quintoDia;
 
-            // Saldo do mês anterior — periodo está no formato "JAN/2026 > FEV/2026"
-            const saldoRef = saldos.find(s => saldoMesRef(s) === strMesRef);
+            const saldoRef = saldos.find(s => saldoMatchMes(s, strMesRef));
             // Recibo com referência ao mês anterior
             const reciboRef = recibos.find(r => r.referenceDate === strMesRef);
 

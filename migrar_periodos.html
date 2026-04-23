@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração de Períodos - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-md border border-slate-200 w-full max-w-xl p-8">
+        <h1 class="text-xl font-black text-slate-800 mb-1">Migração de Períodos</h1>
+        <p class="text-xs text-slate-500 mb-6">Adiciona o campo <code class="bg-slate-100 px-1 rounded">periodoChave</code> (formato <code class="bg-slate-100 px-1 rounded">AAAA-MM</code>) a todos os documentos de <strong>saldos_virada</strong>. Operação idempotente — documentos já migrados são ignorados.</p>
+
+        <button id="btnMigrar" onclick="iniciarMigracao()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors text-sm">
+            Iniciar Migração
+        </button>
+
+        <div id="status" class="mt-6 hidden">
+            <div class="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                <span>Progresso</span>
+                <span id="statusTexto">0 / 0</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 mb-4">
+                <div id="barra" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width:0%"></div>
+            </div>
+            <div id="log" class="bg-slate-50 rounded-xl border border-slate-200 p-4 max-h-64 overflow-y-auto text-xs font-mono space-y-1"></div>
+        </div>
+
+        <div id="resultado" class="mt-4 hidden"></div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        function labelToChave(label) {
+            const meses = {
+                'janeiro':'01','fevereiro':'02','março':'03','abril':'04',
+                'maio':'05','junho':'06','julho':'07','agosto':'08',
+                'setembro':'09','outubro':'10','novembro':'11','dezembro':'12'
+            };
+            const partes = (label || '').split('➔');
+            const dest = (partes[partes.length - 1] || partes[0]).trim();
+            const [mes, ano] = dest.split('/');
+            const mm = meses[(mes || '').toLowerCase().trim()];
+            const yyyy = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
+            return (mm && !isNaN(yyyy)) ? `${yyyy}-${mm}` : null;
+        }
+
+        function log(msg, tipo = 'normal') {
+            const el = document.getElementById('log');
+            const span = document.createElement('div');
+            span.className = tipo === 'ok' ? 'text-green-600' : tipo === 'skip' ? 'text-slate-400' : tipo === 'err' ? 'text-red-500' : 'text-slate-600';
+            span.textContent = msg;
+            el.appendChild(span);
+            el.scrollTop = el.scrollHeight;
+        }
+
+        window.iniciarMigracao = async () => {
+            const btn = document.getElementById('btnMigrar');
+            btn.disabled = true;
+            btn.textContent = 'Migrando...';
+            document.getElementById('status').classList.remove('hidden');
+            document.getElementById('resultado').classList.add('hidden');
+            document.getElementById('log').innerHTML = '';
+
+            try {
+                const snap = await getDocs(collection(db, "saldos_virada"));
+                const docs = [];
+                snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+
+                let migrados = 0, ignorados = 0, erros = 0;
+                const total = docs.length;
+
+                for (let i = 0; i < docs.length; i++) {
+                    const s = docs[i];
+                    const nome = s.igrejaFormatada || s.igrejaNome || s.id;
+                    const pct = Math.round(((i + 1) / total) * 100);
+                    document.getElementById('barra').style.width = pct + '%';
+                    document.getElementById('statusTexto').textContent = `${i + 1} / ${total}`;
+
+                    if (s.periodoChave) {
+                        log(`[SKIP] ${nome} — já migrado (${s.periodoChave})`, 'skip');
+                        ignorados++;
+                        continue;
+                    }
+
+                    const chave = labelToChave(s.periodo);
+                    if (!chave) {
+                        log(`[ERRO] ${nome} — período inválido: "${s.periodo}"`, 'err');
+                        erros++;
+                        continue;
+                    }
+
+                    try {
+                        await updateDoc(doc(db, "saldos_virada", s.id), {
+                            periodoChave: chave,
+                            periodoLabel: s.periodo || ''
+                        });
+                        log(`[OK]   ${nome} → ${chave} (${s.periodo})`, 'ok');
+                        migrados++;
+                    } catch (e) {
+                        log(`[ERRO] ${nome} — ${e.message}`, 'err');
+                        erros++;
+                    }
+                }
+
+                const res = document.getElementById('resultado');
+                res.classList.remove('hidden');
+                res.innerHTML = `
+                    <div class="rounded-xl border p-4 ${erros > 0 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}">
+                        <p class="font-bold text-sm mb-1 ${erros > 0 ? 'text-amber-700' : 'text-green-700'}">Migração concluída</p>
+                        <p class="text-xs text-slate-600">✅ Migrados: <strong>${migrados}</strong> &nbsp;|&nbsp; ⏭ Já migrados: <strong>${ignorados}</strong> &nbsp;|&nbsp; ❌ Erros: <strong>${erros}</strong></p>
+                    </div>
+                `;
+                btn.textContent = 'Concluído';
+
+            } catch (e) {
+                log(`Erro fatal: ${e.message}`, 'err');
+                btn.disabled = false;
+                btn.textContent = 'Tentar Novamente';
+            }
+        };
+    </script>
+</body>
+</html>
