@@ -21,12 +21,16 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @media print {
+            body { background-color: white !important; }
+            @page { size: portrait; margin: 10mm; }
+        }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen pb-10">
+<body class="bg-slate-50 min-h-screen pb-10 print:bg-white print:pb-0">
 
     <!-- CABEÇALHO COMPACTO -->
-    <header class="w-full shadow-sm bg-white border-b">
+    <header class="w-full shadow-sm bg-white border-b print:hidden">
         <div class="max-w-6xl mx-auto px-4 py-1.5">
             <div class="flex justify-between items-center">
                 <a href="index.html" class="flex items-center gap-2">
@@ -50,23 +54,69 @@
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto p-4 md:p-8 space-y-6">
+    <!-- SEÇÃO DE IMPRESSÃO (Oculta na tela) -->
+    <div id="print-section" class="hidden print:block w-full bg-white text-black font-sans px-2 py-4">
+        <div class="flex justify-between items-center mb-4 border-b-2 border-slate-800 pb-2">
+            <div class="flex items-center gap-4">
+                <img src="logo.png" alt="Logo IEQ" class="h-10 object-contain">
+                <div>
+                    <h1 class="text-lg font-black uppercase tracking-widest text-slate-900 leading-tight">Relatório de Presenças</h1>
+                    <p class="text-xs font-bold text-slate-600 mt-0.5">Região 655 • Londrina/PR</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-4 text-[10px] uppercase font-bold text-slate-700 border border-slate-300 p-2 flex flex-wrap gap-x-6 gap-y-1">
+            <div><span class="text-slate-500">Evento:</span> <span id="printFiltroEvento">TODOS</span></div>
+            <div><span class="text-slate-500">Status:</span> <span id="printFiltroStatus">TODOS</span></div>
+            <div><span class="text-slate-500">Igreja:</span> <span id="printFiltroIgreja">TODAS</span></div>
+            <div><span class="text-slate-500">Pastor:</span> <span id="printFiltroPastor">-</span></div>
+        </div>
+
+        <div class="flex flex-wrap gap-4 text-[10px] font-bold uppercase mb-4 border-b border-slate-200 pb-2">
+            <span>TOTAL: <span id="printCountTotal">0</span></span>
+            <span class="text-emerald-700">PRESENTES: <span id="printCountPresentes">0</span></span>
+            <span class="text-red-700">AUSENTES: <span id="printCountAusentes">0</span></span>
+            <span class="text-amber-700">JUSTIFICADOS: <span id="printCountJustificados">0</span></span>
+            <span class="text-blue-700">CONSOLIDADAS: <span id="printCountConsolidadas">0</span></span>
+        </div>
+
+        <table class="w-full text-left text-[10px] border-collapse">
+            <thead>
+                <tr class="border-b border-slate-300 font-bold uppercase text-slate-500">
+                    <th class="pb-1 px-1">Pastor / Igreja</th>
+                    <th class="pb-1 px-1">Evento</th>
+                    <th class="pb-1 px-1">Status</th>
+                    <th class="pb-1 px-1">Motivo</th>
+                </tr>
+            </thead>
+            <tbody id="printTabelaPresencas" class="text-slate-800">
+            </tbody>
+        </table>
+    </div>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-6 space-y-4 print:hidden">
         
         <!-- FILTROS -->
-        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-            <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <i data-lucide="filter" class="w-4 h-4 text-blue-600"></i> Filtros de Busca
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="filter" class="w-3.5 h-3.5 text-blue-600"></i> Filtros
+                </h2>
+                <button onclick="window.print()" class="text-[10px] font-bold text-slate-600 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 uppercase tracking-wider shadow-sm border border-slate-200">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir Relatório
+                </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Evento</label>
-                    <select id="filterEvento" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Evento</label>
+                    <select id="filterEvento" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
                         <option value="Todos">Carregando eventos...</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Status</label>
-                    <select id="filterStatus" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Status</label>
+                    <select id="filterStatus" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
                         <option value="Todos">Todos os Status</option>
                         <option value="Presente">Presentes</option>
                         <option value="Ausente">Ausentes (Pendentes)</option>
@@ -75,19 +125,31 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Buscar Pastor</label>
-                    <input type="text" id="filterNome" placeholder="Digite o nome..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Igreja</label>
+                    <select id="filterIgreja" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                        <option value="Todas">Carregando igrejas...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Buscar Pastor</label>
+                    <input type="text" id="filterNome" placeholder="Digite o nome..." class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
                 </div>
             </div>
         </div>
 
         <!-- TABELA -->
-        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
                     <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Lista de Lançamentos
                 </h2>
-                <span id="contador" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded-lg">Carregando...</span>
+                <div class="flex flex-wrap gap-1.5 text-[9px] font-black uppercase tracking-wider">
+                    <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200" id="countTotal">Total: 0</span>
+                    <span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded border border-emerald-200" id="countPresentes">Presentes: 0</span>
+                    <span class="bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200" id="countAusentes">Ausentes: 0</span>
+                    <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-200" id="countJustificados">Justif: 0</span>
+                    <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200" id="countConsolidadas">Consol: 0</span>
+                </div>
             </div>
             
             <div class="overflow-x-auto custom-scrollbar">
@@ -114,7 +176,7 @@
     </main>
 
     <!-- MODAL DE EDIÇÃO -->
-    <div id="modalEdit" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div id="modalEdit" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:hidden">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
             <div class="bg-slate-800 px-6 py-4 flex justify-between items-center">
                 <h3 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
@@ -184,6 +246,16 @@
                     selectEv.innerHTML += `<option value="${ev.id}">${ev.nome} (${dataFormatada})</option>`;
                 });
 
+                // Carrega todas as Igrejas para o filtro
+                const igSnap = await getDocs(collection(db, "igrejas"));
+                let igrejas = [];
+                igSnap.forEach(d => igrejas.push(d.data()));
+                igrejas.sort((a,b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+                
+                const selectIg = document.getElementById("filterIgreja");
+                selectIg.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
+                igrejas.forEach(ig => selectIg.innerHTML += `<option value="${ig.nome}">${ig.codigo} - ${ig.nome}</option>`);
+
                 // Carrega todas as Presenças
                 const prSnap = await getDocs(collection(db, "presencas"));
                 prSnap.forEach(d => allPresencas.push({id: d.id, ...d.data()}));
@@ -198,10 +270,13 @@
         window.renderTable = () => {
             const filterEv = document.getElementById("filterEvento").value;
             const filterSt = document.getElementById("filterStatus").value;
+            const filterIg = document.getElementById("filterIgreja").value;
             const filterNome = document.getElementById("filterNome").value.toLowerCase();
 
             const tbody = document.getElementById("tabelaPresencas");
+            const pbody = document.getElementById("printTabelaPresencas");
             tbody.innerHTML = '';
+            pbody.innerHTML = '';
 
             let filtered = allPresencas.filter(p => {
                 // Filtro Evento
@@ -213,6 +288,9 @@
                 if(filterSt === "Justificado" && p.status !== "Justificado") return false;
                 if(filterSt === "Ausente" && (p.status !== "Ausente" || isConsolidated)) return false;
                 if(filterSt === "Consolidado" && (!isConsolidated || p.status !== "Ausente")) return false;
+                
+                // Filtro Igreja
+                if(filterIg !== "Todas" && (!p.igreja || !p.igreja.includes(filterIg))) return false;
 
                 // Filtro Nome
                 if(filterNome && !p.nome.toLowerCase().includes(filterNome)) return false;
@@ -228,9 +306,27 @@
                 return a.nome.localeCompare(b.nome);
             });
 
-            document.getElementById('contador').textContent = `${filtered.length} REGISTRO(S)`;
+            let cPresentes = 0, cAusentes = 0, cJustificados = 0, cConsolidadas = 0;
+
+            document.getElementById('countTotal').textContent = `Total: ${filtered.length}`;
+            document.getElementById('printCountTotal').textContent = filtered.length;
+
+            const elEv = document.getElementById('filterEvento');
+            document.getElementById('printFiltroEvento').textContent = filterEv === "Todos" ? "TODOS" : elEv.options[elEv.selectedIndex].text.toUpperCase();
+            const elSt = document.getElementById('filterStatus');
+            document.getElementById('printFiltroStatus').textContent = elSt.options[elSt.selectedIndex].text.toUpperCase();
+            const elIg = document.getElementById('filterIgreja');
+            document.getElementById('printFiltroIgreja').textContent = filterIg === "Todas" ? "TODAS" : elIg.options[elIg.selectedIndex].text.toUpperCase();
+            document.getElementById('printFiltroPastor').textContent = filterNome ? filterNome.toUpperCase() : "-";
 
             filtered.forEach(p => {
+                if(p.status === 'Presente') cPresentes++;
+                else if(p.status === 'Justificado') cJustificados++;
+                else if(p.status === 'Ausente') {
+                    if(p.consolidada) cConsolidadas++;
+                    else cAusentes++;
+                }
+
                 const tr = document.createElement('tr');
                 tr.className = 'border-b border-slate-50 hover:bg-slate-50 transition-colors group';
 
@@ -283,10 +379,43 @@
                     <td class="py-3 px-2 text-right">${actions}</td>
                 `;
                 tbody.appendChild(tr);
+                
+                // Prepara também a versão impressa
+                let statusBadgeText = '';
+                if(p.status === 'Presente') statusBadgeText = 'PRESENTE';
+                else if(p.status === 'Justificado') statusBadgeText = 'JUSTIFICADO';
+                else if(p.status === 'Ausente') statusBadgeText = p.consolidada ? 'CONSOLIDADA' : 'AUSENTE';
+
+                const ptr = document.createElement('tr');
+                ptr.className = 'border-b border-slate-200';
+                ptr.innerHTML = `
+                    <td class="py-1.5 px-1">
+                        <div class="font-bold">${p.nome}</div>
+                        <div class="text-[8px] text-slate-500">${p.igreja || '-'}</div>
+                    </td>
+                    <td class="py-1.5 px-1">
+                        <div class="font-bold">${p.tipoEvento}</div>
+                        <div class="text-[8px] text-slate-500">${dataFormatada}</div>
+                    </td>
+                    <td class="py-1.5 px-1 font-bold">${statusBadgeText}</td>
+                    <td class="py-1.5 px-1 text-[9px] text-slate-600">${p.motivo || '-'}</td>
+                `;
+                pbody.appendChild(ptr);
             });
+            
+            document.getElementById('countPresentes').textContent = `Presentes: ${cPresentes}`;
+            document.getElementById('countAusentes').textContent = `Ausentes: ${cAusentes}`;
+            document.getElementById('countJustificados').textContent = `Justif: ${cJustificados}`;
+            document.getElementById('countConsolidadas').textContent = `Consol: ${cConsolidadas}`;
+
+            document.getElementById('printCountPresentes').textContent = cPresentes;
+            document.getElementById('printCountAusentes').textContent = cAusentes;
+            document.getElementById('printCountJustificados').textContent = cJustificados;
+            document.getElementById('printCountConsolidadas').textContent = cConsolidadas;
 
             if(filtered.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 text-[10px] font-bold uppercase tracking-widest">NENHUM REGISTRO ENCONTRADO PARA OS FILTROS.</td></tr>';
+                pbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 italic text-slate-400">NENHUM DADO PARA EXIBIR COM OS FILTROS ATUAIS</td></tr>';
             }
 
             if(window.lucide) window.lucide.createIcons();
@@ -385,6 +514,7 @@
         // Ouvintes de eventos para re-filtrar on the fly
         document.getElementById('filterEvento').addEventListener('change', window.renderTable);
         document.getElementById('filterStatus').addEventListener('change', window.renderTable);
+        document.getElementById('filterIgreja').addEventListener('change', window.renderTable);
         document.getElementById('filterNome').addEventListener('input', window.renderTable);
 
         // Inicia a vida
