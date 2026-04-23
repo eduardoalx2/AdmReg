@@ -205,6 +205,19 @@
         // Função auxiliar de formatação de moeda
         window.formatMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+        // Converte periodo "JAN/2026 > FEV/2026" → "01/2026" (mês mais antigo = referência)
+        const MESES_ABREV = { JAN:'01', FEV:'02', MAR:'03', ABR:'04', MAI:'05', JUN:'06', JUL:'07', AGO:'08', SET:'09', OUT:'10', NOV:'11', DEZ:'12' };
+        function periodoParaMesRef(periodo) {
+            if (!periodo) return null;
+            const parte = periodo.split('>')[0].trim(); // "JAN/2026"
+            const [abrev, ano] = parte.split('/');
+            const num = MESES_ABREV[(abrev || '').toUpperCase()];
+            return num && ano ? `${num}/${ano.trim()}` : null;
+        }
+        function saldoMesRef(s) {
+            return periodoParaMesRef(s.periodo) || s.mesReferencia || null;
+        }
+
         // Função utilitária para os 5 dias úteis
         function calcularQuintoDiaUtil(ano, mes) {
             let count = 0; let day = 1;
@@ -335,8 +348,8 @@
             const quintoDia = calcularQuintoDiaUtil(anoAtual, mesAtualNum);
             const atrasado = hoje > quintoDia;
 
-            // Saldo do mês anterior (campo pode ser 'periodo' ou 'mesReferencia')
-            const saldoRef = saldos.find(s => (s.periodo || s.mesReferencia) === strMesRef);
+            // Saldo do mês anterior — periodo está no formato "JAN/2026 > FEV/2026"
+            const saldoRef = saldos.find(s => saldoMesRef(s) === strMesRef);
             // Recibo com referência ao mês anterior
             const reciboRef = recibos.find(r => r.referenceDate === strMesRef);
 
@@ -411,7 +424,7 @@
 
                 const reciboValido = recibos.find(r => r.referenceDate === mesStr && (parseFloat(r.regionalTax) || 0) > 0);
                 if (!reciboValido) {
-                    const saldo = saldos.find(s => (s.periodo || s.mesReferencia) === mesStr);
+                    const saldo = saldos.find(s => saldoMesRef(s) === mesStr);
                     let estimativa = null;
                     if (saldo) {
                         const taxadas = saldo.entradasTaxadas || 0;
