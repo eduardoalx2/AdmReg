@@ -512,7 +512,7 @@
 
                 const reciboValido = recibos.find(r => r.referenceDate === mesStr && (parseFloat(r.regionalTax) || 0) > 0);
                 if (!reciboValido) {
-                    const saldo = saldos.find(s => saldoMesRef(s) === mesStr);
+                    const saldo = saldos.find(s => saldoMatchMes(s, mesStr));
                     let estimativa = null;
                     if (saldo) {
                         const taxadas = saldo.entradasTaxadas || 0;
