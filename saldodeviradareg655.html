@@ -17,7 +17,7 @@
     <script>
         let perms = [];
         try { perms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
-        if (!perms.includes('admin') && !perms.includes('saldo_virada')) {
+        if (!perms.includes('admin') && !perms.includes('saldo_virada') && !perms.includes('pastor_titular')) {
             window.location.replace('index.html');
         }
     </script>
@@ -196,6 +196,13 @@
             const [isSaving, setIsSaving] = useState(false);
             const [showPreview, setShowPreview] = useState(false);
             const [showSuccess, setShowSuccess] = useState(false);
+
+            useEffect(() => {
+                if (showSuccess) {
+                    const t = setTimeout(() => { window.location.href = 'painel_pastor.html'; }, 3000);
+                    return () => clearTimeout(t);
+                }
+            }, [showSuccess]);
             
             const totalIncome = useMemo(() => (parseFloat(incomeTaxed) || 0) + (parseFloat(incomeMissions) || 0), [incomeTaxed, incomeMissions]);
             const totalBalance = useMemo(() => (parseFloat(balanceBank) || 0) + (parseFloat(balanceCash) || 0), [balanceBank, balanceCash]);
@@ -222,12 +229,12 @@
                 setIsConfirmed(false); setShowSuccess(false); setShowPreview(false);
             };
 
-            const handleSave = async (showModal = true) => {
-                if (!isFormValid) return false;
+            const handleSave = async () => {
+                if (!isFormValid) return;
                 setIsSaving(true);
                 const now = new Date();
                 const mesReferencia = `${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
-                
+
                 const payload = {
                     igrejaFormatada: `${selectedChurch.code} - ${selectedChurch.name}`,
                     igrejaCodigo: selectedChurch.code,
@@ -251,46 +258,13 @@
                 try {
                     const { db, collection, addDoc, serverTimestamp } = window.firebaseGlobal;
                     await addDoc(collection(db, "saldos_virada"), { ...payload, createdAt: serverTimestamp() });
-
-                    if (showModal) setShowSuccess(true);
-                    return true;
-                } catch (e) { 
-                    console.error("Erro ao gravar:", e); 
-                    alert("Ocorreu um erro ao salvar o lançamento. Verifique sua conexão e tente novamente.");
-                    return false; 
-                } finally { 
-                    setIsSaving(false); 
-                }
-            };
-
-            const handleSaveAndSend = async () => {
-                const saved = await handleSave(false);
-                if (saved) {
-                    const message = `*Resumo de Virada de Mês - R655*
----------------------------------------
-*Igreja:* ${selectedChurch.code} - ${selectedChurch.name}
-*Pastor:* ${selectedChurch?.pastor}
-*Período:* ${selectedPeriod}
-
-*FINANCEIRO*
-Entradas Taxadas: ${formatCurrency(parseFloat(incomeTaxed) || 0)}
-Missões: ${formatCurrency(parseFloat(incomeMissions) || 0)}
-*Total Entradas:* ${formatCurrency(totalIncome)}
-
-*ESTATÍSTICAS*
-Santa Ceia: ${santaCeia || 0}
-Batismos: ${batismos || 0}
-Células: ${celulas || 0}
-
-*SALDOS*
-Saldo em Conta: ${formatCurrency(parseFloat(balanceBank) || 0)}
-Saldo em Dinheiro: ${formatCurrency(parseFloat(balanceCash) || 0)}
-*SALDO TOTAL:* ${formatCurrency(totalBalance)}
----------------------------------------
-_Gerado em: ${new Date().toLocaleString('pt-BR')}_`;
-
-                    window.open(`https://wa.me/554333562718?text=${encodeURIComponent(message)}`, '_blank');
+                    setShowPreview(false);
                     setShowSuccess(true);
+                } catch (e) {
+                    console.error("Erro ao gravar:", e);
+                    alert("Ocorreu um erro ao salvar o lançamento. Verifique sua conexão e tente novamente.");
+                } finally {
+                    setIsSaving(false);
                 }
             };
 
@@ -306,8 +280,8 @@ _Gerado em: ${new Date().toLocaleString('pt-BR')}_`;
                                         <div className="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
                                     </div>
                                 </a>
-                                <a href="index.html" className="text-[10px] font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
-                                    <Icon name="arrow-left" size={12} /> Painel Admin
+                                <a href="painel_pastor.html" className="text-[10px] font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                                    <Icon name="arrow-left" size={12} /> Painel do Pastor
                                 </a>
                             </div>
                         </div>
@@ -406,11 +380,13 @@ _Gerado em: ${new Date().toLocaleString('pt-BR')}_`;
                         <div className="fixed inset-0 z-[100] bg-blue-900/95 flex items-center justify-center p-6 backdrop-blur-md">
                             <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-in-center">
                                 <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Icon name="check" size={40} className="animate-check" />
+                                    <Icon name="check-circle-2" size={44} />
                                 </div>
-                                <h2 className="text-2xl font-black text-slate-800 mb-2">Concluído!</h2>
-                                <p className="text-slate-600 mb-8">Informações gravadas com sucesso na planilha e preparadas para o WhatsApp.</p>
-                                <button onClick={resetForm} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold">Fazer outro lançamento</button>
+                                <h2 className="text-2xl font-black text-slate-800 mb-2">Lançamento Gravado!</h2>
+                                <p className="text-slate-500 text-sm mb-8">Saldo registrado com sucesso. Voltando ao Painel do Pastor...</p>
+                                <button onClick={() => window.location.href = 'painel_pastor.html'} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors">
+                                    Voltar ao Painel
+                                </button>
                             </div>
                         </div>
                     )}
@@ -421,8 +397,8 @@ _Gerado em: ${new Date().toLocaleString('pt-BR')}_`;
                                 <div className="p-4 border-b flex flex-wrap justify-between items-center bg-slate-50 gap-2">
                                     <h3 className="font-bold flex items-center gap-2 text-sm sm:text-base"><Icon name="file-text" className="text-blue-600"/> Resumo do Lançamento</h3>
                                     <div className="flex gap-2">
-                                        <button onClick={handleSaveAndSend} className="bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-2 hover:bg-green-700 transition-colors">
-                                            {isSaving ? <div className="spinner"></div> : <Icon name="share-2" size={14}/>} Gravar e Enviar WhatsApp
+                                        <button onClick={handleSave} className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors">
+                                            {isSaving ? <div className="spinner"></div> : <Icon name="save" size={14}/>} Gravar Lançamento
                                         </button>
                                         <button onClick={() => setShowPreview(false)} className="bg-slate-200 text-slate-700 px-3 sm:px-4 py-2 rounded-lg text-[10px] sm:text-xs font-bold">Cancelar</button>
                                     </div>
