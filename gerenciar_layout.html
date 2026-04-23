@@ -73,6 +73,11 @@
             </div>
             <div class="p-5 space-y-3">
 
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Grupo</label>
+                    <select id="f-grupo" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></select>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo</label>
@@ -256,7 +261,7 @@
             const idx = sorted.findIndex(g => g.id === grupoId);
             const newIdx = idx + dir;
             if (newIdx < 0 || newIdx >= sorted.length) return;
-            [sorted[idx].ordem, sorted[newIdx].ordem] = [sorted[newIdx].ordem, sorted[idx].ordem];
+            [sorted[idx], sorted[newIdx]] = [sorted[newIdx], sorted[idx]];
             sorted.forEach((g, i) => { g.ordem = i; });
             renderGrupos();
         }
@@ -360,6 +365,10 @@
             if (!grupo) return;
             const titulo = document.getElementById('f-titulo').value.trim();
             if (!titulo) { document.getElementById('f-titulo').focus(); return; }
+
+            const novoGrupoId = document.getElementById('f-grupo').value;
+            const novoGrupo = grupos.find(g => g.id === novoGrupoId) || grupo;
+
             const data = {
                 tipo: document.getElementById('f-tipo').value,
                 titulo,

@@ -260,11 +260,29 @@
                 rawData = data;
 
                 setupFilters();
+                
+                const selectIgreja = document.getElementById('churchSelect');
+                let opts = '<option value="">Todas as Igrejas</option>';
+                const sortedIgrejas = Array.from(masterChurches.values()).sort((a, b) => {
+                    const codA = parseInt(a.split(' - ')[0]) || 0;
+                    const codB = parseInt(b.split(' - ')[0]) || 0;
+                    return codA - codB;
+                });
+                sortedIgrejas.forEach(ig => {
+                    opts += `<option value="${ig}">${ig}</option>`;
+                });
+                selectIgreja.innerHTML = opts;
+
                 const _uj = localStorage.getItem('userIgreja');
-                if (_uj) { const el = document.getElementById('churchSearch'); el.value = _uj; el.disabled = true; }
+                if (_uj) { 
+                    const matchOpt = Array.from(selectIgreja.options).find(o => o.value.toLowerCase().includes(_uj.toLowerCase()));
+                    if(matchOpt) selectIgreja.value = matchOpt.value;
+                    selectIgreja.disabled = true; 
+                }
+                
                 renderReport();
 
-                document.getElementById('churchSearch').addEventListener('input', renderReport);
+                document.getElementById('churchSelect').addEventListener('change', renderReport);
                 document.getElementById('competenceSelect').addEventListener('change', renderReport);
                 
                 document.getElementById('btnOnlyPending').addEventListener('click', function() {
