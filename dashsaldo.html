@@ -204,9 +204,11 @@
                       .trim();
         }
 
-        // Retorna periodoChave (AAAA-MM) do documento; fallback para labelToChave se ainda não migrado
+        // Retorna periodoChave (AAAA-MM) do documento; normaliza MM/AAAA antigo
         function getComp(s) {
-            return s.periodoChave || labelToChave(s.periodo) || 'S/D';
+            const raw = s.periodoChave || labelToChave(s.periodo) || 'S/D';
+            const m = typeof raw === 'string' && raw.match(/^(\d{2})\/(\d{4})$/);
+            return m ? `${m[2]}-${m[1]}` : raw;
         }
 
         async function init() {
@@ -222,7 +224,7 @@
 
                 // Garante que o mês atual sempre exista na lista
                 const now = new Date();
-                const currentPeriod = `${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                 competencies.add(currentPeriod);
 
                 const saldosSnapshot = await getDocs(collection(db, "saldos_virada"));
@@ -479,10 +481,8 @@
 
             if (isAll) {
                 // Mostra todos os lançamentos de rawData (um card por período × igreja)
-                const submittedNorms = new Set();
                 rawData.forEach(d => {
                     if (selectedIgreja && d.nomeOriginal !== selectedIgreja) return;
-                    submittedNorms.add(d.normNome);
                     countEntregue++;
                     totalGeralSoma += getNumericValue(d.total);
                     if (!showOnlyPending) {
@@ -494,17 +494,22 @@
                     }
                 });
 
-                // Igrejas que nunca enviaram nenhum lançamento
-                masterChurches.forEach((originalName, normName) => {
-                    if (selectedIgreja && originalName !== selectedIgreja) return;
-                    if (!submittedNorms.has(normName)) {
-                        countPendente++;
-                        listItems.push({
-                            html: generateCardHtml(originalName, '—', 'Pendente', '--', 0, 0, 0, {}),
-                            status: 'Pendente',
-                            nome: originalName
-                        });
-                    }
+                // Para cada período × igreja, verifica pendentes
+                const allComps = Array.from(competencies).filter(c => c !== 'S/D');
+                allComps.forEach(comp => {
+                    const submissionMap = new Map();
+                    rawData.filter(d => d.competencia === comp).forEach(s => submissionMap.set(s.normNome, s));
+                    masterChurches.forEach((originalName, normName) => {
+                        if (selectedIgreja && originalName !== selectedIgreja) return;
+                        if (!submissionMap.has(normName)) {
+                            countPendente++;
+                            listItems.push({
+                                html: generateCardHtml(originalName, comp, 'Pendente', '--', 0, 0, 0, {}),
+                                status: 'Pendente',
+                                nome: originalName
+                            });
+                        }
+                    });
                 });
             } else {
                 const submissions = rawData.filter(d => d.competencia === selectedComp);
