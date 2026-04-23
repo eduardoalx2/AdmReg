@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importador de Presenças para Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-8 text-slate-800 font-sans">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-black text-blue-700 uppercase tracking-tight">Importador de Histórico de Presenças</h1>
+            <a href="index.html" class="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors">Voltar ao Admin</a>
+        </div>
+        
+        <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-6">
+            <p class="text-sm font-medium text-blue-800 mb-2">Copie as células da sua planilha do Google Sheets e cole-as no campo abaixo.</p>
+            <p class="text-xs text-blue-600 font-bold uppercase mb-1">A ordem das colunas na planilha deve ser exatamente esta:</p>
+            <ol class="text-xs text-slate-600 list-decimal pl-5 grid grid-cols-2 md:grid-cols-3 gap-x-2 gap-y-1">
+                <li>NOME</li>
+                <li>IGREJA</li>
+                <li>DATA DO EVENTO</li>
+                <li>TIPO DE EVENTO</li>
+                <li>STATUS</li>
+                <li>MOTIVO DE AUSÊNCIA</li>
+                <li>DECLARO QUE ESTA...</li>
+                <li>DATA DA POSTAGEM</li>
+                <li>OBS</li>
+            </ol>
+            <p class="text-[10px] text-blue-500 mt-2 font-bold italic">* O sistema criará os Eventos automaticamente no histórico caso eles não existam.</p>
+        </div>
+        
+        <textarea id="csvData" rows="12" class="w-full p-4 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 font-mono text-[10px] whitespace-pre bg-slate-50 leading-relaxed" placeholder="Cole aqui as linhas da sua planilha..."></textarea>
+        
+        <div class="mt-6 flex justify-end gap-4">
+            <button id="btnImportar" class="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider py-3 px-8 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95">Iniciar Importação</button>
+        </div>
+        
+        <div id="log" class="mt-6 text-xs font-mono text-slate-600 h-64 overflow-y-auto bg-slate-900 p-4 rounded-xl border border-slate-800 hidden space-y-1"></div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        const btnImportar = document.getElementById('btnImportar');
+        const csvData = document.getElementById('csvData');
+        const logDiv = document.getElementById('log');
+
+        function log(msg, color = 'text-green-400') {
+            logDiv.classList.remove('hidden');
+            const p = document.createElement('p');
+            p.className = color;
+            p.innerText = msg;
+            logDiv.appendChild(p);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        btnImportar.addEventListener('click', async () => {
+            const rawData = csvData.value.trim();
+            if (!rawData) { alert("Nenhum dado colado!"); return; }
+
+            btnImportar.disabled = true;
+            btnImportar.innerText = "IMPORTANDO...";
+            logDiv.innerHTML = '';
+
+            try {
+                log("> Etapa 1: Mapeando Eventos no Firebase para organizar o histórico...", "text-blue-400");
+                const eventosSnap = await getDocs(collection(db, "eventos"));
+                const eventosMap = new Map();
+                eventosSnap.forEach(doc => {
+                    const data = doc.data();
+                    const key = `${String(data.nome).toUpperCase()}_${data.data}`;
+                    eventosMap.set(key, doc.id);
+                });
+
+                log("> Etapa 2: Iniciando processamento das linhas coladas...", "text-blue-400");
+                log("--------------------------------------------------", "text-slate-500");
+
+                const rows = rawData.split('\n');
+                let importados = 0; let erros = 0; let eventosCriados = 0;
+
+                for (let i = 0; i < rows.length; i++) {
+                    if(!rows[i].trim()) continue;
+                    const cols = rows[i].split('\t');
+                    if (cols.length < 5) continue; // Linha inválida/curta
+
+                    let nome = (cols[0] || '').trim();
+                    let igreja = (cols[1] || '').trim();
+                    let dataOriginal = (cols[2] || '').trim(); 
+                    let tipoEvento = (cols[3] || '').trim().toUpperCase();
+                    let status = (cols[4] || '').trim();
+                    let motivo = cols[5] ? cols[5].trim() : '';
+                    let declaracao = cols[6] ? cols[6].trim() : '';
+                    let dataPostagem = cols[7] ? cols[7].trim() : '';
+                    let obs = cols[8] ? cols[8].trim() : '';
+
+                    // Ignorar o cabeçalho se copiado acidentalmente
+                    if (nome.toLowerCase() === 'nome' || tipoEvento.toLowerCase().includes('tipo de evento')) continue;
+
+                    // Padronizar a data (de DD/MM/YYYY para YYYY-MM-DD para funcionar nas buscas)
+                    let dataFmt = dataOriginal;
+                    if (dataOriginal.includes('/')) {
+                        const p = dataOriginal.split('/');
+                        if (p.length >= 3) {
+                            const d = p[0].padStart(2, '0');
+                            const m = p[1].padStart(2, '0');
+                            const y = p[2].length === 2 ? `20${p[2]}` : p[2].substring(0,4);
+                            dataFmt = `${y}-${m}-${d}`;
+                        }
+                    }
+
+                    // Lógica para amarrar a Presença ao Evento correto (ou criá-lo no histórico)
+                    const eventKey = `${tipoEvento}_${dataFmt}`;
+                    let eventoId = eventosMap.get(eventKey);
+
+                    if (!eventoId) {
+                        const newEv = await addDoc(collection(db, "eventos"), {
+                            nome: tipoEvento, data: dataFmt, publico: 'Todos', 
+                            status: 'Inativo', // Criado inativo para não poluir o dropdown de marcação
+                            createdAt: serverTimestamp()
+                        });
+                        eventoId = newEv.id;
+                        eventosMap.set(eventKey, eventoId);
+                        eventosCriados++;
+                        log(`[INFO] Evento do histórico restaurado: ${tipoEvento} (${dataFmt})`, 'text-amber-400');
+                    }
+
+                    const payload = {
+                        nome, igreja, dataEvento: dataFmt, tipoEvento, status, motivo, declaracao,
+                        dataPostagem: dataPostagem || new Date().toLocaleString('pt-BR'), obs,
+                        eventoId, createdAt: serverTimestamp()
+                    };
+
+                    try {
+                        await addDoc(collection(db, "presencas"), payload);
+                        importados++;
+                        log(`[OK] Linha ${i + 1}: ${nome} -> ${status} em ${tipoEvento}`);
+                    } catch (e) {
+                        erros++;
+                        log(`[ERRO] Linha ${i + 1}: Falha ao salvar no Firebase -> ${e.message}`, 'text-red-400');
+                    }
+                }
+                log("--------------------------------------------------", "text-slate-500");
+                log(`> SUCESSO: ${importados} presenças importadas | ${eventosCriados} eventos restaurados | ERROS: ${erros}`, 'text-emerald-400 font-bold text-sm');
+            } catch (err) { log(`ERRO GERAL: ${err.message}`, 'text-red-500 font-bold'); }
+            finally { btnImportar.disabled = false; btnImportar.innerText = "INICIAR IMPORTAÇÃO"; }
+        });
+    </script>
+</body>
+</html>

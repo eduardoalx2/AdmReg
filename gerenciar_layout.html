@@ -268,8 +268,9 @@
             const idx = sorted.findIndex(i => i.id === itemId);
             const newIdx = idx + dir;
             if (newIdx < 0 || newIdx >= sorted.length) return;
-            [sorted[idx].ordem, sorted[newIdx].ordem] = [sorted[newIdx].ordem, sorted[idx].ordem];
+            [sorted[idx], sorted[newIdx]] = [sorted[newIdx], sorted[idx]];
             sorted.forEach((it, i) => { it.ordem = i; });
+            grupo.itens = sorted;
             renderGrupos();
         }
 
@@ -323,6 +324,18 @@
             if (!grupo) return;
             const item = itemId ? grupo.itens.find(i => i.id === itemId) : null;
             editingItem = { grupoId, itemId };
+            
+            const fGrupo = document.getElementById('f-grupo');
+            fGrupo.innerHTML = '';
+            const sortedGrupos = [...grupos].sort((a,b) => (a.ordem||0) - (b.ordem||0));
+            sortedGrupos.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g.id;
+                opt.textContent = g.nome;
+                fGrupo.appendChild(opt);
+            });
+            fGrupo.value = grupoId;
+
             document.getElementById('modal-titulo').textContent = item ? 'Editar Item' : 'Novo Item';
             document.getElementById('f-tipo').value = item?.tipo || 'sistema';
             document.getElementById('f-titulo').value = item?.titulo || '';
@@ -357,12 +370,23 @@
                 visivel: document.getElementById('f-visivel').checked,
             };
             if (itemId) {
-                const item = grupo.itens.find(i => i.id === itemId);
-                if (item) Object.assign(item, data);
+                if (novoGrupoId !== grupoId) {
+                    const itemIndex = grupo.itens.findIndex(i => i.id === itemId);
+                    if (itemIndex > -1) {
+                        const [itemRemovido] = grupo.itens.splice(itemIndex, 1);
+                        Object.assign(itemRemovido, data);
+                        itemRemovido.ordem = novoGrupo.itens.length;
+                        novoGrupo.itens.push(itemRemovido);
+                        grupo.itens.forEach((it, i) => { it.ordem = i; });
+                    }
+                } else {
+                    const item = grupo.itens.find(i => i.id === itemId);
+                    if (item) Object.assign(item, data);
+                }
             } else {
                 data.id = uid();
-                data.ordem = grupo.itens.length;
-                grupo.itens.push(data);
+                data.ordem = novoGrupo.itens.length;
+                novoGrupo.itens.push(data);
             }
             fecharModalItem();
             renderGrupos();

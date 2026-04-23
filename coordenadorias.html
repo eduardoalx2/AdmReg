@@ -187,6 +187,12 @@
                 label.querySelector('input').addEventListener('change', function() {
                     document.getElementById('coord-pastor-id').value = this.value;
                     document.getElementById('coord-pastor-nome').value = this.dataset.nome;
+                    
+                    const pastor = pastoresList.find(x => x.id === this.value);
+                    if (pastor) {
+                        if (pastor.telefone) document.getElementById('coord-whatsapp').value = pastor.telefone;
+                        if (pastor.email) document.getElementById('coord-email').value = pastor.email;
+                    }
                 });
                 container.appendChild(label);
             });

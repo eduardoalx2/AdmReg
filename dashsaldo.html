@@ -457,7 +457,7 @@
 
         function renderReport() {
             const selectedComp = document.getElementById('competenceSelect').value;
-            const searchTerm = document.getElementById('churchSearch').value.toLowerCase();
+            const selectedIgreja = document.getElementById('churchSelect').value;
             const grid = document.getElementById('churchGrid');
             const isAll = selectedComp === 'TODOS';
             let listItems = [];
@@ -466,7 +466,7 @@
             let totalGeralSoma = 0;
 
             if (isAll) {
-                const filteredData = rawData.filter(d => !searchTerm || d.nomeOriginal.toLowerCase().includes(searchTerm));
+                const filteredData = rawData.filter(d => !selectedIgreja || d.nomeOriginal === selectedIgreja);
                 filteredData.forEach(sub => {
                     countEntregue++;
                     totalGeralSoma += getNumericValue(sub.total);
@@ -483,7 +483,7 @@
                 const sortedMaster = Array.from(masterChurches.entries());
 
                 sortedMaster.forEach(([normName, originalName]) => {
-                    if (searchTerm && !originalName.toLowerCase().includes(searchTerm)) return;
+                    if (selectedIgreja && originalName !== selectedIgreja) return;
                     const sub = submissionMap.get(normName);
                     if (!!sub) {
                         countEntregue++;
