@@ -8,8 +8,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script>
         // Bloqueio ultra-rápido via perms
-        if (!localStorage.getItem('userPerms') || !localStorage.getItem('userEmail')) {
+        const permsStr = localStorage.getItem('userPerms');
+        const email = localStorage.getItem('userEmail');
+        const igreja = localStorage.getItem('userIgreja');
+        
+        if (!permsStr || !email) {
             window.location.replace('login.html');
+        } else {
+            let p = [];
+            try { p = JSON.parse(permsStr); } catch(e) {}
+            const isAdmin = p.includes('admin');
+            const isEquipe = p.length > 0 && !igreja;
+            
+            // Trava de segurança: Se for Pastor, expulsa para o painel exclusivo
+            if (!isAdmin && !isEquipe) {
+                window.location.replace('painel_pastor.html');
+            }
         }
     </script>
     <style>
