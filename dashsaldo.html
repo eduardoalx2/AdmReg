@@ -230,9 +230,11 @@
                     const s = doc.data();
                     const originalName = s.igrejaFormatada || s.igrejaNome || `Igreja ${s.igrejaCodigo || '-'}`;
                     const normName = normalizeString(originalName);
-                    const rawComp = s.mesReferencia || s.periodo;
+                    // periodo = período real (ex: "Março/26 ➔ Abril/26"); mesReferencia = data de envio — usar periodo como prioridade
+                    const rawComp = s.periodo || s.mesReferencia;
                     const comp = extractMonthYear(rawComp);
-                    
+                    const periodoDisplay = s.periodo || comp;
+
                     if (originalName && originalName !== 'Igreja -') {
                         if (!masterChurches.has(normName)) masterChurches.set(normName, originalName);
                         if (comp !== 'S/D') competencies.add(comp);
@@ -247,6 +249,7 @@
                             total: s.saldoTotal || 0,
                             dataEnvio: s.dataHoraRegistro || '-',
                             competencia: comp,
+                            periodoDisplay: periodoDisplay,
                             santaCeia: s.santaCeia || 0,
                             batismos: s.batismos || 0,
                             celulas: s.celulas || 0
@@ -489,7 +492,7 @@
                     totalGeralSoma += getNumericValue(d.total);
                     if (!showOnlyPending) {
                         listItems.push({
-                            html: generateCardHtml(d.nomeOriginal, d.competencia, 'Entregue', d.dataEnvio, d.cc, d.din, d.total, d),
+                            html: generateCardHtml(d.nomeOriginal, d.periodoDisplay || d.competencia, 'Entregue', d.dataEnvio, d.cc, d.din, d.total, d),
                             status: 'Entregue',
                             nome: d.nomeOriginal
                         });
