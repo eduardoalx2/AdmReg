@@ -104,15 +104,16 @@
                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">4. Status de Presença</label>
                     <select id="status" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
                         <option value="Presente">PRESENTE</option>
-                        <option value="Ausente">AUSENTE</option>
+                        <option value="Justificado">AUSÊNCIA JUSTIFICADA</option>
+                        <option value="Ausente">AUSENTE (sem justificativa)</option>
                     </select>
                 </div>
 
-                <!-- Motivo da Ausência -->
+                <!-- Motivo da Ausência / Justificativa -->
                 <div id="motivoContainer" class="hidden">
-                    <label class="block text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1 ml-1">Motivo da Ausência (Obrigatório)</label>
-                    <textarea id="motivo" rows="3" placeholder="Justifique detalhadamente sua ausência..."
-                        class="w-full p-3 bg-red-50 border border-red-100 rounded-xl focus:ring-2 focus:ring-red-500 outline-none resize-none text-sm"></textarea>
+                    <label id="motivoLabel" class="block text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1 ml-1">Justificativa (Obrigatório)</label>
+                    <textarea id="motivo" rows="3" placeholder="Descreva o motivo da ausência..."
+                        class="w-full p-3 bg-amber-50 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none resize-none text-sm"></textarea>
                 </div>
 
                 <!-- Declaração -->
@@ -152,7 +153,7 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, addDoc, updateDoc, getDocs, doc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         const WHATSAPP_NUMBER = "554333562718";
 
@@ -162,6 +163,7 @@
         const activeEventSelect = document.getElementById('activeEvent');
         const statusSelect = document.getElementById('status');
         const motivoContainer = document.getElementById('motivoContainer');
+        const motivoLabel = document.getElementById('motivoLabel');
         const motivoTextarea = document.getElementById('motivo');
         const feedback = document.getElementById('feedback');
         const loadingOverlay = document.getElementById('loadingOverlay');
@@ -169,6 +171,7 @@
         const publicoBadge = document.getElementById('publicoBadge');
 
         let todosPastores = [];
+        let presencasDoEvento = new Map(); // nome → {docId, status}
 
         function preencherPastores(publico) {
             let lista = todosPastores;
@@ -179,6 +182,7 @@
             } else if (publico === 'TitularesECoordenadores') {
                 lista = todosPastores.filter(p => p.funcao === 'Pastor Titular' || p.coordenador === true);
             }
+            // Todos e PublicoGeral → lista completa
 
             pastorSelect.innerHTML = '<option value="" disabled selected>SELECIONE SEU NOME</option>';
             lista.forEach(p => {
@@ -186,18 +190,49 @@
                 option.value = p.nome;
                 const tags = [];
                 if (p.funcao === 'Pastor Titular') tags.push('TITULAR');
-                if (p.coordenador) tags.push('COORDENADOR');
-                option.textContent = tags.length > 0 ? `${p.nome} (${tags.join(' | ')})` : p.nome;
+                if (p.coordenador) tags.push('COORD');
+                // Indica se já tem registro pré-existente
+                const reg = presencasDoEvento.get(p.nome);
+                const statusTag = reg ? ` • ${reg.status.toUpperCase()}` : '';
+                option.textContent = tags.length > 0 ? `${p.nome} (${tags.join(' | ')}${statusTag})` : `${p.nome}${statusTag}`;
                 pastorSelect.appendChild(option);
             });
+
+            // Para evento público, permite adicionar convidado não cadastrado
+            if (publico === 'PublicoGeral') {
+                const sep = document.createElement('option');
+                sep.disabled = true;
+                sep.textContent = '── Convidados ──';
+                pastorSelect.appendChild(sep);
+                const outro = document.createElement('option');
+                outro.value = '__OUTRO__';
+                outro.textContent = 'OUTRO (não cadastrado)';
+                pastorSelect.appendChild(outro);
+            }
+        }
+
+        // Campo de nome livre para convidados não cadastrados
+        let nomeOutroInput = null;
+        function mostrarCampoOutro(mostrar) {
+            if (!nomeOutroInput) {
+                nomeOutroInput = document.createElement('input');
+                nomeOutroInput.type = 'text';
+                nomeOutroInput.placeholder = 'NOME COMPLETO DO CONVIDADO';
+                nomeOutroInput.className = 'mt-2 w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold uppercase';
+                nomeOutroInput.id = 'nomeOutroInput';
+                pastorSelect.parentNode.appendChild(nomeOutroInput);
+            }
+            nomeOutroInput.style.display = mostrar ? 'block' : 'none';
+            if (mostrar) nomeOutroInput.focus();
         }
 
         function mostrarBadgePublico(publico) {
             const config = {
-                'Todos':                    { text: 'Aberto para todos', cls: 'bg-slate-100 text-slate-600' },
+                'Todos':                    { text: 'Todos os pastores e coordenadores cadastrados', cls: 'bg-slate-100 text-slate-600' },
                 'Titulares':                { text: 'Exclusivo — Pastores Titulares', cls: 'bg-blue-100 text-blue-700' },
                 'Coordenadores':            { text: 'Exclusivo — Coordenadores', cls: 'bg-purple-100 text-purple-700' },
-                'TitularesECoordenadores':  { text: 'Pastores Titulares e Coordenadores', cls: 'bg-indigo-100 text-indigo-700' }
+                'TitularesECoordenadores':  { text: 'Pastores Titulares e Coordenadores', cls: 'bg-indigo-100 text-indigo-700' },
+                'PublicoGeral':             { text: 'Aberto ao Público — pastores registrados + convidados', cls: 'bg-emerald-100 text-emerald-700' }
             };
             const c = config[publico] || config['Todos'];
             publicoBadge.textContent = c.text;
@@ -259,25 +294,63 @@
             }
         };
 
-        // Quando evento é selecionado → revela o restante do formulário filtrado
-        activeEventSelect.addEventListener('change', () => {
+        // Quando evento é selecionado → carrega presenças existentes e revela formulário
+        activeEventSelect.addEventListener('change', async () => {
             const opt = activeEventSelect.options[activeEventSelect.selectedIndex];
             const publico = opt.dataset.publico || 'Todos';
+            const eventoId = opt.value;
+
+            // Carrega registros já existentes para este evento
+            presencasDoEvento.clear();
+            try {
+                const snap = await getDocs(query(collection(db, "presencas"), where("eventoId", "==", eventoId)));
+                snap.forEach(d => {
+                    const data = d.data();
+                    presencasDoEvento.set(data.nome, { docId: d.id, status: data.status, motivo: data.motivo || '' });
+                });
+            } catch(e) { console.error("Erro ao carregar presenças:", e); }
+
             mostrarBadgePublico(publico);
             preencherPastores(publico);
             pastorSelect.value = '';
             statusSelect.value = 'Presente';
             motivoContainer.classList.add('hidden');
+            mostrarCampoOutro(false);
             formResto.classList.remove('hidden');
         });
 
         pastorSelect.addEventListener('change', () => {
             const nomeSelecionado = pastorSelect.value;
+
+            // Convidado não cadastrado
+            if (nomeSelecionado === '__OUTRO__') {
+                mostrarCampoOutro(true);
+                churchSelect.value = '';
+                statusSelect.value = 'Presente';
+                motivoContainer.classList.add('hidden');
+                return;
+            }
+            mostrarCampoOutro(false);
+
+            // Pré-preenche status se já tem registro
+            const regExistente = presencasDoEvento.get(nomeSelecionado);
+            if (regExistente) {
+                statusSelect.value = regExistente.status;
+                motivoTextarea.value = regExistente.motivo || '';
+                const precisaMotivo = regExistente.status === 'Ausente' || regExistente.status === 'Justificado';
+                motivoContainer.classList.toggle('hidden', !precisaMotivo);
+                motivoTextarea.required = precisaMotivo;
+            } else {
+                statusSelect.value = 'Presente';
+                motivoContainer.classList.add('hidden');
+                motivoTextarea.required = false;
+                motivoTextarea.value = '';
+            }
+
             const pastor = todosPastores.find(p => p.nome === nomeSelecionado);
             if (!pastor) return;
-
             const igrejas = Array.isArray(pastor.igreja) ? pastor.igreja : (pastor.igreja ? [pastor.igreja] : []);
-            if (igrejas.length === 1) {
+            if (igrejas.length >= 1) {
                 const nomeIgreja = igrejas[0];
                 for (let i = 0; i < churchSelect.options.length; i++) {
                     if (churchSelect.options[i].value.includes(nomeIgreja)) {
@@ -289,7 +362,11 @@
         });
 
         statusSelect.addEventListener('change', () => {
-            if (statusSelect.value === 'Ausente') {
+            const precisaMotivo = statusSelect.value === 'Ausente' || statusSelect.value === 'Justificado';
+            if (precisaMotivo) {
+                motivoLabel.textContent = statusSelect.value === 'Justificado'
+                    ? 'Justificativa (Obrigatório)'
+                    : 'Motivo da Ausência (Obrigatório)';
                 motivoContainer.classList.remove('hidden');
                 motivoTextarea.required = true;
             } else {
@@ -302,12 +379,20 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            if (statusSelect.value === 'Ausente' && !motivoTextarea.value.trim()) {
-                showFeedback("POR FAVOR, INFORME O MOTIVO DA AUSÊNCIA!", "error");
+            const precisaMotivo = statusSelect.value === 'Ausente' || statusSelect.value === 'Justificado';
+            if (precisaMotivo && !motivoTextarea.value.trim()) {
+                showFeedback("POR FAVOR, PREENCHA A JUSTIFICATIVA!", "error");
                 return;
             }
 
-            const nome = document.getElementById('pastorName').value.trim();
+            const isOutro = pastorSelect.value === '__OUTRO__';
+            const nomeOutro = isOutro && nomeOutroInput ? nomeOutroInput.value.trim().toUpperCase() : '';
+            if (isOutro && !nomeOutro) {
+                showFeedback("INFORME O NOME DO CONVIDADO!", "error");
+                return;
+            }
+
+            const nome = isOutro ? nomeOutro : pastorSelect.value.trim();
             const igreja = document.getElementById('church').value;
             const eventoOption = activeEventSelect.options[activeEventSelect.selectedIndex];
             const eventoId = eventoOption.value;
@@ -327,14 +412,20 @@
                 motivo,
                 declaracao: document.getElementById('declaration').checked ? "Sim" : "Não",
                 dataPostagem,
-                createdAt: serverTimestamp()
+                updatedAt: serverTimestamp()
             };
 
             loadingOverlay.classList.remove('hidden');
 
             try {
-                // Salva diretamente na coleção 'presencas' no Firebase Firestore
-                await addDoc(collection(db, "presencas"), payload);
+                // Upsert: atualiza se já existe registro pré-registrado, senão cria novo
+                const regExistente = !isOutro ? presencasDoEvento.get(nome) : null;
+                if (regExistente) {
+                    await updateDoc(doc(db, "presencas", regExistente.docId), payload);
+                } else {
+                    payload.createdAt = serverTimestamp();
+                    await addDoc(collection(db, "presencas"), payload);
+                }
 
                 const dataFormatada = dataEvento.split('-').reverse().join('/');
                 

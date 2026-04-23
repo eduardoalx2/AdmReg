@@ -59,7 +59,7 @@
     <div class="max-w-6xl mx-auto space-y-6 p-4 md:p-8">
 
         <!-- Indicadores Rápidos -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Registros Exibidos</p>
                 <h3 class="text-2xl font-black text-slate-800" id="countTotal">0</h3>
@@ -71,6 +71,10 @@
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ausentes</p>
                 <h3 class="text-2xl font-black text-red-600" id="countAusentes">0</h3>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm text-center border">
+                <p class="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-1">Justificados</p>
+                <h3 class="text-2xl font-black text-amber-600" id="countJustificados">0</h3>
             </div>
             <button onclick="window.print()" class="bg-slate-900 text-white p-4 rounded-2xl shadow-sm hover:bg-blue-600 transition-colors flex flex-col items-center justify-center gap-1 group">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400 group-hover:text-blue-200 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
@@ -119,6 +123,7 @@
         const countTotal = document.getElementById('countTotal');
         const countPresentes = document.getElementById('countPresentes');
         const countAusentes = document.getElementById('countAusentes');
+        const countJustificados = document.getElementById('countJustificados');
 
         async function inicializar() {
             try {
@@ -188,25 +193,27 @@
 
             tabela.innerHTML = '';
 
-            let cPres = 0;
-            let cAus = 0;
+            let cPres = 0, cAus = 0, cJust = 0;
 
             if (filtrados.length === 0) {
                 tabela.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400 text-xs font-bold uppercase tracking-wider">NENHUM REGISTRO ENCONTRADO PARA OS FILTROS APLICADOS.</td></tr>`;
             } else {
                 filtrados.forEach(p => {
-                    if(p.status === 'Presente') cPres++;
-                    if(p.status === 'Ausente') cAus++;
+                    if (p.status === 'Presente')    cPres++;
+                    if (p.status === 'Ausente')     cAus++;
+                    if (p.status === 'Justificado') cJust++;
 
                     const tr = document.createElement('tr');
                     tr.className = 'border-b border-slate-50 hover:bg-slate-50 transition-colors';
-                    
-                    const isPresente = p.status === 'Presente';
-                    const statusBadge = isPresente 
+
+                    const statusBadge = p.status === 'Presente'
                         ? '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider">Presente</span>'
+                        : p.status === 'Justificado'
+                        ? '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider">Justificado</span>'
                         : '<span class="bg-red-100 text-red-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider">Ausente</span>';
 
                     const dataEventoFormatada = p.dataEvento ? p.dataEvento.split('-').reverse().join('/') : '';
+                    const mostraMotivo = p.status === 'Ausente' || p.status === 'Justificado';
 
                     tr.innerHTML = `
                         <td class="p-4 font-bold text-slate-800 uppercase text-xs">${p.nome || '-'}</td>
@@ -216,16 +223,16 @@
                             <div class="text-[10px] text-slate-400 font-semibold">${dataEventoFormatada}</div>
                         </td>
                         <td class="p-4 text-center">${statusBadge}</td>
-                        <td class="p-4 text-xs text-slate-500 italic">${!isPresente ? (p.motivo || 'Sem justificativa') : '<span class="opacity-30">-</span>'}</td>
+                        <td class="p-4 text-xs text-slate-500 italic">${mostraMotivo ? (p.motivo || '<span class="text-red-400 font-bold">Sem justificativa</span>') : '<span class="opacity-30">-</span>'}</td>
                     `;
                     tabela.appendChild(tr);
                 });
             }
 
-            // Update Indicadores
             countTotal.textContent = filtrados.length;
             countPresentes.textContent = cPres;
             countAusentes.textContent = cAus;
+            countJustificados.textContent = cJust;
         }
 
         // Listeners dos Filtros

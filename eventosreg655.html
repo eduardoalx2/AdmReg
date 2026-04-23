@@ -64,10 +64,11 @@
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Público-alvo</label>
                         <select id="publico" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
-                            <option value="Todos" selected>TODOS</option>
+                            <option value="Todos" selected>TODOS (TITULARES + PASTORES + COORDENADORES)</option>
                             <option value="Titulares">SOMENTE TITULARES</option>
                             <option value="Coordenadores">SOMENTE COORDENADORES</option>
                             <option value="TitularesECoordenadores">TITULARES E COORDENADORES</option>
+                            <option value="PublicoGeral">ABERTO AO PÚBLICO (pastores registrados + convidados)</option>
                         </select>
                     </div>
                     <div>
@@ -112,6 +113,46 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        async function prePopularAusencias(eventoId, tipoEvento, dataEvento, publico) {
+            try {
+                const pastoresSnap = await getDocs(collection(db, "pastores"));
+                let lista = [];
+                pastoresSnap.forEach(d => lista.push(d.data()));
+
+                // Filtra pelo público do evento (PublicoGeral = todos os pastores registrados)
+                if (publico === 'Titulares') {
+                    lista = lista.filter(p => p.funcao === 'Pastor Titular');
+                } else if (publico === 'Coordenadores') {
+                    lista = lista.filter(p => p.coordenador === true);
+                } else if (publico === 'TitularesECoordenadores') {
+                    lista = lista.filter(p => p.funcao === 'Pastor Titular' || p.coordenador === true);
+                }
+                // 'Todos' e 'PublicoGeral' → todos os pastores cadastrados
+
+                const agora = new Date().toLocaleString('pt-BR');
+                const promises = lista.map(p => {
+                    const igrejaArr = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                    return addDoc(collection(db, "presencas"), {
+                        nome: p.nome,
+                        igreja: igrejaArr[0] || '',
+                        eventoId,
+                        tipoEvento,
+                        dataEvento,
+                        status: 'Ausente',
+                        motivo: '',
+                        declaracao: '',
+                        dataPostagem: agora,
+                        obs: '',
+                        preRegistrado: true,
+                        createdAt: serverTimestamp()
+                    });
+                });
+                await Promise.all(promises);
+            } catch(e) {
+                console.error("Erro ao pré-popular ausências:", e);
+            }
+        }
 
         const form = document.getElementById('eventoForm');
         const tabelaEventos = document.getElementById('tabelaEventos');
@@ -188,8 +229,10 @@
             };
 
             try {
-                await addDoc(collection(db, "eventos"), payload);
-                showFeedback("Evento cadastrado com sucesso!", "success");
+                const docRef = await addDoc(collection(db, "eventos"), payload);
+                showFeedback("Evento cadastrado! Registrando ausências...", "success");
+                await prePopularAusencias(docRef.id, payload.nome, payload.data, payload.publico);
+                showFeedback(`Evento cadastrado com sucesso! Ausências pré-registradas.`, "success");
                 form.reset();
                 document.getElementById('data').value = hoje;
                 carregarEventos();
