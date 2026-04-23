@@ -183,7 +183,7 @@
                 window.renderizarTabela();
             } catch (e) {
                 console.error(e);
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-red-500 text-xs font-bold uppercase tracking-wider">Erro ao sincronizar dados.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500 text-xs font-bold uppercase tracking-wider">Erro ao sincronizar dados: ${e.message || e}</td></tr>`;
             }
         };
 
