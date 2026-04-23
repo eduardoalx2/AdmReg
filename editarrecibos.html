@@ -465,33 +465,26 @@
             return extenso.charAt(0).toUpperCase() + extenso.slice(1);
         };
 
-        // Função que aciona a geração do PDF baseada num Recibo Específico
-        window.gerarPdfRecibo = (id) => {
-            const r = recibosList.find(i => i.id === id);
-            if(!r) return;
+        const formatReferenceExtenso = (refString) => {
+            if (!refString || refString.length !== 7) return refString;
+            const parts = refString.split('/');
+            if (parts.length !== 2) return refString;
+            const monthIndex = parseInt(parts[0], 10) - 1;
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            if (monthIndex >= 0 && monthIndex < 12) return `${monthNames[monthIndex]}/${parts[1]}`;
+            return refString;
+        };
 
-            const formatReferenceExtenso = (refString) => {
-                if (!refString || refString.length !== 7) return refString;
-                const parts = refString.split('/');
-                if (parts.length !== 2) return refString;
-                const monthIndex = parseInt(parts[0], 10) - 1;
-                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-                if (monthIndex >= 0 && monthIndex < 12) return `${monthNames[monthIndex]}/${parts[1]}`;
-                return refString;
-            };
-
+        function preencherDadosPdf(r) {
             document.getElementById('pdf-data-emissao').textContent = r.dataEmissao || 'S/D';
             document.getElementById('pdf-referencia').textContent = formatReferenceExtenso(r.referenceDate);
             document.getElementById('pdf-igreja').textContent = r.igrejaFormatada || 'Não informada';
             document.getElementById('pdf-pastor').textContent = r.pastor || 'Não informado';
-            
             document.getElementById('pdf-entradas').textContent = window.formatMoeda(r.incomeValue);
             document.getElementById('pdf-regional').textContent = window.formatMoeda(r.regionalTax);
             document.getElementById('pdf-coord').textContent = window.formatMoeda(r.coordinatorFeeParsed);
-            
             document.getElementById('pdf-label-seguros').textContent = `Seguro de Vida (${r.insuranceCount || 0})`;
             document.getElementById('pdf-seguros').textContent = window.formatMoeda(r.insuranceTotal);
-
             const containerOutros = document.getElementById('pdf-outros-container');
             if (r.otherValueParsed > 0) {
                 document.getElementById('pdf-label-outros').textContent = `Outros (${r.otherDesc || ''})`;
@@ -500,48 +493,44 @@
             } else {
                 containerOutros.classList.add('hidden');
             }
-
             document.getElementById('pdf-total').textContent = window.formatMoeda(r.total);
             document.getElementById('pdf-extenso').textContent = numeroPorExtenso(r.total);
-
             const customLogo = localStorage.getItem('customLogo');
             const customSignature = localStorage.getItem('customSignature');
-            
-            if(customLogo) {
-                document.getElementById('pdf-logo').src = customLogo;
-            } else {
-                document.getElementById('pdf-logo').src = "logo.png";
-            }
-
-            if(customSignature) {
+            document.getElementById('pdf-logo').src = customLogo || 'logo.png';
+            if (customSignature) {
                 document.getElementById('pdf-assinatura').src = customSignature;
                 document.getElementById('pdf-assinatura').style.display = 'block';
                 document.getElementById('pdf-assinatura-texto').style.display = 'none';
             } else {
-                document.getElementById('pdf-assinatura').src = "assinatura.png";
+                document.getElementById('pdf-assinatura').src = 'assinatura.png';
             }
+        }
 
-            const element = document.getElementById('receipt-content');
-            const safeDate = (r.referenceDate || '').replace('/', '-');
-            const safeChurch = (r.igrejaCodigo || 'UNID');
-            const customFileName = `${safeChurch} - REC REG REF(${safeDate}).pdf`;
-
-            const opt = { 
-                margin: 0, 
-                filename: customFileName, 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { 
-                    scale: 2, 
-                    useCORS: true, 
-                    allowTaint: true,
-                    scrollY: 0,
-                    scrollX: 0
-                }, 
+        function getPdfOpt(filename) {
+            return {
+                margin: 0,
+                filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, allowTaint: true, scrollY: 0, scrollX: 0 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
-            
-            html2pdf().set(opt).from(element).save();
+        }
+
+        function getNomeArquivoPdf(r) {
+            const safeDate = (r.referenceDate || '').replace('/', '-');
+            const safeChurch = (r.igrejaCodigo || 'UNID');
+            return `${safeChurch} - REC REG REF(${safeDate}).pdf`;
+        }
+
+        // Função que aciona a geração do PDF baseada num Recibo Específico
+        window.gerarPdfRecibo = (id) => {
+            const r = recibosList.find(i => i.id === id);
+            if (!r) return;
+            preencherDadosPdf(r);
+            const element = document.getElementById('receipt-content');
+            html2pdf().set(getPdfOpt(getNomeArquivoPdf(r))).from(element).save();
         };
 
         window.limparFiltros = () => {
@@ -633,20 +622,7 @@
             lucide.createIcons();
         }
 
-        window.enviarWhatsapp = (id) => {
-            const r = recibosList.find(i => i.id === id);
-            if(!r) return;
-            
-            const formatReferenceExtenso = (refString) => {
-                if (!refString || refString.length !== 7) return refString;
-                const parts = refString.split('/');
-                if (parts.length !== 2) return refString;
-                const monthIndex = parseInt(parts[0], 10) - 1;
-                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-                if (monthIndex >= 0 && monthIndex < 12) return `${monthNames[monthIndex]}/${parts[1]}`;
-                return refString;
-            };
-            
+        function textoWhatsappRecibo(r) {
             let texto = `*RECIBO DE ENTRADAS - IEQ*\n`;
             texto += `---------------------------------------\n`;
             texto += `*Igreja:* ${r.igrejaFormatada || 'Não informada'}\n`;
@@ -654,13 +630,48 @@
             texto += `*Emissão:* ${r.dataEmissao || 'S/D'}\n\n`;
             texto += `*Subtotal:* ${window.formatMoeda(r.incomeValue)}\n`;
             texto += `*Taxa Regional (4%):* ${window.formatMoeda(r.regionalTax)}\n`;
-            if(r.coordinatorFeeParsed > 0) texto += `*Taxa Coord.:* ${window.formatMoeda(r.coordinatorFeeParsed)}\n`;
-            if(r.insuranceCount > 0) texto += `*Seguros (${r.insuranceCount}):* ${window.formatMoeda(r.insuranceTotal)}\n`;
-            if(r.otherValueParsed > 0) texto += `*Outros (${r.otherDesc || 'Taxas'}):* ${window.formatMoeda(r.otherValueParsed)}\n`;
+            if (r.coordinatorFeeParsed > 0) texto += `*Taxa Coord.:* ${window.formatMoeda(r.coordinatorFeeParsed)}\n`;
+            if (r.insuranceCount > 0) texto += `*Seguros (${r.insuranceCount}):* ${window.formatMoeda(r.insuranceTotal)}\n`;
+            if (r.otherValueParsed > 0) texto += `*Outros (${r.otherDesc || 'Taxas'}):* ${window.formatMoeda(r.otherValueParsed)}\n`;
             texto += `\n*TOTAL PAGO:* ${window.formatMoeda(r.total)}\n`;
             texto += `---------------------------------------\n`;
             texto += `_Documento gerado eletronicamente._`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+            return texto;
+        }
+
+        window.enviarWhatsapp = async (id) => {
+            const r = recibosList.find(i => i.id === id);
+            if (!r) return;
+
+            const btn = document.querySelector(`button[onclick="enviarWhatsapp('${id}')"]`);
+            if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+
+            preencherDadosPdf(r);
+            await new Promise(resolve => setTimeout(resolve, 80));
+
+            const element = document.getElementById('receipt-content');
+            const nomeArquivo = getNomeArquivoPdf(r);
+
+            try {
+                const pdfBlob = await html2pdf().set(getPdfOpt(nomeArquivo)).from(element).output('blob');
+                const pdfFile = new File([pdfBlob], nomeArquivo, { type: 'application/pdf' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    await navigator.share({
+                        files: [pdfFile],
+                        title: `Recibo - ${r.igrejaFormatada || ''}`,
+                        text: `Recibo de Entradas - ${r.igrejaFormatada || ''} - Ref: ${r.referenceDate || ''}`
+                    });
+                    return;
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            } finally {
+                if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+            }
+
+            // Fallback: abre WhatsApp com texto (desktop ou navegador sem suporte a share de arquivos)
+            window.open(`https://wa.me/?text=${encodeURIComponent(textoWhatsappRecibo(r))}`, '_blank');
         };
 
         window.editarRecibo = (id) => {
