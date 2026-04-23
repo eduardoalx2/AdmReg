@@ -104,14 +104,10 @@
         <!-- Filtros e Controles -->
         <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 flex flex-wrap md:flex-nowrap gap-4 items-center justify-between">
             <div class="w-full md:w-auto flex-1">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pesquisar Igreja</label>
-                <div class="relative">
-                    <input type="text" id="churchSearch" placeholder="Nome da igreja..." 
-                           class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-lg focus:ring-1 focus:ring-blue-500 outline-none block p-2 pl-9 transition-all">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                        <i data-lucide="search" class="w-3.5 h-3.5"></i>
-                    </div>
-                </div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Igreja</label>
+                <select id="churchSelect" class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-lg focus:ring-1 focus:ring-blue-500 outline-none block p-2 transition-all">
+                    <option value="">Todas as Igrejas</option>
+                </select>
             </div>
 
             <div class="w-full md:w-auto">
