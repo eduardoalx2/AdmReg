@@ -180,7 +180,7 @@
     <script type="module">
         import { auth, db } from './firebase-config.js';
         import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-        import { collection, getDocs, doc, getDoc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         lucide.createIcons();
 
@@ -223,14 +223,21 @@
                 const igSnap = await getDocs(query(collection(db, "igrejas"), where("nome", "==", userIgreja)));
                 if(!igSnap.empty) igrejaObj = igSnap.docs[0].data();
 
-                // 3. Buscar os últimos 6 Saldos e Recibos
-                const qSaldos = query(collection(db, "saldos_virada"), where("igrejaNome", "==", userIgreja), orderBy("createdAt", "desc"), limit(6));
-                const qRecibos = query(collection(db, "recibos"), where("igrejaNome", "==", userIgreja), orderBy("createdAt", "desc"), limit(6));
+                // 3. Buscar os últimos 6 Saldos e Recibos (sem orderBy para evitar índice composto)
+                const qSaldos = query(collection(db, "saldos_virada"), where("igrejaNome", "==", userIgreja));
+                const qRecibos = query(collection(db, "recibos"), where("igrejaNome", "==", userIgreja));
 
                 const [saldosSnap, recibosSnap] = await Promise.all([getDocs(qSaldos), getDocs(qRecibos)]);
-                
-                const saldos = []; saldosSnap.forEach(d => saldos.push(d.data()));
-                globalRecibos = []; recibosSnap.forEach(d => globalRecibos.push({id: d.id, ...d.data()}));
+
+                const saldos = [];
+                saldosSnap.forEach(d => saldos.push(d.data()));
+                saldos.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+                saldos.splice(6);
+
+                globalRecibos = [];
+                recibosSnap.forEach(d => globalRecibos.push({id: d.id, ...d.data()}));
+                globalRecibos.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+                globalRecibos.splice(6);
 
                 renderListas(saldos, globalRecibos);
                 calcularTermometro(saldos, globalRecibos);
