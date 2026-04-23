@@ -331,8 +331,8 @@
 
             const box = document.getElementById('boxStatusMes');
 
-            if (reciboRef) {
-                // Recibo já emitido para o mês de referência: situação regular
+            if (reciboRef && (parseFloat(reciboRef.regionalTax) || 0) > 0) {
+                // Recibo emitido com taxa regional preenchida: situação regular
                 box.innerHTML = `
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mb-3"><i data-lucide="check-circle-2" class="w-8 h-8"></i></div>
                     <h3 class="text-lg font-black text-slate-800 uppercase">Tudo Certo!</h3>
