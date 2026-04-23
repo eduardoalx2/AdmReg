@@ -311,60 +311,77 @@
 
         function calcularTermometro(saldos, recibos) {
             const hoje = new Date();
-            const mesAtualNum = hoje.getMonth();
+            const mesAtualNum = hoje.getMonth(); // 0-indexed (abril = 3)
             const anoAtual = hoje.getFullYear();
-            const strMesRef = `${String(mesAtualNum + 1).padStart(2, '0')}/${anoAtual}`; // MM/AAAA
-            
+
+            // Referência = mês ANTERIOR: o saldo de março gera recibo em abril ref. "03/AAAA"
+            const mesPrevNum = mesAtualNum === 0 ? 11 : mesAtualNum - 1;
+            const anoPrev = mesAtualNum === 0 ? anoAtual - 1 : anoAtual;
+            const strMesRef = `${String(mesPrevNum + 1).padStart(2, '0')}/${anoPrev}`;
+
+            // 5º dia útil do mês atual = prazo para envio do saldo do mês anterior
             const quintoDia = calcularQuintoDiaUtil(anoAtual, mesAtualNum);
             const atrasado = hoje > quintoDia;
 
-            const saldoAtual = saldos.find(s => s.mesReferencia === strMesRef);
-            const reciboAtual = recibos.find(r => r.referenceDate === strMesRef);
+            // Saldo do mês anterior (campo pode ser 'periodo' ou 'mesReferencia')
+            const saldoRef = saldos.find(s => (s.periodo || s.mesReferencia) === strMesRef);
+            // Recibo com referência ao mês anterior
+            const reciboRef = recibos.find(r => r.referenceDate === strMesRef);
 
             const box = document.getElementById('boxStatusMes');
-            
-            if (reciboAtual) {
+
+            if (reciboRef) {
+                // Recibo já emitido para o mês de referência: situação regular
                 box.innerHTML = `
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mb-3"><i data-lucide="check-circle-2" class="w-8 h-8"></i></div>
                     <h3 class="text-lg font-black text-slate-800 uppercase">Tudo Certo!</h3>
                     <p class="text-xs font-medium text-slate-500 mt-1">O recibo de <b>${strMesRef}</b> já foi emitido.</p>
                 `;
-            } 
-            else if (saldoAtual) {
-                // Tem saldo mas não tem recibo: Projetar valor
-                const taxadas = saldoAtual.entradasTaxadas || 0;
+            }
+            else if (atrasado) {
+                // Prazo vencido sem recibo = pendente independente de ter saldo
+                box.innerHTML = `
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-3"><i data-lucide="alert-circle" class="w-8 h-8"></i></div>
+                    <h3 class="text-lg font-black text-red-600 uppercase">Pendente (Atrasado)</h3>
+                    <p class="text-xs font-medium text-red-500 mt-1">O prazo do 5º dia útil já passou e o recibo de <b>${strMesRef}</b> não foi emitido.</p>
+                    ${!saldoRef ? `<a href="saldodeviradareg655.html" class="mt-4 inline-block bg-red-600 text-white font-bold text-xs uppercase px-6 py-2.5 rounded-xl hover:bg-red-700 transition-colors">Lançar Saldo Agora</a>` : ''}
+                `;
+            }
+            else if (saldoRef) {
+                // Dentro do prazo e saldo já enviado: aguardando escritório emitir recibo
+                const taxadas = saldoRef.entradasTaxadas || 0;
                 const seguroValor = configPainel.valorSeguro || 0;
                 const qtdSeguros = igrejaObj?.seguros || 0;
-                
-                const estTotal = (taxadas * 0.04) + 100 + (qtdSeguros * seguroValor);
+                const totalSeguro = qtdSeguros * seguroValor;
+                const baseTaxas = (taxadas * 0.04) + 100;
+                const estTotal = baseTaxas + totalSeguro;
 
                 box.innerHTML = `
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-3"><i data-lucide="clock" class="w-8 h-8"></i></div>
                     <h3 class="text-lg font-black text-slate-800 uppercase">Aguardando Escritório</h3>
-                    <p class="text-xs font-medium text-slate-500 mt-1">Saldo lançado. Recibo de ${strMesRef} em emissão.</p>
+                    <p class="text-xs font-medium text-slate-500 mt-1">Saldo lançado. Recibo de <b>${strMesRef}</b> em emissão.</p>
                     <div class="mt-4 bg-slate-50 border border-slate-100 p-3 rounded-xl inline-block text-left w-full max-w-[250px]">
-                        <p class="text-[9px] font-bold uppercase text-slate-400 mb-1">Estimativa a Pagar (aprox.)</p>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] font-bold uppercase text-slate-500">Taxas + Coord.</span>
+                            <span class="text-[10px] font-bold text-slate-700">${window.formatMoeda(baseTaxas)}</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-200">
+                            <span class="text-[10px] font-bold uppercase text-slate-500">Seguro (${qtdSeguros} vidas)</span>
+                            <span class="text-[10px] font-bold text-slate-700">${window.formatMoeda(totalSeguro)}</span>
+                        </div>
+                        <p class="text-[9px] font-bold uppercase text-slate-400 mb-1">Estimativa Total a Pagar</p>
                         <p class="text-xl font-black text-blue-700">${window.formatMoeda(estTotal)}</p>
                     </div>
                 `;
-            } 
+            }
             else {
-                // Sem Saldo
-                if (atrasado) {
-                    box.innerHTML = `
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-3"><i data-lucide="alert-circle" class="w-8 h-8"></i></div>
-                        <h3 class="text-lg font-black text-red-600 uppercase">Pendente (Atrasado)</h3>
-                        <p class="text-xs font-medium text-red-500 mt-1">O prazo do 5º dia útil já passou! Envie o saldo de <b>${strMesRef}</b> urgente.</p>
-                        <a href="saldodeviradareg655.html" class="mt-4 inline-block bg-red-600 text-white font-bold text-xs uppercase px-6 py-2.5 rounded-xl hover:bg-red-700 transition-colors">Lançar Saldo Agora</a>
-                    `;
-                } else {
-                    box.innerHTML = `
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-3"><i data-lucide="alert-triangle" class="w-8 h-8"></i></div>
-                        <h3 class="text-lg font-black text-amber-600 uppercase">Pendente Lançamento</h3>
-                        <p class="text-xs font-medium text-amber-700 mt-1">Você ainda não lançou o saldo de <b>${strMesRef}</b>. Envie até o 5º dia útil.</p>
-                        <a href="saldodeviradareg655.html" class="mt-4 inline-block bg-amber-500 text-amber-950 font-bold text-xs uppercase px-6 py-2.5 rounded-xl hover:bg-amber-600 transition-colors shadow-sm">Lançar Saldo Agora</a>
-                    `;
-                }
+                // Dentro do prazo, sem saldo: pendente de lançamento
+                box.innerHTML = `
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600 mb-3"><i data-lucide="alert-triangle" class="w-8 h-8"></i></div>
+                    <h3 class="text-lg font-black text-amber-600 uppercase">Pendente Lançamento</h3>
+                    <p class="text-xs font-medium text-amber-700 mt-1">Você ainda não lançou o saldo de <b>${strMesRef}</b>. Envie até o 5º dia útil.</p>
+                    <a href="saldodeviradareg655.html" class="mt-4 inline-block bg-amber-500 text-amber-950 font-bold text-xs uppercase px-6 py-2.5 rounded-xl hover:bg-amber-600 transition-colors shadow-sm">Lançar Saldo Agora</a>
+                `;
             }
             lucide.createIcons();
         }
