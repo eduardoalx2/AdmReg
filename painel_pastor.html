@@ -181,6 +181,7 @@
         import { auth, db } from './firebase-config.js';
         import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
         import { collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        // query e where ainda usados para busca da igreja do pastor
 
         lucide.createIcons();
 
@@ -223,19 +224,26 @@
                 const igSnap = await getDocs(query(collection(db, "igrejas"), where("nome", "==", userIgreja)));
                 if(!igSnap.empty) igrejaObj = igSnap.docs[0].data();
 
-                // 3. Buscar os últimos 6 Saldos e Recibos (sem orderBy para evitar índice composto)
-                const qSaldos = query(collection(db, "saldos_virada"), where("igrejaNome", "==", userIgreja));
-                const qRecibos = query(collection(db, "recibos"), where("igrejaNome", "==", userIgreja));
+                // 3. Buscar todos os registros e filtrar client-side (garante match mesmo com variações de campo)
+                const [saldosSnap, recibosSnap] = await Promise.all([
+                    getDocs(collection(db, "saldos_virada")),
+                    getDocs(collection(db, "recibos"))
+                ]);
 
-                const [saldosSnap, recibosSnap] = await Promise.all([getDocs(qSaldos), getDocs(qRecibos)]);
+                const lower = userIgreja.toLowerCase();
+                function matchIgreja(data) {
+                    if ((data.igrejaNome || '').toLowerCase() === lower) return true;
+                    const parts = (data.igrejaFormatada || '').split(' - ');
+                    return parts.length > 1 && parts.slice(1).join(' - ').toLowerCase() === lower;
+                }
 
                 const saldos = [];
-                saldosSnap.forEach(d => saldos.push(d.data()));
+                saldosSnap.forEach(d => { const data = d.data(); if (matchIgreja(data)) saldos.push(data); });
                 saldos.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
                 saldos.splice(6);
 
                 globalRecibos = [];
-                recibosSnap.forEach(d => globalRecibos.push({id: d.id, ...d.data()}));
+                recibosSnap.forEach(d => { const data = d.data(); if (matchIgreja(data)) globalRecibos.push({id: d.id, ...data}); });
                 globalRecibos.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
                 globalRecibos.splice(6);
 
@@ -386,28 +394,45 @@
             if (recibos.length === 0) {
                 listRecibos.innerHTML = '<p class="text-xs text-slate-400 text-center py-4 italic">Nenhum recibo emitido ainda.</p>';
             } else {
-                listRecibos.innerHTML = recibos.map(r => `
-                    <div class="p-3 bg-white rounded-xl border border-slate-100 hover:border-blue-200 transition-colors shadow-sm flex flex-col justify-between gap-3">
-                        <div class="flex justify-between items-start">
+                listRecibos.innerHTML = recibos.map(r => {
+                    const itens = [
+                        { label: 'Entradas', val: r.incomeValue },
+                        { label: 'Taxa Regional (4%)', val: r.regionalTax },
+                        { label: 'Taxa Coordenadoria', val: r.coordinatorFeeParsed },
+                        (r.insuranceTotal > 0) ? { label: `Seguros (${r.insuranceCount || 0})`, val: r.insuranceTotal } : null,
+                        (r.otherValueParsed > 0) ? { label: `Outros${r.otherDesc ? ` — ${r.otherDesc}` : ''}`, val: r.otherValueParsed } : null,
+                    ].filter(Boolean);
+
+                    return `
+                    <div class="p-4 bg-white rounded-xl border border-slate-100 hover:border-blue-200 transition-colors shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
                             <div>
-                                <span class="font-black text-sm text-slate-800 uppercase block mb-0.5">Ref: ${r.referenceDate}</span>
-                                <span class="text-[10px] text-slate-500 font-medium">Emitido: ${r.dataEmissao}</span>
+                                <span class="font-black text-sm text-slate-800 uppercase tracking-wide">Ref. ${r.referenceDate || '-'}</span>
+                                <span class="text-[10px] text-slate-400 block mt-0.5">Emitido em: ${r.dataEmissao || '-'}</span>
                             </div>
                             <div class="text-right">
-                                <span class="font-black text-sm text-blue-600 block mb-0.5">${window.formatMoeda(r.total)}</span>
-                                <span class="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Pago</span>
+                                <span class="font-black text-xl text-blue-600 leading-tight block">${window.formatMoeda(r.total)}</span>
+                                <span class="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black uppercase tracking-wider block mt-1">Pago</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 border-t border-slate-50 pt-2">
-                            <button onclick="baixarPdf('${r.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded-lg text-[10px] font-bold uppercase flex items-center justify-center gap-1 transition-colors">
+                        <div class="bg-slate-50 rounded-lg px-3 py-2 mb-3 space-y-1">
+                            ${itens.map(i => `
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-slate-500">${i.label}</span>
+                                    <span class="font-semibold text-slate-700">${window.formatMoeda(i.val)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="baixarPdf('${r.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-[10px] font-bold uppercase flex items-center justify-center gap-1 transition-colors">
                                 <i data-lucide="download" class="w-3 h-3"></i> Baixar PDF
                             </button>
-                            <button onclick="enviarZap('${r.id}')" class="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-1.5 rounded-lg text-[10px] font-bold uppercase flex items-center justify-center gap-1 transition-colors">
+                            <button onclick="enviarZap('${r.id}')" class="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-2 rounded-lg text-[10px] font-bold uppercase flex items-center justify-center gap-1 transition-colors">
                                 <i data-lucide="message-circle" class="w-3 h-3"></i> Enviar Zap
                             </button>
                         </div>
-                    </div>
-                `).join('');
+                    </div>`;
+                }).join('');
             }
             lucide.createIcons();
         }
@@ -458,8 +483,8 @@
             const r = globalRecibos.find(i => i.id === id);
             if (!r) return;
             preencherPdf(r);
-            await new Promise(resolve => setTimeout(resolve, 80));
-            
+            await new Promise(resolve => setTimeout(resolve, 100));
+
             const element = document.getElementById('receipt-content');
             const fileName = `${r.igrejaCodigo || 'UNID'} - REC REG REF(${r.referenceDate.replace('/','-')}).pdf`;
 
@@ -468,21 +493,34 @@
                     margin: 0, filename: fileName, image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 }).from(element).output('blob');
-                
+
                 const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                    await navigator.share({
-                        files: [pdfFile],
-                        title: `Recibo - ${r.igrejaFormatada || ''}`,
-                        text: `Segue o Recibo de Entradas - Ref: ${r.referenceDate || ''}`
-                    });
+                const shareData = { files: [pdfFile], title: `Recibo - ${r.igrejaFormatada || ''}`, text: `Segue o Recibo de Entradas - Ref: ${r.referenceDate || ''}` };
+
+                // Tenta native share (funciona no Android Chrome e iOS Safari moderno)
+                if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                    await navigator.share(shareData);
                     return;
                 }
-            } catch (err) { if (err.name !== 'AbortError') console.error(err); }
-            
-            // Fallback texto Whatsapp
-            let txt = `*RECIBO DE ENTRADAS - IEQ*\n*Referência:* ${formatRefExtenso(r.referenceDate)}\n*Total Pago:* ${window.formatMoeda(r.total)}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
+
+                // Fallback: baixa o PDF e abre WhatsApp com texto
+                const blobUrl = URL.createObjectURL(pdfBlob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+
+            } catch (err) {
+                if (err.name === 'AbortError') return; // usuário cancelou o share nativo
+                console.error(err);
+            }
+
+            // Abre WhatsApp com resumo (após download ou em caso de erro na geração)
+            const txt = `*RECIBO DE ENTRADAS - IEQ*\n*Referência:* ${formatRefExtenso(r.referenceDate)}\n*Total Pago:* ${window.formatMoeda(r.total)}`;
+            setTimeout(() => window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank'), 700);
         };
 
         // Botão Falar com Secretaria
