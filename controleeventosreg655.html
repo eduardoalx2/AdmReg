@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Presença - Região 655</title>
+    <title>Controle de Eventos e Presenças - Região 655</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         let perms = [];
         try { perms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
+        // Verifica acesso com base na permissão correta
         if (!perms.includes('admin') && !perms.includes('controle_presencas')) {
             window.location.replace('index.html');
         }
@@ -16,9 +18,12 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
         .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-slate-50 min-h-screen pb-10">
 
     <!-- CABEÇALHO COMPACTO -->
     <header class="w-full shadow-sm bg-white border-b">
@@ -32,235 +37,359 @@
                     </div>
                 </a>
                 <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Painel Admin
+                    <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
                 </a>
             </div>
         </div>
-        <div class="header-gradient py-2 px-4">
-            <div class="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase">Controle de Presença</h1>
-                <!-- Filtros -->
-                <div class="flex flex-col md:flex-row items-center gap-2">
-                    <input type="text" id="filtroNome" placeholder="BUSCAR POR NOME..." class="w-full md:w-44 p-2 bg-slate-700 border border-slate-600 rounded-lg outline-none text-[10px] font-bold uppercase tracking-widest placeholder:text-slate-400 text-white focus:ring-1 focus:ring-blue-400">
-                    <select id="filtroIgreja" class="w-full md:w-56 p-2 bg-slate-700 border border-slate-600 rounded-lg outline-none text-[10px] font-bold uppercase tracking-widest text-white focus:ring-1 focus:ring-blue-400">
-                        <option value="">TODAS AS IGREJAS</option>
-                    </select>
-                    <select id="filtroEvento" class="w-full md:w-56 p-2 bg-slate-700 border border-slate-600 rounded-lg outline-none text-[10px] font-bold uppercase tracking-widest text-white focus:ring-1 focus:ring-blue-400">
-                        <option value="">TODOS OS EVENTOS</option>
-                    </select>
-                </div>
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-6xl mx-auto">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
+                    <i data-lucide="clipboard-check" class="w-5 h-5"></i> Controle de Presenças
+                </h1>
             </div>
         </div>
     </header>
 
-    <div class="max-w-6xl mx-auto space-y-6 p-4 md:p-8">
-
-        <!-- Indicadores Rápidos -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Registros Exibidos</p>
-                <h3 class="text-2xl font-black text-slate-800" id="countTotal">0</h3>
+    <main class="max-w-6xl mx-auto p-4 md:p-8 space-y-6">
+        
+        <!-- FILTROS -->
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4 text-blue-600"></i> Filtros de Busca
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Evento</label>
+                    <select id="filterEvento" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                        <option value="Todos">Carregando eventos...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Status</label>
+                    <select id="filterStatus" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                        <option value="Todos">Todos os Status</option>
+                        <option value="Presente">Presentes</option>
+                        <option value="Ausente">Ausentes (Pendentes)</option>
+                        <option value="Justificado">Justificados</option>
+                        <option value="Consolidado">Ausências Consolidadas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Buscar Pastor</label>
+                    <input type="text" id="filterNome" placeholder="Digite o nome..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                </div>
             </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Presentes</p>
-                <h3 class="text-2xl font-black text-green-600" id="countPresentes">0</h3>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Ausentes</p>
-                <h3 class="text-2xl font-black text-red-600" id="countAusentes">0</h3>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm text-center border">
-                <p class="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-1">Justificados</p>
-                <h3 class="text-2xl font-black text-amber-600" id="countJustificados">0</h3>
-            </div>
-            <button onclick="window.print()" class="bg-slate-900 text-white p-4 rounded-2xl shadow-sm hover:bg-blue-600 transition-colors flex flex-col items-center justify-center gap-1 group">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400 group-hover:text-blue-200 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                <span class="text-[10px] font-bold uppercase tracking-widest">Imprimir</span>
-            </button>
         </div>
 
-        <!-- Tabela -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 border-b border-slate-100">
-                        <tr class="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                            <th class="p-4 whitespace-nowrap">Pastor(a) / Obreiro(a)</th>
-                            <th class="p-4 whitespace-nowrap">Igreja</th>
-                            <th class="p-4 whitespace-nowrap">Evento & Data</th>
-                            <th class="p-4 whitespace-nowrap text-center">Status</th>
-                            <th class="p-4 w-1/3">Justificativa (Ausentes)</th>
+        <!-- TABELA -->
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Lista de Lançamentos
+                </h2>
+                <span id="contador" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded-lg">Carregando...</span>
+            </div>
+            
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                        <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                            <th class="pb-3 px-2">Pastor / Igreja</th>
+                            <th class="pb-3 px-2">Evento</th>
+                            <th class="pb-3 px-2">Status</th>
+                            <th class="pb-3 px-2">Motivo</th>
+                            <th class="pb-3 px-2 text-right">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tabelaPresencas" class="text-sm">
                         <tr>
-                            <td colspan="5" class="text-center py-12 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                <svg class="animate-spin h-6 w-6 text-blue-500 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                CARREGANDO DADOS...
+                            <td colspan="5" class="text-center py-8 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                Sincronizando com banco de dados...
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
+    </main>
+
+    <!-- MODAL DE EDIÇÃO -->
+    <div id="modalEdit" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-slate-800 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="edit" class="w-4 h-4"></i> Editar Lançamento
+                </h3>
+                <button onclick="window.closeModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="editId">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Pastor</label>
+                    <input type="text" id="editNome" readonly class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Status</label>
+                    <select id="editStatus" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
+                        <option value="Presente">PRESENTE</option>
+                        <option value="Ausente">AUSENTE</option>
+                        <option value="Justificado">JUSTIFICADO</option>
+                    </select>
+                </div>
+
+                <div id="containerMotivo">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Motivo / Justificativa</label>
+                    <textarea id="editMotivo" rows="3" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none"></textarea>
+                </div>
+
+                <div id="containerConsolidada" class="hidden bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="editConsolidada" class="mt-1 h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500">
+                        <span class="text-xs font-bold text-blue-800 leading-tight">
+                            Marcar como Ausência Consolidada
+                            <span class="block text-[10px] font-medium text-blue-600 mt-0.5">Essa ausência já foi conversada, justificada e resolvida internamente.</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button onclick="window.closeModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-colors text-xs uppercase tracking-widest">Cancelar</button>
+                    <button id="btnSave" onclick="window.saveEdit()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors text-xs uppercase tracking-widest shadow-lg flex justify-center items-center gap-2">Salvar</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        let todasPresencas = [];
-        
-        const tabela = document.getElementById('tabelaPresencas');
-        const filtroNome = document.getElementById('filtroNome');
-        const filtroIgreja = document.getElementById('filtroIgreja');
-        const filtroEvento = document.getElementById('filtroEvento');
+        let allPresencas = [];
+        let allEventos = [];
 
-        // Labels Dinâmicos
-        const countTotal = document.getElementById('countTotal');
-        const countPresentes = document.getElementById('countPresentes');
-        const countAusentes = document.getElementById('countAusentes');
-        const countJustificados = document.getElementById('countJustificados');
-
-        async function inicializar() {
+        async function loadData() {
             try {
-                // 1. Puxa os Eventos para colocar no select
-                const eventosSnapshot = await getDocs(query(collection(db, "eventos"), orderBy("data", "desc")));
-                eventosSnapshot.forEach(doc => {
-                    const ev = doc.data();
-                    const dataFormatada = ev.data.split('-').reverse().join('/');
-                    const option = document.createElement('option');
-                    option.value = doc.id; // Id do evento
-                    option.textContent = `${ev.nome} (${dataFormatada})`;
-                    filtroEvento.appendChild(option);
-                });
-
-                // 2. Puxa as Igrejas (apenas extraindo os nomes que existem nas presenças para o select é uma opção, 
-                // mas vamos puxar da coleção para garantir a lista limpa)
-                const igrejasSnapshot = await getDocs(collection(db, "igrejas"));
-                const arrayIgrejas = [];
-                igrejasSnapshot.forEach(doc => arrayIgrejas.push(doc.data()));
-                arrayIgrejas.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+                // Carrega todos os Eventos
+                const evSnap = await getDocs(query(collection(db, "eventos"), orderBy("data", "desc")));
+                const selectEv = document.getElementById("filterEvento");
+                selectEv.innerHTML = '<option value="Todos">Todos os Eventos</option>';
                 
-                arrayIgrejas.forEach(ig => {
-                    const cod = String(ig.codigo).padStart(4, '0');
-                    const desc = `${cod} - ${ig.nome}`;
-                    const option = document.createElement('option');
-                    option.value = desc;
-                    option.textContent = desc;
-                    filtroIgreja.appendChild(option);
-                });
-                const _uj = localStorage.getItem('userIgreja');
-                if (_uj) {
-                    const opts = Array.from(filtroIgreja.options);
-                    const match = opts.find(o => o.textContent.toLowerCase().includes(_uj.toLowerCase()));
-                    if (match) { filtroIgreja.value = match.value; filtroIgreja.disabled = true; }
-                }
-
-                // 3. Busca Presenças
-                const q = query(collection(db, "presencas"), orderBy("createdAt", "desc"));
-                const pSnapshot = await getDocs(q);
-                
-                pSnapshot.forEach(doc => {
-                    todasPresencas.push({ id: doc.id, ...doc.data() });
+                evSnap.forEach(d => {
+                    const ev = {id: d.id, ...d.data()};
+                    allEventos.push(ev);
+                    const dataFormatada = ev.data ? ev.data.split('-').reverse().join('/') : '';
+                    selectEv.innerHTML += `<option value="${ev.id}">${ev.nome} (${dataFormatada})</option>`;
                 });
 
-                renderizarTabela();
+                // Carrega todas as Presenças
+                const prSnap = await getDocs(collection(db, "presencas"));
+                prSnap.forEach(d => allPresencas.push({id: d.id, ...d.data()}));
 
+                window.renderTable();
             } catch (error) {
-                console.error("Erro ao buscar dados:", error);
-                tabela.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-red-500 text-[10px] font-bold uppercase tracking-widest">ERRO AO CARREGAR OS DADOS DO BANCO</td></tr>`;
+                console.error("Erro ao carregar dados:", error);
+                document.getElementById("tabelaPresencas").innerHTML = '<tr><td colspan="5" class="text-center py-6 text-red-500 text-[10px] font-bold uppercase tracking-widest">Erro ao carregar dados.</td></tr>';
             }
         }
 
-        function renderizarTabela() {
-            const fNome = filtroNome.value.toUpperCase();
-            const fIgreja = filtroIgreja.value;
-            const fEvento = filtroEvento.value;
+        window.renderTable = () => {
+            const filterEv = document.getElementById("filterEvento").value;
+            const filterSt = document.getElementById("filterStatus").value;
+            const filterNome = document.getElementById("filterNome").value.toLowerCase();
 
-            // Filtragem array em memoria
-            const filtrados = todasPresencas.filter(p => {
-                const matchNome = (p.nome || '').toUpperCase().includes(fNome);
-                // Retira a verificação exata e aceita se conter o texto, caso tenha havido mudanças
-                const matchIgreja = fIgreja === "" || p.igreja === fIgreja;
-                // eventoId foi injetado na modificação da tela presencareg655.html
-                const matchEvento = fEvento === "" || p.eventoId === fEvento; 
-                return matchNome && matchIgreja && matchEvento;
+            const tbody = document.getElementById("tabelaPresencas");
+            tbody.innerHTML = '';
+
+            let filtered = allPresencas.filter(p => {
+                // Filtro Evento
+                if(filterEv !== "Todos" && p.eventoId !== filterEv) return false;
+                
+                // Filtro Status com a lógica de Consolidação
+                const isConsolidated = p.consolidada === true;
+                if(filterSt === "Presente" && p.status !== "Presente") return false;
+                if(filterSt === "Justificado" && p.status !== "Justificado") return false;
+                if(filterSt === "Ausente" && (p.status !== "Ausente" || isConsolidated)) return false;
+                if(filterSt === "Consolidado" && (!isConsolidated || p.status !== "Ausente")) return false;
+
+                // Filtro Nome
+                if(filterNome && !p.nome.toLowerCase().includes(filterNome)) return false;
+
+                return true;
             });
 
-            tabela.innerHTML = '';
+            // Ordena os registros (Data do evento DECRESCENTE -> Nome)
+            filtered.sort((a,b) => {
+                const dA = a.dataEvento || '';
+                const dB = b.dataEvento || '';
+                if(dA !== dB) return dB.localeCompare(dA);
+                return a.nome.localeCompare(b.nome);
+            });
 
-            let cPres = 0, cAus = 0, cJust = 0;
+            document.getElementById('contador').textContent = `${filtered.length} REGISTRO(S)`;
 
-            if (filtrados.length === 0) {
-                tabela.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400 text-xs font-bold uppercase tracking-wider">NENHUM REGISTRO ENCONTRADO PARA OS FILTROS APLICADOS.</td></tr>`;
-            } else {
-                filtrados.forEach(p => {
-                    if (p.status === 'Presente')    cPres++;
-                    if (p.status === 'Ausente')     cAus++;
-                    if (p.status === 'Justificado') cJust++;
+            filtered.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-slate-50 hover:bg-slate-50 transition-colors group';
 
-                    const tr = document.createElement('tr');
-                    tr.className = 'border-b border-slate-50 hover:bg-slate-50 transition-colors';
+                let statusBadge = '';
+                if(p.status === 'Presente') {
+                    statusBadge = '<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm">Presente</span>';
+                } else if(p.status === 'Justificado') {
+                    statusBadge = '<span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm">Justificado</span>';
+                } else if(p.status === 'Ausente') {
+                    if(p.consolidada) {
+                        statusBadge = '<span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm">Consolidada</span>';
+                    } else {
+                        statusBadge = '<span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm animate-pulse">Ausente</span>';
+                    }
+                }
 
-                    const statusBadge = p.status === 'Presente'
-                        ? '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider">Presente</span>'
-                        : p.status === 'Justificado'
-                        ? '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider">Justificado</span>'
-                        : '<span class="bg-red-100 text-red-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider">Ausente</span>';
-
-                    const dataEventoFormatada = p.dataEvento ? p.dataEvento.split('-').reverse().join('/') : '';
-                    const mostraMotivo = p.status === 'Ausente' || p.status === 'Justificado';
-
-                    tr.innerHTML = `
-                        <td class="p-4 font-bold text-slate-800 uppercase text-xs">${p.nome || '-'}</td>
-                        <td class="p-4 text-slate-600 font-medium text-xs whitespace-nowrap truncate max-w-[200px]" title="${p.igreja}">${p.igreja || '-'}</td>
-                        <td class="p-4">
-                            <div class="font-bold text-slate-700 text-xs">${p.tipoEvento || '-'}</div>
-                            <div class="text-[10px] text-slate-400 font-semibold">${dataEventoFormatada}</div>
-                        </td>
-                        <td class="p-4 text-center">${statusBadge}</td>
-                        <td class="p-4 text-xs text-slate-500 italic">${mostraMotivo ? (p.motivo || '<span class="text-red-400 font-bold">Sem justificativa</span>') : '<span class="opacity-30">-</span>'}</td>
+                // Botões de Ação
+                let actions = `
+                    <div class="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                        <button onclick="window.openEdit('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors shadow-sm" title="Editar Lançamento">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        </button>
+                `;
+                
+                // Botão Rápido de Consolidar diretamente na tabela (só aparece se estiver Ausente e ainda não consolidada)
+                if (p.status === 'Ausente' && !p.consolidada) {
+                    actions += `
+                        <button onclick="window.markConsolidated('${p.id}')" class="text-emerald-500 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 p-2 rounded-lg transition-colors shadow-sm" title="Marcar como Ausência Consolidada">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        </button>
                     `;
-                    tabela.appendChild(tr);
-                });
+                }
+                actions += `</div>`;
+
+                const dataFormatada = p.dataEvento ? p.dataEvento.split('-').reverse().join('/') : '';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-2">
+                        <p class="font-bold text-xs text-slate-800">${p.nome}</p>
+                        <p class="text-[10px] font-medium text-slate-500 max-w-[180px] truncate" title="${p.igreja || '-'}">${p.igreja || '-'}</p>
+                    </td>
+                    <td class="py-3 px-2">
+                        <p class="font-semibold text-xs text-slate-600">${p.tipoEvento}</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">${dataFormatada}</p>
+                    </td>
+                    <td class="py-3 px-2">${statusBadge}</td>
+                    <td class="py-3 px-2">
+                        <p class="text-[11px] font-medium text-slate-600 max-w-[200px] truncate" title="${p.motivo || ''}">${p.motivo || '-'}</p>
+                    </td>
+                    <td class="py-3 px-2 text-right">${actions}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 text-[10px] font-bold uppercase tracking-widest">NENHUM REGISTRO ENCONTRADO PARA OS FILTROS.</td></tr>';
             }
 
-            countTotal.textContent = filtrados.length;
-            countPresentes.textContent = cPres;
-            countAusentes.textContent = cAus;
-            countJustificados.textContent = cJust;
+            if(window.lucide) window.lucide.createIcons();
         }
 
-        // Listeners dos Filtros
-        filtroNome.addEventListener('input', renderizarTabela);
-        filtroIgreja.addEventListener('change', renderizarTabela);
-        filtroEvento.addEventListener('change', renderizarTabela);
+        window.openEdit = (id) => {
+            const p = allPresencas.find(x => x.id === id);
+            if(!p) return;
+            document.getElementById('editId').value = p.id;
+            document.getElementById('editNome').value = p.nome;
+            document.getElementById('editStatus').value = p.status;
+            document.getElementById('editMotivo').value = p.motivo || '';
+            document.getElementById('editConsolidada').checked = p.consolidada === true;
+            
+            const st = p.status;
+            const container = document.getElementById('containerConsolidada');
+            if(st === 'Ausente') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                document.getElementById('editConsolidada').checked = false;
+            }
 
-        window.onload = inicializar;
+            document.getElementById('modalEdit').classList.remove('hidden');
+        }
 
+        window.closeModal = () => {
+            document.getElementById('modalEdit').classList.add('hidden');
+        }
+
+        document.getElementById('editStatus').addEventListener('change', () => {
+            const st = document.getElementById('editStatus').value;
+            const container = document.getElementById('containerConsolidada');
+            if(st === 'Ausente') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                document.getElementById('editConsolidada').checked = false;
+            }
+        });
+
+        window.saveEdit = async () => {
+            const id = document.getElementById('editId').value;
+            const status = document.getElementById('editStatus').value;
+            const motivo = document.getElementById('editMotivo').value.trim();
+            const consolidada = document.getElementById('editConsolidada').checked;
+
+            const btn = document.getElementById('btnSave');
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> SALVANDO...';
+            if(window.lucide) window.lucide.createIcons();
+
+            try {
+                await updateDoc(doc(db, "presencas", id), {
+                    status,
+                    motivo,
+                    consolidada: status === 'Ausente' ? consolidada : false
+                });
+                
+                // Atualiza localmente
+                const idx = allPresencas.findIndex(x => x.id === id);
+                if(idx !== -1) {
+                    allPresencas[idx].status = status;
+                    allPresencas[idx].motivo = motivo;
+                    allPresencas[idx].consolidada = status === 'Ausente' ? consolidada : false;
+                }
+                window.renderTable();
+                window.closeModal();
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao salvar alterações!");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Salvar';
+            }
+        }
+
+        // Função rápida de consolidação direto da tabela
+        window.markConsolidated = async (id) => {
+            if(confirm("Deseja marcar esta ausência como CONSOLIDADA?\n\nIsso significa que a ausência já foi devidamente conversada, justificada e resolvida com o pastor, mas ela continuará visível no histórico para fins de documentação.")) {
+                try {
+                    await updateDoc(doc(db, "presencas", id), { consolidada: true });
+                    
+                    // Atualiza array local para refletir UI sem recarregar banco
+                    const idx = allPresencas.findIndex(x => x.id === id);
+                    if(idx !== -1) allPresencas[idx].consolidada = true;
+                    
+                    window.renderTable();
+                } catch(e) {
+                    console.error(e);
+                    alert("Erro ao atualizar!");
+                }
+            }
+        }
+
+        // Ouvintes de eventos para re-filtrar on the fly
+        document.getElementById('filterEvento').addEventListener('change', window.renderTable);
+        document.getElementById('filterStatus').addEventListener('change', window.renderTable);
+        document.getElementById('filterNome').addEventListener('input', window.renderTable);
+
+        // Inicia a vida
+        loadData();
+        if(window.lucide) window.lucide.createIcons();
     </script>
-    </div> <!-- fecha max-w-6xl -->
-
-    <style>
-        @media print {
-            body { background: white; padding: 0; }
-            .max-w-6xl { max-width: 100%; }
-            select, input, button, a { display: none !important; }
-            .bg-slate-50 { background: white !important; }
-            .border-slate-200 { border-color: #eee !important; }
-            .shadow-sm { box-shadow: none !important; }
-            /* Ajustar exibição da tabela na impressão */
-            table { width: 100%; border: 1px solid #ddd; }
-            th, td { padding: 8px !important; border-bottom: 1px solid #eee; }
-        }
-    </style>
-
-    <footer class="py-4 text-center text-slate-400 text-[10px]">
-        &copy; 2024 Região 655 - IEQ Londrina/PR
-    </footer>
 </body>
 </html>
