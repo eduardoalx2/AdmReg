@@ -80,6 +80,16 @@
                     </div>
                 </div>
 
+                <!-- DÉBITOS EM ABERTO (preenchido via JS) -->
+                <div id="boxDebitos" class="hidden bg-white rounded-3xl shadow-sm border border-red-200 overflow-hidden">
+                    <div class="bg-red-50 p-4 border-b border-red-100 flex items-center justify-between">
+                        <h2 class="text-xs font-black uppercase tracking-widest text-red-600 flex items-center gap-2">
+                            <i data-lucide="alert-circle" class="w-4 h-4"></i> Débitos em Aberto
+                        </h2>
+                    </div>
+                    <div id="listaDebitos" class="p-4 space-y-1.5"></div>
+                </div>
+
                 <!-- BOTÕES DE AÇÃO / SUPORTE -->
                 <div class="grid grid-cols-2 gap-3">
                     <a href="saldodeviradareg655.html" class="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2 shadow-lg card-hover transition-colors">
@@ -237,19 +247,20 @@
                     return parts.length > 1 && parts.slice(1).join(' - ').toLowerCase() === lower;
                 }
 
-                const saldos = [];
-                saldosSnap.forEach(d => { const data = d.data(); if (matchIgreja(data)) saldos.push(data); });
-                saldos.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-                saldos.splice(6);
+                const todosSaldos = [];
+                saldosSnap.forEach(d => { const data = d.data(); if (matchIgreja(data)) todosSaldos.push(data); });
+                todosSaldos.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
 
                 globalRecibos = [];
                 recibosSnap.forEach(d => { const data = d.data(); if (matchIgreja(data)) globalRecibos.push({id: d.id, ...data}); });
                 const parseEmissao = s => { const p = (s || '').split('/'); return p.length === 3 ? new Date(+p[2], +p[1]-1, +p[0]).getTime() : 0; };
                 globalRecibos.sort((a, b) => parseEmissao(b.dataEmissao) - parseEmissao(a.dataEmissao));
-                globalRecibos.splice(6);
 
-                renderListas(saldos, globalRecibos);
-                calcularTermometro(saldos, globalRecibos);
+                // Termômetro recebe todos os registros para análise histórica
+                calcularTermometro(todosSaldos, globalRecibos);
+
+                // Listas exibem apenas os 6 mais recentes
+                renderListas(todosSaldos.slice(0, 6), globalRecibos.slice(0, 6));
 
             } catch(e) {
                 console.error("Erro ao inicializar:", e);
@@ -383,6 +394,60 @@
                     <p class="text-xs font-medium text-amber-700 mt-1">Você ainda não lançou o saldo de <b>${strMesRef}</b>. Envie até o 5º dia útil.</p>
                     <a href="saldodeviradareg655.html" class="mt-4 inline-block bg-amber-500 text-amber-950 font-bold text-xs uppercase px-6 py-2.5 rounded-xl hover:bg-amber-600 transition-colors shadow-sm">Lançar Saldo Agora</a>
                 `;
+            }
+            lucide.createIcons();
+
+            // --- DÉBITOS HISTÓRICOS (Jan/2026 em diante) ---
+            const [prevMesNum, prevAnoNum] = strMesRef.split('/').map(Number);
+            const limiteDebito = new Date(prevAnoNum, prevMesNum - 1, 1);
+            const inicioDebito = new Date(2026, 0, 1); // Janeiro/2026
+
+            const debitos = [];
+            let cursor = new Date(inicioDebito);
+            while (cursor <= limiteDebito) {
+                const mm = String(cursor.getMonth() + 1).padStart(2, '0');
+                const yyyy = cursor.getFullYear();
+                const mesStr = `${mm}/${yyyy}`;
+
+                const reciboValido = recibos.find(r => r.referenceDate === mesStr && (parseFloat(r.regionalTax) || 0) > 0);
+                if (!reciboValido) {
+                    const saldo = saldos.find(s => (s.periodo || s.mesReferencia) === mesStr);
+                    let estimativa = null;
+                    if (saldo) {
+                        const taxadas = saldo.entradasTaxadas || 0;
+                        const seguroValor = configPainel.valorSeguro || 0;
+                        const qtdSeguros = igrejaObj?.seguros || 0;
+                        estimativa = (taxadas * 0.04) + 100 + (qtdSeguros * seguroValor);
+                    }
+                    debitos.push({ mes: mesStr, estimativa });
+                }
+                cursor.setMonth(cursor.getMonth() + 1);
+            }
+
+            const boxDebitos = document.getElementById('boxDebitos');
+            const listaDebitos = document.getElementById('listaDebitos');
+
+            if (debitos.length > 0) {
+                const totalConhecido = debitos.filter(d => d.estimativa !== null).reduce((s, d) => s + d.estimativa, 0);
+                const temDesconhecido = debitos.some(d => d.estimativa === null);
+
+                listaDebitos.innerHTML = debitos.map(d => `
+                    <div class="flex justify-between items-center py-1.5 border-b border-red-50 last:border-0">
+                        <span class="text-xs font-bold text-slate-700">Ref. ${d.mes}</span>
+                        <span class="text-xs font-black ${d.estimativa !== null ? 'text-red-600' : 'text-slate-400 italic'}">
+                            ${d.estimativa !== null ? window.formatMoeda(d.estimativa) : 'sem saldo lançado'}
+                        </span>
+                    </div>
+                `).join('') + `
+                    <div class="flex justify-between items-center pt-2 mt-1 border-t-2 border-red-200">
+                        <span class="text-xs font-black uppercase text-red-700">Total estimado</span>
+                        <span class="text-sm font-black text-red-700">${window.formatMoeda(totalConhecido)}${temDesconhecido ? '*' : ''}</span>
+                    </div>
+                    ${temDesconhecido ? '<p class="text-[10px] text-slate-400 italic mt-1">* Meses sem saldo não incluídos no total.</p>' : ''}
+                `;
+                boxDebitos.classList.remove('hidden');
+            } else {
+                boxDebitos.classList.add('hidden');
             }
             lucide.createIcons();
         }
