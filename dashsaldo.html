@@ -317,7 +317,7 @@
                 return b.localeCompare(a);
             });
             
-            let options = '<option value="TODOS">Visão Global</option>';
+            let options = '<option value="TODOS">Todos</option>';
             options += sortedComp.map(c => `<option value="${c}">${c}</option>`).join('');
             select.innerHTML = options;
             
@@ -480,15 +480,43 @@
             let totalGeralSoma = 0;
 
             if (isAll) {
-                const filteredData = rawData.filter(d => !selectedIgreja || d.nomeOriginal === selectedIgreja);
-                filteredData.forEach(sub => {
-                    countEntregue++;
-                    totalGeralSoma += getNumericValue(sub.total);
-                    listItems.push({
-                        html: generateCardHtml(sub.nomeOriginal, sub.competencia, 'Entregue', sub.dataEnvio, sub.cc, sub.din, sub.total, sub),
-                        status: 'Entregue',
-                        nome: sub.nomeOriginal
-                    });
+                // Monta mapa: por igreja, guarda o lançamento mais recente
+                const churchLatest = new Map();
+                rawData.forEach(d => {
+                    if (selectedIgreja && d.nomeOriginal !== selectedIgreja) return;
+                    const existing = churchLatest.get(d.nomeOriginal);
+                    if (!existing) {
+                        churchLatest.set(d.nomeOriginal, d);
+                    } else {
+                        // Compara competência e mantém a mais recente
+                        const toDate = s => { const p = (s||'').split('/'); return p.length===2 ? new Date(+p[1], +p[0]-1) : new Date(0); };
+                        if (toDate(d.competencia) > toDate(existing.competencia)) churchLatest.set(d.nomeOriginal, d);
+                    }
+                });
+
+                // Itera todas as igrejas conhecidas (mesmo as que nunca enviaram)
+                const sortedMaster = Array.from(masterChurches.entries());
+                sortedMaster.forEach(([normName, originalName]) => {
+                    if (selectedIgreja && originalName !== selectedIgreja) return;
+                    const sub = churchLatest.get(originalName);
+                    if (sub) {
+                        countEntregue++;
+                        totalGeralSoma += getNumericValue(sub.total);
+                        if (!showOnlyPending) {
+                            listItems.push({
+                                html: generateCardHtml(originalName, sub.competencia, 'Entregue', sub.dataEnvio, sub.cc, sub.din, sub.total, sub),
+                                status: 'Entregue',
+                                nome: originalName
+                            });
+                        }
+                    } else {
+                        countPendente++;
+                        listItems.push({
+                            html: generateCardHtml(originalName, '—', 'Pendente', '--', 0, 0, 0, {}),
+                            status: 'Pendente',
+                            nome: originalName
+                        });
+                    }
                 });
             } else {
                 const submissions = rawData.filter(d => d.competencia === selectedComp);
