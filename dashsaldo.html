@@ -480,36 +480,26 @@
             let totalGeralSoma = 0;
 
             if (isAll) {
-                // Monta mapa: por igreja, guarda o lançamento mais recente
-                const churchLatest = new Map();
+                // Mostra todos os lançamentos de rawData (um card por período × igreja)
+                const submittedNorms = new Set();
                 rawData.forEach(d => {
                     if (selectedIgreja && d.nomeOriginal !== selectedIgreja) return;
-                    const existing = churchLatest.get(d.nomeOriginal);
-                    if (!existing) {
-                        churchLatest.set(d.nomeOriginal, d);
-                    } else {
-                        // Compara competência e mantém a mais recente
-                        const toDate = s => { const p = (s||'').split('/'); return p.length===2 ? new Date(+p[1], +p[0]-1) : new Date(0); };
-                        if (toDate(d.competencia) > toDate(existing.competencia)) churchLatest.set(d.nomeOriginal, d);
+                    submittedNorms.add(d.normNome);
+                    countEntregue++;
+                    totalGeralSoma += getNumericValue(d.total);
+                    if (!showOnlyPending) {
+                        listItems.push({
+                            html: generateCardHtml(d.nomeOriginal, d.competencia, 'Entregue', d.dataEnvio, d.cc, d.din, d.total, d),
+                            status: 'Entregue',
+                            nome: d.nomeOriginal
+                        });
                     }
                 });
 
-                // Itera todas as igrejas conhecidas (mesmo as que nunca enviaram)
-                const sortedMaster = Array.from(masterChurches.entries());
-                sortedMaster.forEach(([normName, originalName]) => {
+                // Igrejas que nunca enviaram nenhum lançamento
+                masterChurches.forEach((originalName, normName) => {
                     if (selectedIgreja && originalName !== selectedIgreja) return;
-                    const sub = churchLatest.get(originalName);
-                    if (sub) {
-                        countEntregue++;
-                        totalGeralSoma += getNumericValue(sub.total);
-                        if (!showOnlyPending) {
-                            listItems.push({
-                                html: generateCardHtml(originalName, sub.competencia, 'Entregue', sub.dataEnvio, sub.cc, sub.din, sub.total, sub),
-                                status: 'Entregue',
-                                nome: originalName
-                            });
-                        }
-                    } else {
+                    if (!submittedNorms.has(normName)) {
                         countPendente++;
                         listItems.push({
                             html: generateCardHtml(originalName, '—', 'Pendente', '--', 0, 0, 0, {}),
