@@ -244,7 +244,8 @@
 
                 globalRecibos = [];
                 recibosSnap.forEach(d => { const data = d.data(); if (matchIgreja(data)) globalRecibos.push({id: d.id, ...data}); });
-                globalRecibos.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+                const parseEmissao = s => { const p = (s || '').split('/'); return p.length === 3 ? new Date(+p[2], +p[1]-1, +p[0]).getTime() : 0; };
+                globalRecibos.sort((a, b) => parseEmissao(b.dataEmissao) - parseEmissao(a.dataEmissao));
                 globalRecibos.splice(6);
 
                 renderListas(saldos, globalRecibos);
