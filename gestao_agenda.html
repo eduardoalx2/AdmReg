@@ -214,7 +214,7 @@
         async function carregarAgenda() {
             try {
                 // Carrega todos os eventos ordenados pela data
-                const q = query(collection(db, "agenda"), orderBy("data", "desc"));
+                const q = query(collection(db, "agenda"), orderBy("data", "asc"));
                 const querySnapshot = await getDocs(q);
                 agendaList = [];
                 
