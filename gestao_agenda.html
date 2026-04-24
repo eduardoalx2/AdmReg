@@ -40,6 +40,7 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -102,6 +103,13 @@
                     </button>
                 </div>
             </div>
+        </div>
+        
+        <!-- ABAS -->
+        <div class="flex gap-6 border-b border-slate-200 mb-2 overflow-x-auto custom-scrollbar px-1">
+            <button onclick="window.setTab('upcoming')" id="tab-upcoming" class="tab-active py-3 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap transition-all">Próximos</button>
+            <button onclick="window.setTab('past')" id="tab-past" class="py-3 text-[11px] font-bold text-slate-400 tracking-widest uppercase whitespace-nowrap transition-all">Anteriores</button>
+            <button onclick="window.setTab('all')" id="tab-all" class="py-3 text-[11px] font-bold text-slate-400 tracking-widest uppercase whitespace-nowrap transition-all">Todos</button>
         </div>
 
         <!-- TABELA DE EVENTOS -->
@@ -205,6 +213,7 @@
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         let agendaList = [];
+        let currentTab = 'upcoming';
         
         if (window.lucide) lucide.createIcons();
 
@@ -213,8 +222,7 @@
 
         async function carregarAgenda() {
             try {
-                // Carrega todos os eventos ordenados pela data
-                const q = query(collection(db, "agenda"), orderBy("data", "asc"));
+                const q = query(collection(db, "agenda"));
                 const querySnapshot = await getDocs(q);
                 agendaList = [];
                 
@@ -229,6 +237,15 @@
             }
         }
 
+        window.setTab = (tab) => {
+            currentTab = tab;
+            ['tab-upcoming', 'tab-past', 'tab-all'].forEach(id => {
+                document.getElementById(id).className = 'py-3 text-[11px] font-bold text-slate-400 tracking-widest uppercase whitespace-nowrap transition-all';
+            });
+            document.getElementById('tab-' + tab).className = 'tab-active py-3 text-[11px] font-bold tracking-widest uppercase whitespace-nowrap transition-all';
+            window.renderizarTabela();
+        };
+
         window.limparFiltros = () => {
             document.getElementById('filtro-nome').value = '';
             document.getElementById('filtro-mes').value = '';
@@ -240,12 +257,25 @@
             const filtroNome = document.getElementById('filtro-nome').value.toUpperCase();
             const filtroMes = document.getElementById('filtro-mes').value; // Formato YYYY-MM
             const filtroTipo = document.getElementById('filtro-tipo').value.toUpperCase();
+            const today = new Date().toISOString().split('T')[0];
 
             const filtrados = agendaList.filter(e => {
                 if (filtroNome && !(e.evento || '').toUpperCase().includes(filtroNome)) return false;
                 if (filtroMes && !(e.data || '').startsWith(filtroMes)) return false;
                 if (filtroTipo && (e.tipo || '').toUpperCase() !== filtroTipo) return false;
+                
+                const isPast = (e.data || '') < today;
+                if (currentTab === 'upcoming' && isPast) return false;
+                if (currentTab === 'past' && !isPast) return false;
+                
                 return true;
+            });
+
+            // Ordenação: Eventos passados = mais recentes primeiro. Futuros/Todos = mais próximos primeiro.
+            filtrados.sort((a, b) => {
+                const dataA = a.data || '';
+                const dataB = b.data || '';
+                return currentTab === 'past' ? dataB.localeCompare(dataA) : dataA.localeCompare(dataB);
             });
 
             tabela.innerHTML = '';
@@ -276,7 +306,7 @@
                     <td><span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider ${tipoCor}">${e.tipo || '-'}</span></td>
                     <td class="text-xs text-slate-600 font-medium truncate max-w-[200px]" title="${e.local || '-'}">${e.local || '-'}</td>
                     <td class="text-center">
-                        <div class="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="flex items-center justify-center gap-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                             <button onclick="window.editarEvento('${e.id}')" class="text-blue-500 hover:text-blue-700 transition-colors" title="Editar">
                                 <i data-lucide="edit" class="w-4 h-4"></i>
                             </button>

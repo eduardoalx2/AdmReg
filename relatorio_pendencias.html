@@ -74,26 +74,29 @@
         
         <!-- Filters -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:hidden">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Igreja</label>
-                    <select id="filterIgreja" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                    <select id="filterIgreja" onchange="window.renderTable()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
                         <option value="Todas">Todas as Igrejas</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Mês</label>
-                    <select id="filterMes" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                    <select id="filterMes" onchange="window.renderTable()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
                         <option value="Todos">Todos os Meses</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Status</label>
-                    <select id="filterStatus" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                    <select id="filterStatus" onchange="window.renderTable()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
                         <option value="Todos">Todos os Status</option>
                         <option value="Aguardando Lançamento">Aguardando Lançamento do Pastor</option>
                         <option value="Aguardando Emissão">Aguardando Emissão do Recibo</option>
                     </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="window.limparFiltros()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs uppercase transition-colors shadow-sm h-[34px]">Limpar Filtros</button>
                 </div>
             </div>
         </div>
@@ -236,25 +239,23 @@
             });
 
             const selIgreja = document.getElementById('filterIgreja');
+            selIgreja.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
             igrejasPendentes.forEach(nome => selIgreja.innerHTML += `<option value="${nome}">${nome}</option>`);
 
             const selMes = document.getElementById('filterMes');
+            selMes.innerHTML = '<option value="Todos">Todos os Meses</option>';
             mesesPendentes.forEach(mes => selMes.innerHTML += `<option value="${mes}">${mes}</option>`);
-
-            document.getElementById('filterIgreja').addEventListener('change', renderTable);
-            document.getElementById('filterMes').addEventListener('change', renderTable);
-            document.getElementById('filterStatus').addEventListener('change', renderTable);
         }
 
-        function renderTable() {
+        window.renderTable = () => {
             const filterIgreja = document.getElementById('filterIgreja').value;
             const filterMes = document.getElementById('filterMes').value;
             const filterStatus = document.getElementById('filterStatus').value;
 
             const filtered = allPendencias.filter(p => {
-                if (filterIgreja !== 'Todos' && p.igrejaNome !== filterIgreja) return false;
-                if (filterMes !== 'Todos' && p.mesRef !== filterMes) return false;
-                if (filterStatus !== 'Todos' && p.status !== filterStatus) return false;
+                if (filterIgreja && filterIgreja !== 'Todas' && p.igrejaNome !== filterIgreja) return false;
+                if (filterMes && filterMes !== 'Todos' && p.mesRef !== filterMes) return false;
+                if (filterStatus && filterStatus !== 'Todos' && p.status !== filterStatus) return false;
                 return true;
             });
 
@@ -298,6 +299,13 @@
                 tbody.appendChild(tr);
             });
         }
+
+        window.limparFiltros = () => {
+            document.getElementById('filterIgreja').value = 'Todas';
+            document.getElementById('filterMes').value = 'Todos';
+            document.getElementById('filterStatus').value = 'Todos';
+            window.renderTable();
+        };
 
         loadData();
         if (window.lucide) lucide.createIcons();

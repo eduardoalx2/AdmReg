@@ -72,13 +72,42 @@
             </div>
         </div>
 
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-2">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Igreja</label>
+                    <select id="filtroIgreja" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
+                        <option value="Todas">Todas as Igrejas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Mês</label>
+                    <select id="filtroMes" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
+                        <option value="Todos">Todos os Meses</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Pendência</label>
+                    <select id="filtroTipo" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
+                        <option value="Todos">Todas as Pendências</option>
+                        <option value="Saldos">Apenas Saldos Atrasados</option>
+                        <option value="Taxas">Apenas Taxas Pendentes</option>
+                        <option value="Ausencias">Apenas Ausências</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="window.limparFiltros()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs uppercase transition-colors shadow-sm h-[34px]">Limpar Filtros</button>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
             <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center justify-between">
                 <h2 class="text-xs font-black uppercase tracking-widest text-slate-600 flex items-center gap-2">
                     <i data-lucide="list-x" class="w-4 h-4 text-red-500"></i> Detalhamento por Igreja
                 </h2>
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="checkApenasPendentes" checked onchange="renderizarTabela()" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500">
+                    <input type="checkbox" id="checkApenasPendentes" checked onchange="window.renderizarTabela()" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500">
                     <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:block">Apenas com pendências</span>
                 </label>
             </div>
@@ -144,6 +173,7 @@
                 const limiteDebito = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
                 dadosOriginais = [];
 
+                const mesesSet = new Set();
                 igrejas.forEach(ig => {
                     const cod = String(ig.codigo).padStart(4, '0');
                     const titular = pastores.find(p => p.funcao === 'Pastor Titular' && (Array.isArray(p.igreja) ? p.igreja.includes(ig.nome) : p.igreja === ig.nome));
@@ -158,6 +188,7 @@
                         const mm = String(cursor.getMonth() + 1).padStart(2, '0');
                         const yyyy = cursor.getFullYear();
                         const mesStr = `${mm}/${yyyy}`;
+                        mesesSet.add(mesStr);
                         
                         const recibo = recibos.find(r => r.referenceDate === mesStr && (r.igrejaCodigo === cod || r.igrejaNome === ig.nome));
                         if (!recibo) {
@@ -174,12 +205,29 @@
                         }
                         cursor.setMonth(cursor.getMonth() + 1);
                     }
-                    const ausencias = presencas.filter(p => p.status === 'Ausente' && (p.igreja || '').includes(ig.nome));
-                    const totalPendencias = saldosPendentes.length + taxasPendentes.length + ausencias.length;
+                    const ausenciasLista = presencas.filter(p => p.status === 'Ausente' && (p.igreja || '').includes(ig.nome));
+                    const totalPendencias = saldosPendentes.length + taxasPendentes.length + ausenciasLista.length;
                     
-                    dadosOriginais.push({ igrejaNome: `${cod} - ${ig.nome}`, pastor: nomePastor, celPastor, saldosPendentes, taxasPendentes, valorEmAberto, temValorDesconhecido, ausencias: ausencias.length, totalPendencias });
+                    dadosOriginais.push({ igrejaNome: `${cod} - ${ig.nome}`, pastor: nomePastor, celPastor, saldosPendentes, taxasPendentes, valorEmAberto, temValorDesconhecido, ausencias: ausenciasLista.length, ausenciasLista, totalPendencias });
                 });
                 dadosOriginais.sort((a,b) => parseInt(a.igrejaNome) - parseInt(b.igrejaNome));
+
+                const selectIgreja = document.getElementById('filtroIgreja');
+                selectIgreja.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
+                dadosOriginais.forEach(d => {
+                    selectIgreja.innerHTML += `<option value="${d.igrejaNome}">${d.igrejaNome}</option>`;
+                });
+
+                const selectMes = document.getElementById('filtroMes');
+                selectMes.innerHTML = '<option value="Todos">Todos os Meses</option>';
+                Array.from(mesesSet).sort((a,b) => {
+                    const [mA, yA] = a.split('/');
+                    const [mB, yB] = b.split('/');
+                    return new Date(yB, mB - 1) - new Date(yA, mA - 1);
+                }).forEach(m => {
+                    selectMes.innerHTML += `<option value="${m}">${m}</option>`;
+                });
+
                 window.renderizarTabela();
             } catch (e) {
                 console.error(e);
@@ -189,7 +237,34 @@
 
         window.renderizarTabela = () => {
             const tbody = document.getElementById('tabela-corpo');
-            const filtrados = document.getElementById('checkApenasPendentes').checked ? dadosOriginais.filter(d => d.totalPendencias > 0) : dadosOriginais;
+            const apenasPendentes = document.getElementById('checkApenasPendentes').checked;
+            const filtroIgreja = document.getElementById('filtroIgreja').value;
+            const filtroMes = document.getElementById('filtroMes').value;
+            const filtroTipo = document.getElementById('filtroTipo').value;
+
+            const filtrados = dadosOriginais.filter(d => {
+                if (apenasPendentes && d.totalPendencias === 0) return false;
+                if (filtroIgreja !== 'Todas' && d.igrejaNome !== filtroIgreja) return false;
+                
+                if (filtroTipo !== 'Todos') {
+                    if (filtroTipo === 'Saldos' && d.saldosPendentes.length === 0) return false;
+                    if (filtroTipo === 'Taxas' && d.taxasPendentes.length === 0) return false;
+                    if (filtroTipo === 'Ausencias' && d.ausencias === 0) return false;
+                }
+
+                if (filtroMes !== 'Todos') {
+                    const temSaldoNoMes = d.saldosPendentes.includes(filtroMes);
+                    const temTaxaNoMes = d.taxasPendentes.includes(filtroMes);
+                    const temAusenciaNoMes = d.ausenciasLista.some(a => {
+                        if(!a.dataEvento) return false;
+                        const [y, m] = a.dataEvento.split('-');
+                        return `${m}/${y}` === filtroMes;
+                    });
+                    if (!temSaldoNoMes && !temTaxaNoMes && !temAusenciaNoMes) return false;
+                }
+                return true;
+            });
+
             let stSaldos = 0, stValores = 0, stAusencias = 0;
             tbody.innerHTML = '';
 
@@ -211,6 +286,14 @@
             document.getElementById('kpi-igrejas').textContent = filtrados.length; document.getElementById('kpi-saldos').textContent = stSaldos;
             document.getElementById('kpi-valores').textContent = window.formatMoeda(stValores); document.getElementById('kpi-ausencias').textContent = stAusencias;
             lucide.createIcons();
+        };
+
+        window.limparFiltros = () => {
+            document.getElementById('filtroIgreja').value = 'Todas';
+            document.getElementById('filtroMes').value = 'Todos';
+            document.getElementById('filtroTipo').value = 'Todos';
+            document.getElementById('checkApenasPendentes').checked = true;
+            window.renderizarTabela();
         };
 
         window.enviarCobranca = (n) => {
