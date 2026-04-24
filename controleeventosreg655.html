@@ -231,6 +231,7 @@
 
         let allPresencas = [];
         let allEventos = [];
+        let allPastores = [];
 
         async function loadData() {
             try {
@@ -256,6 +257,10 @@
                 selectIg.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
                 igrejas.forEach(ig => selectIg.innerHTML += `<option value="${ig.nome}">${ig.codigo} - ${ig.nome}</option>`);
 
+                // Carrega todos os Pastores
+                const pSnap = await getDocs(collection(db, "pastores"));
+                pSnap.forEach(d => allPastores.push({id: d.id, ...d.data()}));
+
                 // Carrega todas as Presenças
                 const prSnap = await getDocs(collection(db, "presencas"));
                 prSnap.forEach(d => allPresencas.push({id: d.id, ...d.data()}));
@@ -278,19 +283,65 @@
             tbody.innerHTML = '';
             pbody.innerHTML = '';
 
-            let filtered = allPresencas.filter(p => {
-                // Filtro Evento
-                if(filterEv !== "Todos" && p.eventoId !== filterEv) return false;
+            let displayList = [];
+
+            if (filterEv !== "Todos") {
+                const evento = allEventos.find(ev => ev.id === filterEv);
+                if (evento) {
+                    const publico = evento.publico || 'Todos';
+                    const presencasDoEvento = allPresencas.filter(p => p.eventoId === filterEv);
+                    
+                    const expectedPastores = allPastores.filter(p => {
+                        if (publico === 'Titulares') return p.funcao === 'Pastor Titular';
+                        if (publico === 'Coordenadores') return p.coordenador === true;
+                        if (publico === 'TitularesECoordenadores') return p.funcao === 'Pastor Titular' || p.coordenador === true;
+                        if (publico === 'Todos' || publico === 'PublicoGeral') return true;
+                        return true; // Default to all if audience is not specified
+                    });
+
+                    expectedPastores.forEach(pastor => {
+                        const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
+                        if (presenca) {
+                            displayList.push(presenca);
+                        } else {
+                            const igrejaInfo = Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : pastor.igreja;
+                            displayList.push({
+                                id: `virtual_${pastor.id}_${evento.id}`,
+                                nome: pastor.nome,
+                                igreja: igrejaInfo || '-',
+                                eventoId: evento.id,
+                                tipoEvento: evento.nome,
+                                dataEvento: evento.data,
+                                status: 'Ausente',
+                                motivo: 'Não registrou presença',
+                                isVirtual: true
+                            });
+                        }
+                    });
+
+                    presencasDoEvento.forEach(presenca => {
+                        if (!allPastores.some(p => p.nome === presenca.nome)) {
+                            displayList.push(presenca); // Add visitors
+                        }
+                    });
+                }
+            } else {
+                displayList = [...allPresencas];
+            }
+
+            let filtered = displayList.filter(p => {
                 
                 // Filtro Status com a lógica de Consolidação
                 const isConsolidated = p.consolidada === true;
-                if(filterSt === "Presente" && p.status !== "Presente") return false;
-                if(filterSt === "Justificado" && p.status !== "Justificado") return false;
-                if(filterSt === "Ausente" && (p.status !== "Ausente" || isConsolidated)) return false;
-                if(filterSt === "Consolidado" && (!isConsolidated || p.status !== "Ausente")) return false;
+                if (filterSt !== "Todos") {
+                    if(filterSt === "Presente" && p.status !== "Presente") return false;
+                    if(filterSt === "Justificado" && p.status !== "Justificado") return false;
+                    if(filterSt === "Ausente" && (p.status !== "Ausente" || isConsolidated)) return false;
+                    if(filterSt === "Consolidado" && (!isConsolidated || p.status !== "Ausente")) return false;
+                }
                 
                 // Filtro Igreja
-                if(filterIg !== "Todas" && (!p.igreja || !p.igreja.includes(filterIg))) return false;
+                if(filterIg !== "Todas" && (!p.igreja || !p.igreja.toLowerCase().includes(filterIg.toLowerCase()))) return false;
 
                 // Filtro Nome
                 if(filterNome && !p.nome.toLowerCase().includes(filterNome)) return false;
@@ -344,22 +395,25 @@
                 }
 
                 // Botões de Ação
-                let actions = `
-                    <div class="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                        <button onclick="window.openEdit('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors shadow-sm" title="Editar Lançamento">
-                            <i data-lucide="edit-2" class="w-4 h-4"></i>
-                        </button>
-                `;
-                
-                // Botão Rápido de Consolidar diretamente na tabela (só aparece se estiver Ausente e ainda não consolidada)
-                if (p.status === 'Ausente' && !p.consolidada) {
-                    actions += `
-                        <button onclick="window.markConsolidated('${p.id}')" class="text-emerald-500 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 p-2 rounded-lg transition-colors shadow-sm" title="Marcar como Ausência Consolidada">
-                            <i data-lucide="check-circle" class="w-4 h-4"></i>
-                        </button>
+                let actions = '';
+                if (!p.isVirtual) {
+                    actions = `
+                        <div class="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                            <button onclick="window.openEdit('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors shadow-sm" title="Editar Lançamento">
+                                <i data-lucide="edit-2" class="w-4 h-4"></i>
+                            </button>
                     `;
+                    
+                    // Botão Rápido de Consolidar diretamente na tabela (só aparece se estiver Ausente e ainda não consolidada)
+                    if (p.status === 'Ausente' && !p.consolidada) {
+                        actions += `
+                            <button onclick="window.markConsolidated('${p.id}')" class="text-emerald-500 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 p-2 rounded-lg transition-colors shadow-sm" title="Marcar como Ausência Consolidada">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            </button>
+                        `;
+                    }
+                    actions += `</div>`;
                 }
-                actions += `</div>`;
 
                 const dataFormatada = p.dataEvento ? p.dataEvento.split('-').reverse().join('/') : '';
 
