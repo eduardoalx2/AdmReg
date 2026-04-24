@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteio de Igrejas - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        let perms = [];
+        try { perms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
+        if (!perms.includes('admin')) {
+            window.location.replace('index.html');
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        
+        /* Efeito Roleta */
+        .roulette-container {
+            perspective: 1000px;
+            overflow: hidden;
+            height: 120px;
+            position: relative;
+        }
+        .roulette-item {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            transition: all 0.1s ease-in-out;
+            opacity: 0;
+            transform: translateY(50px) scale(0.8);
+        }
+        .roulette-item.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        .shadow-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="w-full shadow-sm bg-white border-b sticky top-0 z-30">
+        <div class="max-w-md mx-auto px-4 py-2 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2">
+                <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                <div class="border-l border-gray-200 pl-2">
+                    <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                </div>
+            </a>
+            <a href="index.html" class="text-xs font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
+            </a>
+        </div>
+        <div class="header-gradient py-4 px-4 text-center shadow-inner">
+            <h1 class="text-lg font-black text-white tracking-wide uppercase flex items-center justify-center gap-2">
+                <i data-lucide="dices" class="w-6 h-6 text-blue-400"></i> Sorteio de Igrejas
+            </h1>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-md w-full mx-auto p-4 sm:p-6 flex flex-col gap-6">
+        
+        <!-- Configurações do Sorteio -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 space-y-4">
+            <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                <i data-lucide="calendar" class="w-4 h-4"></i> Data do Compromisso
+            </h2>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data</label>
+                    <input type="date" id="dataSorteio" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-slate-700">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Horário</label>
+                    <input type="time" id="horaSorteio" value="19:30" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-slate-700">
+                </div>
+            </div>
+            
+            <p id="status-db" class="text-[10px] font-bold text-slate-400 uppercase text-center mt-2 flex items-center justify-center gap-1">
+                <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> Sincronizando igrejas...
+            </p>
+        </div>
+
+        <!-- Área do Sorteio -->
+        <div class="flex-1 flex flex-col justify-center gap-6">
+            
+            <!-- Display do Resultado -->
+            <div id="resultadoBox" class="bg-slate-800 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden hidden transition-all duration-500 border border-slate-700">
+                <div class="absolute inset-0 bg-blue-600 opacity-10 animate-pulse"></div>
+                <h3 class="text-[10px] font-bold text-blue-400 uppercase tracking-widest text-center mb-6 relative z-10">Igreja Selecionada:</h3>
+                
+                <div class="roulette-container flex items-center justify-center relative z-10">
+                    <div id="nomeIgreja" class="roulette-item text-3xl sm:text-4xl font-black text-white uppercase leading-tight drop-shadow-lg">
+                        PREPARANDO...
+                    </div>
+                </div>
+                
+                <p id="pastorIgreja" class="text-center text-slate-300 font-medium text-sm mt-4 relative z-10 opacity-0 transition-opacity duration-1000"></p>
+            </div>
+
+            <!-- Botão Principal -->
+            <button id="btnSortear" onclick="iniciarSorteio()" disabled class="w-full bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-blue-500 text-white font-black py-5 rounded-3xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-lg tracking-widest uppercase flex items-center justify-center gap-3">
+                <i data-lucide="play" class="w-6 h-6"></i> Sortear Agora
+            </button>
+
+            <!-- Ações Pós-Sorteio -->
+            <div id="acoesBox" class="grid grid-cols-2 gap-3 opacity-0 transition-opacity duration-500 pointer-events-none">
+                <button onclick="enviarWhatsApp()" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold py-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors">
+                    <i data-lucide="message-circle" class="w-6 h-6"></i>
+                    <span class="text-[10px] uppercase tracking-widest">Enviar WhatsApp</span>
+                </button>
+                
+                <button onclick="salvarAgenda()" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold py-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors">
+                    <i data-lucide="calendar-plus" class="w-6 h-6"></i>
+                    <span class="text-[10px] uppercase tracking-widest">Google Agenda</span>
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        lucide.createIcons();
+
+        let igrejasDisponiveis = [];
+        let pastoresMap = {};
+        let igrejaSorteada = null;
+        let isSpinning = false;
+
+        // Configura data padrão para hoje
+        document.getElementById('dataSorteio').value = new Date().toISOString().split('T')[0];
+
+        // 1. Carregar igrejas do banco de dados
+        async function carregarDados() {
+            try {
+                const [igSnap, pastoresSnap] = await Promise.all([
+                    getDocs(query(collection(db, "igrejas"), orderBy("nome"))),
+                    getDocs(collection(db, "pastores"))
+                ]);
+
+                // Mapear pastores titulares
+                pastoresSnap.forEach(d => {
+                    const p = d.data();
+                    if (p.funcao === 'Pastor Titular') {
+                        const pIgs = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                        pIgs.forEach(ig => pastoresMap[ig] = p.nome);
+                    }
+                });
+
+                igSnap.forEach(doc => {
+                    const ig = doc.data();
+                    // Ignora a Sede Regional / Escritório (Região 655)
+                    if (ig.tipo === 'Sede Regional' || ig.tipo === 'Região Eclesiástica') return;
+                    if ((ig.nome || '').toUpperCase().includes('REGIÃO 655')) return;
+                    if ((ig.nome || '').toUpperCase().includes('ESCRITÓRIO')) return;
+
+                    igrejasDisponiveis.push(ig);
+                });
+
+                document.getElementById('status-db').innerHTML = `<i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-500"></i> ${igrejasDisponiveis.length} igrejas prontas para o sorteio.`;
+                document.getElementById('btnSortear').disabled = false;
+                lucide.createIcons();
+
+            } catch (e) {
+                console.error("Erro ao carregar dados:", e);
+                document.getElementById('status-db').innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 text-red-500"></i> Erro ao carregar dados.`;
+            }
+        }
+
+        window.iniciarSorteio = () => {
+            if (isSpinning || igrejasDisponiveis.length === 0) return;
+            isSpinning = true;
+            
+            const btn = document.getElementById('btnSortear');
+            const box = document.getElementById('resultadoBox');
+            const display = document.getElementById('nomeIgreja');
+            const displayPastor = document.getElementById('pastorIgreja');
+            const acoes = document.getElementById('acoesBox');
+            
+            btn.disabled = true;
+            box.classList.remove('hidden');
+            box.classList.remove('shadow-glow');
+            display.classList.add('active');
+            displayPastor.style.opacity = '0';
+            acoes.style.opacity = '0';
+            acoes.style.pointerEvents = 'none';
+
+            let timer;
+            let counter = 0;
+            const maxTicks = 30; // Qtd de giros
+            
+            timer = setInterval(() => {
+                const randomIg = igrejasDisponiveis[Math.floor(Math.random() * igrejasDisponiveis.length)];
+                display.textContent = randomIg.nome;
+                counter++;
+                
+                if (counter >= maxTicks) {
+                    clearInterval(timer);
+                    igrejaSorteada = randomIg;
+                    display.textContent = igrejaSorteada.nome;
+                    box.classList.add('shadow-glow');
+                    
+                    const nomePastor = pastoresMap[igrejaSorteada.nome] || 'Pr. Titular';
+                    displayPastor.textContent = `Resp: ${nomePastor}`;
+                    displayPastor.style.opacity = '1';
+                    
+                    acoes.style.opacity = '1';
+                    acoes.style.pointerEvents = 'auto';
+                    
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="refresh-ccw" class="w-6 h-6"></i> Sortear Novamente';
+                    isSpinning = false;
+                    lucide.createIcons();
+                }
+            }, 80); // Velocidade do giro
+        };
+
+        window.enviarWhatsApp = () => {
+            if (!igrejaSorteada) return;
+            const dObj = document.getElementById('dataSorteio').value.split('-');
+            const dFmt = `${dObj[2]}/${dObj[1]}/${dObj[0]}`;
+            const hFmt = document.getElementById('horaSorteio').value;
+            const pastor = pastoresMap[igrejaSorteada.nome] ? `Pr(a). ${pastoresMap[igrejaSorteada.nome].split(' ')[0]}` : 'Pastor(a)';
+            
+            let msg = `Olá, ${pastor}! A paz do Senhor! 🙏\n\n`;
+            msg += `O sistema da Região 655 acabou de realizar um sorteio e a *${igrejaSorteada.nome}* foi a selecionada para o nosso próximo compromisso/visita!\n\n`;
+            msg += `📅 *Data:* ${dFmt}\n`;
+            msg += `⏰ *Horário:* ${hFmt}\n\n`;
+            msg += `Em breve entraremos em contato para mais detalhes. Deus abençoe grandemente a sua igreja! ✨`;
+
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        };
+
+        window.salvarAgenda = () => {
+            if (!igrejaSorteada) return;
+            const dataStr = document.getElementById('dataSorteio').value; // YYYY-MM-DD
+            const horaStr = document.getElementById('horaSorteio').value; // HH:MM
+            
+            if(!dataStr || !horaStr) { alert("Preencha a data e hora primeiro!"); return; }
+            
+            const dataLimpa = dataStr.replace(/-/g, '');
+            const horaLimpa = horaStr.replace(':', '') + '00';
+            const startDateTime = `${dataLimpa}T${horaLimpa}`;
+            
+            // Estima 2 horas de duração
+            const hInt = parseInt(horaStr.split(':')[0]);
+            const mInt = horaStr.split(':')[1];
+            const hFim = String((hInt + 2) % 24).padStart(2, '0');
+            const endDateTime = `${dataLimpa}T${hFim}${mInt}00`;
+
+            const titulo = `Visita Região 655 - ${igrejaSorteada.nome}`;
+            const detalhes = `Compromisso sorteado pelo sistema da Região 655.\nResponsável: ${pastoresMap[igrejaSorteada.nome] || 'Não informado'}`;
+            
+            const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titulo)}&dates=${startDateTime}/${endDateTime}&details=${encodeURIComponent(detalhes)}`;
+            window.open(url, '_blank');
+        };
+
+        carregarDados();
+    </script>
+</body>
+</html>
