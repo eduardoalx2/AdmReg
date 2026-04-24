@@ -216,7 +216,7 @@
 
             useEffect(() => {
                 if (showSuccess) {
-                    const t = setTimeout(() => { window.location.href = 'painel_pastor.html'; }, 3000);
+                    const t = setTimeout(() => { window.location.href = 'index.html'; }, 3000);
                     return () => clearTimeout(t);
                 }
             }, [showSuccess]);
@@ -299,7 +299,7 @@
                                         <div className="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
                                     </div>
                                 </a>
-                                <a href="painel_pastor.html" className="text-[10px] font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                                <a href="index.html" className="text-[10px] font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
                                     <Icon name="arrow-left" size={12} /> Painel do Pastor
                                 </a>
                             </div>
@@ -403,7 +403,7 @@
                                 </div>
                                 <h2 className="text-2xl font-black text-slate-800 mb-2">Lançamento Gravado!</h2>
                                 <p className="text-slate-500 text-sm mb-8">Saldo registrado com sucesso. Voltando ao Painel do Pastor...</p>
-                                <button onClick={() => window.location.href = 'painel_pastor.html'} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors">
+                                <button onClick={() => window.location.href = 'index.html'} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors">
                                     Voltar ao Painel
                                 </button>
                             </div>
