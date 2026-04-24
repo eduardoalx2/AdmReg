@@ -112,12 +112,16 @@
                 </div>
 
                 <!-- BOTÕES DE AÇÃO / SUPORTE -->
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <a href="saldodeviradareg655.html" class="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2 shadow-lg card-hover transition-colors">
                         <i data-lucide="calculator" class="w-6 h-6"></i>
                         <span class="text-[10px] font-black uppercase tracking-widest leading-tight">Lançar<br>Saldo</span>
                     </a>
-                    <button onclick="abrirSuporte()" class="bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2 shadow-lg card-hover transition-colors">
+                    <a href="presencareg655.html" class="bg-violet-600 hover:bg-violet-700 text-white rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2 shadow-lg card-hover transition-colors">
+                        <i data-lucide="user-check" class="w-6 h-6"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest leading-tight">Registrar<br>Presença</span>
+                    </a>
+                    <button onclick="abrirSuporte()" class="col-span-2 sm:col-span-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2 shadow-lg card-hover transition-colors">
                         <i data-lucide="message-circle" class="w-6 h-6"></i>
                         <span class="text-[10px] font-black uppercase tracking-widest leading-tight">Falar com<br>Secretaria</span>
                     </button>
@@ -134,6 +138,20 @@
 
             <!-- COLUNA DIREITA (Históricos) -->
             <div class="space-y-4 lg:col-span-2">
+
+                <!-- PRÓXIMOS EVENTOS -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-50 px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <h2 class="text-xs font-black uppercase tracking-widest text-slate-600 flex items-center gap-2">
+                            <i data-lucide="calendar-days" class="w-4 h-4 text-blue-500"></i> Próximos Eventos
+                        </h2>
+                        <a href="agendarapidareg655.html" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider flex items-center gap-1 transition-colors"><i data-lucide="external-link" class="w-3 h-3"></i> Ver Agenda</a>
+                    </div>
+                    <div id="listaAgendaPastor" class="p-3">
+                        <!-- Skeleton Loader -->
+                        <div class="animate-pulse flex space-x-4 p-4"><div class="flex-1 space-y-3 py-1"><div class="h-2 bg-slate-200 rounded"></div><div class="h-2 bg-slate-200 rounded w-5/6"></div></div></div>
+                    </div>
+                </div>
 
                 <!-- HISTÓRICO DE RECIBOS (recolhível) -->
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -234,7 +252,7 @@
     <script type="module">
         import { auth, db } from './firebase-config.js';
         import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-        import { collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, doc, getDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         // query e where ainda usados para busca da igreja do pastor
 
         lucide.createIcons();
@@ -296,9 +314,10 @@
                 if(!igSnap.empty) igrejaObj = igSnap.docs[0].data();
 
                 // 3. Buscar todos os registros e filtrar client-side
-                const [saldosSnap, recibosSnap] = await Promise.all([
+                const [saldosSnap, recibosSnap, agendaSnap] = await Promise.all([
                     getDocs(collection(db, "saldos_virada")),
-                    getDocs(collection(db, "recibos"))
+                    getDocs(collection(db, "recibos")),
+                    getDocs(query(collection(db, "agenda"), orderBy("data", "asc")))
                 ]);
 
                 const lower = igrejaAtiva.toLowerCase();
@@ -319,6 +338,17 @@
 
                 calcularTermometro(todosSaldos, globalRecibos);
                 renderListas(todosSaldos.slice(0, 6), globalRecibos.slice(0, 6));
+
+                // Processar e Renderizar Agenda (5 próximos)
+                const todayStr = new Date().toISOString().split('T')[0];
+                const upcomingEvents = [];
+                agendaSnap.forEach(d => {
+                    const ev = d.data();
+                    if (ev.data >= todayStr && ev.tipo !== 'LOCAL') {
+                        upcomingEvents.push({ id: d.id, ...ev });
+                    }
+                });
+                renderAgendaPastor(upcomingEvents.slice(0, 5));
 
                 const presencasSnap = await getDocs(collection(db, "presencas"));
                 const presencasDaIgreja = [];
@@ -618,6 +648,44 @@
                     </div>`;
                 }).join('');
             }
+            lucide.createIcons();
+        }
+
+        function renderAgendaPastor(eventos) {
+            const container = document.getElementById('listaAgendaPastor');
+            if (eventos.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6 italic">Nenhum evento futuro agendado no momento.</p>';
+                return;
+            }
+
+            const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+            container.innerHTML = eventos.map(ev => {
+                const [y, m, d] = ev.data.split('-');
+                const mesNome = meses[parseInt(m)-1];
+                const badgeStyles = {
+                    'REGIONAL': 'bg-blue-100 text-blue-700 border-blue-200',
+                    'CED': 'bg-amber-100 text-amber-700 border-amber-200',
+                    'CND': 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                };
+                const badgeClass = badgeStyles[ev.tipo?.toUpperCase()] || 'bg-slate-100 text-slate-600 border-slate-200';
+
+                return `
+                <div class="flex items-start gap-4 p-3 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors rounded-xl group">
+                    <div class="flex flex-col items-center justify-center bg-slate-100 group-hover:bg-white rounded-lg min-w-[55px] p-2 text-center border border-slate-200 transition-colors shadow-sm">
+                        <span class="text-xl font-black text-slate-800 leading-none">${d}</span>
+                        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">${mesNome}</span>
+                    </div>
+                    <div class="flex-1 min-w-0 py-1">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase border ${badgeClass}">${ev.tipo || 'Evento'}</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase truncate flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${ev.horario || 'A definir'}</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-800 leading-tight truncate mb-1" title="${ev.evento}">${ev.evento}</h4>
+                        <p class="text-[10px] font-medium text-slate-500 truncate flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i> ${ev.local || 'Local a definir'}</p>
+                    </div>
+                </div>`;
+            }).join('');
             lucide.createIcons();
         }
 
