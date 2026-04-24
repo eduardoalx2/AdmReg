@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Rápida IEQ 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .header-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        /* Estilos do Rodapé fornecidos */
+        .footer-regional {
+            margin-top: 40px;
+            padding: 30px 20px;
+            border-top: 1px solid #eeeeee;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 12px;
+            color: #777777;
+            line-height: 1.6;
+            background-color: white;
+            border-radius: 1rem;
+        }
+        .footer-regional b {
+            color: #444444;
+        }
+        
+        /* Cores customizadas para os tipos */
+        .badge-ced { background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .badge-cnd { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+        .badge-regional { background-color: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .badge-default { background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #1e40af;
+            font-weight: 700;
+        }
+
+        /* Efeito hover nos cards */
+        .month-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .month-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="w-full shadow-sm bg-white border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-3">
+                <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto" onerror="this.src='logo.png'">
+                <div class="text-sm font-bold text-slate-800 leading-none">
+                    Região 655 <span class="hidden sm:inline">- Londrina/PR</span>
+                </div>
+            </a>
+            <a href="index.html" class="text-xs font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+                Voltar
+            </a>
+        </div>
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-7xl mx-auto flex items-center gap-3">
+                <h1 class="text-lg font-extrabold text-white tracking-tight uppercase">
+                    Agenda Rápida 2026
+                </h1>
+                <span class="h-0.5 w-8 bg-blue-500 rounded-full"></span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        
+        <div class="flex border-b border-gray-200 mb-6 bg-white rounded-t-xl overflow-hidden shadow-sm">
+            <button onclick="window.switchTab('proximos')" id="tab-proximos" class="flex-1 py-3 text-center text-sm font-bold transition-all hover:bg-gray-50 tab-active">
+                Próximos
+            </button>
+            <button onclick="window.switchTab('anteriores')" id="tab-anteriores" class="flex-1 py-3 text-center text-sm font-medium transition-all hover:bg-gray-50 text-slate-500">
+                Anteriores
+            </button>
+        </div>
+
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+            <p class="mt-2 text-slate-500 font-medium text-xs">Sincronizando...</p>
+        </div>
+
+        <div id="agenda-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            </div>
+
+        <footer class="footer-regional shadow-sm">
+            <p>Desenvolvido por: <b>Escritório Regional | Região 655 - Londrina/PR |</b></p>
+            <p>Superintendente: <b>Rev. Valdir Ávila Ramos</b></p>
+            <p>Secretário Regional: <b>Pr. Eduardo Silva</b></p>
+        </footer>
+    </main>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        let allEvents = [];
+        let currentView = 'proximos';
+
+        async function fetchAgenda() {
+            try {
+                const snap = await getDocs(query(collection(db, "agenda"), orderBy("data", "asc")));
+                const data = [];
+                snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
+
+                allEvents = (data || [])
+                    .filter(e => e.data && e.evento && (e.tipo || '').toUpperCase() !== 'LOCAL')
+                    .map(e => {
+                        const [year, month, day] = e.data.split('-').map(Number);
+                        return {
+                            data: new Date(year, month - 1, day),
+                            dataOriginal: e.data,
+                            descricao: e.evento,
+                            tipo: e.tipo ? e.tipo.trim() : 'OUTROS'
+                        };
+                    });
+
+                renderAgenda();
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('agenda-container').classList.remove('hidden');
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                document.getElementById('loading').innerHTML = `<div class="p-4 text-red-700 text-xs">Erro ao carregar os dados.</div>`;
+            }
+        }
+
+        window.switchTab = (tab) => {
+            currentView = tab;
+            document.getElementById('tab-proximos').className = tab === 'proximos' ? 'flex-1 py-3 text-center text-sm font-bold transition-all hover:bg-gray-50 tab-active' : 'flex-1 py-3 text-center text-sm font-medium transition-all hover:bg-gray-50 text-slate-500';
+            document.getElementById('tab-anteriores').className = tab === 'anteriores' ? 'flex-1 py-3 text-center text-sm font-bold transition-all hover:bg-gray-50 tab-active' : 'flex-1 py-3 text-center text-sm font-medium transition-all hover:bg-gray-50 text-slate-500';
+            renderAgenda();
+        };
+
+        function getMonthName(date) {
+            const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            return months[date.getMonth()];
+        }
+
+        function getDayOfWeekShort(date) {
+            const days = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+            return days[date.getDay()];
+        }
+
+        function getBadgeClass(tipo) {
+            const t = tipo.toUpperCase();
+            if (t.includes('CED')) return 'badge-ced';
+            if (t.includes('CND')) return 'badge-cnd';
+            if (t.includes('REGIONAL')) return 'badge-regional';
+            return 'badge-default';
+        }
+
+        function renderAgenda() {
+            const container = document.getElementById('agenda-container');
+            container.innerHTML = '';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let filteredEvents = [];
+            if (currentView === 'proximos') {
+                filteredEvents = allEvents.filter(e => e.data >= today);
+                filteredEvents.sort((a, b) => a.data - b.data);
+            } else {
+                filteredEvents = allEvents.filter(e => e.data < today);
+                filteredEvents.sort((a, b) => b.data - a.data);
+            }
+
+            if (filteredEvents.length === 0) {
+                container.className = "block text-center py-20";
+                container.innerHTML = `<p class="text-slate-500 font-medium">Nenhum evento registrado.</p>`;
+                return;
+            } else {
+                container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+            }
+
+            const groups = {};
+            filteredEvents.forEach(event => {
+                const monthKey = `${event.data.getFullYear()}-${event.data.getMonth()}`;
+                if (!groups[monthKey]) {
+                    groups[monthKey] = {
+                        name: getMonthName(event.data),
+                        year: event.data.getFullYear(),
+                        events: []
+                    };
+                }
+                groups[monthKey].events.push(event);
+            });
+
+            let sortedKeys = Object.keys(groups);
+            if (currentView === 'proximos') {
+                sortedKeys.sort((a, b) => {
+                    const [yearA, monthA] = a.split('-').map(Number);
+                    const [yearB, monthB] = b.split('-').map(Number);
+                    return yearA !== yearB ? yearA - yearB : monthA - monthB;
+                });
+            } else {
+                sortedKeys.sort((a, b) => {
+                    const [yearA, monthA] = a.split('-').map(Number);
+                    const [yearB, monthB] = b.split('-').map(Number);
+                    return yearB !== yearA ? yearB - yearA : monthB - monthA;
+                });
+            }
+
+            sortedKeys.forEach(key => {
+                const group = groups[key];
+                const monthCard = document.createElement('div');
+                monthCard.className = 'month-card bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 flex flex-col';
+                let html = `
+                    <div class="bg-slate-800 px-4 py-2 flex justify-between items-center">
+                        <h3 class="font-bold text-white uppercase tracking-wider text-[10px]">
+                            ${group.name} <span class="text-slate-400 font-normal ml-1">${group.year}</span>
+                        </h3>
+                        <span class="text-[8px] font-bold bg-white/10 text-white px-2 py-0.5 rounded-full border border-white/20">
+                            ${group.events.length}
+                        </span>
+                    </div>
+                    <div class="divide-y divide-gray-50 flex-grow">
+                `;
+                group.events.forEach(event => {
+                    const day = String(event.data.getDate()).padStart(2, '0');
+                    const dayOfWeek = getDayOfWeekShort(event.data);
+                    const badgeClass = getBadgeClass(event.tipo);
+                    html += `
+                        <div class="px-4 py-2.5 flex items-start hover:bg-slate-50 transition-colors">
+                            <div class="flex-shrink-0 w-8 text-center mr-3">
+                                <div class="text-sm font-bold text-slate-700 leading-none">${day}</div>
+                                <div class="text-[8px] text-slate-400 font-medium uppercase">${dayOfWeek}</div>
+                            </div>
+                            <div class="flex-grow">
+                                <div class="text-[11px] font-semibold text-slate-800 leading-tight mb-0.5">${event.descricao}</div>
+                                <span class="inline-block px-1.5 py-0.5 rounded-[4px] text-[7px] font-bold uppercase ${badgeClass}">
+                                    ${event.tipo}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                monthCard.innerHTML = html;
+                container.appendChild(monthCard);
+            });
+        }
+        fetchAgenda();
+    </script>
+</body>
+</html>
