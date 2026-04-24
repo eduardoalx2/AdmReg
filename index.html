@@ -3,28 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin — Região 655</title>
+    <title>Portal — Região 655</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script>
-        // Bloqueio ultra-rápido via perms
-        const permsStr = localStorage.getItem('userPerms');
-        const email = localStorage.getItem('userEmail');
-        const igreja = localStorage.getItem('userIgreja');
-        
-        if (!permsStr || !email) {
-            window.location.replace('login.html');
-        } else {
-            let p = [];
-            try { p = JSON.parse(permsStr); } catch(e) {}
-            const isAdmin = p.includes('admin');
-            const isEquipe = p.length > 0 && !igreja;
-            
-            // Trava de segurança: Se for Pastor, expulsa para o painel exclusivo
-            if (!isAdmin && !isEquipe) {
-                window.location.replace('painel_pastor.html');
-            }
-        }
+        // Protege antes do render — sem redirecionamento por role (pastores ficam aqui)
+        const _ps = localStorage.getItem('userPerms');
+        const _em = localStorage.getItem('userEmail');
+        if (!_ps || !_em) window.location.replace('login.html');
     </script>
     <style>
         :root {
@@ -33,315 +21,219 @@
             --border: rgba(255,255,255,0.07);
             --border-hover: rgba(99,179,237,0.4);
             --accent: #63b3ed;
-            --accent2: #4299e1;
             --text-primary: #e2e8f0;
             --text-secondary: #94a3b8;
             --text-muted: #4a5568;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
             font-family: 'DM Sans', sans-serif;
-            background-color: var(--bg);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            background-color: var(--bg); color: var(--text-primary);
+            min-height: 100vh; display: flex; flex-direction: column;
         }
-
         body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
+            content: ''; position: fixed; inset: 0;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.5;
+            pointer-events: none; z-index: 0; opacity: 0.5;
         }
-
         .brand-header {
-            position: relative;
-            padding: 48px 24px 56px;
-            text-align: center;
-            overflow: hidden;
-            z-index: 1;
+            position: relative; padding: 48px 24px 56px;
+            text-align: center; overflow: hidden; z-index: 1;
         }
-
         .header-glow {
-            position: absolute;
-            top: -60px; left: 50%;
-            transform: translateX(-50%);
+            position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
             width: 600px; height: 300px;
             background: radial-gradient(ellipse at center, rgba(66,153,225,0.18) 0%, transparent 70%);
             pointer-events: none;
         }
-
         .header-ring {
-            position: absolute;
-            top: -80px; left: 50%;
-            transform: translateX(-50%);
+            position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
             width: 500px; height: 500px;
-            border: 1px solid rgba(99,179,237,0.06);
-            border-radius: 50%;
-            pointer-events: none;
+            border: 1px solid rgba(99,179,237,0.06); border-radius: 50%; pointer-events: none;
         }
-
         .logo-wrap { display: inline-block; margin-bottom: 20px; }
         .logo-wrap img {
-            max-height: 56px; max-width: 200px;
-            object-fit: contain;
+            max-height: 56px; max-width: 200px; object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(99,179,237,0.3));
         }
-
         .badge-regional {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(99,179,237,0.1);
-            border: 1px solid rgba(99,179,237,0.2);
-            border-radius: 100px;
-            padding: 4px 14px;
-            font-family: 'Sora', sans-serif;
-            font-size: 9px; font-weight: 700;
-            letter-spacing: 0.22em;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 16px;
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.2);
+            border-radius: 100px; padding: 4px 14px;
+            font-family: 'Sora', sans-serif; font-size: 9px; font-weight: 700;
+            letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px;
         }
-
         .badge-dot {
-            width: 5px; height: 5px;
-            border-radius: 50%;
-            background: var(--accent);
+            width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
             animation: pulse-dot 2s ease-in-out infinite;
         }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.7); }
-        }
-
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
         .portal-title {
-            font-family: 'Sora', sans-serif;
-            font-size: clamp(26px, 5vw, 44px);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            color: #fff;
-            line-height: 1.1;
-            margin-bottom: 8px;
+            font-family: 'Sora', sans-serif; font-size: clamp(26px,5vw,44px);
+            font-weight: 800; letter-spacing: -0.03em; color: #fff; line-height: 1.1; margin-bottom: 8px;
         }
+        .portal-subtitle { font-size: 12px; color: var(--text-secondary); letter-spacing: 0.05em; }
+        main { flex: 1; width: 100%; margin: 0 auto; padding: 0 16px 64px; position: relative; z-index: 1; }
 
-        .portal-subtitle {
-            font-size: 12px;
-            color: var(--text-secondary);
-            letter-spacing: 0.05em;
-            margin-bottom: 0;
-        }
-
-        main {
-            flex: 1;
-            max-width: 860px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 0 16px 64px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .section-label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            margin-top: 32px;
-        }
-
+        /* ===== ADMIN CARDS ===== */
+        .admin-main { max-width: 860px; margin: 0 auto; }
+        .section-label { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; margin-top: 32px; }
         .section-label-line { height: 1px; flex: 1; background: var(--border); }
-
         .section-label span {
-            font-family: 'Sora', sans-serif;
-            font-size: 9px; font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            white-space: nowrap;
+            font-family: 'Sora', sans-serif; font-size: 9px; font-weight: 700;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.2em; white-space: nowrap;
         }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 8px;
-        }
-
-        @media (max-width: 480px) {
-            .cards-grid { grid-template-columns: 1fr; gap: 6px; }
-        }
-
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 8px; }
+        @media(max-width:480px){.cards-grid{grid-template-columns:1fr;gap:6px;}}
         .link-card {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            background: rgba(255,255,255,0.025);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 11px 14px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
-            position: relative;
-            overflow: hidden;
+            display: flex; align-items: center; gap: 11px;
+            background: rgba(255,255,255,0.025); border: 1px solid var(--border);
+            border-radius: 12px; padding: 11px 14px; cursor: pointer; text-decoration: none;
+            transition: all 0.22s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden;
         }
-
         .link-card::before {
-            content: '';
-            position: absolute; inset: 0;
-            background: linear-gradient(135deg, rgba(99,179,237,0.05) 0%, transparent 60%);
-            opacity: 0;
-            transition: opacity 0.25s;
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg,rgba(99,179,237,0.05) 0%,transparent 60%);
+            opacity: 0; transition: opacity 0.25s;
         }
-
         .link-card:hover::before { opacity: 1; }
-
         .link-card:hover {
-            border-color: var(--border-hover);
-            background: rgba(99,179,237,0.06);
+            border-color: var(--border-hover); background: rgba(99,179,237,0.06);
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(99,179,237,0.1);
         }
-
         .card-icon {
-            flex-shrink: 0;
-            width: 36px; height: 36px;
-            border-radius: 9px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 17px;
-            transition: all 0.22s;
+            flex-shrink: 0; width: 36px; height: 36px; border-radius: 9px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center; font-size: 17px; transition: all 0.22s;
         }
-
-        .link-card:hover .card-icon {
-            background: rgba(99,179,237,0.12);
-            border-color: rgba(99,179,237,0.25);
-        }
-
+        .link-card:hover .card-icon { background: rgba(99,179,237,0.12); border-color: rgba(99,179,237,0.25); }
         .card-texts { flex: 1; min-width: 0; }
-
-        .card-title {
-            font-size: 13px; font-weight: 600;
-            color: var(--text-primary);
-            line-height: 1.35;
-            transition: color 0.2s;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
+        .card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.35; transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .link-card:hover .card-title { color: var(--accent); }
+        .card-obs { font-size: 10px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-arrow { flex-shrink: 0; font-size: 14px; color: var(--text-muted); transition: color 0.2s,transform 0.2s; }
+        .link-card:hover .card-arrow { color: var(--accent); transform: translate(2px,-2px); }
 
-        .card-obs {
-            font-size: 10px;
-            color: var(--text-muted);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        /* ===== PASTOR VIEW ===== */
+        .pastor-main { max-width: 1020px; margin: 0 auto; }
+        .pastor-grid { display: grid; grid-template-columns: 300px 1fr; gap: 18px; align-items: start; }
+        @media(max-width:760px){.pastor-grid{grid-template-columns:1fr;}}
+        .p-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+        .p-card-hdr {
+            background: rgba(255,255,255,0.04); border-bottom: 1px solid var(--border);
+            padding: 13px 16px; display: flex; align-items: center; justify-content: space-between;
         }
-
-        .card-arrow {
-            flex-shrink: 0;
-            font-size: 14px;
-            color: var(--text-muted);
-            transition: color 0.2s, transform 0.2s;
+        .p-card-hdr-title {
+            font-family: 'Sora', sans-serif; font-size: 9px; font-weight: 700;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.18em;
+            display: flex; align-items: center; gap: 8px;
         }
-
-        .link-card:hover .card-arrow {
-            color: var(--accent);
-            transform: translate(2px, -2px);
+        .p-card-body { padding: 18px 16px; }
+        .p-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .p-action-btn {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+            padding: 13px 8px; border-radius: 14px; text-decoration: none; border: none; cursor: pointer;
+            font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em; transition: all 0.2s; color: white;
         }
-
-        .fade-in { animation: fadeUp 0.5s ease-out both; }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
+        .p-action-btn.blue{background:rgba(59,130,246,0.25);border:1px solid rgba(59,130,246,0.35);}
+        .p-action-btn.blue:hover{background:rgba(59,130,246,0.4);}
+        .p-action-btn.violet{background:rgba(139,92,246,0.25);border:1px solid rgba(139,92,246,0.35);}
+        .p-action-btn.violet:hover{background:rgba(139,92,246,0.4);}
+        .p-action-btn.emerald{background:rgba(16,185,129,0.25);border:1px solid rgba(16,185,129,0.35);}
+        .p-action-btn.emerald:hover{background:rgba(16,185,129,0.4);}
+        .p-action-btn.amber{background:rgba(245,158,11,0.25);border:1px solid rgba(245,158,11,0.35);}
+        .p-action-btn.amber:hover{background:rgba(245,158,11,0.4);}
+        .p-collapsible-btn {
+            width: 100%; background: none; border: none; cursor: pointer; color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
         }
-
-        footer {
-            position: relative; z-index: 1;
-            border-top: 1px solid var(--border);
-            padding: 28px 24px;
-            text-align: center;
+        .p-chevron { transition: transform 0.25s; display: inline-block; }
+        .p-chevron.open { transform: rotate(180deg); }
+        .p-tag {
+            display: inline-block; padding: 2px 8px; border-radius: 100px;
+            font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
         }
+        .p-tag.green{background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.25);}
+        .p-tag.red{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.25);}
+        .p-tag.amber{background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);}
+        .p-tag.blue{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);}
+        .p-tag.violet{background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.25);}
+        .p-tag.slate{background:rgba(100,116,139,0.15);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);}
+        .p-divider{height:1px;background:var(--border);}
+        .p-row{padding:11px 16px;border-bottom:1px solid var(--border);}
+        .p-row:last-child{border-bottom:none;}
+        .p-debito-wrap{border:1px solid rgba(239,68,68,0.2);border-radius:18px;overflow:hidden;}
+        .p-debito-hdr{background:rgba(239,68,68,0.08);border-bottom:1px solid rgba(239,68,68,0.15);padding:13px 16px;display:flex;align-items:center;gap:8px;}
+        .presenca-grupo{border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px;}
+        .presenca-hdr{background:rgba(139,92,246,0.08);border-bottom:1px solid rgba(139,92,246,0.12);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+        .p-link-a{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;border:1px solid var(--border);text-decoration:none;color:var(--text-secondary);background:rgba(255,255,255,0.02);transition:all 0.2s;margin-bottom:7px;font-size:12px;font-weight:600;}
+        .p-link-a:hover{border-color:rgba(99,179,237,0.3);color:var(--accent);background:rgba(99,179,237,0.05);}
+        .p-link-a:last-child{margin-bottom:0;}
+        .agenda-item{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);}
+        .agenda-item:last-child{border-bottom:none;}
+        .agenda-date{flex-shrink:0;min-width:50px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:7px;text-align:center;}
+        .skel{background:rgba(255,255,255,0.06);border-radius:8px;animation:skelPulse 1.5s ease-in-out infinite;}
+        @keyframes skelPulse{0%,100%{opacity:0.4}50%{opacity:0.8}}
+        @keyframes pulse-border{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}
+        .aviso-danger{animation:pulse-border 2s infinite;}
 
-        .footer-inner { max-width: 600px; margin: 0 auto; }
+        /* Admin bar */
+        .admin-bar{background:rgba(245,158,11,0.07);border-bottom:1px solid rgba(245,158,11,0.15);padding:10px 20px;position:relative;z-index:30;}
+        .admin-bar-inner{max-width:1020px;margin:0 auto;display:flex;align-items:center;gap:12px;}
+        .admin-bar select{flex:1;max-width:400px;background:rgba(255,255,255,0.06);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--text-primary);outline:none;font-family:'DM Sans',sans-serif;}
 
-        .footer-brand {
-            font-family: 'Sora', sans-serif;
-            font-size: 11px; font-weight: 700;
-            color: var(--text-secondary);
-            letter-spacing: 0.06em;
-            margin-bottom: 10px;
-        }
-
-        .footer-names {
-            display: flex; flex-wrap: wrap;
-            justify-content: center;
-            gap: 6px 24px;
-        }
-
-        .footer-item { font-size: 11px; color: var(--text-muted); }
-        .footer-item span { color: var(--text-secondary); font-weight: 600; }
-
-        .footer-copy {
-            margin-top: 16px;
-            font-size: 9px; color: var(--text-muted);
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            opacity: 0.5;
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(99,179,237,0.3); }
+        .fade-in{animation:fadeUp 0.5s ease-out both;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:28px 24px;text-align:center;}
+        .footer-inner{max-width:600px;margin:0 auto;}
+        .footer-brand{font-family:'Sora',sans-serif;font-size:11px;font-weight:700;color:var(--text-secondary);letter-spacing:0.06em;margin-bottom:10px;}
+        .footer-names{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 24px;}
+        .footer-item{font-size:11px;color:var(--text-muted);}
+        .footer-item span{color:var(--text-secondary);font-weight:600;}
+        .footer-copy{margin-top:16px;font-size:9px;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;opacity:0.5;}
+        ::-webkit-scrollbar{width:6px;}
+        ::-webkit-scrollbar-track{background:var(--bg);}
+        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px;}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(99,179,237,0.3);}
     </style>
 </head>
 <body>
 
     <header class="brand-header">
-        
-        <!-- MÓDULO DO USUÁRIO E LOGOUT -->
-        <div style="position: absolute; top: 24px; right: 24px; z-index: 20; display: flex; align-items: center; gap: 12px;">
-            <div class="text-right hidden sm:block" style="text-align: right;">
-                <p id="top-user-name" class="text-[12px] font-bold text-white leading-none mb-1"></p>
-                <p id="top-user-role" class="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest leading-none"></p>
+        <div style="position:absolute;top:24px;right:24px;z-index:20;display:flex;align-items:center;gap:12px;">
+            <div style="text-align:right;">
+                <p id="top-user-name" style="font-size:12px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px;"></p>
+                <p id="top-user-role" style="font-size:9px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.2em;line-height:1;"></p>
             </div>
-            <button onclick="fazerLogout()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-white p-2.5 rounded-xl transition-all shadow-lg" title="Sair do Sistema">
-                <i class="ph ph-sign-out" style="font-size: 18px;"></i>
+            <button onclick="fazerLogout()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:white;padding:10px;border-radius:12px;cursor:pointer;transition:all 0.2s;" title="Sair">
+                <i class="ph ph-sign-out" style="font-size:18px;"></i>
             </button>
         </div>
-
         <div class="header-glow"></div>
         <div class="header-ring"></div>
-
         <div class="fade-in" style="animation-delay:.05s">
             <div class="logo-wrap">
                 <img src="logo.png" alt="Logo Região 655" onerror="this.style.display='none'">
             </div>
         </div>
-
         <div class="fade-in" style="animation-delay:.12s">
-            <div class="badge-regional">
-                <div class="badge-dot"></div>
-                Escritório Regional
-            </div>
+            <div class="badge-regional"><div class="badge-dot"></div>Escritório Regional</div>
         </div>
-
-        <h1 class="portal-title fade-in" style="animation-delay:.18s">Painel Admin</h1>
-        <p class="portal-subtitle fade-in" style="animation-delay:.24s">Gestão Eclesiástica &amp; Administração — Região 655 · Londrina/PR</p>
+        <h1 class="portal-title fade-in" id="portalTitle" style="animation-delay:.18s">Portal</h1>
+        <p class="portal-subtitle fade-in" id="portalSubtitle" style="animation-delay:.24s">Região 655 · Londrina/PR</p>
     </header>
+
+    <!-- Barra Admin (visão de pastor) -->
+    <div id="barraAdmin" class="admin-bar" style="display:none;">
+        <div class="admin-bar-inner">
+            <span style="font-size:10px;font-weight:700;color:rgba(245,158,11,0.9);text-transform:uppercase;letter-spacing:0.15em;white-space:nowrap;">👁️ Visualizando:</span>
+            <select id="selectIgreja"><option value="">— Selecione uma Igreja —</option></select>
+            <a onclick="voltarAdmin()" style="font-size:11px;color:rgba(245,158,11,0.9);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;cursor:pointer;">← Voltar ao Admin</a>
+        </div>
+    </div>
 
     <main id="main-content">
         <div style="display:flex;align-items:center;justify-content:center;height:200px;">
@@ -351,7 +243,51 @@
             </div>
         </div>
     </main>
-    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+    <!-- PDF oculto para geração de recibos -->
+    <div style="position:absolute;left:-9999px;top:0;z-index:-9999;">
+        <div id="receipt-content" style="font-family:'Inter',sans-serif;padding:24px;background:white;width:21cm;height:29cm;overflow:hidden;display:flex;flex-direction:column;color:#1f2937;">
+            <div style="border:2px solid #1f2937;padding:24px;height:100%;display:flex;flex-direction:column;position:relative;">
+                <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
+                    <img src="logo.png" style="max-width:80px;max-height:80px;object-fit:contain;">
+                    <div>
+                        <h1 style="font-size:28px;font-weight:700;color:#1e3a8a;text-transform:uppercase;line-height:1.1;">Igreja do Evangelho</h1>
+                        <h1 style="font-size:36px;font-weight:900;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.05em;line-height:1.1;">Quadrangular</h1>
+                        <p style="color:#6b7280;font-weight:700;letter-spacing:0.1em;font-size:14px;margin-top:4px;border-top:2px solid #e5e7eb;padding-top:4px;">REGIÃO 655</p>
+                    </div>
+                </div>
+                <h2 style="text-align:center;font-size:22px;font-weight:900;border-bottom:3px solid #f3f4f6;padding-bottom:16px;margin-bottom:24px;text-transform:uppercase;">Recibo</h2>
+                <div style="flex:1;font-size:15px;">
+                    <div style="display:grid;grid-template-columns:160px 1fr;margin-bottom:12px;"><span style="font-weight:700;color:#6b7280;text-transform:uppercase;font-size:12px;">Data Emissão</span><span id="pdf-data-emissao"></span></div>
+                    <div style="display:grid;grid-template-columns:160px 1fr;margin-bottom:12px;"><span style="font-weight:700;color:#6b7280;text-transform:uppercase;font-size:12px;">Referência</span><span id="pdf-referencia"></span></div>
+                    <div style="display:grid;grid-template-columns:160px 1fr;margin-bottom:12px;"><span style="font-weight:700;color:#6b7280;text-transform:uppercase;font-size:12px;">Igreja</span><span id="pdf-igreja" style="font-weight:700;"></span></div>
+                    <div style="display:grid;grid-template-columns:160px 1fr;margin-bottom:24px;"><span style="font-weight:700;color:#6b7280;text-transform:uppercase;font-size:12px;">Pastor</span><span id="pdf-pastor"></span></div>
+                    <hr style="border:1px dashed #d1d5db;margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;padding:6px 8px;background:#f9fafb;margin-bottom:4px;"><span>Subtotal Entradas</span><span id="pdf-entradas" style="font-family:monospace;font-weight:700;"></span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 8px;margin-bottom:4px;"><span>Taxa Regional (4%)</span><span id="pdf-regional" style="font-family:monospace;font-weight:700;"></span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 8px;background:#f9fafb;margin-bottom:4px;"><span>Taxa Coordenadoria</span><span id="pdf-coord" style="font-family:monospace;font-weight:700;"></span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 8px;margin-bottom:4px;"><span id="pdf-label-seguros">Seguro de Vida</span><span id="pdf-seguros" style="font-family:monospace;font-weight:700;"></span></div>
+                    <div id="pdf-outros-container" style="display:none;justify-content:space-between;padding:6px 8px;background:#f9fafb;margin-bottom:4px;"><span id="pdf-label-outros">Outros</span><span id="pdf-outros" style="font-family:monospace;font-weight:700;"></span></div>
+                    <div style="margin-top:24px;background:#111827;color:white;padding:16px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-weight:700;text-transform:uppercase;font-size:14px;">Total Pago</span>
+                        <span id="pdf-total" style="font-size:24px;font-weight:900;font-family:monospace;"></span>
+                    </div>
+                </div>
+                <div style="margin-top:24px;display:flex;justify-content:flex-end;">
+                    <div style="text-align:center;min-width:280px;position:relative;">
+                        <div style="position:absolute;top:-64px;left:0;right:0;display:flex;justify-content:center;">
+                            <img src="assinatura.png" style="height:80px;object-fit:contain;mix-blend-mode:multiply;opacity:0.9;" onerror="this.style.display='none'">
+                        </div>
+                        <div style="border-top:2px solid #1f2937;padding-top:8px;margin-top:16px;">
+                            <p style="font-weight:700;text-transform:uppercase;font-size:13px;">Pr. Eduardo Silva</p>
+                            <p style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Região 655</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="position:absolute;bottom:8px;left:0;width:100%;text-align:center;font-size:10px;color:#9ca3af;text-transform:uppercase;">Documento gerado eletronicamente - IEQ REG655</div>
+            </div>
+        </div>
+    </div>
 
     <footer>
         <div class="footer-inner">
@@ -367,168 +303,676 @@
     <script type="module">
         import { auth, db } from './firebase-config.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, doc, getDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        const DEFAULT_LAYOUT = [
-            {
-                id: 'g-master', nome: 'Segurança & Acessos', ordem: 0,
-                itens: [
-                    { id: 'i-usuarios', tipo: 'sistema', titulo: 'Gestão de Usuários', obs: 'Controle de níveis e permissões', url: 'gestao_usuarios.html', icone: '🔐', perm: 'admin', visivel: true, ordem: 0 },
-                    { id: 'i-layout', tipo: 'sistema', titulo: 'Gerenciar Layout', obs: 'Organizar grupos e links do painel', url: 'gerenciar_layout.html', icone: '🎛️', perm: 'admin', visivel: true, ordem: 1 },
-                    { id: 'i-configpastores', tipo: 'sistema', titulo: 'Config. Pastores', obs: 'Avisos e configurações do painel', url: 'editpagpastores.html', icone: '📢', perm: 'admin', visivel: true, ordem: 2 },
-                    { id: 'i-painelpastor', tipo: 'externo', titulo: 'Ver Painel (Teste)', obs: 'Visualizar a tela do pastor', url: 'painel_pastor.html', icone: '👀', perm: 'admin', visivel: true, ordem: 3 }
-                ]
-            },
-            {
-                id: 'g-cadastros', nome: 'Cadastros', ordem: 1,
-                itens: [
-                    { id: 'i-pastores', tipo: 'sistema', titulo: 'Pastores', obs: 'Obreiros, Aspirantes e Ministros', url: 's_pastores.html', icone: '👨‍💼', perm: 'pastores', visivel: true, ordem: 0 },
-                    { id: 'i-igrejas', tipo: 'sistema', titulo: 'Igrejas', obs: 'Unidades Locais e vinculação de Pastores', url: 's_igrejas.html', icone: '⛪', perm: 'igrejas', visivel: true, ordem: 1 },
-                    { id: 'i-coord', tipo: 'sistema', titulo: 'Coordenadorias', obs: 'Coordenadores e departamentos regionais', url: 'coordenadorias.html', icone: '🏛️', perm: 'coordenadorias', visivel: true, ordem: 2 }
-                ]
-            },
-            {
-                id: 'g-financeiro', nome: 'Financeiro', ordem: 2,
-                itens: [
-                    { id: 'i-saldo', tipo: 'sistema', titulo: 'Saldo de Virada', obs: 'Lançador financeiro de virada de mês', url: 'saldodeviradareg655.html', icone: '💰', perm: 'saldo_virada', visivel: true, ordem: 0 },
-                    { id: 'i-gersaldos', tipo: 'sistema', titulo: 'Gerenciar Saldos', obs: 'Edição e exclusão de lançamentos', url: 'gerenciar_saldos.html', icone: '⚙️', perm: 'gerenciar_saldos', visivel: true, ordem: 1 },
-                    { id: 'i-recibos', tipo: 'sistema', titulo: 'Recibos', obs: 'Emissor de recibos e controle financeiro', url: 'recibosreg655.html', icone: '🧾', perm: 'recibos', visivel: true, ordem: 2 },
-                    { id: 'i-gerrecibos', tipo: 'sistema', titulo: 'Gerenciar Recibos', obs: 'Edição e visualização de recibos', url: 'editarrecibos.html', icone: '📝', perm: 'gerenciar_recibos', visivel: true, ordem: 3 }
-                ]
-            },
-            {
-                id: 'g-dash', nome: 'Dashboards', ordem: 3,
-                itens: [
-                    { id: 'i-dashrecibos', tipo: 'sistema', titulo: 'Dash Recibos', obs: 'Dashboard analítico de arrecadações', url: 'dashreg655.html', icone: '📊', perm: 'dash_recibos', visivel: true, ordem: 0 },
-                    { id: 'i-dashsaldos', tipo: 'sistema', titulo: 'Dash Saldos', obs: 'Dashboard financeiro consolidado', url: 'dashsaldo.html', icone: '📈', perm: 'dash_saldos', visivel: true, ordem: 1 }
-                ]
-            },
-            {
-                id: 'g-regional', nome: 'Regional', ordem: 4,
-                itens: [
-                    { id: 'i-agenda', tipo: 'sistema', titulo: 'Agenda Regional', obs: 'Cronograma de eventos CED e CND', url: 'agendareg655.html', icone: '📅', perm: 'agenda', visivel: true, ordem: 0 }
-                ]
-            },
-            {
-                id: 'g-eventos', nome: 'Eventos & Presença', ordem: 5,
-                itens: [
-                    { id: 'i-gestaoev', tipo: 'sistema', titulo: 'Gestão de Eventos', obs: 'Criar e gerenciar eventos ativos', url: 'eventosreg655.html', icone: '⚙️', perm: 'gestao_eventos', visivel: true, ordem: 0 },
-                    { id: 'i-presenca', tipo: 'sistema', titulo: 'Lançar Presença', obs: 'Registro individual nas convocações', url: 'presencareg655.html', icone: '✅', perm: 'presenca', visivel: true, ordem: 1 },
-                    { id: 'i-controle', tipo: 'sistema', titulo: 'Controle de Presenças', obs: 'Painel de acompanhamento e faltas', url: 'controleeventosreg655.html', icone: '📋', perm: 'controle_presencas', visivel: true, ordem: 2 }
-                ]
-            }
-        ];
-
-        const userEmail = localStorage.getItem('userEmail');
-        const userName = localStorage.getItem('userName');
+        // ===== DADOS DO USUÁRIO =====
+        const userEmail  = localStorage.getItem('userEmail');
+        const userName   = localStorage.getItem('userName');
+        const userIgreja = localStorage.getItem('userIgreja');
         let userPerms = [];
         try { userPerms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
 
+        const isAdmin  = userPerms.includes('admin');
+        const isEquipe = userPerms.length > 0 && !userIgreja && !isAdmin;
+        const isPastor = !isAdmin && !isEquipe;
+
+        // ===== LAYOUT PADRÃO ADMIN =====
+        const DEFAULT_LAYOUT = [
+            { id:'g-master', nome:'Segurança & Acessos', ordem:0, itens:[
+                { id:'i-usuarios',    tipo:'sistema', titulo:'Gestão de Usuários',   obs:'Controle de níveis e permissões',       url:'gestao_usuarios.html',    icone:'🔐', perm:'admin', visivel:true, ordem:0 },
+                { id:'i-layout',      tipo:'sistema', titulo:'Gerenciar Layout',      obs:'Organizar grupos e links do painel',    url:'gerenciar_layout.html',   icone:'🎛️', perm:'admin', visivel:true, ordem:1 },
+                { id:'i-configpast',  tipo:'sistema', titulo:'Config. Pastores',      obs:'Avisos e configurações do painel',      url:'editpagpastores.html',    icone:'📢', perm:'admin', visivel:true, ordem:2 },
+                { id:'i-viewpastor',  tipo:'interno',  titulo:'Ver Painel do Pastor', obs:'Visualizar a tela do pastor',           url:'#',                       icone:'👀', perm:'admin', visivel:true, ordem:3 }
+            ]},
+            { id:'g-cadastros', nome:'Cadastros', ordem:1, itens:[
+                { id:'i-pastores', tipo:'sistema', titulo:'Pastores',        obs:'Obreiros, Aspirantes e Ministros',           url:'s_pastores.html',      icone:'👨‍💼', perm:'pastores',       visivel:true, ordem:0 },
+                { id:'i-igrejas',  tipo:'sistema', titulo:'Igrejas',         obs:'Unidades Locais e vinculação de Pastores',   url:'s_igrejas.html',       icone:'⛪',  perm:'igrejas',        visivel:true, ordem:1 },
+                { id:'i-coord',    tipo:'sistema', titulo:'Coordenadorias',  obs:'Coordenadores e departamentos regionais',    url:'coordenadorias.html',  icone:'🏛️', perm:'coordenadorias', visivel:true, ordem:2 }
+            ]},
+            { id:'g-financeiro', nome:'Financeiro', ordem:2, itens:[
+                { id:'i-saldo',      tipo:'sistema', titulo:'Saldo de Virada',   obs:'Lançador financeiro de virada de mês',    url:'saldodeviradareg655.html', icone:'💰', perm:'saldo_virada',      visivel:true, ordem:0 },
+                { id:'i-gersaldos',  tipo:'sistema', titulo:'Gerenciar Saldos',  obs:'Edição e exclusão de lançamentos',        url:'gerenciar_saldos.html',    icone:'⚙️', perm:'gerenciar_saldos', visivel:true, ordem:1 },
+                { id:'i-recibos',    tipo:'sistema', titulo:'Recibos',           obs:'Emissor de recibos e controle financeiro', url:'recibosreg655.html',       icone:'🧾', perm:'recibos',          visivel:true, ordem:2 },
+                { id:'i-gerrecibos', tipo:'sistema', titulo:'Gerenciar Recibos', obs:'Edição e visualização de recibos',        url:'editarrecibos.html',       icone:'📝', perm:'gerenciar_recibos',visivel:true, ordem:3 }
+            ]},
+            { id:'g-dash', nome:'Dashboards', ordem:3, itens:[
+                { id:'i-dashrecibos', tipo:'sistema', titulo:'Dash Recibos', obs:'Dashboard analítico de arrecadações',    url:'dashreg655.html', icone:'📊', perm:'dash_recibos', visivel:true, ordem:0 },
+                { id:'i-dashsaldos',  tipo:'sistema', titulo:'Dash Saldos',  obs:'Dashboard financeiro consolidado',       url:'dashsaldo.html',  icone:'📈', perm:'dash_saldos',  visivel:true, ordem:1 }
+            ]},
+            { id:'g-regional', nome:'Regional', ordem:4, itens:[
+                { id:'i-agenda',       tipo:'sistema', titulo:'Agenda Regional',   obs:'Cronograma de eventos CED e CND',    url:'agendareg655.html',    icone:'📅', perm:'agenda',    visivel:true, ordem:0 },
+                { id:'i-pendencias',   tipo:'sistema', titulo:'Pendências',        obs:'Igrejas com taxas em aberto',        url:'pendenciasreg655.html',icone:'⚠️', perm:'admin',     visivel:true, ordem:1 },
+                { id:'i-relpend',      tipo:'sistema', titulo:'Rel. Pendências',   obs:'Relatório detalhado de pendências',  url:'relatorio_pendencias.html',icone:'📋',perm:'admin',  visivel:true, ordem:2 }
+            ]},
+            { id:'g-eventos', nome:'Eventos & Presença', ordem:5, itens:[
+                { id:'i-gestaoev', tipo:'sistema', titulo:'Gestão de Eventos',    obs:'Criar e gerenciar eventos ativos',       url:'eventosreg655.html',       icone:'⚙️', perm:'gestao_eventos',   visivel:true, ordem:0 },
+                { id:'i-presenca', tipo:'sistema', titulo:'Lançar Presença',      obs:'Registro individual nas convocações',    url:'presencareg655.html',      icone:'✅', perm:'presenca',         visivel:true, ordem:1 },
+                { id:'i-controle', tipo:'sistema', titulo:'Controle de Presenças',obs:'Painel de acompanhamento e faltas',      url:'controleeventosreg655.html',icone:'📋',perm:'controle_presencas',visivel:true, ordem:2 }
+            ]}
+        ];
+
+        // ===== ESTADO PASTOR =====
+        let igrejaAtiva = isPastor ? (userIgreja || '') : '';
+        let globalRecibos = [];
+        let configPainel = {};
+        let igrejaObj = null;
+
+        const fmt = (v) => (parseFloat(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+        function mesStrToChave(s){ if(!s)return null; const[mm,yyyy]=s.split('/'); return(mm&&yyyy)?`${yyyy}-${mm}`:null; }
+        function saldoMatchMes(s,ref){ return s.periodoChave===mesStrToChave(ref); }
+        function calcQintoDiaUtil(ano,mes){ let c=0,d=1; while(c<5){const w=new Date(ano,mes,d).getDay();if(w!==0&&w!==6)c++;if(c<5)d++;}return new Date(ano,mes,d); }
+
+        // ===== AUTH =====
         onAuthStateChanged(auth, async (user) => {
             if (!user || user.email !== userEmail) { fazerLogout(); return; }
-
             document.getElementById('top-user-name').textContent = userName ? `Olá, ${userName.split(' ')[0]}` : 'Olá!';
-            document.getElementById('top-user-role').textContent = userPerms.includes('admin') ? 'GESTOR MASTER' : 'ACESSO PERSONALIZADO';
+            if (isPastor) {
+                mostrarViewPastor();
+            } else {
+                mostrarViewAdmin();
+            }
+        });
+
+        // ===== VIEW ADMIN =====
+        window.voltarAdmin = async function() {
+            document.getElementById('barraAdmin').style.display = 'none';
+            mostrarViewAdmin();
+        };
+
+        async function mostrarViewAdmin() {
+            document.getElementById('portalTitle').textContent = 'Painel Admin';
+            document.getElementById('portalSubtitle').textContent = 'Gestão Eclesiástica & Administração — Região 655 · Londrina/PR';
+            document.getElementById('top-user-role').textContent = isAdmin ? 'GESTOR MASTER' : 'ACESSO PERSONALIZADO';
+            document.getElementById('main-content').style.maxWidth = '860px';
+            document.getElementById('barraAdmin').style.display = 'none';
 
             let grupos = DEFAULT_LAYOUT;
             try {
                 const snap = await getDoc(doc(db, 'configuracoes', 'layout'));
                 if (snap.exists() && snap.data().grupos?.length) grupos = snap.data().grupos;
-            } catch(e) { console.warn('Layout do Firestore indisponível, usando padrão.', e); }
+            } catch(e) { console.warn('Layout Firestore indisponível, usando padrão.', e); }
 
-            renderMain(grupos, userPerms);
-        });
+            renderAdmin(grupos, userPerms);
+        }
 
-        function renderMain(grupos, perms) {
-            // Hierarquia de Acesso
-            const hierarquia = {
-                'admin': 100,
-                'secretario': 90,
-                'superintendente': 80,
-                'pastor_titular': 70,
-                'coordenador': 60,
-                'obreiro': 50,
-                'membro': 10
-            };
-            let userNivelStr = perms[0];
-            // Transição: se a permissão não faz parte da nova hierarquia, força 'secretario'
-            if (userNivelStr && !hierarquia[userNivelStr]) userNivelStr = 'secretario';
-            if (!userNivelStr) userNivelStr = 'secretario';
-            
-            const userNivel = perms.includes('admin') ? 100 : hierarquia[userNivelStr];
-
-            const has = (p) => {
-                if (!p) return true;
-                if (userNivel === 100) return true; // admin vê tudo
-                const itemNivel = hierarquia[p] || 100; // previne vazamento se p for desconhecido
-                return userNivel >= itemNivel;
-            };
+        function renderAdmin(grupos, perms) {
+            const hierarquia = { admin:100, secretario:90, superintendente:80, pastor_titular:70, coordenador:60, obreiro:50, membro:10 };
+            let nivelStr = perms[0];
+            if (nivelStr && !hierarquia[nivelStr]) nivelStr = 'secretario';
+            if (!nivelStr) nivelStr = 'secretario';
+            const nivel = isAdmin ? 100 : (hierarquia[nivelStr] || 50);
+            const has = (p) => { if(!p) return true; if(nivel===100) return true; return nivel >= (hierarquia[p]||100); };
 
             const main = document.getElementById('main-content');
+            main.innerHTML = '<div class="admin-main">';
+            const wrap = document.createElement('div');
+            wrap.className = 'admin-main';
             main.innerHTML = '';
+            main.appendChild(wrap);
 
-            const sorted = [...grupos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+            const sorted = [...grupos].sort((a,b)=>(a.ordem||0)-(b.ordem||0));
             let delay = 0.25;
 
             sorted.forEach(grupo => {
-                const visibleItems = [...(grupo.itens || [])]
-                    .filter(it => it.visivel !== false && has(it.perm))
-                    .sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-
-                if (!visibleItems.length) return;
-
-                const isAdmin = grupo.itens.every(it => it.perm === 'admin');
-
-                const section = document.createElement('div');
-                section.innerHTML = `
+                const items = [...(grupo.itens||[])].filter(it=>it.visivel!==false && has(it.perm)).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+                if (!items.length) return;
+                const isAdminGrp = grupo.itens.every(it=>it.perm==='admin');
+                const sec = document.createElement('div');
+                sec.innerHTML = `
                     <div class="section-label fade-in" style="animation-delay:${delay.toFixed(2)}s">
                         <div class="section-label-line"></div>
-                        <span>${escHtml(grupo.nome)}</span>
+                        <span>${esc(grupo.nome)}</span>
                         <div class="section-label-line"></div>
                     </div>
-                    <div class="cards-grid fade-in" style="animation-delay:${(delay + 0.04).toFixed(2)}s">
-                        ${visibleItems.map(item => renderCard(item, isAdmin)).join('')}
-                    </div>
-                `;
-                main.appendChild(section);
+                    <div class="cards-grid fade-in" style="animation-delay:${(delay+0.04).toFixed(2)}s">
+                        ${items.map(it=>renderAdminCard(it,isAdminGrp)).join('')}
+                    </div>`;
+                wrap.appendChild(sec);
                 delay += 0.08;
             });
         }
 
-        function renderCard(item, adminGroup) {
-            const isExterno = item.tipo === 'externo';
-            const target = isExterno ? ' target="_blank" rel="noopener noreferrer"' : '';
-            const borderStyle = adminGroup
-                ? 'border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);'
-                : '';
-            const iconStyle = adminGroup
-                ? 'color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.1);'
-                : '';
-            const titleStyle = adminGroup ? 'color: #fca5a5;' : '';
-            return `
-                <a href="${escAttr(item.url || '#')}" class="link-card" style="${borderStyle}"${target}>
-                    <div class="card-icon" style="${iconStyle}">${escHtml(item.icone || '🔗')}</div>
+        function renderAdminCard(item, adminGrp) {
+            const borderStyle = adminGrp ? 'border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);' : '';
+            const iconStyle   = adminGrp ? 'color:#ef4444;border-color:rgba(239,68,68,0.2);background:rgba(239,68,68,0.1);' : '';
+            const titleStyle  = adminGrp ? 'color:#fca5a5;' : '';
+
+            // Card especial "Ver Painel do Pastor"
+            if (item.id === 'i-viewpastor') {
+                return `<a href="#" onclick="iniciarViewPastor(event)" class="link-card" style="${borderStyle}">
+                    <div class="card-icon" style="${iconStyle}">${esc(item.icone||'🔗')}</div>
                     <div class="card-texts">
-                        <div class="card-title" style="${titleStyle}">${escHtml(item.titulo)}</div>
-                        <div class="card-obs">${escHtml(item.obs || '')}</div>
+                        <div class="card-title" style="${titleStyle}">${esc(item.titulo)}</div>
+                        <div class="card-obs">${esc(item.obs||'')}</div>
                     </div>
                     <i class="ph ph-arrow-up-right card-arrow"></i>
-                </a>
-            `;
+                </a>`;
+            }
+
+            const isExt = item.tipo === 'externo';
+            const target = isExt ? ' target="_blank" rel="noopener noreferrer"' : '';
+            return `<a href="${escA(item.url||'#')}" class="link-card" style="${borderStyle}"${target}>
+                <div class="card-icon" style="${iconStyle}">${esc(item.icone||'🔗')}</div>
+                <div class="card-texts">
+                    <div class="card-title" style="${titleStyle}">${esc(item.titulo)}</div>
+                    <div class="card-obs">${esc(item.obs||'')}</div>
+                </div>
+                <i class="ph ph-arrow-up-right card-arrow"></i>
+            </a>`;
         }
 
-        function escHtml(s) {
-            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        window.iniciarViewPastor = async function(e) {
+            e.preventDefault();
+            igrejaAtiva = '';
+            mostrarViewPastor();
+            await inicializarBarraAdmin();
+        };
+
+        // ===== BARRA ADMIN =====
+        async function inicializarBarraAdmin() {
+            document.getElementById('barraAdmin').style.display = 'block';
+            try {
+                const snap = await getDocs(collection(db, 'igrejas'));
+                const nomes = [];
+                snap.forEach(d => { const n = d.data().nome; if(n) nomes.push(n); });
+                nomes.sort((a,b)=>a.localeCompare(b,'pt-BR'));
+                const sel = document.getElementById('selectIgreja');
+                sel.innerHTML = '<option value="">— Selecione uma Igreja —</option>';
+                nomes.forEach(n => { const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+                sel.addEventListener('change', () => {
+                    igrejaAtiva = sel.value;
+                    document.getElementById('portalSubtitle').textContent = igrejaAtiva || 'Selecione uma igreja';
+                    carregarDadosPastor();
+                });
+            } catch(e) { console.error(e); }
         }
-        function escAttr(s) {
-            return String(s || '').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+        // ===== VIEW PASTOR =====
+        async function mostrarViewPastor() {
+            document.getElementById('portalTitle').textContent = isPastor ? (userName?.split(' ')[0] || 'Portal') : 'Painel do Pastor';
+            document.getElementById('portalSubtitle').textContent = igrejaAtiva || (isPastor ? 'Carregando...' : 'Selecione uma igreja');
+            document.getElementById('top-user-role').textContent = isPastor ? 'PASTOR' : 'ADMIN — VISÃO PASTOR';
+            document.getElementById('main-content').style.maxWidth = '1020px';
+
+            renderPastorSkeleton();
+            if (isPastor) await carregarDadosPastor();
         }
+
+        function renderPastorSkeleton() {
+            const main = document.getElementById('main-content');
+            main.innerHTML = `
+            <div class="pastor-main">
+              <div class="pastor-grid">
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                  <div class="p-card"><div class="p-card-hdr"><span class="p-card-hdr-title">Status do Mês</span></div><div class="p-card-body" style="text-align:center;padding:28px 16px;">
+                    <div class="skel" style="width:56px;height:56px;border-radius:50%;margin:0 auto 14px;"></div>
+                    <div class="skel" style="height:16px;width:70%;margin:0 auto 8px;"></div>
+                    <div class="skel" style="height:11px;width:50%;margin:0 auto;"></div>
+                  </div></div>
+                  <div class="p-card"><div class="p-card-hdr"><span class="p-card-hdr-title">Ações Rápidas</span></div><div class="p-card-body">
+                    <div class="p-action-grid"><div class="skel" style="height:72px;border-radius:14px;"></div><div class="skel" style="height:72px;border-radius:14px;"></div><div class="skel" style="height:72px;border-radius:14px;"></div><div class="skel" style="height:72px;border-radius:14px;"></div></div>
+                  </div></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                  <div class="p-card" style="height:200px;"></div>
+                  <div class="p-card" style="height:120px;"></div>
+                  <div class="p-card" style="height:120px;"></div>
+                </div>
+              </div>
+            </div>`;
+        }
+
+        async function carregarDadosPastor() {
+            if (!igrejaAtiva) {
+                const main = document.getElementById('main-content');
+                main.innerHTML = `<div class="pastor-main" style="text-align:center;padding:60px 16px;">
+                    <p style="color:var(--text-muted);font-size:14px;">${isAdmin ? 'Selecione uma igreja na barra acima para visualizar o painel.' : 'Usuário sem igreja vinculada. Contate a secretaria.'}</p>
+                </div>`;
+                return;
+            }
+
+            try {
+                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap] = await Promise.all([
+                    getDoc(doc(db, 'configuracoes', 'painel_pastores')),
+                    getDocs(query(collection(db, 'igrejas'), where('nome','==',igrejaAtiva))),
+                    getDocs(collection(db, 'saldos_virada')),
+                    getDocs(collection(db, 'recibos')),
+                    getDocs(query(collection(db, 'agenda'), orderBy('data','asc'))),
+                    getDocs(collection(db, 'presencas'))
+                ]);
+
+                if (cfgSnap.exists()) configPainel = cfgSnap.data();
+                if (!igSnap.empty) igrejaObj = igSnap.docs[0].data();
+
+                const lower = igrejaAtiva.toLowerCase();
+                function matchIg(d) {
+                    if ((d.igrejaNome||'').toLowerCase()===lower) return true;
+                    const p=(d.igrejaFormatada||'').split(' - ');
+                    return p.length>1 && p.slice(1).join(' - ').toLowerCase()===lower;
+                }
+
+                const saldos = [];
+                saldosSnap.forEach(d=>{ const data=d.data(); if(matchIg(data)) saldos.push(data); });
+                saldos.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+
+                globalRecibos = [];
+                recibosSnap.forEach(d=>{ const data=d.data(); if(matchIg(data)) globalRecibos.push({id:d.id,...data}); });
+                const parseEm = s=>{const p=(s||'').split('/');return p.length===3?new Date(+p[2],+p[1]-1,+p[0]).getTime():0;};
+                globalRecibos.sort((a,b)=>parseEm(b.dataEmissao)-parseEm(a.dataEmissao));
+
+                const today = new Date().toISOString().split('T')[0];
+                const eventos = [];
+                agendaSnap.forEach(d=>{ const ev=d.data(); if(ev.data>=today && ev.tipo!=='LOCAL') eventos.push({id:d.id,...ev}); });
+
+                const presencas = [];
+                presencasSnap.forEach(d=>{
+                    const data=d.data();
+                    const parts=(data.igreja||'').split(' - ');
+                    const nome=parts.length>1?parts.slice(1).join(' - '):data.igreja||'';
+                    if(nome.toLowerCase()===lower||(data.igreja||'').toLowerCase().includes(lower)) presencas.push({id:d.id,...data});
+                });
+
+                renderPastorView(saldos, globalRecibos, eventos.slice(0,5), presencas);
+
+            } catch(e) {
+                console.error(e);
+                document.getElementById('main-content').innerHTML = `<div class="pastor-main" style="text-align:center;padding:60px 16px;">
+                    <p style="color:#f87171;font-size:14px;font-weight:700;">Erro de comunicação com o servidor.</p>
+                    <p style="color:var(--text-muted);font-size:12px;margin-top:8px;">${e.message||e}</p>
+                </div>`;
+            }
+        }
+
+        function renderPastorView(saldos, recibos, eventos, presencas) {
+            const hoje = new Date();
+            const mesAtualNum = hoje.getMonth();
+            const anoAtual = hoje.getFullYear();
+            const mesPrevNum = mesAtualNum===0?11:mesAtualNum-1;
+            const anoPrev = mesAtualNum===0?anoAtual-1:anoAtual;
+            const strMesRef = `${String(mesPrevNum+1).padStart(2,'0')}/${anoPrev}`;
+            const quintoDia = calcQintoDiaUtil(anoAtual, mesAtualNum);
+            const atrasado = hoje > quintoDia;
+
+            const saldoRef  = saldos.find(s=>saldoMatchMes(s,strMesRef));
+            const reciboRef = recibos.find(r=>r.referenceDate===strMesRef);
+
+            // === STATUS BOX ===
+            let statusHtml = '';
+            if (reciboRef && (parseFloat(reciboRef.regionalTax)||0)>0) {
+                statusHtml = `<div style="width:56px;height:56px;border-radius:50%;background:rgba(16,185,129,0.15);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:28px;">✅</div>
+                    <p style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;color:#34d399;margin-bottom:6px;">Tudo Certo!</p>
+                    <p style="font-size:11px;color:var(--text-muted);">Recibo de <b style="color:var(--text-secondary);">${strMesRef}</b> emitido.</p>`;
+            } else if (atrasado) {
+                statusHtml = `<div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.15);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:28px;">🚨</div>
+                    <p style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;color:#f87171;margin-bottom:6px;">Pendente (Atrasado)</p>
+                    <p style="font-size:11px;color:#f87171;">5º dia útil vencido. Taxa não paga!</p>
+                    ${!saldoRef?`<a href="saldodeviradareg655.html" style="margin-top:14px;display:inline-block;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;padding:8px 20px;border-radius:10px;text-decoration:none;">Lançar Saldo Agora</a>`:''}`;
+            } else if (saldoRef) {
+                const taxadas = saldoRef.entradasTaxadas||0;
+                const segVal  = configPainel.valorSeguro||0;
+                const qtdSeg  = igrejaObj?.seguros||0;
+                const total   = (taxadas*0.04)+100+(qtdSeg*segVal);
+                statusHtml = `<div style="width:56px;height:56px;border-radius:50%;background:rgba(59,130,246,0.15);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:28px;">⏳</div>
+                    <p style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;color:#60a5fa;margin-bottom:6px;">Aguardando Escritório</p>
+                    <p style="font-size:11px;color:var(--text-muted);">Saldo enviado. Recibo em emissão.</p>
+                    <div style="margin-top:14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:left;">
+                        <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;"><span style="color:var(--text-muted);">Taxas + Coord.</span><span style="color:var(--text-secondary);font-weight:600;">${fmt((taxadas*0.04)+100)}</span></div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:8px;"><span style="color:var(--text-muted);">Seguro (${qtdSeg} vidas)</span><span style="color:var(--text-secondary);font-weight:600;">${fmt(qtdSeg*segVal)}</span></div>
+                        <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">Estimativa Total</div>
+                        <div style="font-size:22px;font-weight:900;color:#60a5fa;font-family:'Sora',sans-serif;">${fmt(total)}</div>
+                    </div>`;
+            } else {
+                statusHtml = `<div style="width:56px;height:56px;border-radius:50%;background:rgba(245,158,11,0.15);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:28px;">⚠️</div>
+                    <p style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;color:#fbbf24;margin-bottom:6px;">Pendente Lançamento</p>
+                    <p style="font-size:11px;color:#fbbf24;">Lance o saldo de <b>${strMesRef}</b> até o 5º dia útil.</p>
+                    <a href="saldodeviradareg655.html" style="margin-top:14px;display:inline-block;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.4);color:#fbbf24;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;padding:8px 20px;border-radius:10px;text-decoration:none;">Lançar Saldo Agora</a>`;
+            }
+
+            // === DÉBITOS ===
+            const [prevMM, prevYYYY] = strMesRef.split('/').map(Number);
+            const limite = new Date(prevYYYY, prevMM-1, 1);
+            const inicio = new Date(2026, 0, 1);
+            const debitos = [];
+            let cursor = new Date(inicio);
+            while (cursor <= limite) {
+                const mm = String(cursor.getMonth()+1).padStart(2,'0');
+                const yyyy = cursor.getFullYear();
+                const mes = `${mm}/${yyyy}`;
+                const reciboValido = recibos.find(r=>r.referenceDate===mes && (parseFloat(r.regionalTax)||0)>0);
+                if (!reciboValido) {
+                    const s = saldos.find(sl=>saldoMatchMes(sl,mes));
+                    let est = null;
+                    if (s) { const seg=configPainel.valorSeguro||0; const q=igrejaObj?.seguros||0; est=(s.entradasTaxadas||0)*0.04+100+q*seg; }
+                    debitos.push({ mes, est });
+                }
+                cursor.setMonth(cursor.getMonth()+1);
+            }
+
+            let debitosHtml = '';
+            if (debitos.length > 0) {
+                const totalC = debitos.filter(d=>d.est!==null).reduce((s,d)=>s+d.est,0);
+                const temDesc = debitos.some(d=>d.est===null);
+                debitosHtml = `
+                <div class="p-debito-wrap" style="margin-bottom:14px;">
+                    <div class="p-debito-hdr">
+                        <span style="font-size:16px;">🔴</span>
+                        <span style="font-family:'Sora',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#f87171;">Débitos em Aberto</span>
+                    </div>
+                    ${debitos.map(d=>`
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(239,68,68,0.08);">
+                        <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">Ref. ${d.mes}</span>
+                        <span style="font-size:12px;font-weight:700;${d.est!==null?'color:#f87171;':'color:var(--text-muted);font-style:italic;'}">${d.est!==null?fmt(d.est):'sem saldo'}</span>
+                    </div>`).join('')}
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+                        <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:#f87171;">Total estimado</span>
+                        <span style="font-size:15px;font-weight:900;color:#f87171;">${fmt(totalC)}${temDesc?'*':''}</span>
+                    </div>
+                    ${temDesc?`<p style="font-size:10px;color:var(--text-muted);font-style:italic;padding:0 16px 12px;">* Meses sem saldo não incluídos.</p>`:''}
+                </div>`;
+            }
+
+            // === AGENDA ===
+            const meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+            const agendaHtml = eventos.length === 0
+                ? `<p style="font-size:12px;color:var(--text-muted);font-style:italic;text-align:center;padding:24px 16px;">Nenhum evento futuro agendado.</p>`
+                : eventos.map(ev => {
+                    const[y,m,d]=ev.data.split('-');
+                    const badge={REGIONAL:'color:#60a5fa;background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.25);',CED:'color:#fbbf24;background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.25);',CND:'color:#34d399;background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.25);'}[ev.tipo?.toUpperCase()]||'color:var(--text-secondary);background:rgba(255,255,255,0.05);border-color:var(--border);';
+                    return `<div class="agenda-item">
+                        <div class="agenda-date">
+                            <div style="font-size:20px;font-weight:900;color:var(--text-primary);line-height:1;">${d}</div>
+                            <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-top:2px;">${meses[parseInt(m)-1]}</div>
+                        </div>
+                        <div style="flex:1;min-width:0;padding-top:2px;">
+                            <div style="margin-bottom:5px;"><span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:2px 7px;border-radius:100px;border:1px solid;${badge}">${ev.tipo||'Evento'}</span></div>
+                            <p style="font-size:13px;font-weight:700;color:var(--text-primary);line-height:1.3;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(ev.evento)}</p>
+                            <p style="font-size:10px;color:var(--text-muted);">📍 ${esc(ev.local||'Local a definir')} · ${esc(ev.horario||'Horário a definir')}</p>
+                        </div>
+                    </div>`;
+                }).join('');
+
+            // === RECIBOS ===
+            const recibosHtml = recibos.length===0
+                ? `<p style="font-size:12px;color:var(--text-muted);font-style:italic;text-align:center;padding:20px 16px;">Nenhum recibo emitido ainda.</p>`
+                : recibos.slice(0,6).map(r=>{
+                    const itens=[
+                        {l:'Entradas',v:r.incomeValue},
+                        {l:'Taxa Regional (4%)',v:r.regionalTax},
+                        {l:'Taxa Coordenadoria',v:r.coordinatorFeeParsed},
+                        r.insuranceTotal>0?{l:`Seguros (${r.insuranceCount||0})`,v:r.insuranceTotal}:null,
+                        r.otherValueParsed>0?{l:`Outros${r.otherDesc?` — ${r.otherDesc}`:''}`,v:r.otherValueParsed}:null,
+                    ].filter(Boolean);
+                    return `<div class="p-row">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                            <div>
+                                <div style="font-size:12px;font-weight:800;text-transform:uppercase;color:var(--text-primary);">Ref. ${esc(r.referenceDate||'-')}</div>
+                                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Emitido em: ${esc(r.dataEmissao||'-')}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:18px;font-weight:900;color:#60a5fa;font-family:'Sora',sans-serif;">${fmt(r.total)}</div>
+                                <span class="p-tag green" style="margin-top:3px;display:inline-block;">Pago</span>
+                            </div>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:10px;">
+                            ${itens.map(i=>`<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;">
+                                <span style="color:var(--text-muted);">${esc(i.l)}</span>
+                                <span style="font-weight:600;color:var(--text-secondary);">${fmt(i.v)}</span>
+                            </div>`).join('')}
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="baixarPdf('${r.id}')" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text-secondary);padding:8px;border-radius:8px;font-size:10px;font-weight:700;text-transform:uppercase;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(99,179,237,0.4)'" onmouseout="this.style.borderColor='var(--border)'">⬇ Baixar PDF</button>
+                            <button onclick="enviarZap('${r.id}')" style="flex:1;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:#34d399;padding:8px;border-radius:8px;font-size:10px;font-weight:700;text-transform:uppercase;cursor:pointer;transition:all 0.2s;">💬 Enviar Zap</button>
+                        </div>
+                    </div>`;
+                }).join('');
+
+            // === SALDOS ===
+            const saldosHtml = saldos.length===0
+                ? `<p style="font-size:12px;color:var(--text-muted);font-style:italic;text-align:center;padding:20px 16px;">Nenhum saldo lançado recentemente.</p>`
+                : saldos.slice(0,6).map(s=>`<div class="p-row">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                        <span style="font-size:12px;font-weight:800;text-transform:uppercase;color:var(--text-primary);">${esc(s.periodo||s.mesReferencia||'-')}</span>
+                        <span style="font-size:14px;font-weight:900;color:#34d399;">${fmt(s.saldoTotal)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);">
+                        <span>Entradas: ${fmt(s.totalEntradas)}</span>
+                        <span>${esc(s.dataHoraRegistro||'-')}</span>
+                    </div>
+                </div>`).join('');
+
+            // === PRESENÇAS ===
+            const evMap = {};
+            presencas.forEach(p=>{
+                const k=p.eventoId||(p.tipoEvento+'_'+p.dataEvento);
+                if(!evMap[k]) evMap[k]={tipo:p.tipoEvento,data:p.dataEvento,membros:[]};
+                evMap[k].membros.push(p);
+            });
+            const evList = Object.values(evMap).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+            const statusTag = {Presente:'green',Ausente:'red',Justificado:'amber'};
+            const presencasHtml = evList.length===0
+                ? `<p style="font-size:12px;color:var(--text-muted);font-style:italic;text-align:center;padding:20px 16px;">Nenhuma presença registrada.</p>`
+                : evList.slice(0,8).map(ev=>{
+                    const dataFmt=(ev.data||'').split('-').reverse().join('/');
+                    const pres=ev.membros.filter(m=>m.status==='Presente').length;
+                    return `<div class="presenca-grupo">
+                        <div class="presenca-hdr">
+                            <div>
+                                <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:#a78bfa;">${esc(ev.tipo||'Evento')}</div>
+                                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${dataFmt}</div>
+                            </div>
+                            <span class="p-tag violet">${pres}/${ev.membros.length} presentes</span>
+                        </div>
+                        ${ev.membros.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')).map(m=>`
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);">
+                            <span style="font-size:12px;font-weight:500;color:var(--text-secondary);">${esc(m.nome||'-')}</span>
+                            <span class="p-tag ${statusTag[m.status]||'slate'}">${esc(m.status||'-')}</span>
+                        </div>`).join('')}
+                    </div>`;
+                }).join('');
+
+            // === AVISOS ===
+            let muralHtml = '';
+            if (configPainel.avisoTipo && configPainel.avisoTipo!=='none' && configPainel.avisoTexto) {
+                const styles = {
+                    info:    {bg:'rgba(59,130,246,0.12)',border:'rgba(59,130,246,0.3)',color:'#60a5fa',icon:'ℹ️'},
+                    warning: {bg:'rgba(245,158,11,0.12)',border:'rgba(245,158,11,0.3)',color:'#fbbf24',icon:'⚠️'},
+                    danger:  {bg:'rgba(239,68,68,0.12)', border:'rgba(239,68,68,0.3)', color:'#f87171',icon:'🚨'}
+                };
+                const s = styles[configPainel.avisoTipo]||styles.info;
+                muralHtml = `<div style="background:${s.bg};border:1px solid ${s.border};border-radius:16px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;margin-bottom:18px;">
+                    <span style="font-size:24px;flex-shrink:0;">${s.icon}</span>
+                    <div>
+                        <p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:${s.color};margin-bottom:6px;">Quadro de Avisos</p>
+                        <p style="font-size:14px;font-weight:700;color:var(--text-primary);">${esc(configPainel.avisoTexto)}</p>
+                    </div>
+                </div>`;
+            }
+
+            // === LINKS ÚTEIS ===
+            let linksHtml = '';
+            if (configPainel.linkWhatsappGrupo) {
+                linksHtml += `<a href="${escA(configPainel.linkWhatsappGrupo)}" target="_blank" class="p-link-a">
+                    <span>💬 Grupo de Avisos (WhatsApp)</span>
+                    <span style="font-size:10px;opacity:0.5;">↗</span>
+                </a>`;
+            }
+            if (configPainel.links?.length) {
+                configPainel.links.forEach(l=>{
+                    if(l.titulo&&l.url) linksHtml+=`<a href="${escA(l.url)}" target="_blank" class="p-link-a">
+                        <span>🔗 ${esc(l.titulo)}</span>
+                        <span style="font-size:10px;opacity:0.5;">↗</span>
+                    </a>`;
+                });
+            }
+            if (!linksHtml) linksHtml = `<p style="font-size:11px;color:var(--text-muted);font-style:italic;text-align:center;padding:8px;">Nenhum link disponível.</p>`;
+
+            // === RENDER FINAL ===
+            const main = document.getElementById('main-content');
+            main.innerHTML = `<div class="pastor-main">
+                ${muralHtml}
+                ${debitosHtml}
+                <div class="pastor-grid">
+                    <!-- COL ESQUERDA -->
+                    <div style="display:flex;flex-direction:column;gap:14px;">
+
+                        <!-- Status do Mês -->
+                        <div class="p-card">
+                            <div class="p-card-hdr">
+                                <span class="p-card-hdr-title">📅 Status do Mês Atual</span>
+                            </div>
+                            <div class="p-card-body" style="text-align:center;">${statusHtml}</div>
+                        </div>
+
+                        <!-- Ações Rápidas -->
+                        <div class="p-card">
+                            <div class="p-card-hdr"><span class="p-card-hdr-title">⚡ Ações Rápidas</span></div>
+                            <div class="p-card-body">
+                                <div class="p-action-grid">
+                                    <a href="saldodeviradareg655.html" class="p-action-btn blue">
+                                        <span style="font-size:22px;">💰</span><span>Lançar Saldo</span>
+                                    </a>
+                                    <a href="presencareg655.html" class="p-action-btn violet">
+                                        <span style="font-size:22px;">✅</span><span>Registrar Presença</span>
+                                    </a>
+                                    <a href="agendarapidareg655.html" class="p-action-btn amber">
+                                        <span style="font-size:22px;">📅</span><span>Ver Agenda</span>
+                                    </a>
+                                    <button onclick="abrirSuporte()" class="p-action-btn emerald">
+                                        <span style="font-size:22px;">💬</span><span>Falar com Secretaria</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Links Úteis -->
+                        <div class="p-card">
+                            <div class="p-card-hdr"><span class="p-card-hdr-title">🔗 Links Úteis</span></div>
+                            <div class="p-card-body">${linksHtml}</div>
+                        </div>
+
+                    </div>
+
+                    <!-- COL DIREITA -->
+                    <div style="display:flex;flex-direction:column;gap:14px;">
+
+                        <!-- Próximos Eventos -->
+                        <div class="p-card">
+                            <div class="p-card-hdr">
+                                <span class="p-card-hdr-title">🗓️ Próximos Eventos</span>
+                                <a href="agendarapidareg655.html" style="font-size:10px;color:var(--accent);text-decoration:none;font-weight:700;">Ver Agenda ↗</a>
+                            </div>
+                            ${agendaHtml}
+                        </div>
+
+                        <!-- Meus Últimos Recibos -->
+                        <div class="p-card">
+                            <button class="p-collapsible-btn p-card-hdr" onclick="toggleP('recibos',this)">
+                                <span class="p-card-hdr-title">🧾 Meus Últimos Recibos</span>
+                                <span class="p-chevron" id="chev-recibos">▼</span>
+                            </button>
+                            <div id="sec-recibos" style="display:none;max-height:440px;overflow-y:auto;">${recibosHtml}</div>
+                        </div>
+
+                        <!-- Histórico de Saldos -->
+                        <div class="p-card">
+                            <button class="p-collapsible-btn p-card-hdr" onclick="toggleP('saldos',this)">
+                                <span class="p-card-hdr-title">📈 Histórico de Saldos</span>
+                                <span class="p-chevron" id="chev-saldos">▼</span>
+                            </button>
+                            <div id="sec-saldos" style="display:none;max-height:380px;overflow-y:auto;">${saldosHtml}</div>
+                        </div>
+
+                        <!-- Histórico de Presenças -->
+                        <div class="p-card">
+                            <button class="p-collapsible-btn p-card-hdr" onclick="toggleP('presencas',this)">
+                                <span class="p-card-hdr-title">👥 Histórico de Presenças</span>
+                                <span class="p-chevron" id="chev-presencas">▼</span>
+                            </button>
+                            <div id="sec-presencas" style="display:none;max-height:500px;overflow-y:auto;padding:12px;">${presencasHtml}</div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        window.toggleP = function(id) {
+            const sec = document.getElementById('sec-'+id);
+            const chev = document.getElementById('chev-'+id);
+            const open = sec.style.display === 'none';
+            sec.style.display = open ? 'block' : 'none';
+            if (chev) chev.classList.toggle('p-chevron open', open);
+        };
+
+        // ===== PDF =====
+        const fmtRefExtenso = s => {
+            if(!s||s.length!==7) return s;
+            const[mm,yyyy]=s.split('/');
+            const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+            return `${meses[parseInt(mm,10)-1]}/${yyyy}`;
+        };
+
+        function preencherPdf(r) {
+            document.getElementById('pdf-data-emissao').textContent = r.dataEmissao||'S/D';
+            document.getElementById('pdf-referencia').textContent = fmtRefExtenso(r.referenceDate);
+            document.getElementById('pdf-igreja').textContent = r.igrejaFormatada||'Não informada';
+            document.getElementById('pdf-pastor').textContent = r.pastor||'Não informado';
+            document.getElementById('pdf-entradas').textContent = fmt(r.incomeValue);
+            document.getElementById('pdf-regional').textContent = fmt(r.regionalTax);
+            document.getElementById('pdf-coord').textContent = fmt(r.coordinatorFeeParsed);
+            document.getElementById('pdf-label-seguros').textContent = `Seguro de Vida (${r.insuranceCount||0})`;
+            document.getElementById('pdf-seguros').textContent = fmt(r.insuranceTotal);
+            const outrosEl = document.getElementById('pdf-outros-container');
+            if (r.otherValueParsed>0) {
+                document.getElementById('pdf-label-outros').textContent = `Outros (${r.otherDesc||''})`;
+                document.getElementById('pdf-outros').textContent = fmt(r.otherValueParsed);
+                outrosEl.style.display = 'flex';
+            } else { outrosEl.style.display = 'none'; }
+            document.getElementById('pdf-total').textContent = fmt(r.total);
+        }
+
+        window.baixarPdf = (id) => {
+            const r = globalRecibos.find(i=>i.id===id);
+            if (!r) return;
+            preencherPdf(r);
+            const el = document.getElementById('receipt-content');
+            const fn = `${r.igrejaCodigo||'UNID'} - REC REG REF(${(r.referenceDate||'').replace('/','-')}).pdf`;
+            html2pdf().set({ margin:0, filename:fn, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} }).from(el).save();
+        };
+
+        window.enviarZap = async (id) => {
+            const r = globalRecibos.find(i=>i.id===id);
+            if (!r) return;
+            preencherPdf(r);
+            await new Promise(res=>setTimeout(res,100));
+            const el = document.getElementById('receipt-content');
+            const fn = `${r.igrejaCodigo||'UNID'} - REC REG REF(${(r.referenceDate||'').replace('/','-')}).pdf`;
+            try {
+                const blob = await html2pdf().set({ margin:0,filename:fn,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} }).from(el).output('blob');
+                const file = new File([blob], fn, {type:'application/pdf'});
+                const shareData = { files:[file], title:`Recibo - ${r.igrejaFormatada||''}`, text:`Recibo de Entradas - Ref: ${r.referenceDate||''}` };
+                if (navigator.share && navigator.canShare?.(shareData)) { await navigator.share(shareData); return; }
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href=url; a.download=fn; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                setTimeout(()=>URL.revokeObjectURL(url),1500);
+            } catch(err) { if(err.name==='AbortError') return; console.error(err); }
+            const txt = `*RECIBO DE ENTRADAS - IEQ*\n*Referência:* ${fmtRefExtenso(r.referenceDate)}\n*Total Pago:* ${fmt(r.total)}`;
+            setTimeout(()=>window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank'), 700);
+        };
+
+        window.abrirSuporte = () => {
+            const txt = `Olá! Sou o pastor da igreja ${igrejaAtiva}, e preciso de ajuda no Portal.`;
+            window.open(`https://wa.me/554333562718?text=${encodeURIComponent(txt)}`, '_blank');
+        };
 
         window.fazerLogout = async () => {
             await signOut(auth);
             localStorage.clear();
             window.location.replace('login.html');
         };
+
+        function esc(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function escA(s) { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
     </script>
 </body>
 </html>
