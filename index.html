@@ -532,17 +532,26 @@
             }
 
             try {
-                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap] = await Promise.all([
+                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap, layoutSnap] = await Promise.all([
                     getDoc(doc(db, 'configuracoes', 'painel_pastores')),
                     getDocs(query(collection(db, 'igrejas'), where('nome','==',igrejaAtiva))),
                     getDocs(collection(db, 'saldos_virada')),
                     getDocs(collection(db, 'recibos')),
                     getDocs(query(collection(db, 'agenda'), orderBy('data','asc'))),
-                    getDocs(collection(db, 'presencas'))
+                    getDocs(collection(db, 'presencas')),
+                    getDoc(doc(db, 'configuracoes', 'layout'))
                 ]);
 
                 if (cfgSnap.exists()) configPainel = cfgSnap.data();
                 if (!igSnap.empty) igrejaObj = igSnap.docs[0].data();
+
+                const pastorLinks = [];
+                if (layoutSnap.exists()) {
+                    const sortedGrupos = [...(layoutSnap.data().grupos||[])].sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+                    sortedGrupos.forEach(g => {
+                        [...(g.itens||[])].filter(it=>it.perm==='pastor_titular'&&it.visivel!==false).sort((a,b)=>(a.ordem||0)-(b.ordem||0)).forEach(it=>pastorLinks.push(it));
+                    });
+                }
 
                 const lower = igrejaAtiva.toLowerCase();
                 function matchIg(d) {
@@ -572,7 +581,7 @@
                     if(nome.toLowerCase()===lower||(data.igreja||'').toLowerCase().includes(lower)) presencas.push({id:d.id,...data});
                 });
 
-                renderPastorView(saldos, globalRecibos, eventos.slice(0,5), presencas);
+                renderPastorView(saldos, globalRecibos, eventos.slice(0,5), presencas, pastorLinks);
 
             } catch(e) {
                 console.error(e);
@@ -583,7 +592,44 @@
             }
         }
 
-        function renderPastorView(saldos, recibos, eventos, presencas) {
+        function renderAcoesRapidas(links) {
+            if (!links.length) {
+                return `<div class="p-card">
+                    <div class="p-card-hdr"><span class="p-card-hdr-title">⚡ Ações Rápidas</span></div>
+                    <div class="p-card-body"><p style="font-size:11px;color:var(--text-muted);font-style:italic;text-align:center;padding:8px;">Nenhum link configurado. Em Gerenciar Layout, defina o nível "Pastor Titular" para que o link apareça aqui.</p></div>
+                </div>`;
+            }
+            const btnColors = ['blue','violet','amber','emerald','blue','violet','amber','emerald'];
+            let quadColorIdx = 0;
+            let inner = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">`;
+            links.forEach(l => {
+                const isExt = l.tipo === 'externo';
+                const target = isExt ? ' target="_blank" rel="noopener noreferrer"' : '';
+                if ((l.formato||'quadrado') === 'retangular') {
+                    inner += `<a href="${escA(l.url||'#')}" class="link-card" style="grid-column:1/-1;"${target}>
+                        <div class="card-icon">${esc(l.icone||'🔗')}</div>
+                        <div class="card-texts">
+                            <div class="card-title">${esc(l.titulo)}</div>
+                            ${l.obs?`<div class="card-obs">${esc(l.obs)}</div>`:''}
+                        </div>
+                        <i class="ph ph-arrow-up-right card-arrow"></i>
+                    </a>`;
+                } else {
+                    const color = btnColors[quadColorIdx++ % btnColors.length];
+                    inner += `<a href="${escA(l.url||'#')}" class="p-action-btn ${color}"${target}>
+                        <span style="font-size:22px;">${esc(l.icone||'🔗')}</span>
+                        <span>${esc(l.titulo)}</span>
+                    </a>`;
+                }
+            });
+            inner += `</div>`;
+            return `<div class="p-card">
+                <div class="p-card-hdr"><span class="p-card-hdr-title">⚡ Ações Rápidas</span></div>
+                <div class="p-card-body">${inner}</div>
+            </div>`;
+        }
+
+        function renderPastorView(saldos, recibos, eventos, presencas, pastorLinks = []) {
             const hoje = new Date();
             const mesAtualNum = hoje.getMonth();
             const anoAtual = hoje.getFullYear();
@@ -823,26 +869,8 @@
                             <div class="p-card-body" style="text-align:center;">${statusHtml}</div>
                         </div>
 
-                        <!-- Ações Rápidas -->
-                        <div class="p-card">
-                            <div class="p-card-hdr"><span class="p-card-hdr-title">⚡ Ações Rápidas</span></div>
-                            <div class="p-card-body">
-                                <div class="p-action-grid">
-                                    <a href="saldodeviradareg655.html" class="p-action-btn blue">
-                                        <span style="font-size:22px;">💰</span><span>Lançar Saldo</span>
-                                    </a>
-                                    <a href="presencareg655.html" class="p-action-btn violet">
-                                        <span style="font-size:22px;">✅</span><span>Registrar Presença</span>
-                                    </a>
-                                    <a href="agendarapidareg655.html" class="p-action-btn amber">
-                                        <span style="font-size:22px;">📅</span><span>Ver Agenda</span>
-                                    </a>
-                                    <button onclick="abrirSuporte()" class="p-action-btn emerald">
-                                        <span style="font-size:22px;">💬</span><span>Falar com Secretaria</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Ações Rápidas (dinâmico via Gerenciar Layout > nível Pastor Titular) -->
+                        ${renderAcoesRapidas(pastorLinks)}
 
                         <!-- Links Úteis -->
                         <div class="p-card">

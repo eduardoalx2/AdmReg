@@ -89,16 +89,7 @@
                 localStorage.setItem('userPerms', JSON.stringify(perms));
                 localStorage.setItem('userIgreja', userData.igrejaNome || '');
                 
-                // Redirecionamento Inteligente de Rotas (Tratamento de Pastores x Admins)
-                const isAdmin = perms.includes('admin');
-                const isPastorTitular = perms.includes('pastor_titular') || !!userData.igrejaNome;
-                const isEquipeEscritorio = perms.length > 0 && !isPastorTitular;
-
-                if (isAdmin || isEquipeEscritorio) {
-                    window.location.href = "index.html";
-                } else {
-                    window.location.href = "painel_pastor.html";
-                }
+                window.location.href = "index.html";
             } catch (error) {
                 console.error(error);
                 let msg = "Erro ao fazer login.";
