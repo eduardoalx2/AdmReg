@@ -17,7 +17,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
         .footer-regional {
             margin-top: 30px;
             padding-top: 20px;
@@ -28,15 +27,15 @@
             color: #777777;
             line-height: 1.6;
         }
-
-        .footer-regional b {
-            color: #444444;
-        }
+        .footer-regional b { color: #444444; }
+        .tipo-btn { transition: all 0.2s; }
+        .tipo-btn.ativo-sim { border-color: #3b82f6; background: #eff6ff; }
+        .tipo-btn.ativo-nao { border-color: #10b981; background: #ecfdf5; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
 
-    <!-- CABEÇALHO COMPACTO -->
+    <!-- CABEÇALHO -->
     <header class="w-full shadow-sm bg-white border-b">
         <div class="max-w-5xl mx-auto px-4 py-1.5">
             <div class="flex justify-between items-center">
@@ -70,46 +69,73 @@
             <!-- PASSO 1: Evento -->
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">1. Selecione o Evento</label>
-                <select id="activeEvent" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                <select id="activeEvent" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
                     <option value="" disabled selected>CARREGANDO EVENTOS...</option>
                 </select>
             </div>
 
-            <!-- Badge do público-alvo do evento -->
+            <!-- Badge do público-alvo -->
             <div id="publicoBadge" class="hidden px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-center"></div>
 
-            <!-- PASSO 2: Restante do formulário (oculto até evento ser selecionado) -->
+            <!-- PASSO 2+: formulário (oculto até evento ser selecionado) -->
             <div id="formResto" class="hidden space-y-5">
 
                 <div class="border-t border-slate-100 pt-1"></div>
 
-                <!-- Nome do Pastor(a) / Obreiro(a) -->
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">2. Seu Nome</label>
-                    <select id="pastorName" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                <!-- Tipo de participante (só para PublicoGeral) -->
+                <div id="tipoParticipanteSection" class="hidden">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">2. Você é Pastor / Membro do Ministério?</label>
+                    <div class="flex gap-3">
+                        <label id="btnSim" class="tipo-btn flex-1 flex items-center gap-3 p-3 bg-slate-50 border-2 border-slate-200 rounded-xl cursor-pointer">
+                            <input type="radio" name="tipoParticipante" value="sim" id="tipoSim" class="h-4 w-4 text-blue-600">
+                            <span class="text-sm font-bold text-slate-700 uppercase">Sim</span>
+                        </label>
+                        <label id="btnNao" class="tipo-btn flex-1 flex items-center gap-3 p-3 bg-slate-50 border-2 border-slate-200 rounded-xl cursor-pointer">
+                            <input type="radio" name="tipoParticipante" value="nao" id="tipoNao" class="h-4 w-4 text-emerald-600">
+                            <span class="text-sm font-bold text-slate-700 uppercase">Não (Visitante)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Lista de pastores (oculta para visitante) -->
+                <div id="pastorNameSection" class="hidden">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1" id="labelNome">Seu Nome</label>
+                    <select id="pastorName" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
                         <option value="" disabled selected>SELECIONE SEU NOME</option>
                     </select>
                 </div>
 
+                <!-- Campo de nome livre para visitante -->
+                <div id="visitanteNameSection" class="hidden">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Seu Nome Completo <span class="text-red-500">*</span></label>
+                    <input type="text" id="visitanteName" placeholder="DIGITE SEU NOME COMPLETO"
+                        class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                </div>
+
                 <!-- Igreja / Congregação -->
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">3. Igreja / Congregação</label>
-                    <select id="church" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Igreja / Congregação <span class="text-red-500">*</span></label>
+                    <select id="church" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
                         <option value="" disabled selected>SELECIONE A IGREJA</option>
                     </select>
+                    <!-- Campo para outra igreja -->
+                    <div id="outraIgrejaSection" class="hidden mt-2">
+                        <input type="text" id="outraIgreja" placeholder="QUAL O NOME DA SUA IGREJA?"
+                            class="w-full p-3 bg-emerald-50 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-semibold">
+                    </div>
                 </div>
 
                 <!-- Status -->
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">4. Status de Presença</label>
-                    <select id="status" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Status de Presença</label>
+                    <select id="status" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
                         <option value="Presente">PRESENTE</option>
                         <option value="Justificado">AUSÊNCIA JUSTIFICADA</option>
                         <option value="Ausente">AUSENTE (sem justificativa)</option>
                     </select>
                 </div>
 
-                <!-- Motivo da Ausência / Justificativa -->
+                <!-- Motivo da Ausência -->
                 <div id="motivoContainer" class="hidden">
                     <label id="motivoLabel" class="block text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1 ml-1">Justificativa (Obrigatório)</label>
                     <textarea id="motivo" rows="3" placeholder="Descreva o motivo da ausência..."
@@ -118,8 +144,8 @@
 
                 <!-- Declaração -->
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <label class="flex items-start gap-3 cursor-pointer group">
-                        <input type="checkbox" id="declaration" required class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="declaration" class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                         <span class="text-[11px] font-bold text-slate-600 leading-tight uppercase">
                             Declaro que esta resposta é verdadeira
                         </span>
@@ -157,21 +183,46 @@
 
         const WHATSAPP_NUMBER = "554333562718";
 
-        const form = document.getElementById('presenceForm');
-        const churchSelect = document.getElementById('church');
-        const pastorSelect = document.getElementById('pastorName');
-        const activeEventSelect = document.getElementById('activeEvent');
-        const statusSelect = document.getElementById('status');
-        const motivoContainer = document.getElementById('motivoContainer');
-        const motivoLabel = document.getElementById('motivoLabel');
-        const motivoTextarea = document.getElementById('motivo');
-        const feedback = document.getElementById('feedback');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const formResto = document.getElementById('formResto');
-        const publicoBadge = document.getElementById('publicoBadge');
+        const form                  = document.getElementById('presenceForm');
+        const churchSelect          = document.getElementById('church');
+        const pastorSelect          = document.getElementById('pastorName');
+        const activeEventSelect     = document.getElementById('activeEvent');
+        const statusSelect          = document.getElementById('status');
+        const motivoContainer       = document.getElementById('motivoContainer');
+        const motivoLabel           = document.getElementById('motivoLabel');
+        const motivoTextarea        = document.getElementById('motivo');
+        const feedback              = document.getElementById('feedback');
+        const loadingOverlay        = document.getElementById('loadingOverlay');
+        const formResto             = document.getElementById('formResto');
+        const publicoBadge          = document.getElementById('publicoBadge');
+        const tipoSection           = document.getElementById('tipoParticipanteSection');
+        const pastorNameSection     = document.getElementById('pastorNameSection');
+        const visitanteNameSection  = document.getElementById('visitanteNameSection');
+        const visitanteNameInput    = document.getElementById('visitanteName');
+        const outraIgrejaSection    = document.getElementById('outraIgrejaSection');
+        const outraIgrejaInput      = document.getElementById('outraIgreja');
+        const btnSim                = document.getElementById('btnSim');
+        const btnNao                = document.getElementById('btnNao');
 
         let todosPastores = [];
-        let presencasDoEvento = new Map(); // nome → {docId, status}
+        let presencasDoEvento = new Map();
+        let eventoPublico = 'Todos';
+
+        // Auto-maiúsculo nos campos livres
+        visitanteNameInput.addEventListener('input', () => {
+            visitanteNameInput.value = visitanteNameInput.value.toUpperCase();
+        });
+        outraIgrejaInput.addEventListener('input', () => {
+            outraIgrejaInput.value = outraIgrejaInput.value.toUpperCase();
+        });
+
+        function getTipo() {
+            return document.querySelector('input[name="tipoParticipante"]:checked')?.value || null;
+        }
+
+        function isVisitante() {
+            return eventoPublico === 'PublicoGeral' && getTipo() === 'nao';
+        }
 
         function preencherPastores(publico) {
             let lista = todosPastores;
@@ -182,62 +233,63 @@
             } else if (publico === 'TitularesECoordenadores') {
                 lista = todosPastores.filter(p => p.funcao === 'Pastor Titular' || p.coordenador === true);
             }
-            // Todos e PublicoGeral → lista completa
 
             pastorSelect.innerHTML = '<option value="" disabled selected>SELECIONE SEU NOME</option>';
             lista.forEach(p => {
-                const option = document.createElement('option');
-                option.value = p.nome;
+                const opt = document.createElement('option');
+                opt.value = p.nome;
                 const tags = [];
                 if (p.funcao === 'Pastor Titular') tags.push('TITULAR');
                 if (p.coordenador) tags.push('COORD');
-                // Indica se já tem registro pré-existente
                 const reg = presencasDoEvento.get(p.nome);
                 const statusTag = reg ? ` • ${reg.status.toUpperCase()}` : '';
-                option.textContent = tags.length > 0 ? `${p.nome} (${tags.join(' | ')}${statusTag})` : `${p.nome}${statusTag}`;
-                pastorSelect.appendChild(option);
+                opt.textContent = tags.length > 0 ? `${p.nome} (${tags.join(' | ')}${statusTag})` : `${p.nome}${statusTag}`;
+                pastorSelect.appendChild(opt);
             });
-
-            // Para evento público, permite adicionar convidado não cadastrado
-            if (publico === 'PublicoGeral') {
-                const sep = document.createElement('option');
-                sep.disabled = true;
-                sep.textContent = '── Convidados ──';
-                pastorSelect.appendChild(sep);
-                const outro = document.createElement('option');
-                outro.value = '__OUTRO__';
-                outro.textContent = 'OUTRO (não cadastrado)';
-                pastorSelect.appendChild(outro);
-            }
-        }
-
-        // Campo de nome livre para convidados não cadastrados
-        let nomeOutroInput = null;
-        function mostrarCampoOutro(mostrar) {
-            if (!nomeOutroInput) {
-                nomeOutroInput = document.createElement('input');
-                nomeOutroInput.type = 'text';
-                nomeOutroInput.placeholder = 'NOME COMPLETO DO CONVIDADO';
-                nomeOutroInput.className = 'mt-2 w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold uppercase';
-                nomeOutroInput.id = 'nomeOutroInput';
-                pastorSelect.parentNode.appendChild(nomeOutroInput);
-            }
-            nomeOutroInput.style.display = mostrar ? 'block' : 'none';
-            if (mostrar) nomeOutroInput.focus();
         }
 
         function mostrarBadgePublico(publico) {
             const config = {
-                'Todos':                    { text: 'Todos os pastores e coordenadores cadastrados', cls: 'bg-slate-100 text-slate-600' },
-                'Titulares':                { text: 'Exclusivo — Pastores Titulares', cls: 'bg-blue-100 text-blue-700' },
-                'Coordenadores':            { text: 'Exclusivo — Coordenadores', cls: 'bg-purple-100 text-purple-700' },
-                'TitularesECoordenadores':  { text: 'Pastores Titulares e Coordenadores', cls: 'bg-indigo-100 text-indigo-700' },
-                'PublicoGeral':             { text: 'Aberto ao Público — pastores registrados + convidados', cls: 'bg-emerald-100 text-emerald-700' }
+                'Todos':                   { text: 'Todos os pastores e coordenadores cadastrados', cls: 'bg-slate-100 text-slate-600' },
+                'Titulares':               { text: 'Exclusivo — Pastores Titulares', cls: 'bg-blue-100 text-blue-700' },
+                'Coordenadores':           { text: 'Exclusivo — Coordenadores', cls: 'bg-purple-100 text-purple-700' },
+                'TitularesECoordenadores': { text: 'Pastores Titulares e Coordenadores', cls: 'bg-indigo-100 text-indigo-700' },
+                'PublicoGeral':            { text: 'Aberto ao Público — pastores registrados + convidados', cls: 'bg-emerald-100 text-emerald-700' }
             };
             const c = config[publico] || config['Todos'];
             publicoBadge.textContent = c.text;
             publicoBadge.className = `px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-center ${c.cls}`;
             publicoBadge.classList.remove('hidden');
+        }
+
+        function atualizarEstiloBotoes(tipo) {
+            btnSim.classList.remove('ativo-sim', 'ativo-nao');
+            btnNao.classList.remove('ativo-sim', 'ativo-nao');
+            if (tipo === 'sim') btnSim.classList.add('ativo-sim');
+            if (tipo === 'nao') btnNao.classList.add('ativo-nao');
+        }
+
+        function onTipoChange() {
+            const tipo = getTipo();
+            atualizarEstiloBotoes(tipo);
+
+            // Reset campos ao trocar tipo
+            pastorSelect.value = '';
+            visitanteNameInput.value = '';
+            churchSelect.value = '';
+            outraIgrejaSection.classList.add('hidden');
+            outraIgrejaInput.value = '';
+            statusSelect.value = 'Presente';
+            motivoContainer.classList.add('hidden');
+
+            if (tipo === 'sim') {
+                pastorNameSection.classList.remove('hidden');
+                visitanteNameSection.classList.add('hidden');
+            } else {
+                pastorNameSection.classList.add('hidden');
+                visitanteNameSection.classList.remove('hidden');
+                visitanteNameInput.focus();
+            }
         }
 
         window.onload = async function() {
@@ -250,19 +302,24 @@
 
                 // Igrejas
                 const igrejas = [];
-                igrejasSnapshot.forEach(doc => igrejas.push(doc.data()));
+                igrejasSnapshot.forEach(d => igrejas.push(d.data()));
                 igrejas.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
                 churchSelect.innerHTML = '<option value="" disabled selected>SELECIONE A IGREJA</option>';
                 igrejas.forEach(ig => {
-                    const option = document.createElement('option');
+                    const opt = document.createElement('option');
                     const cod = String(ig.codigo).padStart(4, '0');
-                    option.value = `${cod} - ${ig.nome}`;
-                    option.textContent = `${cod} - ${ig.nome}`;
-                    churchSelect.appendChild(option);
+                    opt.value = `${cod} - ${ig.nome}`;
+                    opt.textContent = `${cod} - ${ig.nome}`;
+                    churchSelect.appendChild(opt);
                 });
+                // Opção "Outra Igreja"
+                const outraOpt = document.createElement('option');
+                outraOpt.value = '__OUTRA__';
+                outraOpt.textContent = 'OUTRA IGREJA (NÃO LISTADA)';
+                churchSelect.appendChild(outraOpt);
 
-                // Pastores — guarda tudo em memória, titulares primeiro
-                pastoresSnapshot.forEach(doc => todosPastores.push(doc.data()));
+                // Pastores
+                pastoresSnapshot.forEach(d => todosPastores.push(d.data()));
                 todosPastores.sort((a, b) => {
                     const aT = a.funcao === 'Pastor Titular';
                     const bT = b.funcao === 'Pastor Titular';
@@ -276,16 +333,16 @@
                 if (eventosSnapshot.empty) {
                     activeEventSelect.innerHTML = '<option value="" disabled selected>NENHUM EVENTO ATIVO</option>';
                 } else {
-                    eventosSnapshot.forEach(doc => {
-                        const ev = doc.data();
-                        const option = document.createElement('option');
-                        option.value = doc.id;
+                    eventosSnapshot.forEach(d => {
+                        const ev = d.data();
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
                         const dataFormatada = ev.data.split('-').reverse().join('/');
-                        option.textContent = `${ev.nome} - ${dataFormatada}`;
-                        option.dataset.nome = ev.nome;
-                        option.dataset.data = ev.data;
-                        option.dataset.publico = ev.publico || 'Todos';
-                        activeEventSelect.appendChild(option);
+                        opt.textContent = `${ev.nome} - ${dataFormatada}`;
+                        opt.dataset.nome = ev.nome;
+                        opt.dataset.data = ev.data;
+                        opt.dataset.publico = ev.publico || 'Todos';
+                        activeEventSelect.appendChild(opt);
                     });
                 }
             } catch (error) {
@@ -294,13 +351,12 @@
             }
         };
 
-        // Quando evento é selecionado → carrega presenças existentes e revela formulário
+        // Seleção de evento
         activeEventSelect.addEventListener('change', async () => {
             const opt = activeEventSelect.options[activeEventSelect.selectedIndex];
-            const publico = opt.dataset.publico || 'Todos';
+            eventoPublico = opt.dataset.publico || 'Todos';
             const eventoId = opt.value;
 
-            // Carrega registros já existentes para este evento
             presencasDoEvento.clear();
             try {
                 const snap = await getDocs(query(collection(db, "presencas"), where("eventoId", "==", eventoId)));
@@ -310,57 +366,84 @@
                 });
             } catch(e) { console.error("Erro ao carregar presenças:", e); }
 
-            mostrarBadgePublico(publico);
-            preencherPastores(publico);
+            mostrarBadgePublico(eventoPublico);
+            preencherPastores(eventoPublico);
+
+            // Reset geral
             pastorSelect.value = '';
+            visitanteNameInput.value = '';
+            churchSelect.value = '';
+            outraIgrejaSection.classList.add('hidden');
+            outraIgrejaInput.value = '';
             statusSelect.value = 'Presente';
             motivoContainer.classList.add('hidden');
-            mostrarCampoOutro(false);
+            document.querySelectorAll('input[name="tipoParticipante"]').forEach(r => r.checked = false);
+            btnSim.classList.remove('ativo-sim', 'ativo-nao');
+            btnNao.classList.remove('ativo-sim', 'ativo-nao');
+
+            if (eventoPublico === 'PublicoGeral') {
+                // Para evento aberto: mostra pergunta, oculta ambas as seções de nome
+                tipoSection.classList.remove('hidden');
+                pastorNameSection.classList.add('hidden');
+                visitanteNameSection.classList.add('hidden');
+            } else {
+                // Para outros eventos: oculta pergunta, mostra lista de pastores diretamente
+                tipoSection.classList.add('hidden');
+                pastorNameSection.classList.remove('hidden');
+                visitanteNameSection.classList.add('hidden');
+            }
+
             formResto.classList.remove('hidden');
         });
 
+        // Radio buttons de tipo de participante
+        document.querySelectorAll('input[name="tipoParticipante"]').forEach(radio => {
+            radio.addEventListener('change', onTipoChange);
+        });
+
+        // Seleção de pastor → pré-preenche status e igreja
         pastorSelect.addEventListener('change', () => {
-            const nomeSelecionado = pastorSelect.value;
+            const nome = pastorSelect.value;
+            if (!nome) return;
 
-            // Convidado não cadastrado
-            if (nomeSelecionado === '__OUTRO__') {
-                mostrarCampoOutro(true);
-                churchSelect.value = '';
-                statusSelect.value = 'Presente';
-                motivoContainer.classList.add('hidden');
-                return;
-            }
-            mostrarCampoOutro(false);
-
-            // Pré-preenche status se já tem registro
-            const regExistente = presencasDoEvento.get(nomeSelecionado);
-            if (regExistente) {
-                statusSelect.value = regExistente.status;
-                motivoTextarea.value = regExistente.motivo || '';
-                const precisaMotivo = regExistente.status === 'Ausente' || regExistente.status === 'Justificado';
+            const reg = presencasDoEvento.get(nome);
+            if (reg) {
+                statusSelect.value = reg.status;
+                motivoTextarea.value = reg.motivo || '';
+                const precisaMotivo = reg.status === 'Ausente' || reg.status === 'Justificado';
                 motivoContainer.classList.toggle('hidden', !precisaMotivo);
-                motivoTextarea.required = precisaMotivo;
             } else {
                 statusSelect.value = 'Presente';
                 motivoContainer.classList.add('hidden');
-                motivoTextarea.required = false;
                 motivoTextarea.value = '';
             }
 
-            const pastor = todosPastores.find(p => p.nome === nomeSelecionado);
+            const pastor = todosPastores.find(p => p.nome === nome);
             if (!pastor) return;
-            const igrejas = Array.isArray(pastor.igreja) ? pastor.igreja : (pastor.igreja ? [pastor.igreja] : []);
-            if (igrejas.length >= 1) {
-                const nomeIgreja = igrejas[0];
+            const igrejasP = Array.isArray(pastor.igreja) ? pastor.igreja : (pastor.igreja ? [pastor.igreja] : []);
+            if (igrejasP.length >= 1) {
                 for (let i = 0; i < churchSelect.options.length; i++) {
-                    if (churchSelect.options[i].value.includes(nomeIgreja)) {
+                    if (churchSelect.options[i].value.includes(igrejasP[0])) {
                         churchSelect.selectedIndex = i;
+                        outraIgrejaSection.classList.add('hidden');
                         break;
                     }
                 }
             }
         });
 
+        // Seleção de igreja → mostra campo livre se "outra"
+        churchSelect.addEventListener('change', () => {
+            if (churchSelect.value === '__OUTRA__') {
+                outraIgrejaSection.classList.remove('hidden');
+                outraIgrejaInput.focus();
+            } else {
+                outraIgrejaSection.classList.add('hidden');
+                outraIgrejaInput.value = '';
+            }
+        });
+
+        // Status → mostra/esconde motivo
         statusSelect.addEventListener('change', () => {
             const precisaMotivo = statusSelect.value === 'Ausente' || statusSelect.value === 'Justificado';
             if (precisaMotivo) {
@@ -368,17 +451,62 @@
                     ? 'Justificativa (Obrigatório)'
                     : 'Motivo da Ausência (Obrigatório)';
                 motivoContainer.classList.remove('hidden');
-                motivoTextarea.required = true;
             } else {
                 motivoContainer.classList.add('hidden');
-                motivoTextarea.required = false;
-                motivoTextarea.value = "";
+                motivoTextarea.value = '';
             }
         });
 
+        // Envio do formulário
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            // Validação: tipo de participante obrigatório para PublicoGeral
+            if (eventoPublico === 'PublicoGeral' && !getTipo()) {
+                showFeedback("INFORME SE VOCÊ É PASTOR OU VISITANTE!", "error");
+                return;
+            }
+
+            // Validação: nome
+            let nome = '';
+            if (isVisitante()) {
+                nome = visitanteNameInput.value.trim();
+                if (!nome) {
+                    showFeedback("INFORME SEU NOME COMPLETO!", "error");
+                    visitanteNameInput.focus();
+                    return;
+                }
+            } else {
+                nome = pastorSelect.value;
+                if (!nome) {
+                    showFeedback("SELECIONE SEU NOME NA LISTA!", "error");
+                    return;
+                }
+            }
+
+            // Validação: igreja
+            let igreja = churchSelect.value;
+            if (!igreja) {
+                showFeedback("SELECIONE A IGREJA!", "error");
+                churchSelect.focus();
+                return;
+            }
+            if (igreja === '__OUTRA__') {
+                igreja = outraIgrejaInput.value.trim();
+                if (!igreja) {
+                    showFeedback("INFORME O NOME DA SUA IGREJA!", "error");
+                    outraIgrejaInput.focus();
+                    return;
+                }
+            }
+
+            // Validação: declaração
+            if (!document.getElementById('declaration').checked) {
+                showFeedback("MARQUE A DECLARAÇÃO PARA CONTINUAR!", "error");
+                return;
+            }
+
+            // Validação: motivo de ausência
             const precisaMotivo = statusSelect.value === 'Ausente' || statusSelect.value === 'Justificado';
             if (precisaMotivo && !motivoTextarea.value.trim()) {
                 showFeedback("POR FAVOR, PREENCHA A JUSTIFICATIVA!", "error");
@@ -386,37 +514,17 @@
             }
 
             const eventoOption = activeEventSelect.options[activeEventSelect.selectedIndex];
-            const publico = eventoOption.dataset.publico || 'Todos';
-            const isVisitante = publico === 'PublicoGeral' && document.querySelector('input[name="tipoParticipante"]:checked')?.value === 'nao';
-
-            let nome = '';
-            if (isVisitante) {
-                nome = visitanteNameInput.value.trim();
-            } else {
-                nome = pastorSelect.value;
-            }
-
-            let igreja = churchSelect.value;
-            if (igreja === '__OUTRA__') {
-                igreja = outraIgrejaInput.value.trim();
-            }
-            
-            const eventoId = eventoOption.value;
-            const tipoEvento = eventoOption.dataset.nome;
-            const dataEvento = eventoOption.dataset.data;
-            const status = statusSelect.value;
-            const motivo = motivoTextarea.value.trim();
+            const eventoId     = eventoOption.value;
+            const tipoEvento   = eventoOption.dataset.nome;
+            const dataEvento   = eventoOption.dataset.data;
+            const status       = statusSelect.value;
+            const motivo       = motivoTextarea.value.trim();
             const dataPostagem = new Date().toLocaleString('pt-BR');
 
             const payload = {
-                nome,
-                igreja,
-                eventoId,
-                dataEvento,
-                tipoEvento,
-                status,
-                motivo,
-                declaracao: document.getElementById('declaration').checked ? "Sim" : "Não",
+                nome, igreja, eventoId, dataEvento, tipoEvento,
+                status, motivo,
+                declaracao: "Sim",
                 dataPostagem,
                 updatedAt: serverTimestamp()
             };
@@ -424,8 +532,7 @@
             loadingOverlay.classList.remove('hidden');
 
             try {
-                // Upsert: atualiza se já existe registro pré-registrado, senão cria novo
-                const regExistente = !isVisitante ? presencasDoEvento.get(nome) : null;
+                const regExistente = !isVisitante() ? presencasDoEvento.get(nome) : null;
                 if (regExistente) {
                     await updateDoc(doc(db, "presencas", regExistente.docId), payload);
                 } else {
@@ -434,33 +541,32 @@
                 }
 
                 const dataFormatada = dataEvento.split('-').reverse().join('/');
-                
                 let mensagemZap = `*REGISTRO DE PRESENÇA - REGIÃO 655*%0A%0A`;
-                mensagemZap += `*Pastor:* ${nome}%0A`;
+                mensagemZap += `*Nome:* ${nome}%0A`;
                 mensagemZap += `*Igreja:* ${igreja}%0A`;
                 mensagemZap += `*Evento:* ${tipoEvento}%0A`;
                 mensagemZap += `*Data do Evento:* ${dataFormatada}%0A`;
-                mensagemZap += `*Status:* ${status === 'Presente' ? '✅ PRESENTE' : '❌ AUSENTE'}%0A`;
-                
-                if (status === 'Ausente') {
-                    mensagemZap += `*Motivo:* ${motivo}%0A`;
-                }
-                
+                mensagemZap += `*Status:* ${status === 'Presente' ? '✅ PRESENTE' : status === 'Justificado' ? '⚠️ JUSTIFICADO' : '❌ AUSENTE'}%0A`;
+                if (motivo) mensagemZap += `*Motivo:* ${motivo}%0A`;
                 mensagemZap += `%0A_Enviado via Sistema em: ${dataPostagem}_`;
 
-                const zapUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${mensagemZap}`;
-                
                 loadingOverlay.classList.add('hidden');
                 showFeedback("DADOS GRAVADOS! ABRINDO WHATSAPP...", "success");
-                window.open(zapUrl, '_blank');
+                window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${mensagemZap}`, '_blank');
 
+                // Reset completo
                 form.reset();
-                document.getElementById('declaration').checked = false;
                 motivoContainer.classList.add('hidden');
-                motivoTextarea.required = false;
                 formResto.classList.add('hidden');
                 publicoBadge.classList.add('hidden');
+                tipoSection.classList.add('hidden');
+                pastorNameSection.classList.add('hidden');
+                visitanteNameSection.classList.add('hidden');
+                outraIgrejaSection.classList.add('hidden');
+                btnSim.classList.remove('ativo-sim', 'ativo-nao');
+                btnNao.classList.remove('ativo-sim', 'ativo-nao');
                 activeEventSelect.value = '';
+                eventoPublico = 'Todos';
 
             } catch (error) {
                 console.error("Erro:", error);
@@ -476,7 +582,7 @@
             feedback.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
         }
     </script>
-    </div> <!-- fecha flex container -->
+    </div>
 
     <footer class="py-4 text-center text-slate-400 text-[10px]">
         &copy; 2024 Região 655 - IEQ Londrina/PR
