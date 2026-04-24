@@ -403,8 +403,6 @@
         window.onLayoutLoaded = function(data) {
             if (data && data.grupos && data.grupos.length > 0) {
                 grupos = data.grupos;
-                // A pedido do usuário: forçar todos os itens existentes a admin para serem reconfigurados manualmente
-                grupos.forEach(g => g.itens.forEach(i => i.perm = 'admin'));
             }
             renderGrupos();
             document.getElementById('loading').classList.add('hidden');
