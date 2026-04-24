@@ -139,7 +139,7 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         const publicoCores  = { Todos: 'bg-slate-100 text-slate-600', Titulares: 'bg-blue-100 text-blue-700', Coordenadores: 'bg-purple-100 text-purple-700', TitularesECoordenadores: 'bg-indigo-100 text-indigo-700', PublicoGeral: 'bg-emerald-100 text-emerald-700' };
         const publicoLabels = { Todos: 'Todos', Titulares: 'Somente Titulares', Coordenadores: 'Somente Coordenadores', TitularesECoordenadores: 'Titulares e Coordenadores', PublicoGeral: 'Aberto ao Público' };
@@ -343,14 +343,24 @@
         };
 
         window.excluirEvento = async function(id) {
-            if (confirm("Tem certeza que deseja EXCLUIR este evento? As presenças já registradas não serão deletadas, mas o evento deixará de existir.")) {
+            if (confirm("Tem certeza que deseja EXCLUIR este evento? ATENÇÃO: Todas as listas de presenças e faltas registradas para este evento também serão APAGADAS permanentemente!")) {
                 try {
+                    // 1. Localiza e apaga todas as presenças vinculadas a este evento em cascata
+                    const presencasSnap = await getDocs(query(collection(db, "presencas"), where("eventoId", "==", id)));
+                    const deletePromises = [];
+                    presencasSnap.forEach(docSnap => {
+                        deletePromises.push(deleteDoc(doc(db, "presencas", docSnap.id)));
+                    });
+                    await Promise.all(deletePromises); // Executa todas as exclusões em paralelo
+
+                    // 2. Apaga o evento em si
                     await deleteDoc(doc(db, "eventos", id));
+                    
                     if (document.getElementById('editingId').value === id) window.cancelarEdicao();
                     carregarEventos();
                 } catch (error) {
-                    console.error("Erro ao excluir:", error);
-                    alert("Erro ao excluir o evento.");
+                    console.error("Erro ao excluir evento e presenças:", error);
+                    alert("Erro ao excluir o evento e suas presenças.");
                 }
             }
         };

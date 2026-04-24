@@ -227,7 +227,7 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, getDocs, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         let allPresencas = [];
         let allEventos = [];
@@ -263,7 +263,22 @@
 
                 // Carrega todas as Presenças
                 const prSnap = await getDocs(collection(db, "presencas"));
-                prSnap.forEach(d => allPresencas.push({id: d.id, ...d.data()}));
+                const eventosIds = new Set(allEventos.map(e => e.id));
+                const orfaos = [];
+                
+                prSnap.forEach(d => {
+                    const data = d.data();
+                    if (data.eventoId && !eventosIds.has(data.eventoId)) {
+                        orfaos.push(d.id);
+                    } else {
+                        allPresencas.push({id: d.id, ...data});
+                    }
+                });
+
+                // Limpeza Automática: Apaga do banco as presenças de eventos que já foram excluídos
+                orfaos.forEach(async (id) => {
+                    try { await deleteDoc(doc(db, "presencas", id)); } catch(e) {}
+                });
 
                 window.renderTable();
             } catch (error) {
