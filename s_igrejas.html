@@ -176,7 +176,7 @@
                     <!-- CONTAS BANCÁRIAS -->
                     <div class="border-t border-slate-200 pt-4 mt-2">
                         <div class="flex justify-between items-center mb-2">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Contas Bancárias</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Contas Bancárias <span class="normal-case font-medium text-slate-400">(Santander)</span></label>
                             <button type="button" onclick="window.adicionarConta()" class="text-[9px] bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-2 py-1 rounded font-bold uppercase transition-colors shadow-sm border border-emerald-100">+ Add Conta</button>
                         </div>
                         <div id="lista-contas" class="space-y-2 max-h-32 overflow-y-auto pr-1"></div>
@@ -348,7 +348,7 @@
                         ${ig.tipo === 'Sede Regional' ? '<span class="ml-2 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[8px] uppercase tracking-wider font-bold">Sede</span>' : ''}
                         ${ig.tipo === 'Região Eclesiástica' ? '<span class="ml-2 px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[8px] uppercase tracking-wider font-bold">Região</span>' : ''}
                         ${ig.seguros > 0 ? `<span class="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[8px] uppercase tracking-wider font-bold">${ig.seguros} Seguro(s)</span>` : ''}
-                        ${ig.contas && ig.contas.length > 0 ? `<span class="ml-2 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[8px] uppercase tracking-wider font-bold" title="Possui Conta Corrente"><i data-lucide="credit-card" class="w-2.5 h-2.5 inline-block -mt-0.5"></i> ${ig.contas.length}</span>` : ''}
+                        ${(ig.contas && ig.contas.length > 0) ? `<div class="mt-1.5 flex flex-wrap gap-1.5">${ig.contas.map(c => `<span class="px-1.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded text-[8.5px] font-mono tracking-tight inline-flex items-center gap-1" title="Ag: ${c.agencia} | ${c.obs}"><i data-lucide="credit-card" class="w-2.5 h-2.5"></i> Cc: ${c.conta}</span>`).join('')}</div>` : ''}
                     </td>
                     <td class="text-xs font-bold uppercase">${nomePastor}</td>
                     <td class="text-center">
