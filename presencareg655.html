@@ -385,16 +385,22 @@
                 return;
             }
 
-            const isOutro = pastorSelect.value === '__OUTRO__';
-            const nomeOutro = isOutro && nomeOutroInput ? nomeOutroInput.value.trim().toUpperCase() : '';
-            if (isOutro && !nomeOutro) {
-                showFeedback("INFORME O NOME DO CONVIDADO!", "error");
-                return;
+            const eventoOption = activeEventSelect.options[activeEventSelect.selectedIndex];
+            const publico = eventoOption.dataset.publico || 'Todos';
+            const isVisitante = publico === 'PublicoGeral' && document.querySelector('input[name="tipoParticipante"]:checked')?.value === 'nao';
+
+            let nome = '';
+            if (isVisitante) {
+                nome = visitanteNameInput.value.trim();
+            } else {
+                nome = pastorSelect.value;
             }
 
-            const nome = isOutro ? nomeOutro : pastorSelect.value.trim();
-            const igreja = document.getElementById('church').value;
-            const eventoOption = activeEventSelect.options[activeEventSelect.selectedIndex];
+            let igreja = churchSelect.value;
+            if (igreja === '__OUTRA__') {
+                igreja = outraIgrejaInput.value.trim();
+            }
+            
             const eventoId = eventoOption.value;
             const tipoEvento = eventoOption.dataset.nome;
             const dataEvento = eventoOption.dataset.data;
@@ -419,7 +425,7 @@
 
             try {
                 // Upsert: atualiza se já existe registro pré-registrado, senão cria novo
-                const regExistente = !isOutro ? presencasDoEvento.get(nome) : null;
+                const regExistente = !isVisitante ? presencasDoEvento.get(nome) : null;
                 if (regExistente) {
                     await updateDoc(doc(db, "presencas", regExistente.docId), payload);
                 } else {
