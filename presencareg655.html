@@ -131,7 +131,6 @@
                     <select id="status" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
                         <option value="Presente">PRESENTE</option>
                         <option value="Justificado">AUSÊNCIA JUSTIFICADA</option>
-                        <option value="Ausente">AUSENTE (sem justificativa)</option>
                     </select>
                 </div>
 
@@ -180,8 +179,6 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, updateDoc, getDocs, doc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-
-        const WHATSAPP_NUMBER = "554333562718";
 
         const form                  = document.getElementById('presenceForm');
         const churchSelect          = document.getElementById('church');
@@ -408,9 +405,14 @@
 
             const reg = presencasDoEvento.get(nome);
             if (reg) {
-                statusSelect.value = reg.status;
+                // Se já tinha um registro de 'Ausente' feito pelo admin, força 'Presente' no formulário
+                if (reg.status === 'Ausente') {
+                    statusSelect.value = 'Presente';
+                } else {
+                    statusSelect.value = reg.status;
+                }
                 motivoTextarea.value = reg.motivo || '';
-                const precisaMotivo = reg.status === 'Ausente' || reg.status === 'Justificado';
+                const precisaMotivo = statusSelect.value === 'Justificado';
                 motivoContainer.classList.toggle('hidden', !precisaMotivo);
             } else {
                 statusSelect.value = 'Presente';
@@ -445,11 +447,9 @@
 
         // Status → mostra/esconde motivo
         statusSelect.addEventListener('change', () => {
-            const precisaMotivo = statusSelect.value === 'Ausente' || statusSelect.value === 'Justificado';
+            const precisaMotivo = statusSelect.value === 'Justificado';
             if (precisaMotivo) {
-                motivoLabel.textContent = statusSelect.value === 'Justificado'
-                    ? 'Justificativa (Obrigatório)'
-                    : 'Motivo da Ausência (Obrigatório)';
+                motivoLabel.textContent = 'Justificativa (Obrigatório)';
                 motivoContainer.classList.remove('hidden');
             } else {
                 motivoContainer.classList.add('hidden');
@@ -507,7 +507,7 @@
             }
 
             // Validação: motivo de ausência
-            const precisaMotivo = statusSelect.value === 'Ausente' || statusSelect.value === 'Justificado';
+            const precisaMotivo = statusSelect.value === 'Justificado';
             if (precisaMotivo && !motivoTextarea.value.trim()) {
                 showFeedback("POR FAVOR, PREENCHA A JUSTIFICATIVA!", "error");
                 return;
@@ -540,19 +540,10 @@
                     await addDoc(collection(db, "presencas"), payload);
                 }
 
-                const dataFormatada = dataEvento.split('-').reverse().join('/');
-                let mensagemZap = `*REGISTRO DE PRESENÇA - REGIÃO 655*%0A%0A`;
-                mensagemZap += `*Nome:* ${nome}%0A`;
-                mensagemZap += `*Igreja:* ${igreja}%0A`;
-                mensagemZap += `*Evento:* ${tipoEvento}%0A`;
-                mensagemZap += `*Data do Evento:* ${dataFormatada}%0A`;
-                mensagemZap += `*Status:* ${status === 'Presente' ? '✅ PRESENTE' : status === 'Justificado' ? '⚠️ JUSTIFICADO' : '❌ AUSENTE'}%0A`;
-                if (motivo) mensagemZap += `*Motivo:* ${motivo}%0A`;
-                mensagemZap += `%0A_Enviado via Sistema em: ${dataPostagem}_`;
-
                 loadingOverlay.classList.add('hidden');
-                showFeedback("DADOS GRAVADOS! ABRINDO WHATSAPP...", "success");
-                window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${mensagemZap}`, '_blank');
+                
+                const msgSucesso = status === 'Presente' ? 'PRESENÇA CONFIRMADA COM SUCESSO!' : 'AUSÊNCIA JUSTIFICADA REGISTRADA!';
+                showFeedback(msgSucesso, "success");
 
                 // Reset completo
                 form.reset();
