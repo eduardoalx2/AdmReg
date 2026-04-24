@@ -202,12 +202,21 @@
 </head>
 <body>
 
+    <!-- Banner modo simulação (visível apenas quando admin simula outro usuário) -->
+    <div id="banner-simulacao" style="display:none;background:rgba(245,158,11,0.1);border-bottom:1px solid rgba(245,158,11,0.25);padding:10px 20px;position:relative;z-index:50;align-items:center;gap:12px;">
+        <span style="font-size:16px;flex-shrink:0;">👁</span>
+        <span style="font-size:12px;font-weight:600;color:rgba(245,158,11,0.9);">Modo Simulação: <strong id="sim-label"></strong></span>
+        <a href="visualizar_como.html" style="font-size:10px;color:rgba(245,158,11,0.6);text-decoration:none;font-weight:700;white-space:nowrap;flex-shrink:0;">Trocar ↗</a>
+        <button onclick="encerrarSimulacao()" style="margin-left:auto;flex-shrink:0;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#fbbf24;font-size:10px;font-weight:700;padding:7px 16px;border-radius:8px;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;">✕ Encerrar</button>
+    </div>
+
     <header class="brand-header">
         <div style="position:absolute;top:24px;right:24px;z-index:20;display:flex;align-items:center;gap:12px;">
             <div style="text-align:right;">
                 <p id="top-user-name" style="font-size:12px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px;"></p>
                 <p id="top-user-role" style="font-size:9px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.2em;line-height:1;"></p>
             </div>
+            <a id="btn-ir-simular" href="visualizar_como.html" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:8px 12px;border-radius:12px;font-size:10px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;" title="Simular visão de outro usuário/nível">👁 Simular</a>
             <button onclick="fazerLogout()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:white;padding:10px;border-radius:12px;cursor:pointer;transition:all 0.2s;" title="Sair">
                 <i class="ph ph-sign-out" style="font-size:18px;"></i>
             </button>
@@ -366,6 +375,16 @@
         onAuthStateChanged(auth, async (user) => {
             if (!user || user.email !== userEmail) { fazerLogout(); return; }
             document.getElementById('top-user-name').textContent = userName ? `Olá, ${userName.split(' ')[0]}` : 'Olá!';
+
+            const viewAs = localStorage.getItem('__view_as__');
+            if (viewAs) {
+                const banner = document.getElementById('banner-simulacao');
+                document.getElementById('sim-label').textContent = viewAs;
+                banner.style.display = 'flex';
+            } else if (isAdmin) {
+                document.getElementById('btn-ir-simular').style.display = 'flex';
+            }
+
             if (isPastor) {
                 mostrarViewPastor();
             } else {
@@ -991,6 +1010,19 @@
         window.abrirSuporte = () => {
             const txt = `Olá! Sou o pastor da igreja ${igrejaAtiva}, e preciso de ajuda no Portal.`;
             window.open(`https://wa.me/554333562718?text=${encodeURIComponent(txt)}`, '_blank');
+        };
+
+        window.encerrarSimulacao = function() {
+            const bk = JSON.parse(localStorage.getItem('__view_as_backup__') || '{}');
+            if (bk.userEmail) {
+                localStorage.setItem('userEmail',  bk.userEmail);
+                localStorage.setItem('userName',   bk.userName   || '');
+                localStorage.setItem('userPerms',  bk.userPerms  || '[]');
+                localStorage.setItem('userIgreja', bk.userIgreja || '');
+            }
+            localStorage.removeItem('__view_as__');
+            localStorage.removeItem('__view_as_backup__');
+            window.location.reload();
         };
 
         window.fazerLogout = async () => {
