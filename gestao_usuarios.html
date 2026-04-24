@@ -112,53 +112,16 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Páginas Permitidas</label>
-                        <div class="space-y-2 bg-slate-50 p-3 border border-slate-200 rounded">
-
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Administração</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
-                                <label class="flex items-center gap-2 text-xs font-semibold text-red-700 cursor-pointer"><input type="checkbox" name="perm" value="admin" class="w-3.5 h-3.5 rounded text-red-600 focus:ring-red-500"> Acesso Master (Tudo)</label>
-                            </div>
-
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Eventos & Presença</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="presenca" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Lançar Presença</label>
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="gestao_eventos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Gestão de Eventos</label>
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="controle_presencas" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Controle de Presenças</label>
-                            </div>
-
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Pastores</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
-                                <label class="flex items-center gap-2 text-xs font-semibold text-green-700 cursor-pointer"><input type="checkbox" name="perm" value="pastor_titular" class="w-3.5 h-3.5 rounded text-green-600 focus:ring-green-500"> Pastor Titular</label>
-                            </div>
-
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Cadastros</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="pastores" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Pastores</label>
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="igrejas" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Igrejas</label>
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="coordenadorias" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Coordenadorias</label>
-                            </div>
-
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Financeiro</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="saldo_virada" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Saldo de Virada</label>
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="recibos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Recibos</label>
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="gerenciar_saldos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Gerenciar Saldos</label>
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="gerenciar_recibos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Gerenciar Recibos</label>
-                            </div>
-
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Dashboards</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-1">
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="dash_recibos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Dash Recibos</label>
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="dash_saldos" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Dash Saldos</label>
-                            </div>
-
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider pt-1">Regional</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer"><input type="checkbox" name="perm" value="agenda" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500"> Agenda Regional</label>
-                            </div>
-
-                        </div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nível de Acesso (Hierarquia)</label>
+                        <select id="usuario-nivel" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                            <option value="admin">Gestor Master</option>
+                            <option value="secretario" selected>Secretário Regional</option>
+                            <option value="superintendente">Superintendente</option>
+                            <option value="pastor_titular">Pastor Titular</option>
+                            <option value="coordenador">Coordenador</option>
+                            <option value="obreiro">Obreiros</option>
+                            <option value="membro">Membros</option>
+                        </select>
                     </div>
 
                     <!-- Igreja Vinculada -->
@@ -207,7 +170,7 @@
         window.abrirModal = () => {
             document.getElementById('form-usuario').reset();
             document.getElementById('usuario-id').value = '';
-            document.querySelectorAll('input[name="perm"]').forEach(cb => cb.checked = false);
+            document.getElementById('usuario-nivel').value = 'secretario';
             document.getElementById('modal-titulo').innerHTML = '<i data-lucide="user-plus" class="w-4 h-4"></i> Novo Usuário';
             document.getElementById('bloco-senha').classList.remove('hidden');
             document.getElementById('bloco-confirmar-senha').classList.remove('hidden');
@@ -304,14 +267,10 @@
         }
         carregarIgrejasSelect();
         
-        const permsLabels = {
-            'admin': 'Master',
-            'pastor_titular': 'Pastor Titular',
-            'presenca': 'Presença', 'gestao_eventos': 'Gest.Eventos', 'controle_presencas': 'Ctrl.Presenças',
-            'pastores': 'Pastores', 'igrejas': 'Igrejas', 'coordenadorias': 'Coordenadorias',
-            'saldo_virada': 'Saldo Virada', 'recibos': 'Recibos', 'gerenciar_saldos': 'Ger.Saldos', 'gerenciar_recibos': 'Ger.Recibos',
-            'dash_recibos': 'Dash Recibos', 'dash_saldos': 'Dash Saldos',
-            'agenda': 'Agenda'
+        const niveisLabels = {
+            'admin': 'Gestor Master', 'secretario': 'Secretário Regional',
+            'superintendente': 'Superintendente', 'pastor_titular': 'Pastor Titular',
+            'coordenador': 'Coordenador', 'obreiro': 'Obreiros', 'membro': 'Membros'
         };
 
         async function carregarUsuarios() {
@@ -344,12 +303,13 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-blue-50/50 transition-colors group";
                 
-                let permsHtml = '<span class="text-[10px] text-slate-400 italic">Sem permissões</span>';
+                let permsHtml = '<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase tracking-wider">Secretário Regional</span>';
                 if (u.permissoes && u.permissoes.length > 0) {
+                    const role = u.permissoes[0];
                     if (u.permissoes.includes('admin')) {
-                        permsHtml = '<span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[9px] font-bold uppercase tracking-wider">Acesso Total (Master)</span>';
-                    } else {
-                        permsHtml = u.permissoes.map(p => `<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[9px] font-bold uppercase tracking-wider mr-1 mb-1 inline-block">${permsLabels[p] || p}</span>`).join('');
+                        permsHtml = '<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold uppercase tracking-wider">Gestor Master</span>';
+                    } else if (niveisLabels[role]) {
+                        permsHtml = `<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase tracking-wider">${niveisLabels[role]}</span>`;
                     }
                 }
 
@@ -397,9 +357,15 @@
             document.getElementById('usuario-status').value = u.status || 'Ativo';
             document.getElementById('usuario-igreja').value = u.igrejaNome || '';
 
-            document.querySelectorAll('input[name="perm"]').forEach(cb => {
-                cb.checked = u.permissoes && u.permissoes.includes(cb.value);
-            });
+            let currentRole = 'secretario';
+            if (u.permissoes && u.permissoes.length > 0) {
+                if (Object.keys(niveisLabels).includes(u.permissoes[0])) {
+                    currentRole = u.permissoes[0];
+                } else if (u.permissoes.includes('admin')) {
+                    currentRole = 'admin';
+                }
+            }
+            document.getElementById('usuario-nivel').value = currentRole;
 
             // Em edição: esconde senha, exibe botão de reset
             document.getElementById('bloco-senha').classList.add('hidden');
@@ -446,7 +412,8 @@
             try {
                 const id = document.getElementById('usuario-id').value;
                 const email = document.getElementById('usuario-email').value.trim().toLowerCase();
-                const permsArr = Array.from(document.querySelectorAll('input[name="perm"]:checked')).map(cb => cb.value);
+                const nivelSelecionado = document.getElementById('usuario-nivel').value;
+                const permsArr = [nivelSelecionado];
 
                 const igrejaNome = document.getElementById('usuario-igreja').value;
                 const payload = {

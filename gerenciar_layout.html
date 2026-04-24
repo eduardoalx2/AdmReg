@@ -108,23 +108,16 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Permissão necessária</label>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nível de Acesso (Mínimo)</label>
                     <select id="f-perm" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                        <option value="">Nenhuma (visível a todos os logados)</option>
-                        <option value="admin">admin (somente Gestor Master)</option>
-                        <option value="pastores">pastores</option>
-                        <option value="igrejas">igrejas</option>
-                        <option value="coordenadorias">coordenadorias</option>
-                        <option value="saldo_virada">saldo_virada</option>
-                        <option value="gerenciar_saldos">gerenciar_saldos</option>
-                        <option value="recibos">recibos</option>
-                        <option value="gerenciar_recibos">gerenciar_recibos</option>
-                        <option value="dash_recibos">dash_recibos</option>
-                        <option value="dash_saldos">dash_saldos</option>
-                        <option value="agenda">agenda</option>
-                        <option value="gestao_eventos">gestao_eventos</option>
-                        <option value="presenca">presenca</option>
-                        <option value="controle_presencas">controle_presencas</option>
+                        <option value="">Nenhum (Visível a todos)</option>
+                        <option value="admin">Gestor Master (Apenas Eu)</option>
+                        <option value="secretario">Secretário Regional</option>
+                        <option value="superintendente">Superintendente</option>
+                        <option value="pastor_titular">Pastor Titular</option>
+                        <option value="coordenador">Coordenador</option>
+                        <option value="obreiro">Obreiro</option>
+                        <option value="membro">Membro</option>
                     </select>
                 </div>
 
@@ -153,24 +146,24 @@
                 id: 'g-cadastros', nome: 'Cadastros', ordem: 1,
                 itens: [
                     { id: 'i-pastores', tipo: 'sistema', titulo: 'Pastores', obs: 'Obreiros, Aspirantes e Ministros', url: 's_pastores.html', icone: '👨‍💼', perm: 'pastores', visivel: true, ordem: 0 },
-                    { id: 'i-igrejas', tipo: 'sistema', titulo: 'Igrejas', obs: 'Unidades Locais e vinculação de Pastores', url: 's_igrejas.html', icone: '⛪', perm: 'igrejas', visivel: true, ordem: 1 },
-                    { id: 'i-coord', tipo: 'sistema', titulo: 'Coordenadorias', obs: 'Coordenadores e departamentos regionais', url: 'coordenadorias.html', icone: '🏛️', perm: 'coordenadorias', visivel: true, ordem: 2 }
+                    { id: 'i-igrejas', tipo: 'sistema', titulo: 'Igrejas', obs: 'Unidades Locais e vinculação de Pastores', url: 's_igrejas.html', icone: '⛪', perm: 'admin', visivel: true, ordem: 1 },
+                    { id: 'i-coord', tipo: 'sistema', titulo: 'Coordenadorias', obs: 'Coordenadores e departamentos regionais', url: 'coordenadorias.html', icone: '🏛️', perm: 'admin', visivel: true, ordem: 2 }
                 ]
             },
             {
                 id: 'g-financeiro', nome: 'Financeiro', ordem: 2,
                 itens: [
-                    { id: 'i-saldo', tipo: 'sistema', titulo: 'Saldo de Virada', obs: 'Lançador financeiro de virada de mês', url: 'saldodeviradareg655.html', icone: '💰', perm: 'saldo_virada', visivel: true, ordem: 0 },
-                    { id: 'i-gersaldos', tipo: 'sistema', titulo: 'Gerenciar Saldos', obs: 'Edição e exclusão de lançamentos', url: 'gerenciar_saldos.html', icone: '⚙️', perm: 'gerenciar_saldos', visivel: true, ordem: 1 },
-                    { id: 'i-recibos', tipo: 'sistema', titulo: 'Recibos', obs: 'Emissor de recibos e controle financeiro', url: 'recibosreg655.html', icone: '🧾', perm: 'recibos', visivel: true, ordem: 2 },
-                    { id: 'i-gerrecibos', tipo: 'sistema', titulo: 'Gerenciar Recibos', obs: 'Edição e visualização de recibos', url: 'editarrecibos.html', icone: '📝', perm: 'gerenciar_recibos', visivel: true, ordem: 3 }
+                    { id: 'i-saldo', tipo: 'sistema', titulo: 'Saldo de Virada', obs: 'Lançador financeiro de virada de mês', url: 'saldodeviradareg655.html', icone: '💰', perm: 'admin', visivel: true, ordem: 0 },
+                    { id: 'i-gersaldos', tipo: 'sistema', titulo: 'Gerenciar Saldos', obs: 'Edição e exclusão de lançamentos', url: 'gerenciar_saldos.html', icone: '⚙️', perm: 'admin', visivel: true, ordem: 1 },
+                    { id: 'i-recibos', tipo: 'sistema', titulo: 'Recibos', obs: 'Emissor de recibos e controle financeiro', url: 'recibosreg655.html', icone: '🧾', perm: 'admin', visivel: true, ordem: 2 },
+                    { id: 'i-gerrecibos', tipo: 'sistema', titulo: 'Gerenciar Recibos', obs: 'Edição e visualização de recibos', url: 'editarrecibos.html', icone: '📝', perm: 'admin', visivel: true, ordem: 3 }
                 ]
             },
             {
                 id: 'g-dash', nome: 'Dashboards', ordem: 3,
                 itens: [
-                    { id: 'i-dashrecibos', tipo: 'sistema', titulo: 'Dash Recibos', obs: 'Dashboard analítico de arrecadações', url: 'dashreg655.html', icone: '📊', perm: 'dash_recibos', visivel: true, ordem: 0 },
-                    { id: 'i-dashsaldos', tipo: 'sistema', titulo: 'Dash Saldos', obs: 'Dashboard financeiro consolidado', url: 'dashsaldo.html', icone: '📈', perm: 'dash_saldos', visivel: true, ordem: 1 }
+                    { id: 'i-dashrecibos', tipo: 'sistema', titulo: 'Dash Recibos', obs: 'Dashboard analítico de arrecadações', url: 'dashreg655.html', icone: '📊', perm: 'admin', visivel: true, ordem: 0 },
+                    { id: 'i-dashsaldos', tipo: 'sistema', titulo: 'Dash Saldos', obs: 'Dashboard financeiro consolidado', url: 'dashsaldo.html', icone: '📈', perm: 'admin', visivel: true, ordem: 1 }
                 ]
             },
             {
@@ -182,9 +175,9 @@
             {
                 id: 'g-eventos', nome: 'Eventos & Presença', ordem: 5,
                 itens: [
-                    { id: 'i-gestaoev', tipo: 'sistema', titulo: 'Gestão de Eventos', obs: 'Criar e gerenciar eventos ativos', url: 'eventosreg655.html', icone: '⚙️', perm: 'gestao_eventos', visivel: true, ordem: 0 },
-                    { id: 'i-presenca', tipo: 'sistema', titulo: 'Lançar Presença', obs: 'Registro individual nas convocações', url: 'presencareg655.html', icone: '✅', perm: 'presenca', visivel: true, ordem: 1 },
-                    { id: 'i-controle', tipo: 'sistema', titulo: 'Controle de Presenças', obs: 'Painel de acompanhamento e faltas', url: 'controleeventosreg655.html', icone: '📋', perm: 'controle_presencas', visivel: true, ordem: 2 }
+                    { id: 'i-gestaoev', tipo: 'sistema', titulo: 'Gestão de Eventos', obs: 'Criar e gerenciar eventos ativos', url: 'eventosreg655.html', icone: '⚙️', perm: 'admin', visivel: true, ordem: 0 },
+                    { id: 'i-presenca', tipo: 'sistema', titulo: 'Lançar Presença', obs: 'Registro individual nas convocações', url: 'presencareg655.html', icone: '✅', perm: 'admin', visivel: true, ordem: 1 },
+                    { id: 'i-controle', tipo: 'sistema', titulo: 'Controle de Presenças', obs: 'Painel de acompanhamento e faltas', url: 'controleeventosreg655.html', icone: '📋', perm: 'admin', visivel: true, ordem: 2 }
                 ]
             }
         ];
@@ -243,7 +236,7 @@
                         <p class="text-slate-600 text-[10px] truncate">${esc(item.obs||'')}</p>
                     </div>
                     ${isExterno?'<span class="text-[9px] text-amber-400 font-bold flex-shrink-0">EXT</span>':''}
-                    <span class="text-[9px] bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded flex-shrink-0 max-w-[90px] truncate">${esc(permLabel)}</span>
+                    <span class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded flex-shrink-0 max-w-[100px] truncate">${esc(permLabel)}</span>
                     <button onclick="toggleVisivel('${grupoId}','${item.id}')" title="${oculto?'Oculto — clique para mostrar':'Visível — clique para ocultar'}" class="flex-shrink-0 text-base ${oculto?'grayscale opacity-50':''}">👁️</button>
                     <button onclick="abrirModalItem('${grupoId}','${item.id}')" class="flex-shrink-0 text-slate-600 hover:text-blue-400 text-xs transition-colors">✏️</button>
                     <button onclick="excluirItem('${grupoId}','${item.id}')" class="flex-shrink-0 text-slate-600 hover:text-red-400 text-xs transition-colors">🗑️</button>
@@ -410,6 +403,8 @@
         window.onLayoutLoaded = function(data) {
             if (data && data.grupos && data.grupos.length > 0) {
                 grupos = data.grupos;
+                // A pedido do usuário: forçar todos os itens existentes a admin para serem reconfigurados manualmente
+                grupos.forEach(g => g.itens.forEach(i => i.perm = 'admin'));
             }
             renderGrupos();
             document.getElementById('loading').classList.add('hidden');

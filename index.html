@@ -440,7 +440,30 @@
         });
 
         function renderMain(grupos, perms) {
-            const has = (p) => !p || perms.includes('admin') || perms.includes(p);
+            // Hierarquia de Acesso
+            const hierarquia = {
+                'admin': 100,
+                'secretario': 90,
+                'superintendente': 80,
+                'pastor_titular': 70,
+                'coordenador': 60,
+                'obreiro': 50,
+                'membro': 10
+            };
+            let userNivelStr = perms[0];
+            // Transição: se a permissão não faz parte da nova hierarquia, força 'secretario'
+            if (userNivelStr && !hierarquia[userNivelStr]) userNivelStr = 'secretario';
+            if (!userNivelStr) userNivelStr = 'secretario';
+            
+            const userNivel = perms.includes('admin') ? 100 : hierarquia[userNivelStr];
+
+            const has = (p) => {
+                if (!p) return true;
+                if (userNivel === 100) return true; // admin vê tudo
+                const itemNivel = hierarquia[p] || 100; // previne vazamento se p for desconhecido
+                return userNivel >= itemNivel;
+            };
+
             const main = document.getElementById('main-content');
             main.innerHTML = '';
 
