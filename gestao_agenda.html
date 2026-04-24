@@ -290,6 +290,15 @@
                 tr.className = "hover:bg-blue-50/40 transition-colors group";
                 
                 const dataFormatada = e.data ? e.data.split('-').reverse().join('/') : '-';
+                
+                let diaSemana = '';
+                if (e.data) {
+                    const [y, m, d] = e.data.split('-');
+                    const dateObj = new Date(y, m - 1, d);
+                    const dias = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+                    diaSemana = dias[dateObj.getDay()] + ' • ';
+                }
+
                 const tipoCor = e.tipo === 'REGIONAL' ? 'bg-blue-100 text-blue-700' : 
                                 e.tipo === 'CED' ? 'bg-amber-100 text-amber-700' :
                                 e.tipo === 'CND' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600';
@@ -297,7 +306,7 @@
                 tr.innerHTML = `
                     <td>
                         <div class="font-bold text-slate-800 text-sm">${dataFormatada}</div>
-                        <div class="text-[10px] text-slate-500 font-medium uppercase mt-0.5">${e.horario || '-'} (${e.duracao || '?'}h)</div>
+                        <div class="text-[10px] text-slate-500 font-medium uppercase mt-0.5">${diaSemana}${e.horario || '-'} (${e.duracao || '?'}h)</div>
                     </td>
                     <td>
                         <div class="font-bold text-slate-800 text-sm uppercase leading-tight">${e.evento}</div>
