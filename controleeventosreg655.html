@@ -380,7 +380,45 @@
                     });
                 }
             } else {
-                displayList = [...allPresencas];
+                // Gera lista completa (reais + virtuais) para todos os eventos
+                allEventos.forEach(evento => {
+                    const publico = evento.publico || 'Todos';
+                    const presencasDoEvento = allPresencas.filter(p => p.eventoId === evento.id);
+
+                    const expectedPastores = allPastores.filter(p => {
+                        if (publico === 'Titulares') return p.funcao === 'Pastor Titular';
+                        if (publico === 'Coordenadores') return p.coordenador === true;
+                        if (publico === 'TitularesECoordenadores') return p.funcao === 'Pastor Titular' || p.coordenador === true;
+                        return true;
+                    });
+
+                    expectedPastores.forEach(pastor => {
+                        const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
+                        if (presenca) {
+                            displayList.push(presenca);
+                        } else {
+                            const igrejaInfo = Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : pastor.igreja;
+                            displayList.push({
+                                id: `virtual_${pastor.id}_${evento.id}`,
+                                nome: pastor.nome,
+                                igreja: igrejaInfo || '-',
+                                eventoId: evento.id,
+                                tipoEvento: evento.nome,
+                                dataEvento: evento.data,
+                                status: 'Ausente',
+                                motivo: 'Não registrou presença',
+                                isVirtual: true
+                            });
+                        }
+                    });
+
+                    // Visitantes (não estão na lista de pastores)
+                    presencasDoEvento.forEach(presenca => {
+                        if (!allPastores.some(p => p.nome === presenca.nome)) {
+                            displayList.push(presenca);
+                        }
+                    });
+                });
             }
 
             let filtered = displayList.filter(p => {
