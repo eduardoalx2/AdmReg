@@ -245,7 +245,7 @@
                         const mesStr = `${mm}/${yyyy}`;
                         mesesSet.add(mesStr);
                         
-                        const recibo = recibos.find(r => r.referenceDate === mesStr && (r.igrejaCodigo === cod || r.igrejaNome === ig.nome));
+                        const recibo = recibos.find(r => r.referenceDate === mesStr && (r.igrejaCodigo === cod || r.igrejaNome === ig.nome) && (parseFloat(r.regionalTax) || 0) > 0);
                         if (!recibo) {
                             taxasPendentes.push(mesStr);
                             const chave = mesStrToChave(mesStr);
