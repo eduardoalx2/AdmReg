@@ -424,6 +424,7 @@
             if (data && data.grupos && data.grupos.length > 0) {
                 grupos = data.grupos;
             }
+            try { localStorage.setItem('layout_cache', JSON.stringify(grupos)); } catch(e) {}
             renderGrupos();
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('content').classList.remove('hidden');
@@ -483,6 +484,7 @@
             btn.textContent = 'Salvando...';
             try {
                 await setDoc(doc(db, 'configuracoes', 'layout'), window.getLayoutData());
+                try { localStorage.setItem('layout_cache', JSON.stringify(grupos)); } catch(e) {}
                 window.onSaveSuccess();
             } catch(e) {
                 console.error(e);

@@ -10,11 +10,26 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
-        let perms = [];
-        try { perms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
-        if (!perms.includes('admin') && !perms.includes('dash_recibos')) {
-            window.location.replace('index.html');
-        }
+        (function(){
+            var H={admin:100,secretario:90,superintendente:80,pastor_titular:70,coordenador:60,obreiro:50,membro:10};
+            var perms=[]; try{perms=JSON.parse(localStorage.getItem('userPerms')||'[]');}catch(e){}
+            var nivel=perms.includes('admin')?100:(H[perms[0]]||0);
+            var req=100,pub=false,legacyOk=false;
+            try{
+                var lc=JSON.parse(localStorage.getItem('layout_cache')||'null');
+                if(lc){var pg=location.pathname.split('/').pop()||'index.html';
+                    outer:for(var i=0;i<lc.length;i++){var its=lc[i].itens||[];
+                        for(var j=0;j<its.length;j++){if(its[j].url===pg){var p=its[j].perm;
+                            if(!p){pub=true;req=0;}
+                            else if(H[p]!==undefined){req=H[p];}
+                            else{legacyOk=perms.includes('admin')||perms.includes(p);}
+                            break outer;}}}}
+            }catch(e){}
+            if(!legacyOk&&!pub&&req>(H.membro||10)){
+                if(!localStorage.getItem('userPerms')||!localStorage.getItem('userEmail')){window.location.replace('login.html');}
+                else if(nivel<req){window.location.replace('index.html');}
+            }
+        })();
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
