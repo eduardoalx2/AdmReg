@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Limpeza — Convocação Regional 09/02/2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-6">
+
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 space-y-4">
+        <h1 class="text-base font-black text-slate-800 uppercase tracking-widest">
+            🗑️ Limpeza — Convocação Regional 09/02/2026
+        </h1>
+        <p class="text-xs text-slate-500">
+            Remove ausentes que <strong>não são Pastor Titular</strong> nesse evento. Titulares ausentes são preservados.
+        </p>
+
+        <div id="log" class="bg-slate-50 rounded-xl p-4 font-mono text-[11px] text-slate-700 space-y-1 max-h-80 overflow-y-auto border border-slate-200">
+            <p class="text-slate-400">Aguardando…</p>
+        </div>
+
+        <div class="flex gap-3">
+            <button id="btnPreview" onclick="rodar(false)"
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-widest transition-colors">
+                1. Pré-visualizar (sem deletar)
+            </button>
+            <button id="btnDelete" onclick="rodar(true)" disabled
+                class="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-widest transition-colors">
+                2. Confirmar e Deletar
+            </button>
+        </div>
+        <p class="text-[10px] text-slate-400 text-center">Faça a pré-visualização antes de confirmar.</p>
+    </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, collection, getDocs, deleteDoc, doc, query, where }
+    from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+const app = initializeApp({
+    apiKey: "AIzaSyBTjxxbYqsSVPN_BhsA__gMtTseSn9_Tr0",
+    authDomain: "regiao655-admin.firebaseapp.com",
+    projectId: "regiao655-admin",
+    storageBucket: "regiao655-admin.firebasestorage.app",
+    messagingSenderId: "739836894724",
+    appId: "1:739836894724:web:b8580a4984c1ba6e781f51"
+});
+const db = getFirestore(app);
+
+const EVENTO_DATA  = '2026-02-09';
+const EVENTO_NOME  = 'Convocação Regional';
+
+function log(msg, cor = 'text-slate-700') {
+    const div = document.getElementById('log');
+    const p = document.createElement('p');
+    p.className = cor;
+    p.textContent = msg;
+    div.appendChild(p);
+    div.scrollTop = div.scrollHeight;
+}
+
+window.rodar = async (deletar) => {
+    document.getElementById('log').innerHTML = '';
+    document.getElementById('btnPreview').disabled = true;
+    document.getElementById('btnDelete').disabled  = true;
+
+    try {
+        log('⏳ Buscando eventos...');
+        const evSnap = await getDocs(collection(db, 'eventos'));
+        let eventoId = null;
+        evSnap.forEach(d => {
+            const ev = d.data();
+            if (ev.data === EVENTO_DATA && (ev.nome || '').toLowerCase().includes('convoca')) {
+                eventoId = d.id;
+                log(`✅ Evento encontrado: "${ev.nome}" (${ev.data}) — ID: ${d.id}`, 'text-emerald-700');
+            }
+        });
+
+        if (!eventoId) {
+            log('❌ Evento "Convocação Regional 09/02/2026" não encontrado!', 'text-red-600');
+            document.getElementById('btnPreview').disabled = false;
+            return;
+        }
+
+        log('⏳ Buscando pastores...');
+        const pastSnap = await getDocs(collection(db, 'pastores'));
+        const titulares = new Set();
+        pastSnap.forEach(d => {
+            const p = d.data();
+            if ((p.funcao || '').toLowerCase().includes('titular')) titulares.add(p.nome);
+        });
+        log(`📋 Pastores Titulares encontrados: ${titulares.size}`, 'text-blue-700');
+
+        log('⏳ Buscando presenças do evento...');
+        const prSnap = await getDocs(collection(db, 'presencas'));
+        const alvo = [];
+        prSnap.forEach(d => {
+            const p = d.data();
+            if (p.eventoId === eventoId && p.status === 'Ausente') {
+                const eTitular = titulares.has(p.nome);
+                if (!eTitular) alvo.push({ id: d.id, nome: p.nome, igreja: p.igreja || '-' });
+            }
+        });
+
+        if (alvo.length === 0) {
+            log('✅ Nenhum ausente não-titular encontrado para este evento.', 'text-emerald-700');
+            document.getElementById('btnPreview').disabled = false;
+            return;
+        }
+
+        log(`\n🎯 ${alvo.length} registro(s) ${deletar ? 'DELETADOS' : 'para deletar'}:`, deletar ? 'text-red-700 font-bold' : 'text-amber-700 font-bold');
+        for (const item of alvo) {
+            if (deletar) {
+                await deleteDoc(doc(db, 'presencas', item.id));
+                log(`  🗑️  ${item.nome} — ${item.igreja}`, 'text-red-600');
+            } else {
+                log(`  ➡️  ${item.nome} — ${item.igreja}`, 'text-amber-700');
+            }
+        }
+
+        if (deletar) {
+            log(`\n✅ ${alvo.length} registro(s) deletados com sucesso.`, 'text-emerald-700 font-bold');
+        } else {
+            log(`\n⚠️  Pré-visualização concluída. Clique em "Confirmar e Deletar" para executar.`, 'text-amber-600 font-bold');
+            document.getElementById('btnDelete').disabled = false;
+        }
+
+    } catch (e) {
+        log('❌ Erro: ' + (e.message || e), 'text-red-600');
+    }
+
+    document.getElementById('btnPreview').disabled = false;
+};
+</script>
+</body>
+</html>
