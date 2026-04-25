@@ -210,6 +210,11 @@
             </div>
             <div class="p-6 space-y-4">
                 <input type="hidden" id="editId">
+                <input type="hidden" id="editIsVirtual">
+                <input type="hidden" id="editEventoId">
+                <input type="hidden" id="editTipoEvento">
+                <input type="hidden" id="editDataEvento">
+                <input type="hidden" id="editIgreja">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Pastor</label>
                     <input type="text" id="editNome" readonly class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none">
@@ -249,7 +254,7 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         const _userPerms = JSON.parse(localStorage.getItem('userPerms') || '[]');
         const isAdmin = _userPerms.includes('admin') || _userPerms.includes('secretario');
@@ -258,6 +263,7 @@
         let allPresencas = [];
         let allEventos = [];
         let allPastores = [];
+        let currentDisplayList = [];
 
         async function loadData() {
             try {
@@ -421,6 +427,8 @@
                 });
             }
 
+            currentDisplayList = displayList;
+
             let filtered = displayList.filter(p => {
                 
                 // Filtro Status com a lógica de Consolidação
@@ -486,9 +494,9 @@
                     }
                 }
 
-                // Botões de Ação (somente admin pode editar)
+                // Botões de Ação (somente admin/secretario podem editar)
                 let actions = '';
-                if (isAdmin && !p.isVirtual) {
+                if (isAdmin) {
                     actions = `
                         <div class="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                             <button onclick="window.openEdit('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors shadow-sm" title="Editar Lançamento">
@@ -496,8 +504,8 @@
                             </button>
                     `;
 
-                    // Botão Rápido de Consolidar diretamente na tabela (só aparece se estiver Ausente e ainda não consolidada)
-                    if (p.status === 'Ausente' && !p.consolidada) {
+                    // Botão rápido de consolidar só para registros reais ausentes
+                    if (!p.isVirtual && p.status === 'Ausente' && !p.consolidada) {
                         actions += `
                             <button onclick="window.markConsolidated('${p.id}')" class="text-emerald-500 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 p-2 rounded-lg transition-colors shadow-sm" title="Marcar como Ausência Consolidada">
                                 <i data-lucide="check-circle" class="w-4 h-4"></i>
@@ -569,17 +577,22 @@
 
         window.openEdit = (id) => {
             if (!isAdmin) return;
-            const p = allPresencas.find(x => x.id === id);
+            const p = allPresencas.find(x => x.id === id) || currentDisplayList.find(x => x.id === id);
             if(!p) return;
+
             document.getElementById('editId').value = p.id;
+            document.getElementById('editIsVirtual').value = p.isVirtual ? '1' : '';
+            document.getElementById('editEventoId').value = p.eventoId || '';
+            document.getElementById('editTipoEvento').value = p.tipoEvento || '';
+            document.getElementById('editDataEvento').value = p.dataEvento || '';
+            document.getElementById('editIgreja').value = p.igreja || '';
             document.getElementById('editNome').value = p.nome;
             document.getElementById('editStatus').value = p.status;
             document.getElementById('editMotivo').value = p.motivo || '';
             document.getElementById('editConsolidada').checked = p.consolidada === true;
-            
-            const st = p.status;
+
             const container = document.getElementById('containerConsolidada');
-            if(st === 'Ausente') {
+            if(p.status === 'Ausente') {
                 container.classList.remove('hidden');
             } else {
                 container.classList.add('hidden');
@@ -605,9 +618,10 @@
         });
 
         window.saveEdit = async () => {
-            const id = document.getElementById('editId').value;
-            const status = document.getElementById('editStatus').value;
-            const motivo = document.getElementById('editMotivo').value.trim();
+            const id          = document.getElementById('editId').value;
+            const isVirtual   = document.getElementById('editIsVirtual').value === '1';
+            const status      = document.getElementById('editStatus').value;
+            const motivo      = document.getElementById('editMotivo').value.trim();
             const consolidada = document.getElementById('editConsolidada').checked;
 
             const btn = document.getElementById('btnSave');
@@ -616,19 +630,39 @@
             if(window.lucide) window.lucide.createIcons();
 
             try {
-                await updateDoc(doc(db, "presencas", id), {
-                    status,
-                    motivo,
-                    consolidada: status === 'Ausente' ? consolidada : false
-                });
-                
-                // Atualiza localmente
-                const idx = allPresencas.findIndex(x => x.id === id);
-                if(idx !== -1) {
-                    allPresencas[idx].status = status;
-                    allPresencas[idx].motivo = motivo;
-                    allPresencas[idx].consolidada = status === 'Ausente' ? consolidada : false;
+                if (isVirtual) {
+                    // Registro virtual → cria documento real no Firestore
+                    const nome       = document.getElementById('editNome').value;
+                    const eventoId   = document.getElementById('editEventoId').value;
+                    const tipoEvento = document.getElementById('editTipoEvento').value;
+                    const dataEvento = document.getElementById('editDataEvento').value;
+                    const igreja     = document.getElementById('editIgreja').value;
+                    const consolidadaFinal = status === 'Ausente' ? consolidada : false;
+
+                    const novoRef = await addDoc(collection(db, 'presencas'), {
+                        nome, eventoId, tipoEvento, dataEvento, igreja,
+                        status, motivo, consolidada: consolidadaFinal
+                    });
+
+                    allPresencas.push({
+                        id: novoRef.id, nome, eventoId, tipoEvento, dataEvento,
+                        igreja, status, motivo, consolidada: consolidadaFinal
+                    });
+                } else {
+                    // Registro real → atualiza
+                    await updateDoc(doc(db, "presencas", id), {
+                        status, motivo,
+                        consolidada: status === 'Ausente' ? consolidada : false
+                    });
+
+                    const idx = allPresencas.findIndex(x => x.id === id);
+                    if(idx !== -1) {
+                        allPresencas[idx].status = status;
+                        allPresencas[idx].motivo = motivo;
+                        allPresencas[idx].consolidada = status === 'Ausente' ? consolidada : false;
+                    }
                 }
+
                 window.renderTable();
                 window.closeModal();
             } catch(e) {
