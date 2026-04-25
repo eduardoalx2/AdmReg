@@ -12,7 +12,9 @@
             🗑️ Limpeza — Convocação Regional 09/02/2026
         </h1>
         <p class="text-xs text-slate-500">
-            Remove ausentes que <strong>não são Pastor Titular</strong> nesse evento. Titulares ausentes são preservados.
+            Os ausentes não-titulares são registros <strong>virtuais</strong> (não existem no banco — a página os gera para quem não registrou presença).
+            Esta ferramenta altera o campo <code>publico</code> do evento para <strong>Titulares</strong>, removendo os virtuais,
+            e apaga quaisquer registros reais de não-titulares com status Ausente.
         </p>
 
         <div id="log" class="bg-slate-50 rounded-xl p-4 font-mono text-[11px] text-slate-700 space-y-1 max-h-80 overflow-y-auto border border-slate-200">
@@ -34,7 +36,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, collection, getDocs, deleteDoc, doc, query, where }
+import { getFirestore, collection, getDocs, deleteDoc, doc, updateDoc }
     from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const app = initializeApp({
@@ -67,12 +69,14 @@ window.rodar = async (deletar) => {
     try {
         log('⏳ Buscando eventos...');
         const evSnap = await getDocs(collection(db, 'eventos'));
-        let eventoId = null;
+        let eventoId = null, eventoDocRef = null, publicoAtual = null;
         evSnap.forEach(d => {
             const ev = d.data();
             if (ev.data === EVENTO_DATA && (ev.nome || '').toLowerCase().includes('convoca')) {
-                eventoId = d.id;
-                log(`✅ Evento encontrado: "${ev.nome}" (${ev.data}) — ID: ${d.id}`, 'text-emerald-700');
+                eventoId    = d.id;
+                eventoDocRef = doc(db, 'eventos', d.id);
+                publicoAtual = ev.publico || '(não definido)';
+                log(`✅ Evento encontrado: "${ev.nome}" (${ev.data}) — publico atual: "${publicoAtual}"`, 'text-emerald-700');
             }
         });
 
@@ -91,35 +95,34 @@ window.rodar = async (deletar) => {
         });
         log(`📋 Pastores Titulares encontrados: ${titulares.size}`, 'text-blue-700');
 
-        log('⏳ Buscando presenças do evento...');
+        log('⏳ Buscando presenças reais (Firestore) do evento...');
         const prSnap = await getDocs(collection(db, 'presencas'));
         const alvo = [];
         prSnap.forEach(d => {
             const p = d.data();
-            if (p.eventoId === eventoId && p.status === 'Ausente') {
-                const eTitular = titulares.has(p.nome);
-                if (!eTitular) alvo.push({ id: d.id, nome: p.nome, igreja: p.igreja || '-' });
+            if (p.eventoId === eventoId && p.status === 'Ausente' && !titulares.has(p.nome)) {
+                alvo.push({ id: d.id, nome: p.nome, igreja: p.igreja || '-' });
             }
         });
 
-        if (alvo.length === 0) {
-            log('✅ Nenhum ausente não-titular encontrado para este evento.', 'text-emerald-700');
-            document.getElementById('btnPreview').disabled = false;
-            return;
-        }
+        log(`\n📊 Resultado da análise:`, 'text-slate-600 font-bold');
+        log(`  • Registros reais no Firestore para deletar: ${alvo.length}`, alvo.length > 0 ? 'text-red-600' : 'text-slate-500');
+        log(`  • Campo "publico" do evento: "${publicoAtual}" → será alterado para "Titulares"`, 'text-amber-700');
+        log(`  • Isso remove os ${alvo.length === 0 ? 'registros virtuais (ausências geradas automaticamente para não-titulares)' : `${alvo.length} reais + os virtuais`}`, 'text-amber-700');
 
-        log(`\n🎯 ${alvo.length} registro(s) ${deletar ? 'DELETADOS' : 'para deletar'}:`, deletar ? 'text-red-700 font-bold' : 'text-amber-700 font-bold');
-        for (const item of alvo) {
-            if (deletar) {
-                await deleteDoc(doc(db, 'presencas', item.id));
-                log(`  🗑️  ${item.nome} — ${item.igreja}`, 'text-red-600');
-            } else {
-                log(`  ➡️  ${item.nome} — ${item.igreja}`, 'text-amber-700');
-            }
+        if (alvo.length > 0) {
+            log(`\n🗂️ Registros reais a deletar:`, 'text-slate-600');
+            alvo.forEach(item => log(`  ➡️  ${item.nome} — ${item.igreja}`, 'text-amber-700'));
         }
 
         if (deletar) {
-            log(`\n✅ ${alvo.length} registro(s) deletados com sucesso.`, 'text-emerald-700 font-bold');
+            for (const item of alvo) {
+                await deleteDoc(doc(db, 'presencas', item.id));
+                log(`  🗑️  Deletado: ${item.nome}`, 'text-red-600');
+            }
+            await updateDoc(eventoDocRef, { publico: 'Titulares' });
+            log(`\n✅ Campo "publico" atualizado para "Titulares".`, 'text-emerald-700 font-bold');
+            log(`✅ Concluído! Recarregue o Controle de Presenças para ver o resultado.`, 'text-emerald-700 font-bold');
         } else {
             log(`\n⚠️  Pré-visualização concluída. Clique em "Confirmar e Deletar" para executar.`, 'text-amber-600 font-bold');
             document.getElementById('btnDelete').disabled = false;
