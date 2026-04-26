@@ -230,6 +230,8 @@
 
                 const mesesSet = new Set();
                 igrejas.forEach(ig => {
+                    // Escritório regional não paga taxa
+                    if (ig.tipo === 'Região Eclesiástica' || ig.tipo === 'Sede Regional') return;
                     const cod = String(ig.codigo).padStart(4, '0');
                     const titular = pastores.find(p => p.funcao === 'Pastor Titular' && (Array.isArray(p.igreja) ? p.igreja.includes(ig.nome) : p.igreja === ig.nome));
                     const nomePastor = titular ? titular.nome : 'Sem Titular';
