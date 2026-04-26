@@ -385,6 +385,10 @@
                     });
 
                     expectedPastores.forEach(pastor => {
+                        // Ignora eventos anteriores à data de início do titular
+                        const pastorInicio = pastor.dataInicioIgreja || '2025-01-01';
+                        if (evento.data < pastorInicio) return;
+
                         const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
                         if (presenca) {
                             // Ausente só é válido para eventos Inativos
@@ -429,6 +433,10 @@
                     });
 
                     expectedPastores.forEach(pastor => {
+                        // Ignora eventos anteriores à data de início do titular
+                        const pastorInicio = pastor.dataInicioIgreja || '2025-01-01';
+                        if (evento.data < pastorInicio) return;
+
                         const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
                         if (presenca) {
                             // Ausente só é válido para eventos Inativos

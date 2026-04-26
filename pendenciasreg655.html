@@ -378,11 +378,14 @@
                     }
 
                     // ── Ausências em eventos INATIVOS ──
+                    const pastorInicio = titular?.dataInicioIgreja || '2025-01-01';
                     const ausenciasLista = presencas.filter(p => {
                         if (p.status !== 'Ausente') return false;
                         if (!(p.igreja || '').includes(ig.nome)) return false;
                         const ev = eventosMap[p.eventoId];
-                        return ev && ev.status === 'Inativo';
+                        if (!ev || ev.status !== 'Inativo') return false;
+                        // Só conta ausência a partir da data de início do titular
+                        return (ev.data || '') >= pastorInicio;
                     });
 
                     // Registra para a aba de faltas
@@ -400,6 +403,11 @@
                         });
                     });
 
+                    // Conta quantos meses são de gestão anterior (antes de pastorInicio)
+                    const limiteChave = pastorInicio.substring(0, 7);
+                    const taxasHerdadas  = taxasPendentes.filter(m => (mesStrToChave(m) || '') < limiteChave).length;
+                    const saldosHerdados = saldosPendentes.filter(m => (mesStrToChave(m) || '') < limiteChave).length;
+
                     const totalPendenciasFinanceiras = saldosPendentes.length + taxasPendentes.length;
                     const totalPendencias = totalPendenciasFinanceiras + ausenciasLista.length;
 
@@ -409,6 +417,8 @@
                         celPastor,
                         saldosPendentes,
                         taxasPendentes,
+                        taxasHerdadas,
+                        saldosHerdados,
                         valorEmAberto,
                         temValorDesconhecido,
                         ausencias: ausenciasLista.length,
@@ -505,8 +515,14 @@
                                 </div>
                                 <div class="text-[10px] text-slate-500 font-medium">${d.pastor}</div>
                             </td>
-                            <td class="px-4 py-3 text-center">${d.saldosPendentes.length > 0 ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.saldosPendentes.length} meses</span>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}</td>
-                            <td class="px-4 py-3 text-center">${d.taxasPendentes.length > 0 ? `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.taxasPendentes.length} taxas</span>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}</td>
+                            <td class="px-4 py-3 text-center">
+                                ${d.saldosPendentes.length > 0 ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.saldosPendentes.length} meses</span>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}
+                                ${d.saldosHerdados > 0 ? `<span class="block text-[9px] text-slate-400 mt-0.5">(${d.saldosHerdados} gestão anterior)</span>` : ''}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                ${d.taxasPendentes.length > 0 ? `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.taxasPendentes.length} taxas</span>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}
+                                ${d.taxasHerdadas > 0 ? `<span class="block text-[9px] text-slate-400 mt-0.5">(${d.taxasHerdadas} gestão anterior)</span>` : ''}
+                            </td>
                             <td class="px-4 py-3 text-right text-xs ${d.valorEmAberto > 0 ? 'text-red-600 font-bold' : 'text-slate-400'}">${window.formatMoeda(d.valorEmAberto)}${d.temValorDesconhecido && d.valorEmAberto > 0 ? '*' : ''}</td>
                             <td class="px-4 py-3 text-center">${temPend ? `<button onclick="event.stopPropagation();window.abrirDetalhes('${d.igrejaNome.replace(/'/g,"\\'")}') " class="bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 p-1.5 rounded-lg transition-colors"><i data-lucide="eye" class="w-4 h-4"></i></button>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}</td>
                         </tr>`;

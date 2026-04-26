@@ -551,7 +551,7 @@
             }
 
             try {
-                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap, layoutSnap, eventosSnap] = await Promise.all([
+                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap, layoutSnap, eventosSnap, pastoresSnap] = await Promise.all([
                     getDoc(doc(db, 'configuracoes', 'painel_pastores')),
                     getDocs(query(collection(db, 'igrejas'), where('nome','==',igrejaAtiva))),
                     getDocs(collection(db, 'saldos_virada')),
@@ -559,7 +559,8 @@
                     getDocs(query(collection(db, 'agenda'), orderBy('data','asc'))),
                     getDocs(collection(db, 'presencas')),
                     getDoc(doc(db, 'configuracoes', 'layout')),
-                    getDocs(collection(db, 'eventos'))
+                    getDocs(collection(db, 'eventos')),
+                    getDocs(collection(db, 'pastores'))
                 ]);
 
                 if (cfgSnap.exists()) configPainel = cfgSnap.data();
@@ -598,6 +599,18 @@
                 const eventosMap = {};
                 eventosSnap.forEach(d=>{ eventosMap[d.id] = d.data(); });
 
+                // Descobre dataInicioIgreja do titular atual da igreja
+                const lowerIg = igrejaAtiva.toLowerCase();
+                let dataInicioIgreja = '2025-01-01';
+                pastoresSnap.forEach(d => {
+                    const p = d.data();
+                    if (p.funcao !== 'Pastor Titular') return;
+                    const igrejas = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                    if (igrejas.some(ig => ig.toLowerCase() === lowerIg)) {
+                        dataInicioIgreja = p.dataInicioIgreja || '2025-01-01';
+                    }
+                });
+
                 const presencas = [];
                 presencasSnap.forEach(d=>{
                     const data=d.data();
@@ -606,7 +619,7 @@
                     if(nome.toLowerCase()===lower||(data.igreja||'').toLowerCase().includes(lower)) presencas.push({id:d.id,...data});
                 });
 
-                renderPastorView(saldos, globalRecibos, eventos, presencas, pastorLinks, eventosMap);
+                renderPastorView(saldos, globalRecibos, eventos, presencas, pastorLinks, eventosMap, dataInicioIgreja);
 
             } catch(e) {
                 console.error(e);
@@ -769,6 +782,9 @@
             const recibosHtml = recibos.length===0
                 ? `<p style="font-size:12px;color:var(--text-muted);font-style:italic;text-align:center;padding:20px 16px;">Nenhum recibo emitido ainda.</p>`
                 : recibos.slice(0,6).map(r=>{
+                    const [rmm,ryyyy]=(r.referenceDate||'').split('/');
+                    const rChave=(rmm&&ryyyy)?`${ryyyy}-${rmm}`:'';
+                    const rHerdado=rChave && rChave<dataInicioIgreja.substring(0,7);
                     const itens=[
                         {l:'Entradas',v:r.incomeValue},
                         {l:'Taxa Regional (4%)',v:r.regionalTax},
@@ -781,6 +797,7 @@
                             <div>
                                 <div style="font-size:12px;font-weight:800;text-transform:uppercase;color:var(--text-primary);">Ref. ${esc(r.referenceDate||'-')}</div>
                                 <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Emitido em: ${esc(r.dataEmissao||'-')}</div>
+                                ${rHerdado?`<span style="font-size:8px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.2);padding:1px 6px;border-radius:100px;display:inline-block;margin-top:3px;">Gestão anterior</span>`:''}
                             </div>
                             <div style="text-align:right;">
                                 <div style="font-size:18px;font-weight:900;color:#60a5fa;font-family:'Sora',sans-serif;">${fmt(r.total)}</div>
@@ -803,16 +820,22 @@
             // === SALDOS ===
             const saldosHtml = saldos.length===0
                 ? `<p style="font-size:12px;color:var(--text-muted);font-style:italic;text-align:center;padding:20px 16px;">Nenhum saldo lançado recentemente.</p>`
-                : saldos.slice(0,6).map(s=>`<div class="p-row">
+                : saldos.slice(0,6).map(s=>{
+                    const sChave=s.periodoChave||'';
+                    const sHerdado=sChave && sChave<dataInicioIgreja.substring(0,7);
+                    return `<div class="p-row">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                        <span style="font-size:12px;font-weight:800;text-transform:uppercase;color:var(--text-primary);">${esc(s.periodo||s.mesReferencia||'-')}</span>
+                        <div>
+                            <span style="font-size:12px;font-weight:800;text-transform:uppercase;color:var(--text-primary);">${esc(s.periodo||s.mesReferencia||'-')}</span>
+                            ${sHerdado?`<span style="font-size:8px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.2);padding:1px 6px;border-radius:100px;display:inline-block;margin-left:4px;">Gestão anterior</span>`:''}
+                        </div>
                         <span style="font-size:14px;font-weight:900;color:#34d399;">${fmt(s.saldoTotal)}</span>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);">
                         <span>Entradas: ${fmt(s.totalEntradas)}</span>
                         <span>${esc(s.dataHoraRegistro||'-')}</span>
                     </div>
-                </div>`).join('');
+                </div>`;}).join('');
 
             // === PRESENÇAS ===
             const evMap = {};

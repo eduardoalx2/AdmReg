@@ -208,6 +208,12 @@
                         </div>
                     </div>
 
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Titular desde</label>
+                        <input type="date" id="pastor-dataInicio" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        <p class="text-[9px] text-slate-400 mt-0.5">Data em que assumiu a titularidade da(s) igreja(s) acima.</p>
+                    </div>
+
                     <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
                         <label class="flex items-center gap-3 cursor-pointer">
                             <input type="checkbox" id="pastor-coordenador" class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500">
@@ -257,6 +263,7 @@
             document.querySelectorAll('input[name="pastor-igrejas-cb"]').forEach(cb => cb.checked = false);
             document.getElementById('pastor-id').value = '';
             document.getElementById('pastor-coordenador').checked = false;
+            document.getElementById('pastor-dataInicio').value = '2025-01-01';
             document.getElementById('search-igreja-modal').value = '';
             filtrarIgrejasModal();
             document.getElementById('modal-titulo').innerHTML = '<i data-lucide="user-plus" class="w-4 h-4"></i> Novo Pastor';
@@ -422,6 +429,7 @@
             document.getElementById('pastor-funcao').value = p.funcao || '';
             document.getElementById('pastor-categoria').value = p.categoria || '';
             document.getElementById('pastor-coordenador').checked = p.coordenador || false;
+            document.getElementById('pastor-dataInicio').value = p.dataInicioIgreja || '2025-01-01';
             const pIgrejas = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
             document.querySelectorAll('input[name="pastor-igrejas-cb"]').forEach(cb => {
                 cb.checked = pIgrejas.includes(cb.value);
@@ -487,6 +495,7 @@
                     funcao: document.getElementById('pastor-funcao').value,
                     categoria: document.getElementById('pastor-categoria').value,
                     coordenador: document.getElementById('pastor-coordenador').checked,
+                    dataInicioIgreja: document.getElementById('pastor-dataInicio').value || '2025-01-01',
                     igreja: igrejasSelecionadas,
                     updatedAt: serverTimestamp()
                 };
