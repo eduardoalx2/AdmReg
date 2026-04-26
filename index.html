@@ -589,8 +589,10 @@
                 globalRecibos.sort((a,b)=>parseEm(b.dataEmissao)-parseEm(a.dataEmissao));
 
                 const today = new Date().toISOString().split('T')[0];
+                const limite30 = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
                 const eventos = [];
-                agendaSnap.forEach(d=>{ const ev=d.data(); if(ev.data>=today && ev.tipo!=='LOCAL') eventos.push({id:d.id,...ev}); });
+                agendaSnap.forEach(d=>{ const ev=d.data(); if(ev.data>=today && ev.data<=limite30 && ev.tipo!=='LOCAL') eventos.push({id:d.id,...ev}); });
+                eventos.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
 
                 const presencas = [];
                 presencasSnap.forEach(d=>{
@@ -600,7 +602,7 @@
                     if(nome.toLowerCase()===lower||(data.igreja||'').toLowerCase().includes(lower)) presencas.push({id:d.id,...data});
                 });
 
-                renderPastorView(saldos, globalRecibos, eventos.slice(0,5), presencas, pastorLinks);
+                renderPastorView(saldos, globalRecibos, eventos, presencas, pastorLinks);
 
             } catch(e) {
                 console.error(e);
