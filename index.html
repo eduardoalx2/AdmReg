@@ -817,8 +817,10 @@
             // === PRESENÇAS ===
             const evMap = {};
             presencas.forEach(p=>{
-                const k=p.eventoId||(p.tipoEvento+'_'+p.dataEvento);
                 const evRef = p.eventoId && eventosMap[p.eventoId];
+                // Ausente só é válido para eventos Inativos
+                if (p.status === 'Ausente' && evRef && evRef.status !== 'Inativo') return;
+                const k=p.eventoId||(p.tipoEvento+'_'+p.dataEvento);
                 const dataAtual = evRef?.data || p.dataEvento;
                 const tipoAtual = evRef?.nome || p.tipoEvento;
                 if(!evMap[k]) evMap[k]={tipo:tipoAtual,data:dataAtual,membros:[]};

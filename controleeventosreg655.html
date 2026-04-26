@@ -387,6 +387,8 @@
                     expectedPastores.forEach(pastor => {
                         const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
                         if (presenca) {
+                            // Ausente só é válido para eventos Inativos
+                            if (presenca.status === 'Ausente' && !eventoInativo) return;
                             displayList.push({ ...presenca, dataEvento: evento.data });
                         } else if (eventoInativo) {
                             // Ausente virtual só gerado se evento estiver Inativo
@@ -407,6 +409,7 @@
 
                     presencasDoEvento.forEach(presenca => {
                         if (!allPastores.some(p => p.nome === presenca.nome)) {
+                            if (presenca.status === 'Ausente' && !eventoInativo) return;
                             displayList.push({ ...presenca, dataEvento: evento.data });
                         }
                     });
@@ -428,6 +431,8 @@
                     expectedPastores.forEach(pastor => {
                         const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
                         if (presenca) {
+                            // Ausente só é válido para eventos Inativos
+                            if (presenca.status === 'Ausente' && !eventoInativo) return;
                             displayList.push({ ...presenca, dataEvento: evento.data });
                         } else if (eventoInativo) {
                             // Ausente virtual só gerado se evento estiver Inativo
@@ -449,6 +454,7 @@
                     // Visitantes (não estão na lista de pastores)
                     presencasDoEvento.forEach(presenca => {
                         if (!allPastores.some(p => p.nome === presenca.nome)) {
+                            if (presenca.status === 'Ausente' && !eventoInativo) return;
                             displayList.push({ ...presenca, dataEvento: evento.data });
                         }
                     });
