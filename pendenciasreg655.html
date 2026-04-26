@@ -41,6 +41,9 @@
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         #modal-box { animation: slideUp 0.2s cubic-bezier(0.34,1.56,0.64,1); }
         @keyframes slideUp { from { opacity:0; transform:translateY(24px) scale(0.97) } to { opacity:1; transform:translateY(0) scale(1) } }
+        .tab-btn-active { background-color: #1e293b; color: #fff; }
+        .tab-btn-inactive { background-color: transparent; color: #64748b; }
+        .tab-btn-inactive:hover { background-color: #f1f5f9; color: #334155; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -72,83 +75,151 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-4">
+
+        <!-- KPIs FINANCEIRO -->
+        <div id="kpi-fin" class="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Igrejas c/ Pendências</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Igrejas c/ Pend. Financeiras</p>
                 <h3 class="text-2xl font-black text-slate-800" id="kpi-igrejas">0</h3>
             </div>
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-b-4 border-b-amber-500">
                 <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Saldos Atrasados</p>
                 <h3 class="text-2xl font-black text-slate-800" id="kpi-saldos">0</h3>
             </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-b-4 border-b-red-500">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-b-4 border-b-red-500 col-span-2 md:col-span-1">
                 <p class="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1">Valores em Aberto</p>
                 <h3 class="text-2xl font-black text-slate-800 tracking-tight" id="kpi-valores">R$ 0,00</h3>
             </div>
+        </div>
+
+        <!-- KPIs FALTAS -->
+        <div id="kpi-fal" class="hidden grid grid-cols-2 gap-4">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-b-4 border-b-purple-500">
-                <p class="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-1">Ausências Recentes</p>
-                <h3 class="text-2xl font-black text-slate-800" id="kpi-ausencias">0</h3>
+                <p class="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-1">Igrejas c/ Ausências</p>
+                <h3 class="text-2xl font-black text-slate-800" id="kpi-igrejas-fal">0</h3>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-b-4 border-b-purple-400">
+                <p class="text-[10px] font-bold text-purple-500 uppercase tracking-widest mb-1">Total de Faltas</p>
+                <h3 class="text-2xl font-black text-slate-800" id="kpi-total-fal">0</h3>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-2">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Igreja</label>
-                    <select id="filtroIgreja" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
-                        <option value="Todas">Todas as Igrejas</option>
-                    </select>
+        <!-- ABAS -->
+        <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-1 flex gap-1">
+            <button id="tab-btn-fin" onclick="mudarAba('financeiro')"
+                class="tab-btn-active flex-1 py-2 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                <i data-lucide="landmark" class="w-3.5 h-3.5"></i> Financeiro
+            </button>
+            <button id="tab-btn-fal" onclick="mudarAba('faltas')"
+                class="tab-btn-inactive flex-1 py-2 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                <i data-lucide="user-x" class="w-3.5 h-3.5"></i> Faltas em Eventos
+            </button>
+        </div>
+
+        <!-- ── TAB FINANCEIRO ─────────────────────────────────────────── -->
+        <div id="tab-fin">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Igreja</label>
+                        <select id="filtroIgreja" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
+                            <option value="Todas">Todas as Igrejas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Mês</label>
+                        <select id="filtroMes" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
+                            <option value="Todos">Todos os Meses</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Pendência</label>
+                        <select id="filtroTipo" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
+                            <option value="Todos">Todas as Pendências</option>
+                            <option value="Saldos">Apenas Saldos Atrasados</option>
+                            <option value="Taxas">Apenas Taxas Pendentes</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="window.limparFiltros()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs uppercase transition-colors shadow-sm h-[34px]">Limpar Filtros</button>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Mês</label>
-                    <select id="filtroMes" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
-                        <option value="Todos">Todos os Meses</option>
-                    </select>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center justify-between">
+                    <h2 class="text-xs font-black uppercase tracking-widest text-slate-600 flex items-center gap-2">
+                        <i data-lucide="list-x" class="w-4 h-4 text-red-500"></i> Detalhamento Financeiro por Igreja
+                    </h2>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="checkApenasPendentes" checked onchange="window.renderizarTabela()" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:block">Apenas com pendências</span>
+                    </label>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Pendência</label>
-                    <select id="filtroTipo" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
-                        <option value="Todos">Todas as Pendências</option>
-                        <option value="Saldos">Apenas Saldos Atrasados</option>
-                        <option value="Taxas">Apenas Taxas Pendentes</option>
-                        <option value="Ausencias">Apenas Ausências</option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button onclick="window.limparFiltros()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs uppercase transition-colors shadow-sm h-[34px]">Limpar Filtros</button>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                <th class="px-4 py-3">Igreja / Pastor</th>
+                                <th class="px-4 py-3 text-center">Saldos Atrasados</th>
+                                <th class="px-4 py-3 text-center">Taxas Pendentes</th>
+                                <th class="px-4 py-3 text-right">Aberto Estimado</th>
+                                <th class="px-4 py-3 text-center">Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-corpo" class="text-sm divide-y divide-slate-50">
+                            <tr><td colspan="5" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Sincronizando dados globais...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-            <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 class="text-xs font-black uppercase tracking-widest text-slate-600 flex items-center gap-2">
-                    <i data-lucide="list-x" class="w-4 h-4 text-red-500"></i> Detalhamento por Igreja
-                </h2>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="checkApenasPendentes" checked onchange="window.renderizarTabela()" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:block">Apenas com pendências</span>
-                </label>
+        <!-- ── TAB FALTAS ─────────────────────────────────────────────── -->
+        <div id="tab-fal" class="hidden space-y-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Igreja</label>
+                        <select id="filtroIgrejaFal" onchange="window.renderizarFaltas()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
+                            <option value="Todas">Todas as Igrejas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar Evento</label>
+                        <select id="filtroEvento" onchange="window.renderizarFaltas()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
+                            <option value="Todos">Todos os Eventos</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="window.limparFiltrosFal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs uppercase transition-colors shadow-sm h-[34px]">Limpar Filtros</button>
+                    </div>
+                </div>
             </div>
-            
-            <div class="overflow-x-auto custom-scrollbar">
-                <table class="w-full text-left whitespace-nowrap">
-                    <thead>
-                        <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                            <th class="px-4 py-3">Igreja / Pastor</th>
-                            <th class="px-4 py-3 text-center">Saldos Atrasados</th>
-                            <th class="px-4 py-3 text-center">Taxas Pendentes</th>
-                            <th class="px-4 py-3 text-right">Aberto Estimado</th>
-                            <th class="px-4 py-3 text-center">Ausências</th>
-                            <th class="px-4 py-3 text-center">Detalhes</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-corpo" class="text-sm divide-y divide-slate-50">
-                        <tr><td colspan="6" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Sincronizando dados globais...</td></tr>
-                    </tbody>
-                </table>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center justify-between">
+                    <h2 class="text-xs font-black uppercase tracking-widest text-slate-600 flex items-center gap-2">
+                        <i data-lucide="user-x" class="w-4 h-4 text-purple-500"></i> Faltas em Eventos Encerrados
+                    </h2>
+                    <span class="text-[9px] font-bold text-purple-500 bg-purple-50 border border-purple-200 px-2 py-1 rounded-lg uppercase tracking-widest">Apenas eventos inativos</span>
+                </div>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                <th class="px-4 py-3">Igreja / Pastor</th>
+                                <th class="px-4 py-3">Evento</th>
+                                <th class="px-4 py-3 text-center">Data</th>
+                                <th class="px-4 py-3 text-center">Contato</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-faltas" class="text-sm divide-y divide-slate-50">
+                            <tr><td colspan="4" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -157,8 +228,6 @@
     <!-- MODAL DETALHES DA IGREJA -->
     <div id="modal-detalhes" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm" onclick="if(event.target===this)window.fecharDetalhes()">
         <div id="modal-box" class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[85vh]">
-
-            <!-- Cabeçalho do modal -->
             <div class="px-5 pt-5 pb-4 border-b border-slate-100 flex-shrink-0">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
@@ -171,11 +240,7 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Conteúdo rolável -->
             <div id="modal-content" class="overflow-y-auto custom-scrollbar flex-1 px-5 py-4 space-y-5"></div>
-
-            <!-- Rodapé com valor e botão -->
             <div class="px-5 py-4 border-t border-slate-100 flex-shrink-0 flex items-center justify-between gap-3 bg-slate-50 rounded-b-3xl sm:rounded-b-2xl">
                 <div>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Valor Est. em Aberto</p>
@@ -195,174 +260,323 @@
         lucide.createIcons();
 
         let dadosOriginais = [];
+        let faltasOriginais = []; // { igrejaNome, pastor, celPastor, eventoNome, eventoData, eventoId }
+        let abaAtiva = 'financeiro';
+
         window.formatMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        // Converte "MM/AAAA" → "AAAA-MM" para comparar com periodoChave
         function mesStrToChave(mesStr) {
             if (!mesStr) return null;
             const [mm, yyyy] = mesStr.split('/');
             return (mm && yyyy) ? `${yyyy}-${mm}` : null;
         }
 
+        // ── Troca de aba ──────────────────────────────────────────────────
+        window.mudarAba = (aba) => {
+            abaAtiva = aba;
+            const isFin = aba === 'financeiro';
+
+            document.getElementById('tab-fin').classList.toggle('hidden', !isFin);
+            document.getElementById('tab-fal').classList.toggle('hidden', isFin);
+            document.getElementById('kpi-fin').classList.toggle('hidden', !isFin);
+            document.getElementById('kpi-fal').classList.toggle('hidden', isFin);
+
+            document.getElementById('tab-btn-fin').className =
+                (isFin ? 'tab-btn-active' : 'tab-btn-inactive') +
+                ' flex-1 py-2 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2';
+            document.getElementById('tab-btn-fal').className =
+                (!isFin ? 'tab-btn-active' : 'tab-btn-inactive') +
+                ' flex-1 py-2 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2';
+
+            if (isFin) window.renderizarTabela();
+            else window.renderizarFaltas();
+            lucide.createIcons();
+        };
+
+        // ── Carregamento de dados ─────────────────────────────────────────
         window.carregarDados = async () => {
-            const tbody = document.getElementById('tabela-corpo');
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-blue-500 text-xs font-bold uppercase tracking-wider"><div class="animate-spin inline-block w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full mr-2 align-middle"></div> Buscando informações...</td></tr>';
-            
+            document.getElementById('tabela-corpo').innerHTML =
+                '<tr><td colspan="5" class="text-center py-10 text-blue-500 text-xs font-bold uppercase tracking-wider"><div class="animate-spin inline-block w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full mr-2 align-middle"></div> Buscando informações...</td></tr>';
+            document.getElementById('tabela-faltas').innerHTML =
+                '<tr><td colspan="4" class="text-center py-10 text-blue-500 text-xs font-bold uppercase tracking-wider">Carregando...</td></tr>';
+
             try {
                 const configSnap = await getDoc(doc(db, "configuracoes", "painel_pastores"));
                 const config = configSnap.exists() ? configSnap.data() : { valorSeguro: 45 };
                 const valorSeguro = config.valorSeguro || 45;
 
-                const [igrejasSnap, pastoresSnap, saldosSnap, recibosSnap, presencasSnap] = await Promise.all([
-                    getDocs(collection(db, "igrejas")), getDocs(collection(db, "pastores")),
-                    getDocs(collection(db, "saldos_virada")), getDocs(collection(db, "recibos")), getDocs(collection(db, "presencas"))
+                const [igrejasSnap, pastoresSnap, saldosSnap, recibosSnap, presencasSnap, eventosSnap] = await Promise.all([
+                    getDocs(collection(db, "igrejas")),
+                    getDocs(collection(db, "pastores")),
+                    getDocs(collection(db, "saldos_virada")),
+                    getDocs(collection(db, "recibos")),
+                    getDocs(collection(db, "presencas")),
+                    getDocs(collection(db, "eventos")),
                 ]);
 
-                const igrejas = []; igrejasSnap.forEach(d => igrejas.push(d.data()));
-                const pastores = []; pastoresSnap.forEach(d => pastores.push(d.data()));
-                const saldos = []; saldosSnap.forEach(d => saldos.push(d.data()));
-                const recibos = []; recibosSnap.forEach(d => recibos.push(d.data()));
+                const igrejas   = []; igrejasSnap.forEach(d => igrejas.push(d.data()));
+                const pastores  = []; pastoresSnap.forEach(d => pastores.push(d.data()));
+                const saldos    = []; saldosSnap.forEach(d => saldos.push(d.data()));
+                const recibos   = []; recibosSnap.forEach(d => recibos.push(d.data()));
                 const presencas = []; presencasSnap.forEach(d => presencas.push(d.data()));
+
+                // Mapa de eventos: id → { nome, data, status }
+                const eventosMap = {};
+                eventosSnap.forEach(d => { eventosMap[d.id] = { id: d.id, ...d.data() }; });
 
                 const hoje = new Date();
                 const limiteDebito = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
                 dadosOriginais = [];
+                faltasOriginais = [];
 
-                const mesesSet = new Set();
+                const mesesSet  = new Set();
+                const eventosSetFal = new Set(); // eventos com ao menos 1 falta
+
                 igrejas.forEach(ig => {
-                    // Escritório regional não paga taxa
                     if (ig.tipo === 'Região Eclesiástica' || ig.tipo === 'Sede Regional') return;
+
                     const cod = String(ig.codigo).padStart(4, '0');
-                    const titular = pastores.find(p => p.funcao === 'Pastor Titular' && (Array.isArray(p.igreja) ? p.igreja.includes(ig.nome) : p.igreja === ig.nome));
+                    const titular = pastores.find(p =>
+                        p.funcao === 'Pastor Titular' &&
+                        (Array.isArray(p.igreja) ? p.igreja.includes(ig.nome) : p.igreja === ig.nome)
+                    );
                     const nomePastor = titular ? titular.nome : 'Sem Titular';
-                    const celPastor = titular ? titular.telefone : '';
-                    
-                    let saldosPendentes = []; let taxasPendentes = [];
-                    let valorEmAberto = 0; let temValorDesconhecido = false;
+                    const celPastor  = titular ? titular.telefone : '';
+
+                    // ── Pendências financeiras ──
+                    let saldosPendentes = [], taxasPendentes = [];
+                    let valorEmAberto = 0, temValorDesconhecido = false;
 
                     let cursor = new Date(2026, 0, 1);
                     while (cursor <= limiteDebito) {
-                        const mm = String(cursor.getMonth() + 1).padStart(2, '0');
-                        const yyyy = cursor.getFullYear();
+                        const mm     = String(cursor.getMonth() + 1).padStart(2, '0');
+                        const yyyy   = cursor.getFullYear();
                         const mesStr = `${mm}/${yyyy}`;
                         mesesSet.add(mesStr);
-                        
-                        const recibo = recibos.find(r => r.referenceDate === mesStr && (r.igrejaCodigo === cod || r.igrejaNome === ig.nome) && (parseFloat(r.regionalTax) || 0) > 0);
+
+                        const recibo = recibos.find(r =>
+                            r.referenceDate === mesStr &&
+                            (r.igrejaCodigo === cod || r.igrejaNome === ig.nome) &&
+                            (parseFloat(r.regionalTax) || 0) > 0
+                        );
                         if (!recibo) {
                             taxasPendentes.push(mesStr);
                             const chave = mesStrToChave(mesStr);
-                        const saldo = saldos.find(s => (s.igrejaCodigo === cod || s.igrejaNome === ig.nome) && (s.periodoChave === chave));
+                            const saldo = saldos.find(s =>
+                                (s.igrejaCodigo === cod || s.igrejaNome === ig.nome) &&
+                                s.periodoChave === chave
+                            );
                             if (!saldo) {
                                 saldosPendentes.push(mesStr);
-                                valorEmAberto += (100 + ((ig.seguros || 0) * valorSeguro));
+                                valorEmAberto += 100 + (ig.seguros || 0) * valorSeguro;
                                 temValorDesconhecido = true;
                             } else {
-                                valorEmAberto += (saldo.entradasTaxadas * 0.04) + 100 + ((ig.seguros || 0) * valorSeguro);
+                                valorEmAberto += (saldo.entradasTaxadas * 0.04) + 100 + (ig.seguros || 0) * valorSeguro;
                             }
                         }
                         cursor.setMonth(cursor.getMonth() + 1);
                     }
-                    const ausenciasLista = presencas.filter(p => p.status === 'Ausente' && (p.igreja || '').includes(ig.nome));
-                    const totalPendencias = saldosPendentes.length + taxasPendentes.length + ausenciasLista.length;
-                    
-                    dadosOriginais.push({ igrejaNome: `${cod} - ${ig.nome}`, pastor: nomePastor, celPastor, saldosPendentes, taxasPendentes, valorEmAberto, temValorDesconhecido, ausencias: ausenciasLista.length, ausenciasLista, totalPendencias });
-                });
-                dadosOriginais.sort((a,b) => parseInt(a.igrejaNome) - parseInt(b.igrejaNome));
 
-                const selectIgreja = document.getElementById('filtroIgreja');
-                selectIgreja.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
+                    // ── Ausências em eventos INATIVOS ──
+                    const ausenciasLista = presencas.filter(p => {
+                        if (p.status !== 'Ausente') return false;
+                        if (!(p.igreja || '').includes(ig.nome)) return false;
+                        const ev = eventosMap[p.eventoId];
+                        return ev && ev.status === 'Inativo';
+                    });
+
+                    // Registra para a aba de faltas
+                    ausenciasLista.forEach(p => {
+                        const ev = eventosMap[p.eventoId] || {};
+                        const nomeEvento = ev.nome || p.tipoEvento || 'Evento Regional';
+                        eventosSetFal.add(nomeEvento);
+                        faltasOriginais.push({
+                            igrejaNome: `${cod} - ${ig.nome}`,
+                            pastor: nomePastor,
+                            celPastor,
+                            eventoNome: nomeEvento,
+                            eventoData: p.dataEvento || ev.data || '',
+                            eventoId: p.eventoId,
+                        });
+                    });
+
+                    const totalPendenciasFinanceiras = saldosPendentes.length + taxasPendentes.length;
+                    const totalPendencias = totalPendenciasFinanceiras + ausenciasLista.length;
+
+                    dadosOriginais.push({
+                        igrejaNome: `${cod} - ${ig.nome}`,
+                        pastor: nomePastor,
+                        celPastor,
+                        saldosPendentes,
+                        taxasPendentes,
+                        valorEmAberto,
+                        temValorDesconhecido,
+                        ausencias: ausenciasLista.length,
+                        ausenciasLista,
+                        totalPendenciasFinanceiras,
+                        totalPendencias,
+                    });
+                });
+
+                dadosOriginais.sort((a, b) => parseInt(a.igrejaNome) - parseInt(b.igrejaNome));
+                faltasOriginais.sort((a, b) => {
+                    const ig = a.igrejaNome.localeCompare(b.igrejaNome);
+                    if (ig !== 0) return ig;
+                    return (a.eventoData || '').localeCompare(b.eventoData || '');
+                });
+
+                // Popula filtros financeiros
+                const selFin = document.getElementById('filtroIgreja');
+                selFin.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
                 dadosOriginais.forEach(d => {
-                    selectIgreja.innerHTML += `<option value="${d.igrejaNome}">${d.igrejaNome}</option>`;
+                    selFin.innerHTML += `<option value="${d.igrejaNome}">${d.igrejaNome}</option>`;
                 });
 
-                const selectMes = document.getElementById('filtroMes');
-                selectMes.innerHTML = '<option value="Todos">Todos os Meses</option>';
-                Array.from(mesesSet).sort((a,b) => {
+                const selMes = document.getElementById('filtroMes');
+                selMes.innerHTML = '<option value="Todos">Todos os Meses</option>';
+                Array.from(mesesSet).sort((a, b) => {
                     const [mA, yA] = a.split('/');
                     const [mB, yB] = b.split('/');
                     return new Date(yB, mB - 1) - new Date(yA, mA - 1);
-                }).forEach(m => {
-                    selectMes.innerHTML += `<option value="${m}">${m}</option>`;
+                }).forEach(m => { selMes.innerHTML += `<option value="${m}">${m}</option>`; });
+
+                // Popula filtros de faltas
+                const selFal = document.getElementById('filtroIgrejaFal');
+                selFal.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
+                [...new Set(faltasOriginais.map(f => f.igrejaNome))].sort().forEach(n => {
+                    selFal.innerHTML += `<option value="${n}">${n}</option>`;
+                });
+
+                const selEv = document.getElementById('filtroEvento');
+                selEv.innerHTML = '<option value="Todos">Todos os Eventos</option>';
+                Array.from(eventosSetFal).sort().forEach(n => {
+                    selEv.innerHTML += `<option value="${n}">${n}</option>`;
                 });
 
                 window.renderizarTabela();
+                window.renderizarFaltas();
+
             } catch (e) {
                 console.error(e);
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500 text-xs font-bold uppercase tracking-wider">Erro ao sincronizar dados: ${e.message || e}</td></tr>`;
+                document.getElementById('tabela-corpo').innerHTML =
+                    `<tr><td colspan="5" class="text-center py-10 text-red-500 text-xs font-bold uppercase">Erro: ${e.message || e}</td></tr>`;
             }
         };
 
+        // ── Tabela financeira ─────────────────────────────────────────────
         window.renderizarTabela = () => {
             const tbody = document.getElementById('tabela-corpo');
             const apenasPendentes = document.getElementById('checkApenasPendentes').checked;
-            const filtroIgreja = document.getElementById('filtroIgreja').value;
-            const filtroMes = document.getElementById('filtroMes').value;
-            const filtroTipo = document.getElementById('filtroTipo').value;
+            const filtroIgreja   = document.getElementById('filtroIgreja').value;
+            const filtroMes      = document.getElementById('filtroMes').value;
+            const filtroTipo     = document.getElementById('filtroTipo').value;
 
             const filtrados = dadosOriginais.filter(d => {
-                if (apenasPendentes && d.totalPendencias === 0) return false;
+                if (apenasPendentes && d.totalPendenciasFinanceiras === 0) return false;
                 if (filtroIgreja !== 'Todas' && d.igrejaNome !== filtroIgreja) return false;
-                
-                if (filtroTipo !== 'Todos') {
-                    if (filtroTipo === 'Saldos' && d.saldosPendentes.length === 0) return false;
-                    if (filtroTipo === 'Taxas' && d.taxasPendentes.length === 0) return false;
-                    if (filtroTipo === 'Ausencias' && d.ausencias === 0) return false;
-                }
-
+                if (filtroTipo === 'Saldos' && d.saldosPendentes.length === 0) return false;
+                if (filtroTipo === 'Taxas'  && d.taxasPendentes.length === 0)  return false;
                 if (filtroMes !== 'Todos') {
-                    const temSaldoNoMes = d.saldosPendentes.includes(filtroMes);
-                    const temTaxaNoMes = d.taxasPendentes.includes(filtroMes);
-                    const temAusenciaNoMes = d.ausenciasLista.some(a => {
-                        if(!a.dataEvento) return false;
-                        const [y, m] = a.dataEvento.split('-');
-                        return `${m}/${y}` === filtroMes;
-                    });
-                    if (!temSaldoNoMes && !temTaxaNoMes && !temAusenciaNoMes) return false;
+                    const temS = d.saldosPendentes.includes(filtroMes);
+                    const temT = d.taxasPendentes.includes(filtroMes);
+                    if (!temS && !temT) return false;
                 }
                 return true;
             });
 
-            let stSaldos = 0, stValores = 0, stAusencias = 0;
+            let stSaldos = 0, stValores = 0;
             tbody.innerHTML = '';
 
-            if (filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhuma pendência encontrada! 🎉</td></tr>';
-            else {
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhuma pendência financeira encontrada! 🎉</td></tr>';
+            } else {
                 filtrados.forEach(d => {
-                    stSaldos += d.saldosPendentes.length; stValores += d.valorEmAberto; stAusencias += d.ausencias;
-                    const temPendencia = d.totalPendencias > 0;
-                    const rowClass = temPendencia ? 'row-pendente' : '';
-                    const rowClick = temPendencia ? `onclick="window.abrirDetalhes('${d.igrejaNome.replace(/'/g,"\\\'")}')"` : '';
+                    stSaldos += d.saldosPendentes.length;
+                    stValores += d.valorEmAberto;
+                    const temPend = d.totalPendenciasFinanceiras > 0;
+                    const rowClass = temPend ? 'row-pendente' : '';
+                    const rowClick = temPend ? `onclick="window.abrirDetalhes('${d.igrejaNome.replace(/'/g,"\\'")}')"` : '';
                     tbody.innerHTML += `
                         <tr class="${rowClass} transition-colors" ${rowClick}>
                             <td class="px-4 py-3">
                                 <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                    ${temPendencia ? '<span class="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0 inline-block"></span>' : ''}
+                                    ${temPend ? '<span class="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0 inline-block"></span>' : ''}
                                     ${d.igrejaNome}
                                 </div>
                                 <div class="text-[10px] text-slate-500 font-medium">${d.pastor}</div>
                             </td>
-                            <td class="px-4 py-3 text-center">${d.saldosPendentes.length > 0 ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.saldosPendentes.length} meses</span>` : `<span class="text-slate-300 text-xl leading-none">&bull;</span>`}</td>
-                            <td class="px-4 py-3 text-center">${d.taxasPendentes.length > 0 ? `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.taxasPendentes.length} taxas</span>` : `<span class="text-slate-300 text-xl leading-none">&bull;</span>`}</td>
+                            <td class="px-4 py-3 text-center">${d.saldosPendentes.length > 0 ? `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.saldosPendentes.length} meses</span>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}</td>
+                            <td class="px-4 py-3 text-center">${d.taxasPendentes.length > 0 ? `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.taxasPendentes.length} taxas</span>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}</td>
                             <td class="px-4 py-3 text-right text-xs ${d.valorEmAberto > 0 ? 'text-red-600 font-bold' : 'text-slate-400'}">${window.formatMoeda(d.valorEmAberto)}${d.temValorDesconhecido && d.valorEmAberto > 0 ? '*' : ''}</td>
-                            <td class="px-4 py-3 text-center">${d.ausencias > 0 ? `<span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.ausencias} faltas</span>` : `<span class="text-slate-300 text-xl leading-none">&bull;</span>`}</td>
-                            <td class="px-4 py-3 text-center">${temPendencia ? `<button onclick="event.stopPropagation();window.abrirDetalhes('${d.igrejaNome.replace(/'/g,"\\\'")}')" class="bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 p-1.5 rounded-lg transition-colors" title="Ver detalhes"><i data-lucide="eye" class="w-4 h-4"></i></button>` : `<span class="text-slate-300 text-xl leading-none">&bull;</span>`}</td>
+                            <td class="px-4 py-3 text-center">${temPend ? `<button onclick="event.stopPropagation();window.abrirDetalhes('${d.igrejaNome.replace(/'/g,"\\'")}') " class="bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 p-1.5 rounded-lg transition-colors"><i data-lucide="eye" class="w-4 h-4"></i></button>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}</td>
                         </tr>`;
                 });
             }
-            document.getElementById('kpi-igrejas').textContent = filtrados.length; document.getElementById('kpi-saldos').textContent = stSaldos;
-            document.getElementById('kpi-valores').textContent = window.formatMoeda(stValores); document.getElementById('kpi-ausencias').textContent = stAusencias;
+
+            document.getElementById('kpi-igrejas').textContent = filtrados.filter(d => d.totalPendenciasFinanceiras > 0).length;
+            document.getElementById('kpi-saldos').textContent  = stSaldos;
+            document.getElementById('kpi-valores').textContent = window.formatMoeda(stValores);
+            lucide.createIcons();
+        };
+
+        // ── Tabela de faltas ──────────────────────────────────────────────
+        window.renderizarFaltas = () => {
+            const tbody      = document.getElementById('tabela-faltas');
+            const filtroIg   = document.getElementById('filtroIgrejaFal').value;
+            const filtroEv   = document.getElementById('filtroEvento').value;
+
+            const filtrados = faltasOriginais.filter(f => {
+                if (filtroIg !== 'Todas' && f.igrejaNome !== filtroIg) return false;
+                if (filtroEv !== 'Todos' && f.eventoNome !== filtroEv) return false;
+                return true;
+            });
+
+            tbody.innerHTML = '';
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhuma falta encontrada em eventos encerrados! 🎉</td></tr>';
+            } else {
+                filtrados.forEach(f => {
+                    const dtFmt = f.eventoData ? f.eventoData.split('-').reverse().join('/') : '—';
+                    const waBtn = f.celPastor
+                        ? `<button onclick="window.waFalta('${f.igrejaNome.replace(/'/g,"\\'")}')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 p-1.5 rounded-lg transition-colors border border-emerald-200" title="WhatsApp"><i data-lucide="message-circle" class="w-4 h-4"></i></button>`
+                        : '<span class="text-slate-300 text-xs">—</span>';
+                    tbody.innerHTML += `
+                        <tr class="transition-colors hover:bg-slate-50">
+                            <td class="px-4 py-3">
+                                <div class="text-xs font-bold text-slate-800">${f.igrejaNome}</div>
+                                <div class="text-[10px] text-slate-500 font-medium">${f.pastor}</div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-1 rounded-lg">${f.eventoNome}</span>
+                            </td>
+                            <td class="px-4 py-3 text-center text-xs font-semibold text-slate-500">${dtFmt}</td>
+                            <td class="px-4 py-3 text-center">${waBtn}</td>
+                        </tr>`;
+                });
+            }
+
+            const igrejasComFalta = new Set(filtrados.map(f => f.igrejaNome)).size;
+            document.getElementById('kpi-igrejas-fal').textContent = igrejasComFalta;
+            document.getElementById('kpi-total-fal').textContent   = filtrados.length;
             lucide.createIcons();
         };
 
         window.limparFiltros = () => {
             document.getElementById('filtroIgreja').value = 'Todas';
-            document.getElementById('filtroMes').value = 'Todos';
-            document.getElementById('filtroTipo').value = 'Todos';
+            document.getElementById('filtroMes').value    = 'Todos';
+            document.getElementById('filtroTipo').value   = 'Todos';
             document.getElementById('checkApenasPendentes').checked = true;
             window.renderizarTabela();
         };
 
-        // ── helpers ──────────────────────────────────────────────────────
+        window.limparFiltrosFal = () => {
+            document.getElementById('filtroIgrejaFal').value = 'Todas';
+            document.getElementById('filtroEvento').value    = 'Todos';
+            window.renderizarFaltas();
+        };
+
+        // ── helpers ───────────────────────────────────────────────────────
         function mesLongo(mesStr) {
             const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
             const [mm, yyyy] = mesStr.split('/');
@@ -384,6 +598,13 @@
             if (n.length>=10) { if (n.length<=11) n='55'+n; window.open(`https://wa.me/${n}?text=${encodeURIComponent(msg)}`,'_blank'); }
             else window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
         }
+
+        // WhatsApp rápido direto da linha da falta (só para aquele evento)
+        window.waFalta = (igrejaNome) => {
+            const d = dadosOriginais.find(i => i.igrejaNome === igrejaNome);
+            if (!d) return;
+            window.enviarCobrancaFormal(igrejaNome);
+        };
 
         // ── modal detalhes ────────────────────────────────────────────────
         window.abrirDetalhes = (n) => {
@@ -427,7 +648,7 @@
                 html += `<div>
                     <div class="flex items-center gap-2 mb-2">
                         <span class="w-2 h-2 rounded-full bg-purple-400"></span>
-                        <h3 class="text-[10px] font-black uppercase tracking-widest text-purple-700">Ausências em Eventos</h3>
+                        <h3 class="text-[10px] font-black uppercase tracking-widest text-purple-700">Ausências em Eventos (encerrados)</h3>
                         <span class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-0.5 rounded-full">${d.ausenciasLista.length}</span>
                     </div>
                     <div class="space-y-1.5">
@@ -452,9 +673,7 @@
             lucide.createIcons();
         };
 
-        window.fecharDetalhes = () => {
-            document.getElementById('modal-detalhes').classList.add('hidden');
-        };
+        window.fecharDetalhes = () => { document.getElementById('modal-detalhes').classList.add('hidden'); };
         document.addEventListener('keydown', e => { if (e.key==='Escape') window.fecharDetalhes(); });
 
         // ── mensagem formal WhatsApp ───────────────────────────────────────
@@ -462,11 +681,8 @@
             const d = dadosOriginais.find(i => i.igrejaNome === n);
             if (!d) return;
             const prNome = d.pastor.split(' ').slice(0,2).join(' ');
-            let msg = `*ESCRITÓRIO REGIONAL — REGIÃO 655*\n`;
-            msg += `_Londrina/PR_\n`;
-            msg += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-            msg += `Prezado(a) Pr. ${prNome},\n\n`;
-            msg += `Em nome do *Escritório da Região 655*, comunicamos que foram identificadas pendências em nosso sistema referentes à *${d.igrejaNome}*:\n\n`;
+            let msg = `*ESCRITÓRIO REGIONAL — REGIÃO 655*\n_Londrina/PR_\n━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+            msg += `Prezado(a) Pr. ${prNome},\n\nEm nome do *Escritório da Região 655*, comunicamos que foram identificadas pendências referentes à *${d.igrejaNome}*:\n\n`;
             if (d.saldosPendentes.length > 0) {
                 msg += `📊 *Saldos de Virada Pendentes:*\n`;
                 d.saldosPendentes.forEach(m => msg += `   • ${mesLongo(m)}\n`);
@@ -478,7 +694,7 @@
                 msg += '\n';
             }
             if (d.ausenciasLista && d.ausenciasLista.length > 0) {
-                msg += `👤 *Ausências Registradas:*\n`;
+                msg += `👤 *Ausências em Eventos:*\n`;
                 d.ausenciasLista.forEach(a => {
                     const ev = a.nomeEvento || a.evento || a.tipoEvento || 'Evento Regional';
                     const dt = a.dataEvento ? ' — ' + dataFmt(a.dataEvento) : '';
@@ -489,11 +705,7 @@
             if (d.valorEmAberto > 0) {
                 msg += `💰 *Valor estimado em aberto:* ${window.formatMoeda(d.valorEmAberto)}${d.temValorDesconhecido ? '*' : ''}\n\n`;
             }
-            msg += `Solicitamos, gentilmente, a regularização das pendências acima o quanto antes.\n`;
-            msg += `Em caso de dúvidas, entre em contato com a Secretaria Regional.\n\n`;
-            msg += `Atenciosamente,\n`;
-            msg += `*Escritório da Região 655*\n`;
-            msg += `Secretaria Regional — Londrina/PR`;
+            msg += `Solicitamos, gentilmente, a regularização das pendências acima o quanto antes.\nEm caso de dúvidas, entre em contato com a Secretaria Regional.\n\nAtenciosamente,\n*Escritório da Região 655*\nSecretaria Regional — Londrina/PR`;
             waOpen(d.celPastor, msg);
         };
 
