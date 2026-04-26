@@ -907,15 +907,6 @@
                     <!-- COL DIREITA -->
                     <div style="display:flex;flex-direction:column;gap:14px;">
 
-                        <!-- Próximos Eventos -->
-                        <div class="p-card">
-                            <div class="p-card-hdr">
-                                <span class="p-card-hdr-title">🗓️ Próximos Eventos</span>
-                                <a href="agendarapidareg655.html" style="font-size:10px;color:var(--accent);text-decoration:none;font-weight:700;">Ver Agenda ↗</a>
-                            </div>
-                            ${agendaHtml}
-                        </div>
-
                         <!-- Meus Últimos Recibos -->
                         <div class="p-card">
                             <button class="p-collapsible-btn p-card-hdr" onclick="toggleP('recibos',this)">
@@ -941,6 +932,15 @@
                                 <span class="p-chevron" id="chev-presencas">▼</span>
                             </button>
                             <div id="sec-presencas" style="display:none;max-height:500px;overflow-y:auto;padding:12px;">${presencasHtml}</div>
+                        </div>
+
+                        <!-- Próximos Eventos -->
+                        <div class="p-card">
+                            <div class="p-card-hdr">
+                                <span class="p-card-hdr-title">🗓️ Próximos Eventos</span>
+                                <a href="agendarapidareg655.html" style="font-size:10px;color:var(--accent);text-decoration:none;font-weight:700;">Ver Agenda ↗</a>
+                            </div>
+                            ${agendaHtml}
                         </div>
 
                     </div>
