@@ -159,22 +159,33 @@
             </div>
         </div>
 
-        <!-- TABELA -->
+        <!-- TABELA / CARDS -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                 <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                    <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Lista de Lançamentos
+                    <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Lançamentos
                 </h2>
-                <div class="flex flex-wrap gap-1.5 text-[9px] font-black uppercase tracking-wider">
-                    <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200" id="countTotal">Total: 0</span>
-                    <span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded border border-emerald-200" id="countPresentes">Presentes: 0</span>
-                    <span class="bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200" id="countAusentes">Ausentes: 0</span>
-                    <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-200" id="countJustificados">Justif: 0</span>
-                    <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200" id="countConsolidadas">Consol: 0</span>
+                <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap gap-1.5 text-[9px] font-black uppercase tracking-wider">
+                        <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200" id="countTotal">Total: 0</span>
+                        <span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded border border-emerald-200" id="countPresentes">Presentes: 0</span>
+                        <span class="bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200" id="countAusentes">Ausentes: 0</span>
+                        <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-200" id="countJustificados">Justif: 0</span>
+                        <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200" id="countConsolidadas">Consol: 0</span>
+                    </div>
+                    <!-- Toggle de visualização -->
+                    <button id="btnToggleView" onclick="window.toggleView()" title="Alternar visualização"
+                        class="flex-shrink-0 p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                        <i data-lucide="list" class="w-3.5 h-3.5" id="iconToggleView"></i>
+                    </button>
                 </div>
             </div>
-            
-            <div class="overflow-x-auto custom-scrollbar">
+
+            <!-- VIEW: CARDS (padrão) -->
+            <div id="viewCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+
+            <!-- VIEW: LISTA -->
+            <div id="viewLista" class="hidden overflow-x-auto custom-scrollbar">
                 <table class="w-full text-left border-collapse min-w-[700px]">
                     <thead>
                         <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
@@ -264,6 +275,17 @@
         let allEventos = [];
         let allPastores = [];
         let currentDisplayList = [];
+        let viewMode = 'cards'; // 'cards' | 'lista'
+
+        window.toggleView = () => {
+            viewMode = viewMode === 'cards' ? 'lista' : 'cards';
+            const isCards = viewMode === 'cards';
+            document.getElementById('viewCards').classList.toggle('hidden', !isCards);
+            document.getElementById('viewLista').classList.toggle('hidden', isCards);
+            // troca ícone: lista quando está em cards (para ir pra lista), grid quando está em lista
+            document.getElementById('iconToggleView').setAttribute('data-lucide', isCards ? 'list' : 'layout-grid');
+            if (window.lucide) window.lucide.createIcons();
+        };
 
         async function loadData() {
             try {
@@ -334,10 +356,12 @@
             const filterIg = document.getElementById("filterIgreja").value;
             const filterNome = document.getElementById("filterNome").value.toLowerCase();
 
-            const tbody = document.getElementById("tabelaPresencas");
-            const pbody = document.getElementById("printTabelaPresencas");
+            const tbody  = document.getElementById("tabelaPresencas");
+            const pbody  = document.getElementById("printTabelaPresencas");
+            const cards  = document.getElementById("viewCards");
             tbody.innerHTML = '';
             pbody.innerHTML = '';
+            cards.innerHTML = '';
 
             // Oculta coluna de ações para não-admins
             const thAcoes = document.querySelector('th.pb-3.px-2.text-right');
@@ -537,7 +561,38 @@
                     <td class="py-3 px-2 text-right">${actions}</td>
                 `;
                 tbody.appendChild(tr);
-                
+
+                // Card
+                const cardActionsHtml = isAdmin ? `
+                    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 justify-end">
+                        <button onclick="window.openEdit('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors" title="Editar">
+                            <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                        ${!p.isVirtual && p.status === 'Ausente' && !p.consolidada ? `
+                        <button onclick="window.markConsolidated('${p.id}')" class="text-emerald-500 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 p-2 rounded-lg transition-colors" title="Consolidar">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                        </button>` : ''}
+                    </div>` : '';
+
+                const card = document.createElement('div');
+                card.className = 'bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col gap-1 hover:shadow-md transition-shadow';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <p class="font-black text-xs text-slate-800 leading-snug truncate">${p.nome}</p>
+                            <p class="text-[10px] font-medium text-slate-500 truncate">${p.igreja || '-'}</p>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    <div class="mt-2 flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-1 rounded-lg">${p.tipoEvento}</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase">${dataFormatada}</span>
+                    </div>
+                    ${p.motivo && p.motivo !== 'Não registrou presença' ? `<p class="text-[10px] text-slate-500 mt-1 italic leading-snug">${p.motivo}</p>` : ''}
+                    ${cardActionsHtml}
+                `;
+                cards.appendChild(card);
+
                 // Prepara também a versão impressa
                 let statusBadgeText = '';
                 if(p.status === 'Presente') statusBadgeText = 'PRESENTE';
@@ -572,6 +627,8 @@
             document.getElementById('printCountConsolidadas').textContent = cConsolidadas;
 
             if(filtered.length === 0) {
+                const emptyMsg = '<p class="col-span-full text-center py-10 text-slate-400 text-[10px] font-bold uppercase tracking-widest">NENHUM REGISTRO ENCONTRADO PARA OS FILTROS.</p>';
+                cards.innerHTML = emptyMsg;
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 text-[10px] font-bold uppercase tracking-widest">NENHUM REGISTRO ENCONTRADO PARA OS FILTROS.</td></tr>';
                 pbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 italic text-slate-400">NENHUM DADO PARA EXIBIR COM OS FILTROS ATUAIS</td></tr>';
             }
