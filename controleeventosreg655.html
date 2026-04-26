@@ -349,21 +349,23 @@
                 const evento = allEventos.find(ev => ev.id === filterEv);
                 if (evento) {
                     const publico = evento.publico || 'Todos';
+                    const eventoInativo = evento.status === 'Inativo';
                     const presencasDoEvento = allPresencas.filter(p => p.eventoId === filterEv);
-                    
+
                     const expectedPastores = allPastores.filter(p => {
                         if (publico === 'Titulares') return p.funcao === 'Pastor Titular';
                         if (publico === 'Coordenadores') return p.coordenador === true;
                         if (publico === 'TitularesECoordenadores') return p.funcao === 'Pastor Titular' || p.coordenador === true;
                         if (publico === 'Todos' || publico === 'PublicoGeral') return true;
-                        return true; // Default to all if audience is not specified
+                        return true;
                     });
 
                     expectedPastores.forEach(pastor => {
                         const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
                         if (presenca) {
                             displayList.push(presenca);
-                        } else {
+                        } else if (eventoInativo) {
+                            // Ausente virtual só gerado se evento estiver Inativo
                             const igrejaInfo = Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : pastor.igreja;
                             displayList.push({
                                 id: `virtual_${pastor.id}_${evento.id}`,
@@ -389,6 +391,7 @@
                 // Gera lista completa (reais + virtuais) para todos os eventos
                 allEventos.forEach(evento => {
                     const publico = evento.publico || 'Todos';
+                    const eventoInativo = evento.status === 'Inativo';
                     const presencasDoEvento = allPresencas.filter(p => p.eventoId === evento.id);
 
                     const expectedPastores = allPastores.filter(p => {
@@ -402,7 +405,8 @@
                         const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
                         if (presenca) {
                             displayList.push(presenca);
-                        } else {
+                        } else if (eventoInativo) {
+                            // Ausente virtual só gerado se evento estiver Inativo
                             const igrejaInfo = Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : pastor.igreja;
                             displayList.push({
                                 id: `virtual_${pastor.id}_${evento.id}`,
