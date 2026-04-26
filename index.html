@@ -740,15 +740,18 @@
 
             // === AGENDA ===
             const meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+            const dias  = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
             const agendaHtml = eventos.length === 0
                 ? `<p style="font-size:12px;color:var(--text-muted);font-style:italic;text-align:center;padding:24px 16px;">Nenhum evento futuro agendado.</p>`
                 : eventos.map(ev => {
                     const[y,m,d]=ev.data.split('-');
+                    const diaSemana = dias[new Date(+y,+m-1,+d).getDay()];
                     const badge={REGIONAL:'color:#60a5fa;background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.25);',CED:'color:#fbbf24;background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.25);',CND:'color:#34d399;background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.25);'}[ev.tipo?.toUpperCase()]||'color:var(--text-secondary);background:rgba(255,255,255,0.05);border-color:var(--border);';
                     return `<div class="agenda-item">
                         <div class="agenda-date">
                             <div style="font-size:20px;font-weight:900;color:var(--text-primary);line-height:1;">${d}</div>
-                            <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-top:2px;">${meses[parseInt(m)-1]}</div>
+                            <div style="font-size:9px;font-weight:800;color:var(--text-primary);text-transform:uppercase;margin-top:1px;opacity:0.7;">${diaSemana}</div>
+                            <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-top:1px;">${meses[parseInt(m)-1]}</div>
                         </div>
                         <div style="flex:1;min-width:0;padding-top:2px;">
                             <div style="margin-bottom:5px;"><span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:2px 7px;border-radius:100px;border:1px solid;${badge}">${ev.tipo||'Evento'}</span></div>
