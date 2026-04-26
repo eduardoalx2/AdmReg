@@ -551,14 +551,15 @@
             }
 
             try {
-                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap, layoutSnap] = await Promise.all([
+                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap, layoutSnap, eventosSnap] = await Promise.all([
                     getDoc(doc(db, 'configuracoes', 'painel_pastores')),
                     getDocs(query(collection(db, 'igrejas'), where('nome','==',igrejaAtiva))),
                     getDocs(collection(db, 'saldos_virada')),
                     getDocs(collection(db, 'recibos')),
                     getDocs(query(collection(db, 'agenda'), orderBy('data','asc'))),
                     getDocs(collection(db, 'presencas')),
-                    getDoc(doc(db, 'configuracoes', 'layout'))
+                    getDoc(doc(db, 'configuracoes', 'layout')),
+                    getDocs(collection(db, 'eventos'))
                 ]);
 
                 if (cfgSnap.exists()) configPainel = cfgSnap.data();
@@ -594,6 +595,9 @@
                 agendaSnap.forEach(d=>{ const ev=d.data(); if(ev.data>=today && ev.data<=limite30 && ev.tipo!=='LOCAL') eventos.push({id:d.id,...ev}); });
                 eventos.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
 
+                const eventosMap = {};
+                eventosSnap.forEach(d=>{ eventosMap[d.id] = d.data(); });
+
                 const presencas = [];
                 presencasSnap.forEach(d=>{
                     const data=d.data();
@@ -602,7 +606,7 @@
                     if(nome.toLowerCase()===lower||(data.igreja||'').toLowerCase().includes(lower)) presencas.push({id:d.id,...data});
                 });
 
-                renderPastorView(saldos, globalRecibos, eventos, presencas, pastorLinks);
+                renderPastorView(saldos, globalRecibos, eventos, presencas, pastorLinks, eventosMap);
 
             } catch(e) {
                 console.error(e);
@@ -650,7 +654,7 @@
             </div>`;
         }
 
-        function renderPastorView(saldos, recibos, eventos, presencas, pastorLinks = []) {
+        function renderPastorView(saldos, recibos, eventos, presencas, pastorLinks = [], eventosMap = {}) {
             const hoje = new Date();
             const mesAtualNum = hoje.getMonth();
             const anoAtual = hoje.getFullYear();
@@ -814,7 +818,10 @@
             const evMap = {};
             presencas.forEach(p=>{
                 const k=p.eventoId||(p.tipoEvento+'_'+p.dataEvento);
-                if(!evMap[k]) evMap[k]={tipo:p.tipoEvento,data:p.dataEvento,membros:[]};
+                const evRef = p.eventoId && eventosMap[p.eventoId];
+                const dataAtual = evRef?.data || p.dataEvento;
+                const tipoAtual = evRef?.nome || p.tipoEvento;
+                if(!evMap[k]) evMap[k]={tipo:tipoAtual,data:dataAtual,membros:[]};
                 evMap[k].membros.push(p);
             });
             const evList = Object.values(evMap).sort((a,b)=>(b.data||'').localeCompare(a.data||''));

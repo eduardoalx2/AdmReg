@@ -387,7 +387,7 @@
                     expectedPastores.forEach(pastor => {
                         const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
                         if (presenca) {
-                            displayList.push(presenca);
+                            displayList.push({ ...presenca, dataEvento: evento.data });
                         } else if (eventoInativo) {
                             // Ausente virtual só gerado se evento estiver Inativo
                             const igrejaInfo = Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : pastor.igreja;
@@ -407,7 +407,7 @@
 
                     presencasDoEvento.forEach(presenca => {
                         if (!allPastores.some(p => p.nome === presenca.nome)) {
-                            displayList.push(presenca); // Add visitors
+                            displayList.push({ ...presenca, dataEvento: evento.data });
                         }
                     });
                 }
@@ -428,7 +428,7 @@
                     expectedPastores.forEach(pastor => {
                         const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
                         if (presenca) {
-                            displayList.push(presenca);
+                            displayList.push({ ...presenca, dataEvento: evento.data });
                         } else if (eventoInativo) {
                             // Ausente virtual só gerado se evento estiver Inativo
                             const igrejaInfo = Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : pastor.igreja;
@@ -449,7 +449,7 @@
                     // Visitantes (não estão na lista de pastores)
                     presencasDoEvento.forEach(presenca => {
                         if (!allPastores.some(p => p.nome === presenca.nome)) {
-                            displayList.push(presenca);
+                            displayList.push({ ...presenca, dataEvento: evento.data });
                         }
                     });
                 });
