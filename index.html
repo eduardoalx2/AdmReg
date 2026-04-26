@@ -667,7 +667,7 @@
             </div>`;
         }
 
-        function renderPastorView(saldos, recibos, eventos, presencas, pastorLinks = [], eventosMap = {}) {
+        function renderPastorView(saldos, recibos, eventos, presencas, pastorLinks = [], eventosMap = {}, dataInicioIgreja = '2025-01-01') {
             const hoje = new Date();
             const mesAtualNum = hoje.getMonth();
             const anoAtual = hoje.getFullYear();
