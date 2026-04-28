@@ -230,7 +230,8 @@
             const [recentReceipts, setRecentReceipts] = useState([]);
             const fileInputRef = useRef(null);
 
-            const [autoFillState, setAutoFillState] = useState('normal'); 
+            const [autoFillState, setAutoFillState] = useState('normal');
+            const [taxaJaPaga, setTaxaJaPaga] = useState(false);
 
             // Lógica para transformar "DEZ/2025 > JAN/2026" em "01/2026"
             const extractFirstMonthYear = (compStr) => {
@@ -265,21 +266,35 @@
                 async function checkData() {
                     if (!selectedChurch || referenceDate.length !== 7 || !window.firebaseGlobal) {
                         if (autoFillState !== 'normal') { setAutoFillState('normal'); }
+                        setTaxaJaPaga(false);
                         return;
                     }
 
                     try {
                         const { db, collection, getDocs, query, where } = window.firebaseGlobal;
-                        
+
                         const currentChurchData = churches.find(c => c.code === selectedChurch);
                         const defaultSeguros = currentChurchData ? (currentChurchData.seguros || 0) : 0;
 
                         setInsuranceCount(defaultSeguros);
 
-                        // 2. Verificar se existe "Saldo de Virada" para copiar Entradas
+                        // Verificar se já existe recibo com taxa regional paga para essa igreja/mês
+                        const qRecibo = query(
+                            collection(db, "recibos"),
+                            where("igrejaCodigo", "==", selectedChurch),
+                            where("referenceDate", "==", referenceDate)
+                        );
+                        const snapRecibo = await getDocs(qRecibo);
+                        let jaPago = false;
+                        snapRecibo.forEach(d => {
+                            if ((parseFloat(d.data().regionalTax) || 0) > 0) jaPago = true;
+                        });
+                        setTaxaJaPaga(jaPago);
+
+                        // Verificar se existe "Saldo de Virada" para copiar Entradas
                         const qSaldo = query(collection(db, "saldos_virada"), where("igrejaCodigo", "==", selectedChurch));
                         const snapSaldo = await getDocs(qSaldo);
-                        
+
                         let foundSaldo = null;
                         snapSaldo.forEach(doc => {
                             const data = doc.data();
@@ -504,7 +519,10 @@
             let mainBgColor = "bg-slate-800";
             let titleColor = "text-emerald-400";
 
-            if (autoFillState === 'draft_saldo') {
+            if (taxaJaPaga) {
+                mainBgColor = "bg-green-800";
+                titleColor = "text-green-400";
+            } else if (autoFillState === 'draft_saldo') {
                 cardBgClass = "bg-amber-50/40";
                 cardBorderClass = "border-amber-300";
                 iconColorClass = "text-amber-500";
