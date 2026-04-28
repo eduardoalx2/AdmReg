@@ -204,8 +204,13 @@
                     </div>
 
                     <div class="md:col-span-2">
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Local / Endereço</label>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Local (Nome do Lugar)</label>
                         <input type="text" id="agenda-local" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold uppercase" placeholder="Ex: IEQ SEDE - LONDRINA">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Endereço Completo <span class="text-slate-400 font-normal normal-case">(usado no Google Agenda)</span></label>
+                        <input type="text" id="agenda-endereco" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" placeholder="Ex: Rua Exemplo, 123 - Centro, Londrina/PR">
                     </div>
 
                     <div class="md:col-span-2">
@@ -397,6 +402,7 @@
             document.getElementById('agenda-tipo').value = e.tipo || 'REGIONAL';
             document.getElementById('agenda-ministerio').value = e.ministerio || '';
             document.getElementById('agenda-local').value = e.local || '';
+            document.getElementById('agenda-endereco').value = e.endereco || '';
             document.getElementById('agenda-link').value = e.link || '';
             
             document.getElementById('modal-titulo').innerHTML = '<i data-lucide="edit" class="w-4 h-4"></i> Editar Evento';
@@ -433,6 +439,7 @@
                     tipo: document.getElementById('agenda-tipo').value,
                     ministerio: document.getElementById('agenda-ministerio').value.trim().toUpperCase(),
                     local: document.getElementById('agenda-local').value.trim().toUpperCase(),
+                    endereco: document.getElementById('agenda-endereco').value.trim(),
                     link: document.getElementById('agenda-link').value.trim(),
                     updatedAt: serverTimestamp()
                 };
@@ -456,7 +463,11 @@
 
         function buildGCalUrl(ev) {
             const nome = encodeURIComponent(ev.evento || '');
-            const local = encodeURIComponent(ev.local || '');
+            // Usa endereço completo se disponível, senão cai para o nome do local
+            const localGcal = ev.endereco
+                ? (ev.local ? `${ev.local} — ${ev.endereco}` : ev.endereco)
+                : (ev.local || '');
+            const local = encodeURIComponent(localGcal);
             const detalhes = encodeURIComponent(ev.link ? `Mais informações: ${ev.link}` : 'Evento IEQ Região 655');
 
             let dates;
@@ -495,6 +506,7 @@
             msg += `📆 Data: ${dataFormatada}${diaSemana}\n`;
             if (ev.horario) msg += `🕐 Horário: ${ev.horario}${ev.duracao ? ` (${ev.duracao}h)` : ''}\n`;
             if (ev.local) msg += `📍 Local: ${ev.local}\n`;
+            if (ev.endereco) msg += `🗺️ Endereço: ${ev.endereco}\n`;
             if (ev.ministerio && ev.ministerio !== 'GERAL') msg += `👥 Ministério: ${ev.ministerio}\n`;
             if (ev.link) msg += `🔗 Inscrições: ${ev.link}\n`;
             msg += `\n📲 *Adicionar ao Google Agenda:*\n${gcalUrl}`;
