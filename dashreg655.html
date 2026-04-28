@@ -346,10 +346,11 @@
                 querySnapshot.forEach((doc) => {
                     const r = doc.data();
                     
-                    let comp = r.referenceDate || "S/D";
-                    if (r.dataEmissao && r.dataEmissao.length >= 10) {
-                        comp = r.dataEmissao.substring(3); // Extrai apenas o MM/AAAA da data de emissão
+                    let comp = r.referenceDate;
+                    if (!comp && r.dataEmissao && r.dataEmissao.length >= 10) {
+                        comp = r.dataEmissao.substring(3);
                     }
+                    comp = comp || "S/D";
 
                     const totalLinha = (parseFloat(r.regionalTax) || 0) + 
                                        (parseFloat(r.coordinatorFeeParsed) || 0) + 
