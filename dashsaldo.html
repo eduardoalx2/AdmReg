@@ -219,6 +219,25 @@
                       .trim();
         }
 
+        function quintoUtilDoMes(ano, mes) {
+            let d = new Date(ano, mes, 1);
+            let uteis = 0;
+            while (uteis < 5) {
+                if (d.getDay() !== 0 && d.getDay() !== 6) uteis++;
+                if (uteis < 5) d.setDate(d.getDate() + 1);
+            }
+            return d;
+        }
+
+        function calcLimitePendencias() {
+            const hoje = new Date();
+            const prazo = quintoUtilDoMes(hoje.getFullYear(), hoje.getMonth());
+            const limite = hoje >= prazo
+                ? new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)
+                : new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1);
+            return `${limite.getFullYear()}-${String(limite.getMonth() + 1).padStart(2, '0')}`;
+        }
+
         // Retorna periodoChave (AAAA-MM) do documento; normaliza MM/AAAA antigo
         function getComp(s) {
             const raw = s.periodoChave || labelToChave(s.periodo) || 'S/D';
@@ -237,10 +256,8 @@
                     masterChurches.set(normName, originalName);
                 });
 
-                // Garante que o mês atual sempre exista na lista
-                const now = new Date();
-                const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                competencies.add(currentPeriod);
+                // Adiciona o mês mais recente com prazo vencido (5º dia útil do mês seguinte)
+                competencies.add(calcLimitePendencias());
 
                 const saldosSnapshot = await getDocs(collection(db, "saldos_virada"));
                 const data = [];
@@ -334,10 +351,9 @@
             options += sortedComp.map(c => `<option value="${c}">${chaveParaLabel(c)}</option>`).join('');
             select.innerHTML = options;
 
-            const now = new Date();
-            const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            if (select.querySelector(`option[value="${currentPeriod}"]`)) {
-                select.value = currentPeriod;
+            const lim = calcLimitePendencias();
+            if (select.querySelector(`option[value="${lim}"]`)) {
+                select.value = lim;
             }
         }
 

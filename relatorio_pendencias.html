@@ -195,9 +195,15 @@
             const mesAtual = hoje.getMonth();
             const anoAtual = hoje.getFullYear();
             
-            const mesLimite = mesAtual === 0 ? 11 : mesAtual - 1;
-            const anoLimite = mesAtual === 0 ? anoAtual - 1 : anoAtual;
-            const dataLimite = new Date(anoLimite, mesLimite, 1);
+            const _prazo = (() => {
+                let d = new Date(anoAtual, mesAtual, 1);
+                let u = 0;
+                while (u < 5) { if (d.getDay() !== 0 && d.getDay() !== 6) u++; if (u < 5) d.setDate(d.getDate() + 1); }
+                return d;
+            })();
+            const dataLimite = hoje >= _prazo
+                ? new Date(anoAtual, mesAtual - 1, 1)
+                : new Date(anoAtual, mesAtual - 2, 1);
 
             const dataInicio = new Date(2026, 0, 1); // Janeiro de 2026
 

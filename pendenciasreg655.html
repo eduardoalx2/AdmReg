@@ -325,7 +325,15 @@
                 eventosSnap.forEach(d => { eventosMap[d.id] = { id: d.id, ...d.data() }; });
 
                 const hoje = new Date();
-                const limiteDebito = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+                const _prazo = (() => {
+                    let d = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+                    let u = 0;
+                    while (u < 5) { if (d.getDay() !== 0 && d.getDay() !== 6) u++; if (u < 5) d.setDate(d.getDate() + 1); }
+                    return d;
+                })();
+                const limiteDebito = hoje >= _prazo
+                    ? new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)
+                    : new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1);
                 dadosOriginais = [];
                 faltasOriginais = [];
 
