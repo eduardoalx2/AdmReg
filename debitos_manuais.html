@@ -189,8 +189,8 @@
                             class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-1 focus:ring-red-400">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data de Referência <span class="text-red-500">*</span></label>
-                        <input type="date" id="debito-data" required
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mês de Referência <span class="text-red-500">*</span></label>
+                        <input type="month" id="debito-data" required
                             class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold outline-none focus:ring-1 focus:ring-red-400">
                     </div>
                 </div>
@@ -325,7 +325,7 @@
             from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         const fmt  = v => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const fmtD = d => d ? d.split('-').reverse().join('/') : '—';
+        const fmtD = d => { if (!d) return '—'; const p = d.split('-'); return p.length === 2 ? `${p[1]}/${p[0]}` : p.reverse().join('/'); };
 
         let debitosList  = [];
         let igrejasList  = [];
