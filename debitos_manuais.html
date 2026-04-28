@@ -284,14 +284,12 @@
                     <span id="pag-restante" class="text-amber-800 font-black text-base"></span>
                 </div>
 
-                <div class="flex gap-2 pt-2 border-t border-slate-100">
+                <div class="flex gap-3 pt-2 border-t border-slate-100">
                     <button type="button" onclick="window.fecharModalPagamento()"
                         class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl uppercase text-[10px] hover:bg-slate-200 tracking-widest">Cancelar</button>
-                    <button type="button" onclick="window.confirmarPagamento(false)"
-                        class="flex-1 bg-slate-700 text-white font-bold py-3 rounded-xl uppercase text-[10px] hover:bg-slate-800 tracking-widest">Só Registrar</button>
-                    <button type="button" onclick="window.confirmarPagamento(true)"
-                        class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl uppercase text-[10px] hover:bg-emerald-700 shadow-lg tracking-widest flex justify-center items-center gap-1">
-                        <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Registrar + Recibo
+                    <button type="button" onclick="window.confirmarPagamento()"
+                        class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl uppercase text-[10px] hover:bg-emerald-700 shadow-lg tracking-widest flex justify-center items-center gap-2">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Registrar + Recibo
                     </button>
                 </div>
             </div>
@@ -313,6 +311,9 @@
                     <button onclick="window.baixarReciboQuitacao()" class="px-4 py-2 bg-blue-600 text-white rounded font-medium text-sm flex gap-2 items-center hover:bg-blue-700">
                         <i data-lucide="download" class="w-4 h-4"></i> PDF
                     </button>
+                    <button onclick="window.compartilharWhatsApp()" class="px-4 py-2 bg-green-600 text-white rounded font-medium text-sm flex gap-2 items-center hover:bg-green-700">
+                        <i data-lucide="send" class="w-4 h-4"></i> WhatsApp
+                    </button>
                 </div>
             </div>
             <div id="receipt-print-area" class="p-10 bg-white"></div>
@@ -327,11 +328,12 @@
         const fmt  = v => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const fmtD = d => { if (!d) return '—'; const p = d.split('-'); return p.length === 2 ? `${p[1]}/${p[0]}` : p.reverse().join('/'); };
 
-        let debitosList  = [];
-        let igrejasList  = [];
-        let pastoresList = [];
-        let itemCount    = 0;
+        let debitosList   = [];
+        let igrejasList   = [];
+        let pastoresList  = [];
+        let itemCount     = 0;
         let pagandoDebito = null;
+        let currentReciboRef = null; // { debito, pagamento } — usado por download/WhatsApp
 
         if (window.lucide) lucide.createIcons();
 
@@ -648,7 +650,7 @@
             }
         };
 
-        window.confirmarPagamento = async (gerarRecibo) => {
+        window.confirmarPagamento = async () => {
             const id = document.getElementById('pag-debito-id').value;
             const d  = debitosList.find(i => i.id === id);
             if (!d) return;
@@ -661,8 +663,8 @@
                 alert(`O valor não pode ser maior que o saldo devedor (${fmt(saldo)}).`); return;
             }
 
-            const dataPag  = document.getElementById('pag-data').value;
-            if (!dataPag)  { alert('Informe a data do pagamento.'); return; }
+            const dataPag = document.getElementById('pag-data').value;
+            if (!dataPag) { alert('Informe a data do pagamento.'); return; }
 
             const obs        = document.getElementById('pag-obs').value.trim();
             const novoPago   = (d.valorPago || 0) + valorPagando;
@@ -670,17 +672,48 @@
             const novoPag    = { data: dataPag, valor: valorPagando, obs };
             const pagamentos = [...(d.pagamentos || []), novoPag];
 
+            // Converte YYYY-MM → MM/YYYY para salvar no padrão do Firestore recibos
+            const [ry, rm]        = (d.dataReferencia || '').split('-');
+            const referenceDate   = rm && ry ? `${rm}/${ry}` : d.dataReferencia || '';
+            const hoje            = new Date();
+            const dataEmissao     = `${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`;
+            const igrejaFormatada = `${d.igrejaCodigo} - ${d.igrejaNome}`;
+
             try {
                 await updateDoc(doc(db, 'pendencias_manuais', id), {
                     valorPago: novoPago, status: novoStatus, pagamentos, updatedAt: serverTimestamp()
                 });
+
+                // Salva na coleção recibos para aparecer em todos os dashboards
+                await addDoc(collection(db, 'recibos'), {
+                    igrejaCodigo:       d.igrejaCodigo,
+                    igrejaNome:         d.igrejaNome,
+                    igrejaFormatada,
+                    pastor:             d.pastor || '',
+                    referenceDate,
+                    dataEmissao,
+                    incomeValue:        0,
+                    regionalTax:        0,
+                    coordinatorFeeParsed: 0,
+                    insuranceCount:     0,
+                    insuranceTotal:     0,
+                    otherDesc:          d.descricao || '',
+                    otherValueParsed:   valorPagando,
+                    total:              valorPagando,
+                    tipo:               'quitacao',
+                    pendenciaId:        id,
+                    status:             'Pago',
+                    dataHoraRegistro:   `${dataEmissao} ${hoje.toLocaleTimeString('pt-BR')}`,
+                    createdAt:          serverTimestamp()
+                });
+
                 const idx = debitosList.findIndex(i => i.id === id);
                 if (idx !== -1) {
                     debitosList[idx] = { ...debitosList[idx], valorPago: novoPago, status: novoStatus, pagamentos };
                 }
                 window.fecharModalPagamento();
                 window.renderizarTabela();
-                if (gerarRecibo) window.exibirRecibo(debitosList.find(i => i.id === id), novoPag);
+                window.exibirRecibo(debitosList.find(i => i.id === id), novoPag);
             } catch (err) {
                 console.error(err); alert('Erro ao registrar pagamento.');
             }
@@ -688,9 +721,13 @@
 
         // ── RECIBO ────────────────────────────────────────────────────
         window.exibirRecibo = (d, pagamento) => {
-            const novoSaldo  = (d.valorTotal || 0) - (d.valorPago || 0);
-            const isQuitado  = d.status === 'quitado';
-            const pagAntes   = (d.valorPago || 0) - pagamento.valor;
+            currentReciboRef = { debito: d, pagamento };
+            const novoSaldo = (d.valorTotal || 0) - (d.valorPago || 0);
+            const isQuitado = d.status === 'quitado';
+            const pagAntes  = (d.valorPago || 0) - pagamento.valor;
+
+            const assinatura    = localStorage.getItem('customSignature') || './assinatura.png';
+            const assinaturaHtml = `<img src="${assinatura}" style="height:80px;object-fit:contain;mix-blend-mode:multiply;opacity:0.9;display:block;margin:0 auto;" onerror="this.style.display='none'">`;
 
             const itensHtml = (d.itens || []).map(item => `
                 <tr>
@@ -745,9 +782,10 @@
                             <span style="font-weight:900;font-size:18px;font-family:monospace;color:${isQuitado ? '#15803d' : '#b45309'};">${isQuitado ? fmt(0) : fmt(novoSaldo)}</span>
                         </div>
                     </div>
-                    <div style="display:flex;justify-content:flex-end;">
-                        <div style="text-align:center;min-width:260px;">
-                            <div style="border-top:2px solid #1e293b;padding-top:8px;">
+                    <div style="display:flex;justify-content:flex-end;margin-top:48px;">
+                        <div style="text-align:center;min-width:260px;position:relative;">
+                            ${assinaturaHtml}
+                            <div style="border-top:2px solid #1e293b;padding-top:8px;margin-top:4px;">
                                 <div style="font-weight:700;text-transform:uppercase;font-size:12px;">Pr. Eduardo Silva</div>
                                 <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Superintendente — Região 655</div>
                             </div>
@@ -766,13 +804,54 @@
 
         window.baixarReciboQuitacao = () => {
             const el = document.getElementById('receipt-print-area');
+            let filename = 'Recibo_Debito.pdf';
+            if (currentReciboRef) {
+                const { debito } = currentReciboRef;
+                const cod = debito.igrejaCodigo || '';
+                const [ry, rm] = (debito.dataReferencia || '').split('-');
+                const safeRef = rm && ry ? `${rm}-${ry}` : (debito.dataReferencia || '');
+                filename = `${cod} - REC DEB REF(${safeRef}).pdf`;
+            }
             html2pdf().set({
                 margin: 10,
-                filename: `Recibo_Quitacao_${new Date().toISOString().split('T')[0]}.pdf`,
+                filename,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).from(el).save();
+        };
+
+        window.compartilharWhatsApp = async () => {
+            const el = document.getElementById('receipt-print-area');
+            let filename = 'Recibo_Debito.pdf';
+            if (currentReciboRef) {
+                const { debito } = currentReciboRef;
+                const cod = debito.igrejaCodigo || '';
+                const [ry, rm] = (debito.dataReferencia || '').split('-');
+                const safeRef = rm && ry ? `${rm}-${ry}` : (debito.dataReferencia || '');
+                filename = `${cod} - REC DEB REF(${safeRef}).pdf`;
+            }
+            try {
+                const blob = await html2pdf().set({
+                    margin: 10,
+                    filename,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                }).from(el).outputPdf('blob');
+
+                const file = new File([blob], filename, { type: 'application/pdf' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: filename });
+                } else {
+                    const d = currentReciboRef?.debito;
+                    const msg = `Recibo de quitação de débito — ${d?.igrejaCodigo || ''} ${d?.igrejaNome || ''} (Ref. ${fmtD(d?.dataReferencia || '')})`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Não foi possível compartilhar. Tente baixar o PDF e enviar manualmente.');
+            }
         };
 
         carregarDados();

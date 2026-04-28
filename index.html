@@ -551,7 +551,7 @@
             }
 
             try {
-                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap, layoutSnap, eventosSnap, pastoresSnap] = await Promise.all([
+                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap, layoutSnap, eventosSnap, pastoresSnap, debManuaisSnap] = await Promise.all([
                     getDoc(doc(db, 'configuracoes', 'painel_pastores')),
                     getDocs(query(collection(db, 'igrejas'), where('nome','==',igrejaAtiva))),
                     getDocs(collection(db, 'saldos_virada')),
@@ -560,7 +560,8 @@
                     getDocs(collection(db, 'presencas')),
                     getDoc(doc(db, 'configuracoes', 'layout')),
                     getDocs(collection(db, 'eventos')),
-                    getDocs(collection(db, 'pastores'))
+                    getDocs(collection(db, 'pastores')),
+                    getDocs(collection(db, 'pendencias_manuais'))
                 ]);
 
                 if (cfgSnap.exists()) configPainel = cfgSnap.data();
@@ -619,7 +620,13 @@
                     if(nome.toLowerCase()===lower||(data.igreja||'').toLowerCase().includes(lower)) presencas.push({id:d.id,...data});
                 });
 
-                renderPastorView(saldos, globalRecibos, eventos, presencas, pastorLinks, eventosMap, dataInicioIgreja);
+                const pendenciasManuais = [];
+                debManuaisSnap.forEach(d => {
+                    const data = d.data();
+                    if ((data.igrejaNome || '').toLowerCase() === lower) pendenciasManuais.push({ id: d.id, ...data });
+                });
+
+                renderPastorView(saldos, globalRecibos, eventos, presencas, pastorLinks, eventosMap, dataInicioIgreja, pendenciasManuais);
 
             } catch(e) {
                 console.error(e);
@@ -667,7 +674,8 @@
             </div>`;
         }
 
-        function renderPastorView(saldos, recibos, eventos, presencas, pastorLinks = [], eventosMap = {}, dataInicioIgreja = '2025-01-01') {
+        function renderPastorView(saldos, recibos, eventos, presencas, pastorLinks = [], eventosMap = {}, dataInicioIgreja = '2025-01-01', pendenciasManuais = []) {
+            const fmtD = d => { if (!d) return '—'; const p = d.split('-'); return p.length === 2 ? `${p[1]}/${p[0]}` : p.reverse().join('/'); };
             const hoje = new Date();
             const mesAtualNum = hoje.getMonth();
             const anoAtual = hoje.getFullYear();
@@ -752,6 +760,36 @@
                         <span style="font-size:15px;font-weight:900;color:#f87171;">${fmt(totalC)}${temDesc?'*':''}</span>
                     </div>
                     ${temDesc?`<p style="font-size:10px;color:var(--text-muted);font-style:italic;padding:0 16px 12px;">* Meses sem saldo não incluídos.</p>`:''}
+                </div>`;
+            }
+
+            // === DÉBITOS MANUAIS ===
+            let debitosManuaisHtml = '';
+            const debManuaisAbertos = pendenciasManuais.filter(d => d.status !== 'quitado');
+            if (debManuaisAbertos.length > 0) {
+                const totalManual = debManuaisAbertos.reduce((s, d) => s + ((d.valorTotal||0)-(d.valorPago||0)), 0);
+                debitosManuaisHtml = `
+                <div class="p-debito-wrap" style="margin-bottom:14px;">
+                    <div class="p-debito-hdr">
+                        <span style="font-size:16px;">⚠️</span>
+                        <span style="font-family:'Sora',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#fbbf24;">Débitos Especiais</span>
+                    </div>
+                    ${debManuaisAbertos.map(d => {
+                        const saldo = (d.valorTotal||0) - (d.valorPago||0);
+                        const statusLbl = d.status === 'parcial' ? 'Parcial' : 'Pendente';
+                        const statusColor = d.status === 'parcial' ? '#fbbf24' : '#f87171';
+                        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(245,158,11,0.08);">
+                            <div>
+                                <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">${esc(d.descricao||'—')}</span>
+                                <div style="font-size:10px;color:var(--text-muted);">Ref. ${fmtD(d.dataReferencia)} · <span style="color:${statusColor};font-weight:700;">${statusLbl}</span></div>
+                            </div>
+                            <span style="font-size:12px;font-weight:700;color:#fbbf24;">${fmt(saldo)}</span>
+                        </div>`;
+                    }).join('')}
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+                        <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:#fbbf24;">Total em Aberto</span>
+                        <span style="font-size:15px;font-weight:900;color:#fbbf24;">${fmt(totalManual)}</span>
+                    </div>
                 </div>`;
             }
 
@@ -913,6 +951,7 @@
             main.innerHTML = `<div class="pastor-main">
                 ${muralHtml}
                 ${debitosHtml}
+                ${debitosManuaisHtml}
                 <div class="pastor-grid">
                     <!-- COL ESQUERDA -->
                     <div style="display:flex;flex-direction:column;gap:14px;">
