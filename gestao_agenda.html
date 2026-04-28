@@ -462,22 +462,19 @@
         });
 
         function buildGCalUrl(ev) {
-            const nome = encodeURIComponent(ev.evento || '');
-            // Usa endereço completo se disponível, senão cai para o nome do local
             const localGcal = ev.endereco
                 ? (ev.local ? `${ev.local} — ${ev.endereco}` : ev.endereco)
                 : (ev.local || '');
-            const local = encodeURIComponent(localGcal);
-            const detalhes = encodeURIComponent(ev.link ? `Mais informações: ${ev.link}` : 'Evento IEQ Região 655');
+            const detalhes = ev.link ? `Mais informações: ${ev.link}` : 'Evento IEQ Região 655';
 
-            let dates;
+            let dates = '';
             if (ev.data) {
                 const [y, m, d] = ev.data.split('-');
                 if (ev.horario) {
                     const [h, min] = ev.horario.split(':');
-                    const startStr = `${y}${m}${d}T${h}${min}00`;
+                    const startStr = `${y}${m}${d}T${String(h).padStart(2,'0')}${String(min).padStart(2,'0')}00`;
                     const dur = parseFloat(ev.duracao || 2);
-                    const endDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min) + dur * 60);
+                    const endDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min) + Math.round(dur * 60));
                     const ey = endDate.getFullYear();
                     const em = String(endDate.getMonth() + 1).padStart(2, '0');
                     const ed = String(endDate.getDate()).padStart(2, '0');
@@ -485,12 +482,22 @@
                     const emin = String(endDate.getMinutes()).padStart(2, '0');
                     dates = `${startStr}/${ey}${em}${ed}T${eh}${emin}00`;
                 } else {
-                    dates = `${y}${m}${d}/${y}${m}${d}`;
+                    // Dia inteiro: data fim = dia seguinte (padrão Google Calendar)
+                    const nextDay = new Date(parseInt(y), parseInt(m) - 1, parseInt(d) + 1);
+                    const ny = nextDay.getFullYear();
+                    const nm = String(nextDay.getMonth() + 1).padStart(2, '0');
+                    const nd = String(nextDay.getDate()).padStart(2, '0');
+                    dates = `${y}${m}${d}/${ny}${nm}${nd}`;
                 }
-            } else {
-                dates = '';
             }
-            return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${nome}&dates=${dates}&location=${local}&details=${detalhes}`;
+
+            // URLSearchParams garante encoding correto de todos os parâmetros
+            const params = new URLSearchParams();
+            params.set('text', ev.evento || '');
+            if (dates) params.set('dates', dates);
+            if (localGcal) params.set('location', localGcal);
+            params.set('details', detalhes);
+            return `https://calendar.google.com/calendar/r/eventedit?${params.toString()}`;
         }
 
         function buildWhatsAppMsg(ev, gcalUrl) {
