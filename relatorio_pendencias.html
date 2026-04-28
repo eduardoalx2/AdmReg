@@ -107,6 +107,7 @@
                         <option value="Todos">Todos os Status</option>
                         <option value="Aguardando Lançamento">Aguardando Lançamento do Pastor</option>
                         <option value="Aguardando Emissão">Aguardando Emissão do Recibo</option>
+                        <option value="Débito Especial">Débitos Especiais</option>
                     </select>
                 </div>
                 <div class="flex items-end">
@@ -165,11 +166,12 @@
 
         async function loadData() {
             try {
-                const [igrejasSnap, recibosSnap, saldosSnap, configSnap] = await Promise.all([
+                const [igrejasSnap, recibosSnap, saldosSnap, configSnap, debManuaisSnap] = await Promise.all([
                     getDocs(collection(db, "igrejas")),
                     getDocs(collection(db, "recibos")),
                     getDocs(collection(db, "saldos_virada")),
-                    getDoc(doc(db, "configuracoes", "painel_pastores"))
+                    getDoc(doc(db, "configuracoes", "painel_pastores")),
+                    getDocs(collection(db, "pendencias_manuais"))
                 ]);
 
                 igrejasSnap.forEach(d => allIgrejas.push({ id: d.id, ...d.data() }));
@@ -180,6 +182,24 @@
                 allIgrejas.sort((a,b) => (a.nome || '').localeCompare(b.nome || ''));
 
                 gerarRelatorioPendencias();
+
+                // Adiciona débitos manuais em aberto ao relatório
+                debManuaisSnap.forEach(d => {
+                    const dm = { id: d.id, ...d.data() };
+                    if (dm.status === 'quitado') return;
+                    const [ry, rm] = (dm.dataReferencia || '').split('-');
+                    const mesRef = rm && ry ? `${rm}/${ry}` : dm.dataReferencia || '';
+                    const saldo = (dm.valorTotal || 0) - (dm.valorPago || 0);
+                    allPendencias.push({
+                        id: dm.id,
+                        igrejaNome: dm.igrejaNome,
+                        mesRef,
+                        status: 'Débito Especial',
+                        valorEstimado: saldo,
+                        descricao: dm.descricao || ''
+                    });
+                });
+
                 buildFilters();
                 renderTable();
 
@@ -302,16 +322,21 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 transition-colors";
                 
-                const statusClass = p.status === 'Aguardando Lançamento' 
-                    ? 'bg-red-100 text-red-700' 
-                    : 'bg-amber-100 text-amber-700';
+                const statusClass = p.status === 'Débito Especial'
+                    ? 'bg-orange-100 text-orange-700'
+                    : p.status === 'Aguardando Lançamento'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-amber-100 text-amber-700';
 
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-slate-700">${p.igrejaNome}</td>
+                    <td class="p-3 font-bold text-slate-700">
+                        ${p.igrejaNome}
+                        ${p.descricao ? `<div class="text-[10px] text-slate-400 font-normal mt-0.5 italic">${p.descricao}</div>` : ''}
+                    </td>
                     <td class="p-3 font-semibold text-blue-600">${p.mesRef}</td>
                     <td class="p-3">
                         <span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider ${statusClass}">
-                            ${p.status.replace(/ /g, ' ')}
+                            ${p.status}
                         </span>
                     </td>
                     <td class="p-3 text-right font-semibold text-slate-600">

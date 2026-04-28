@@ -144,6 +144,7 @@
                             <option value="Todos">Todas as Pendências</option>
                             <option value="Saldos">Apenas Saldos Atrasados</option>
                             <option value="Taxas">Apenas Taxas Pendentes</option>
+                            <option value="Manuais">Apenas Débitos Especiais</option>
                         </select>
                     </div>
                     <div class="flex items-end">
@@ -169,12 +170,13 @@
                                 <th class="px-4 py-3">Igreja / Pastor</th>
                                 <th class="px-4 py-3 text-center">Saldos Atrasados</th>
                                 <th class="px-4 py-3 text-center">Taxas Pendentes</th>
+                                <th class="px-4 py-3 text-center">Déb. Especiais</th>
                                 <th class="px-4 py-3 text-right">Aberto Estimado</th>
                                 <th class="px-4 py-3 text-center">Detalhes</th>
                             </tr>
                         </thead>
                         <tbody id="tabela-corpo" class="text-sm divide-y divide-slate-50">
-                            <tr><td colspan="5" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Sincronizando dados globais...</td></tr>
+                            <tr><td colspan="6" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Sincronizando dados globais...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -269,6 +271,7 @@
         let abaAtiva = 'financeiro';
 
         window.formatMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const fmtD = d => { if (!d) return '—'; const p = d.split('-'); return p.length === 2 ? `${p[1]}/${p[0]}` : p.reverse().join('/'); };
 
         function mesStrToChave(mesStr) {
             if (!mesStr) return null;
@@ -310,20 +313,22 @@
                 const config = configSnap.exists() ? configSnap.data() : { valorSeguro: 45 };
                 const valorSeguro = config.valorSeguro || 45;
 
-                const [igrejasSnap, pastoresSnap, saldosSnap, recibosSnap, presencasSnap, eventosSnap] = await Promise.all([
+                const [igrejasSnap, pastoresSnap, saldosSnap, recibosSnap, presencasSnap, eventosSnap, debManuaisSnap] = await Promise.all([
                     getDocs(collection(db, "igrejas")),
                     getDocs(collection(db, "pastores")),
                     getDocs(collection(db, "saldos_virada")),
                     getDocs(collection(db, "recibos")),
                     getDocs(collection(db, "presencas")),
                     getDocs(collection(db, "eventos")),
+                    getDocs(collection(db, "pendencias_manuais")),
                 ]);
 
-                const igrejas   = []; igrejasSnap.forEach(d => igrejas.push(d.data()));
-                const pastores  = []; pastoresSnap.forEach(d => pastores.push(d.data()));
-                const saldos    = []; saldosSnap.forEach(d => saldos.push(d.data()));
-                const recibos   = []; recibosSnap.forEach(d => recibos.push(d.data()));
-                const presencas = []; presencasSnap.forEach(d => presencas.push(d.data()));
+                const igrejas    = []; igrejasSnap.forEach(d => igrejas.push(d.data()));
+                const pastores   = []; pastoresSnap.forEach(d => pastores.push(d.data()));
+                const saldos     = []; saldosSnap.forEach(d => saldos.push(d.data()));
+                const recibos    = []; recibosSnap.forEach(d => recibos.push(d.data()));
+                const presencas  = []; presencasSnap.forEach(d => presencas.push(d.data()));
+                const debManuais = []; debManuaisSnap.forEach(d => debManuais.push({ id: d.id, ...d.data() }));
 
                 // Mapa de eventos: id → { nome, data, status }
                 const eventosMap = {};
@@ -421,7 +426,15 @@
                     const taxasHerdadas  = taxasPendentes.filter(m => (mesStrToChave(m) || '') < limiteChave).length;
                     const saldosHerdados = saldosPendentes.filter(m => (mesStrToChave(m) || '') < limiteChave).length;
 
-                    const totalPendenciasFinanceiras = saldosPendentes.length + taxasPendentes.length;
+                    // ── Débitos Manuais (pendencias_manuais) ──
+                    const debManuaisAbertos = debManuais.filter(dm =>
+                        dm.status !== 'quitado' &&
+                        (dm.igrejaNome === ig.nome || dm.igrejaCodigo === cod)
+                    );
+                    const valorManuaisAberto = debManuaisAbertos.reduce((s, dm) => s + ((dm.valorTotal||0)-(dm.valorPago||0)), 0);
+                    valorEmAberto += valorManuaisAberto;
+
+                    const totalPendenciasFinanceiras = saldosPendentes.length + taxasPendentes.length + debManuaisAbertos.length;
                     const totalPendencias = totalPendenciasFinanceiras + ausenciasLista.length;
 
                     dadosOriginais.push({
@@ -434,6 +447,8 @@
                         saldosHerdados,
                         valorEmAberto,
                         temValorDesconhecido,
+                        debitosManuais: debManuaisAbertos,
+                        debitosManuaisTotal: debManuaisAbertos.length,
                         ausencias: ausenciasLista.length,
                         ausenciasLista,
                         totalPendenciasFinanceiras,
@@ -497,8 +512,9 @@
             const filtrados = dadosOriginais.filter(d => {
                 if (apenasPendentes && d.totalPendenciasFinanceiras === 0) return false;
                 if (filtroIgreja !== 'Todas' && d.igrejaNome !== filtroIgreja) return false;
-                if (filtroTipo === 'Saldos' && d.saldosPendentes.length === 0) return false;
-                if (filtroTipo === 'Taxas'  && d.taxasPendentes.length === 0)  return false;
+                if (filtroTipo === 'Saldos'  && d.saldosPendentes.length === 0)  return false;
+                if (filtroTipo === 'Taxas'   && d.taxasPendentes.length === 0)   return false;
+                if (filtroTipo === 'Manuais' && d.debitosManuaisTotal === 0)     return false;
                 if (filtroMes !== 'Todos') {
                     const temS = d.saldosPendentes.includes(filtroMes);
                     const temT = d.taxasPendentes.includes(filtroMes);
@@ -511,7 +527,7 @@
             tbody.innerHTML = '';
 
             if (filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhuma pendência financeira encontrada! 🎉</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhuma pendência financeira encontrada! 🎉</td></tr>';
             } else {
                 filtrados.forEach(d => {
                     stSaldos += d.saldosPendentes.length;
@@ -535,6 +551,9 @@
                             <td class="px-4 py-3 text-center">
                                 ${d.taxasPendentes.length > 0 ? `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.taxasPendentes.length} taxas</span>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}
                                 ${d.taxasHerdadas > 0 ? `<span class="block text-[9px] text-slate-400 mt-0.5">(${d.taxasHerdadas} gestão anterior)</span>` : ''}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                ${d.debitosManuaisTotal > 0 ? `<span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-bold text-[10px]">${d.debitosManuaisTotal} déb.</span>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}
                             </td>
                             <td class="px-4 py-3 text-right text-xs ${d.valorEmAberto > 0 ? 'text-red-600 font-bold' : 'text-slate-400'}">${window.formatMoeda(d.valorEmAberto)}${d.temValorDesconhecido && d.valorEmAberto > 0 ? '*' : ''}</td>
                             <td class="px-4 py-3 text-center">${temPend ? `<button onclick="event.stopPropagation();window.abrirDetalhes('${d.igrejaNome.replace(/'/g,"\\'")}') " class="bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 p-1.5 rounded-lg transition-colors"><i data-lucide="eye" class="w-4 h-4"></i></button>` : '<span class="text-slate-300 text-xl leading-none">&bull;</span>'}</td>
@@ -692,6 +711,29 @@
                 </div>`;
             }
 
+            if (d.debitosManuais && d.debitosManuais.length > 0) {
+                html += `<div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                        <h3 class="text-[10px] font-black uppercase tracking-widest text-orange-700">Débitos Especiais</h3>
+                        <span class="bg-orange-100 text-orange-700 text-[10px] font-black px-2 py-0.5 rounded-full">${d.debitosManuais.length}</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        ${d.debitosManuais.map(dm => {
+                            const saldo = (dm.valorTotal||0) - (dm.valorPago||0);
+                            const stLbl = dm.status === 'parcial' ? 'Parcial' : 'Pendente';
+                            return `<div class="flex items-center justify-between bg-orange-50 border border-orange-100 rounded-lg px-3 py-2 gap-3">
+                                <div class="min-w-0">
+                                    <span class="text-xs font-bold text-orange-900 block truncate">${dm.descricao || '—'}</span>
+                                    <span class="text-[10px] text-orange-500">Ref. ${fmtD(dm.dataReferencia)} · ${stLbl}</span>
+                                </div>
+                                <span class="text-xs font-black text-orange-700 flex-shrink-0">${window.formatMoeda(saldo)}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+            }
+
             if (d.temValorDesconhecido) {
                 html += `<p class="text-[10px] text-slate-400 italic">* Valor estimado — saldo de virada não informado para alguns meses; cálculo usa taxa mínima.</p>`;
             }
@@ -728,6 +770,14 @@
                     const ev = a.nomeEvento || a.evento || a.tipoEvento || 'Evento Regional';
                     const dt = a.dataEvento ? ' — ' + dataFmt(a.dataEvento) : '';
                     msg += `   • ${ev}${dt}\n`;
+                });
+                msg += '\n';
+            }
+            if (d.debitosManuais && d.debitosManuais.length > 0) {
+                msg += `📌 *Débitos Especiais:*\n`;
+                d.debitosManuais.forEach(dm => {
+                    const saldo = (dm.valorTotal||0) - (dm.valorPago||0);
+                    msg += `   • ${dm.descricao || '—'} (Ref. ${fmtD(dm.dataReferencia)}) — ${window.formatMoeda(saldo)}\n`;
                 });
                 msg += '\n';
             }
