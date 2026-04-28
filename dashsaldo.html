@@ -399,6 +399,7 @@
 
         function generateCardHtml(churchName, comp, status, dataEnvio, cc, din, total, extraData) {
             const isDelivered = status === 'Entregue';
+            const compDisplay = (comp && /^\d{4}-\d{2}$/.test(comp)) ? chaveParaLabel(comp) : comp;
             
             let fullReportHtml = '';
             if (showFullReport && isDelivered) {
@@ -449,7 +450,7 @@
                     <div class="flex justify-between items-start mb-3">
                         <div class="overflow-hidden">
                             <h3 class="font-bold text-slate-900 text-sm leading-tight truncate pr-1" title="${churchName}">${churchName}</h3>
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${comp}</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${compDisplay}</span>
                         </div>
                         <span class="px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider whitespace-nowrap ${isDelivered ? 'status-badge-delivered' : 'status-badge-pending'}">
                             ${status === 'Entregue' ? 'OK' : 'Pendente'}
