@@ -235,13 +235,6 @@
             </div>
             <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Número do WhatsApp</label>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5">+55</span>
-                        <input type="tel" id="enviar-telefone" placeholder="(43) 99999-9999" class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-green-500 outline-none text-sm font-semibold text-slate-800" maxlength="15">
-                    </div>
-                </div>
-                <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Prévia da Mensagem</label>
                     <textarea id="enviar-preview" rows="10" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-green-500 outline-none text-xs font-medium text-slate-700 resize-none custom-scrollbar leading-relaxed"></textarea>
                 </div>
@@ -516,7 +509,6 @@
             document.getElementById('enviar-telefone').value = '';
             document.getElementById('modal-enviar').classList.remove('hidden');
             if (window.lucide) window.lucide.createIcons();
-            setTimeout(() => document.getElementById('enviar-telefone').focus(), 100);
         };
 
         window.fecharModalEnviar = () => {
@@ -524,15 +516,8 @@
         };
 
         window.confirmarEnvio = () => {
-            const fone = document.getElementById('enviar-telefone').value.replace(/\D/g, '');
-            if (!fone || fone.length < 10) {
-                alert('Informe um número de WhatsApp válido.');
-                document.getElementById('enviar-telefone').focus();
-                return;
-            }
             const msg = document.getElementById('enviar-preview').value;
-            const url = `https://wa.me/55${fone}?text=${encodeURIComponent(msg)}`;
-            window.open(url, '_blank');
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
             window.fecharModalEnviar();
         };
 
