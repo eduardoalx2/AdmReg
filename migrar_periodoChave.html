@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração periodoChave - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-md border border-slate-200 w-full max-w-xl p-8">
+        <h1 class="text-xl font-black text-slate-800 mb-1">Correção de periodoChave</h1>
+        <p class="text-xs text-slate-500 mb-2">Corrige o campo <code class="bg-slate-100 px-1 rounded">periodoChave</code> de todos os documentos de <strong>saldos_virada</strong>.</p>
+        <p class="text-xs text-amber-600 font-bold mb-6 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            ⚠️ Problema corrigido: "Março/26 ➔ Abril/26" estava sendo salvo como <code>2026-04</code> (Abril). O correto é <code>2026-03</code> (Março), pois o saldo é do fechamento de Março.
+        </p>
+
+        <button id="btnMigrar" onclick="iniciarMigracao()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors text-sm">
+            Iniciar Correção
+        </button>
+
+        <div id="status" class="mt-6 hidden">
+            <div class="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                <span>Progresso</span>
+                <span id="statusTexto">0 / 0</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 mb-4">
+                <div id="barra" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width:0%"></div>
+            </div>
+            <div id="log" class="bg-slate-50 rounded-xl border border-slate-200 p-4 max-h-64 overflow-y-auto text-xs font-mono space-y-1"></div>
+        </div>
+
+        <div id="resultado" class="mt-4 hidden"></div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // Pega o PRIMEIRO mês do período (ex: "Março/26 ➔ Abril/26" → "2026-03")
+        function labelToChave(label) {
+            const meses = {
+                'janeiro':'01','fevereiro':'02','março':'03','abril':'04',
+                'maio':'05','junho':'06','julho':'07','agosto':'08',
+                'setembro':'09','outubro':'10','novembro':'11','dezembro':'12',
+                'jan':'01','fev':'02','mar':'03','abr':'04',
+                'mai':'05','jun':'06','jul':'07','ago':'08',
+                'set':'09','out':'10','nov':'11','dez':'12'
+            };
+            const partes = (label || '').split(/➔|>/).map(s => s.trim()).filter(Boolean);
+            const dest = partes[0] || '';
+            const [mes, ano] = dest.split('/');
+            const mm = meses[(mes || '').toLowerCase().trim()];
+            const yyyy = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
+            return (mm && !isNaN(yyyy)) ? `${yyyy}-${mm}` : null;
+        }
+
+        function log(msg, tipo = 'normal') {
+            const el = document.getElementById('log');
+            const span = document.createElement('div');
+            span.className = tipo === 'ok' ? 'text-green-600' : tipo === 'skip' ? 'text-slate-400' : tipo === 'err' ? 'text-red-500' : 'text-blue-600';
+            span.textContent = msg;
+            el.appendChild(span);
+            el.scrollTop = el.scrollHeight;
+        }
+
+        window.iniciarMigracao = async () => {
+            const btn = document.getElementById('btnMigrar');
+            btn.disabled = true;
+            btn.textContent = 'Corrigindo...';
+            document.getElementById('status').classList.remove('hidden');
+            document.getElementById('resultado').classList.add('hidden');
+            document.getElementById('log').innerHTML = '';
+
+            try {
+                const snap = await getDocs(collection(db, "saldos_virada"));
+                const docs = [];
+                snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+
+                let atualizados = 0, semAlteracao = 0, erros = 0;
+                const total = docs.length;
+
+                for (let i = 0; i < docs.length; i++) {
+                    const s = docs[i];
+                    const nome = s.igrejaFormatada || s.igrejaNome || s.id;
+                    const pct = Math.round(((i + 1) / total) * 100);
+                    document.getElementById('barra').style.width = pct + '%';
+                    document.getElementById('statusTexto').textContent = `${i + 1} / ${total}`;
+
+                    const periodoLabel = s.periodo || s.periodoLabel || '';
+                    if (!periodoLabel) {
+                        log(`[SKIP] ${nome} — sem campo periodo`, 'skip');
+                        semAlteracao++;
+                        continue;
+                    }
+
+                    const novaChave = labelToChave(periodoLabel);
+                    if (!novaChave) {
+                        log(`[ERRO] ${nome} — período inválido: "${periodoLabel}"`, 'err');
+                        erros++;
+                        continue;
+                    }
+
+                    // Recalcula mesReferencia a partir do primeiro mês
+                    const [anoRef, mmRef] = novaChave.split('-');
+                    const novaMesReferencia = `${mmRef}/${anoRef}`;
+
+                    if (s.periodoChave === novaChave && s.mesReferencia === novaMesReferencia) {
+                        log(`[OK]   ${nome} — já correto (${novaChave})`, 'skip');
+                        semAlteracao++;
+                        continue;
+                    }
+
+                    try {
+                        await updateDoc(doc(db, "saldos_virada", s.id), {
+                            periodoChave: novaChave,
+                            mesReferencia: novaMesReferencia
+                        });
+                        log(`[ATUALIZADO] ${nome}: ${s.periodoChave || '?'} → ${novaChave}  |  mesRef: ${s.mesReferencia || '?'} → ${novaMesReferencia}`, 'ok');
+                        atualizados++;
+                    } catch (e) {
+                        log(`[ERRO] ${nome} — ${e.message}`, 'err');
+                        erros++;
+                    }
+                }
+
+                const res = document.getElementById('resultado');
+                res.classList.remove('hidden');
+                res.innerHTML = `
+                    <div class="rounded-xl border p-4 ${erros > 0 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}">
+                        <p class="font-bold text-sm mb-1 ${erros > 0 ? 'text-amber-700' : 'text-green-700'}">Correção concluída</p>
+                        <p class="text-xs text-slate-600">✅ Atualizados: <strong>${atualizados}</strong> &nbsp;|&nbsp; ⏭ Já corretos: <strong>${semAlteracao}</strong> &nbsp;|&nbsp; ❌ Erros: <strong>${erros}</strong></p>
+                    </div>
+                `;
+                btn.textContent = 'Concluído';
+
+            } catch (e) {
+                log(`Erro fatal: ${e.message}`, 'err');
+                btn.disabled = false;
+                btn.textContent = 'Tentar Novamente';
+            }
+        };
+    </script>
+</body>
+</html>

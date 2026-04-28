@@ -196,7 +196,7 @@
                 'set':'09','out':'10','nov':'11','dez':'12'
             };
             const partes = (label || '').split(/➔|>/).map(s => s.trim()).filter(Boolean);
-            const dest = partes[partes.length - 1] || '';
+            const dest = partes[0] || '';
             const [mes, ano] = dest.split('/');
             const mm = meses[(mes || '').toLowerCase().trim()];
             const yyyy = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);

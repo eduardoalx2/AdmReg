@@ -143,7 +143,7 @@
                 'set':'09','out':'10','nov':'11','dez':'12'
             };
             const partes = (label || '').split(/➔|>/).map(s => s.trim()).filter(Boolean);
-            const dest = partes[partes.length - 1] || '';
+            const dest = partes[0] || '';
             const [mes, ano] = dest.split('/');
             const mm = meses[(mes || '').toLowerCase().trim()];
             const yyyy = parseInt(ano) < 100 ? 2000 + parseInt(ano) : parseInt(ano);
@@ -265,7 +265,9 @@
                 if (!isFormValid) return;
                 setIsSaving(true);
                 const now = new Date();
-                const mesReferencia = `${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+                const chaveRef = labelToChave(selectedPeriod);
+                const [anoRef, mmRef] = (chaveRef || '').split('-');
+                const mesReferencia = mmRef && anoRef ? `${mmRef}/${anoRef}` : `${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
                 const payload = {
                     igrejaFormatada: `${selectedChurch.code} - ${selectedChurch.name}`,
