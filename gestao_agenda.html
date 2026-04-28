@@ -222,6 +222,39 @@
         </div>
     </div>
 
+    <!-- MODAL ENVIAR EVENTO VIA WHATSAPP -->
+    <div id="modal-enviar" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[95vh]">
+            <div class="bg-green-700 px-5 py-4 flex justify-between items-center shrink-0">
+                <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i> Enviar Evento via WhatsApp
+                </h2>
+                <button type="button" onclick="window.fecharModalEnviar()" class="text-green-200 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Número do WhatsApp</label>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5">+55</span>
+                        <input type="tel" id="enviar-telefone" placeholder="(43) 99999-9999" class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-green-500 outline-none text-sm font-semibold text-slate-800" maxlength="15">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Prévia da Mensagem</label>
+                    <textarea id="enviar-preview" rows="10" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-green-500 outline-none text-xs font-medium text-slate-700 resize-none custom-scrollbar leading-relaxed"></textarea>
+                </div>
+                <div class="flex gap-3 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="window.fecharModalEnviar()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl uppercase text-[11px] hover:bg-slate-200 transition-colors tracking-widest">Cancelar</button>
+                    <button type="button" onclick="window.confirmarEnvio()" class="flex-1 bg-green-600 text-white font-bold py-3 rounded-xl uppercase text-[11px] hover:bg-green-700 transition-colors shadow-lg tracking-widest flex justify-center items-center gap-2">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i> Abrir WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
@@ -330,6 +363,9 @@
                     <td class="text-xs text-slate-600 font-medium truncate max-w-[200px]" title="${e.local || '-'}">${e.local || '-'}</td>
                     <td class="text-center">
                         <div class="flex items-center justify-center gap-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                            <button onclick="window.enviarEvento('${e.id}')" class="text-green-500 hover:text-green-700 transition-colors" title="Enviar por WhatsApp">
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                            </button>
                             <button onclick="window.editarEvento('${e.id}')" class="text-blue-500 hover:text-blue-700 transition-colors" title="Editar">
                                 <i data-lucide="edit" class="w-4 h-4"></i>
                             </button>
@@ -424,6 +460,81 @@
                 btn.disabled = false;
             }
         });
+
+        function buildGCalUrl(ev) {
+            const nome = encodeURIComponent(ev.evento || '');
+            const local = encodeURIComponent(ev.local || '');
+            const detalhes = encodeURIComponent(ev.link ? `Mais informações: ${ev.link}` : 'Evento IEQ Região 655');
+
+            let dates;
+            if (ev.data) {
+                const [y, m, d] = ev.data.split('-');
+                if (ev.horario) {
+                    const [h, min] = ev.horario.split(':');
+                    const startStr = `${y}${m}${d}T${h}${min}00`;
+                    const dur = parseFloat(ev.duracao || 2);
+                    const endDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min) + dur * 60);
+                    const ey = endDate.getFullYear();
+                    const em = String(endDate.getMonth() + 1).padStart(2, '0');
+                    const ed = String(endDate.getDate()).padStart(2, '0');
+                    const eh = String(endDate.getHours()).padStart(2, '0');
+                    const emin = String(endDate.getMinutes()).padStart(2, '0');
+                    dates = `${startStr}/${ey}${em}${ed}T${eh}${emin}00`;
+                } else {
+                    dates = `${y}${m}${d}/${y}${m}${d}`;
+                }
+            } else {
+                dates = '';
+            }
+            return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${nome}&dates=${dates}&location=${local}&details=${detalhes}`;
+        }
+
+        function buildWhatsAppMsg(ev, gcalUrl) {
+            const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+            let diaSemana = '';
+            if (ev.data) {
+                const [y, m, d] = ev.data.split('-');
+                diaSemana = ` — ${diasSemana[new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).getDay()]}`;
+            }
+            const dataFormatada = ev.data ? ev.data.split('-').reverse().join('/') : '-';
+
+            let msg = `📅 *${ev.evento}*\n\n`;
+            msg += `📆 Data: ${dataFormatada}${diaSemana}\n`;
+            if (ev.horario) msg += `🕐 Horário: ${ev.horario}${ev.duracao ? ` (${ev.duracao}h)` : ''}\n`;
+            if (ev.local) msg += `📍 Local: ${ev.local}\n`;
+            if (ev.ministerio && ev.ministerio !== 'GERAL') msg += `👥 Ministério: ${ev.ministerio}\n`;
+            if (ev.link) msg += `🔗 Inscrições: ${ev.link}\n`;
+            msg += `\n📲 *Adicionar ao Google Agenda:*\n${gcalUrl}`;
+            return msg;
+        }
+
+        window.enviarEvento = (id) => {
+            const ev = agendaList.find(i => i.id === id);
+            if (!ev) return;
+            const gcalUrl = buildGCalUrl(ev);
+            document.getElementById('enviar-preview').value = buildWhatsAppMsg(ev, gcalUrl);
+            document.getElementById('enviar-telefone').value = '';
+            document.getElementById('modal-enviar').classList.remove('hidden');
+            if (window.lucide) window.lucide.createIcons();
+            setTimeout(() => document.getElementById('enviar-telefone').focus(), 100);
+        };
+
+        window.fecharModalEnviar = () => {
+            document.getElementById('modal-enviar').classList.add('hidden');
+        };
+
+        window.confirmarEnvio = () => {
+            const fone = document.getElementById('enviar-telefone').value.replace(/\D/g, '');
+            if (!fone || fone.length < 10) {
+                alert('Informe um número de WhatsApp válido.');
+                document.getElementById('enviar-telefone').focus();
+                return;
+            }
+            const msg = document.getElementById('enviar-preview').value;
+            const url = `https://wa.me/55${fone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+            window.fecharModalEnviar();
+        };
 
         // Inicia carregando a lista
         carregarAgenda();
