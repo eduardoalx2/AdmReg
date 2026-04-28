@@ -506,7 +506,6 @@
             if (!ev) return;
             const gcalUrl = buildGCalUrl(ev);
             document.getElementById('enviar-preview').value = buildWhatsAppMsg(ev, gcalUrl);
-            document.getElementById('enviar-telefone').value = '';
             document.getElementById('modal-enviar').classList.remove('hidden');
             if (window.lucide) window.lucide.createIcons();
         };
