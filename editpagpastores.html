@@ -18,11 +18,13 @@
         .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
         .loader { border-top-color: #3b82f6; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .item-row { display:flex; gap:8px; align-items:flex-start; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px; }
+        .item-row .drag-handle { cursor:grab; color:#94a3b8; padding-top:2px; flex-shrink:0; }
+        .drag-row-over { border-color:#3b82f6!important; background:#eff6ff!important; }
     </style>
 </head>
 <body>
 
-    <!-- CABEÇALHO COMPACTO -->
     <header class="w-full shadow-sm bg-white border-b">
         <div class="max-w-4xl mx-auto px-4 py-1.5">
             <div class="flex justify-between items-center">
@@ -33,125 +35,146 @@
                         <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
                     </div>
                 </a>
-                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
-                    <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
-                </a>
+                <div class="flex items-center gap-3">
+                    <a href="controle_avisos.html" class="text-[10px] font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 uppercase tracking-wider px-2 py-1 rounded-lg hover:bg-purple-50 transition-colors">
+                        <i data-lucide="check-square" class="w-3 h-3"></i> Controle de Avisos
+                    </a>
+                    <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
+                    </a>
+                </div>
             </div>
         </div>
         <div class="header-gradient py-3 px-4">
-            <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="max-w-4xl mx-auto">
                 <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Gestão do Painel dos Pastores
                 </h1>
+                <p class="text-white/50 text-[10px] mt-0.5">As configurações abaixo refletem instantaneamente no painel de todos os pastores titulares.</p>
             </div>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto py-8 px-4">
+    <main class="max-w-4xl mx-auto py-8 px-4 space-y-6">
+
+        <!-- ═══ SEÇÃO 1: MURAL DE AVISOS ═══ -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            
-            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
-                <h2 class="text-lg font-bold text-slate-800">Configurações Globais</h2>
-                <p class="text-xs text-slate-500 mt-1">O que você configurar aqui refletirá instantaneamente no painel de todos os pastores titulares.</p>
+            <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                <i data-lucide="bell-ring" class="w-4 h-4 text-slate-400"></i>
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Mural de Avisos</h2>
             </div>
-
-            <form id="configForm" class="p-6 space-y-8">
-                
-                <!-- SEÇÃO 1: Avisos e Alertas -->
-                <div>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2 border-b pb-2">
-                        <i data-lucide="bell-ring" class="w-4 h-4"></i> Mural de Avisos
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Mensagem de Destaque</label>
-                            <textarea id="avisoTexto" rows="3" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none" placeholder="Ex: Prazo para lançamento do saldo financeiro encerra dia 07..."></textarea>
-                        </div>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Tipo de Aviso</label>
-                                <select id="avisoTipo" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
-                                    <option value="info">🔵 Informativo (Padrão)</option>
-                                    <option value="warning">🟡 Alerta (Atenção)</option>
-                                    <option value="danger">🔴 Urgente (Importante)</option>
-                                    <option value="none">⚪ Nenhum (Ocultar Aviso)</option>
-                                </select>
-                            </div>
-                        </div>
+            <div class="p-5 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Mensagem de Destaque</label>
+                        <textarea id="avisoTexto" rows="4" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none" placeholder="Ex: Prazo para lançamento do saldo financeiro encerra dia 07..."></textarea>
+                        <p class="text-[10px] text-slate-400 mt-1">⚠️ Alterar o texto gera um novo aviso — confirmações anteriores são descartadas.</p>
                     </div>
-                </div>
-
-                <!-- SEÇÃO 2: Parâmetros Financeiros -->
-                <div>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2 border-b pb-2">
-                        <i data-lucide="calculator" class="w-4 h-4"></i> Base de Cálculo (Lançamento de Saldo)
-                    </h3>
-                    <p class="text-xs text-slate-500 mb-4">Estes valores são usados para o painel do pastor gerar a prévia do valor que ele terá que pagar no mês.</p>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="space-y-4">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Percentual Regional (%)</label>
-                            <input type="number" id="taxaRegional" value="4" step="0.1" class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl outline-none text-sm font-bold text-slate-500" readonly title="Valor Fixo">
-                            <p class="text-[9px] mt-1 text-slate-400">Padrão 4% sobre entradas</p>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Tipo de Aviso</label>
+                            <select id="avisoTipo" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                <option value="info">🔵 Informativo</option>
+                                <option value="warning">🟡 Alerta</option>
+                                <option value="danger">🔴 Urgente</option>
+                                <option value="none">⚪ Ocultar Aviso</option>
+                            </select>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Taxa Coordenadoria (R$)</label>
-                            <input type="number" id="taxaCoord" value="100" class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl outline-none text-sm font-bold text-slate-500" readonly title="Valor Fixo">
-                            <p class="text-[9px] mt-1 text-slate-400">Padrão R$ 100,00</p>
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Valor p/ Vida - Seguro (R$)</label>
-                            <input type="number" id="valorSeguro" placeholder="24.00" step="0.01" required class="w-full p-3 bg-white border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-blue-700">
-                            <p class="text-[9px] mt-1 text-blue-500">Ex: 24.50 (Custo por pessoa)</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SEÇÃO 3: Links Úteis -->
-                <div>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2 border-b pb-2">
-                        <i data-lucide="link" class="w-4 h-4"></i> Comunicação & Links Úteis
-                    </h3>
-                    
-                    <div class="mb-4 p-4 border border-emerald-200 rounded-xl bg-emerald-50">
-                        <label class="block text-[11px] font-bold text-emerald-700 uppercase mb-1 flex items-center gap-1">
-                            <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Link do Grupo Oficial de WhatsApp (Avisos)
-                        </label>
-                        <input type="url" id="linkWhatsappGrupo" placeholder="https://chat.whatsapp.com/..." class="w-full p-3 bg-white border border-emerald-300 rounded-lg outline-none text-sm focus:ring-2 focus:ring-emerald-500">
-                        <p class="text-[9px] mt-1 text-emerald-600">Ficará em destaque no painel do pastor.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="p-4 border border-slate-200 rounded-xl bg-slate-50">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Botão 1 - Título</label>
-                            <input type="text" id="link1Titulo" placeholder="Ex: Portal Nacional IEQ" class="w-full p-2 mb-2 bg-white border border-slate-200 rounded-lg outline-none text-xs">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Botão 1 - URL (Link)</label>
-                            <input type="url" id="link1Url" placeholder="https://..." class="w-full p-2 bg-white border border-slate-200 rounded-lg outline-none text-xs">
-                        </div>
-                        <div class="p-4 border border-slate-200 rounded-xl bg-slate-50">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Botão 2 - Título</label>
-                            <input type="text" id="link2Titulo" placeholder="Ex: SGQ - Relatório" class="w-full p-2 mb-2 bg-white border border-slate-200 rounded-lg outline-none text-xs">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Botão 2 - URL (Link)</label>
-                            <input type="url" id="link2Url" placeholder="https://..." class="w-full p-2 bg-white border border-slate-200 rounded-lg outline-none text-xs">
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                            <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">ID do aviso atual</p>
+                            <p id="avisoIdDisplay" class="text-[10px] font-mono text-slate-400 break-all">—</p>
+                            <a href="controle_avisos.html" class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-purple-600 hover:underline">
+                                <i data-lucide="users" class="w-3 h-3"></i> Ver quem confirmou
+                            </a>
                         </div>
                     </div>
                 </div>
-
-                <div class="pt-4 border-t border-slate-100 flex justify-end items-center gap-4">
-                    <div id="feedback" class="text-xs font-bold uppercase tracking-wider hidden"></div>
-                    <button type="submit" id="btnSalvar" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-colors flex items-center gap-2 uppercase tracking-wide text-xs">
-                        <i data-lucide="save" class="w-4 h-4"></i> Salvar Configurações
-                    </button>
-                </div>
-
-            </form>
+            </div>
         </div>
+
+        <!-- ═══ SEÇÃO 2: PARÂMETROS FINANCEIROS ═══ -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                <i data-lucide="calculator" class="w-4 h-4 text-slate-400"></i>
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Base de Cálculo (Lançamento de Saldo)</h2>
+            </div>
+            <div class="p-5">
+                <p class="text-xs text-slate-500 mb-4">Usados para gerar a prévia do valor que o pastor terá que pagar no mês.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Percentual Regional (%)</label>
+                        <input type="number" value="4" step="0.1" class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl outline-none text-sm font-bold text-slate-400 cursor-not-allowed" readonly>
+                        <p class="text-[9px] mt-1 text-slate-400">Padrão 4% — fixo</p>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Taxa Coordenadoria (R$)</label>
+                        <input type="number" value="100" class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl outline-none text-sm font-bold text-slate-400 cursor-not-allowed" readonly>
+                        <p class="text-[9px] mt-1 text-slate-400">Padrão R$ 100,00 — fixo</p>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Valor por Vida — Seguro (R$)</label>
+                        <input type="number" id="valorSeguro" placeholder="24.00" step="0.01" class="w-full p-3 bg-white border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-blue-700">
+                        <p class="text-[9px] mt-1 text-blue-500">Ex: 24.50</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SEÇÃO 3: AÇÕES RÁPIDAS ═══ -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="zap" class="w-4 h-4 text-slate-400"></i>
+                    <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Ações Rápidas</h2>
+                </div>
+                <button type="button" onclick="adicionarAcao()" class="text-[10px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors uppercase tracking-wide">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Adicionar
+                </button>
+            </div>
+            <div class="p-5">
+                <p class="text-[11px] text-slate-400 mb-4">Botões que aparecem no painel do pastor em "Ações Rápidas". Arraste para reordenar.</p>
+                <div id="lista-acoes" class="space-y-2"></div>
+                <p id="acoes-vazio" class="hidden text-[11px] text-slate-400 italic text-center py-4">Nenhuma ação configurada. Clique em "Adicionar" para criar.</p>
+            </div>
+        </div>
+
+        <!-- ═══ SEÇÃO 4: LINKS ÚTEIS ═══ -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="link" class="w-4 h-4 text-slate-400"></i>
+                    <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Links Úteis</h2>
+                </div>
+                <button type="button" onclick="adicionarLink()" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors uppercase tracking-wide">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Adicionar
+                </button>
+            </div>
+            <div class="p-5">
+                <div class="mb-4 p-4 border border-emerald-200 rounded-xl bg-emerald-50/60">
+                    <label class="block text-[11px] font-bold text-emerald-700 uppercase mb-1 flex items-center gap-1">
+                        <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Grupo Oficial de WhatsApp (destaque)
+                    </label>
+                    <input type="url" id="linkWhatsappGrupo" placeholder="https://chat.whatsapp.com/..." class="w-full p-2.5 bg-white border border-emerald-300 rounded-lg outline-none text-sm focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <p class="text-[11px] text-slate-400 mb-3">Demais links — arraste para reordenar.</p>
+                <div id="lista-links" class="space-y-2"></div>
+                <p id="links-vazio" class="hidden text-[11px] text-slate-400 italic text-center py-4">Nenhum link adicional. Clique em "Adicionar".</p>
+            </div>
+        </div>
+
+        <!-- BOTÃO SALVAR -->
+        <div class="flex justify-between items-center gap-4 bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <div id="feedback" class="text-xs font-bold uppercase tracking-wider hidden"></div>
+            <button type="button" id="btnSalvar" onclick="salvar()" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-colors flex items-center gap-2 uppercase tracking-wide text-xs">
+                <i data-lucide="save" class="w-4 h-4"></i> Salvar Todas as Configurações
+            </button>
+        </div>
+
     </main>
 
-    <!-- Overlay de Carregamento -->
     <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 flex-col gap-3">
         <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-100 h-12 w-12"></div>
-        <p class="text-white font-bold uppercase tracking-widest text-xs">Sincronizando com Firebase...</p>
+        <p class="text-white font-bold uppercase tracking-widest text-xs">Sincronizando...</p>
     </div>
 
     <script type="module">
@@ -160,90 +183,243 @@
 
         if (window.lucide) lucide.createIcons();
 
-        const form = document.getElementById('configForm');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const feedback = document.getElementById('feedback');
         const docRef = doc(db, "configuracoes", "painel_pastores");
+        const overlay = document.getElementById('loadingOverlay');
+        const feedback = document.getElementById('feedback');
 
-        // Função para mostrar mensagem na tela
-        function showFeedback(msg, isError = false) {
+        let avisoIdAtual = '';
+        let avisoTextoOriginal = '';
+
+        function showFeedback(msg, err = false) {
             feedback.textContent = msg;
             feedback.classList.remove('hidden', 'text-green-600', 'text-red-600');
-            feedback.classList.add(isError ? 'text-red-600' : 'text-green-600');
+            feedback.classList.add(err ? 'text-red-600' : 'text-green-600');
             setTimeout(() => feedback.classList.add('hidden'), 4000);
         }
 
-        // Carregar configurações atuais
-        async function carregarDados() {
-            try {
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    
-                    document.getElementById('avisoTexto').value = data.avisoTexto || '';
-                    document.getElementById('avisoTipo').value = data.avisoTipo || 'none';
-                    document.getElementById('valorSeguro').value = data.valorSeguro || '';
-                    document.getElementById('linkWhatsappGrupo').value = data.linkWhatsappGrupo || '';
-                    
-                    if(data.links && data.links.length > 0) {
-                        document.getElementById('link1Titulo').value = data.links[0]?.titulo || '';
-                        document.getElementById('link1Url').value = data.links[0]?.url || '';
-                        document.getElementById('link2Titulo').value = data.links[1]?.titulo || '';
-                        document.getElementById('link2Url').value = data.links[1]?.url || '';
-                    }
-                }
-            } catch (error) {
-                console.error("Erro ao carregar configurações:", error);
-                showFeedback("Erro ao carregar dados.", true);
-            } finally {
-                loadingOverlay.classList.add('hidden');
-            }
+        // ─── AÇÕES RÁPIDAS ────────────────────────────────────────────
+        let acoesData = [];
+
+        window.adicionarAcao = (item = {}) => {
+            const id = Date.now() + Math.random();
+            const div = criarLinhaAcao(id, item);
+            document.getElementById('lista-acoes').appendChild(div);
+            atualizarVazioAcoes();
+            lucide.createIcons();
+        };
+
+        function criarLinhaAcao(id, item = {}) {
+            const div = document.createElement('div');
+            div.className = 'item-row';
+            div.dataset.id = id;
+            div.setAttribute('draggable', 'true');
+            div.innerHTML = `
+                <div class="drag-handle" title="Arrastar"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
+                <div class="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <div class="sm:col-span-1">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Ícone (emoji)</label>
+                        <input type="text" name="icone" value="${esc(item.icone||'')}" placeholder="📊" maxlength="4"
+                            class="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-bold outline-none focus:ring-1 focus:ring-blue-400 text-center">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Título</label>
+                        <input type="text" name="titulo" value="${esc(item.titulo||'')}" placeholder="Ex: Lançar Saldo"
+                            class="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Formato</label>
+                        <select name="formato" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-blue-400">
+                            <option value="quadrado" ${(item.formato||'quadrado')==='quadrado'?'selected':''}>Quadrado</option>
+                            <option value="retangular" ${item.formato==='retangular'?'selected':''}>Retangular</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">URL / Link</label>
+                        <input type="text" name="url" value="${esc(item.url||'')}" placeholder="saldodeviradareg655.html ou https://..."
+                            class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Tipo</label>
+                        <select name="tipo" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-blue-400">
+                            <option value="interno" ${(item.tipo||'interno')!=='externo'?'selected':''}>Interno</option>
+                            <option value="externo" ${item.tipo==='externo'?'selected':''}>Externo ↗</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-4">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Observação (opcional)</label>
+                        <input type="text" name="obs" value="${esc(item.obs||'')}" placeholder="Texto complementar abaixo do título"
+                            class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-400">
+                    </div>
+                </div>
+                <button type="button" onclick="this.closest('.item-row').remove();atualizarVazioAcoes();" class="text-red-400 hover:text-red-600 p-1 flex-shrink-0 mt-1" title="Remover">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>`;
+            addDragEvents(div);
+            return div;
         }
 
-        // Salvar configurações
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
+        window.atualizarVazioAcoes = () => {
+            const lista = document.getElementById('lista-acoes');
+            document.getElementById('acoes-vazio').classList.toggle('hidden', lista.children.length > 0);
+        };
+
+        // ─── LINKS ÚTEIS ──────────────────────────────────────────────
+        window.adicionarLink = (item = {}) => {
+            const id = Date.now() + Math.random();
+            const div = criarLinhaLink(id, item);
+            document.getElementById('lista-links').appendChild(div);
+            atualizarVazioLinks();
+            lucide.createIcons();
+        };
+
+        function criarLinhaLink(id, item = {}) {
+            const div = document.createElement('div');
+            div.className = 'item-row';
+            div.dataset.id = id;
+            div.setAttribute('draggable', 'true');
+            div.innerHTML = `
+                <div class="drag-handle" title="Arrastar"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
+                <div class="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Ícone (emoji)</label>
+                        <input type="text" name="icone" value="${esc(item.icone||'')}" placeholder="🔗" maxlength="4"
+                            class="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-bold outline-none focus:ring-1 focus:ring-emerald-400 text-center">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Título</label>
+                        <input type="text" name="titulo" value="${esc(item.titulo||'')}" placeholder="Ex: Portal Nacional IEQ"
+                            class="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-emerald-400">
+                    </div>
+                    <div class="sm:col-span-4">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">URL</label>
+                        <input type="url" name="url" value="${esc(item.url||'')}" placeholder="https://..."
+                            class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-400">
+                    </div>
+                    <div class="sm:col-span-4">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Descrição (aparece abaixo do título)</label>
+                        <input type="text" name="descricao" value="${esc(item.descricao||'')}" placeholder="Ex: Acesse o portal nacional para relatórios..."
+                            class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-emerald-400">
+                    </div>
+                </div>
+                <button type="button" onclick="this.closest('.item-row').remove();atualizarVazioLinks();" class="text-red-400 hover:text-red-600 p-1 flex-shrink-0 mt-1" title="Remover">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>`;
+            addDragEvents(div);
+            return div;
+        }
+
+        window.atualizarVazioLinks = () => {
+            const lista = document.getElementById('lista-links');
+            document.getElementById('links-vazio').classList.toggle('hidden', lista.children.length > 0);
+        };
+
+        // ─── DRAG & DROP ──────────────────────────────────────────────
+        let dragSrc = null;
+        function addDragEvents(el) {
+            el.addEventListener('dragstart', e => { dragSrc = el; e.dataTransfer.effectAllowed = 'move'; });
+            el.addEventListener('dragover',  e => { e.preventDefault(); el.classList.add('drag-row-over'); });
+            el.addEventListener('dragleave', () => el.classList.remove('drag-row-over'));
+            el.addEventListener('drop', e => {
+                e.preventDefault(); el.classList.remove('drag-row-over');
+                if (dragSrc && dragSrc !== el) {
+                    const parent = el.parentNode;
+                    const nodes = [...parent.children];
+                    const srcIdx = nodes.indexOf(dragSrc);
+                    const tgtIdx = nodes.indexOf(el);
+                    if (srcIdx < tgtIdx) parent.insertBefore(dragSrc, el.nextSibling);
+                    else parent.insertBefore(dragSrc, el);
+                }
+            });
+        }
+
+        // ─── helpers ──────────────────────────────────────────────────
+        function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        function coletarLinhas(listaId, campos) {
+            return [...document.getElementById(listaId).children].map(row => {
+                const obj = {};
+                campos.forEach(f => { const el = row.querySelector(`[name="${f}"]`); if (el) obj[f] = el.value.trim(); });
+                return obj;
+            }).filter(o => o.titulo || o.url);
+        }
+
+        // ─── CARREGAR ─────────────────────────────────────────────────
+        async function carregarDados() {
+            try {
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    const d = snap.data();
+
+                    document.getElementById('avisoTexto').value = d.avisoTexto || '';
+                    document.getElementById('avisoTipo').value  = d.avisoTipo  || 'none';
+                    document.getElementById('valorSeguro').value = d.valorSeguro || '';
+                    document.getElementById('linkWhatsappGrupo').value = d.linkWhatsappGrupo || '';
+
+                    avisoIdAtual = d.avisoId || '';
+                    avisoTextoOriginal = d.avisoTexto || '';
+                    document.getElementById('avisoIdDisplay').textContent = avisoIdAtual || '(nenhum)';
+
+                    // Ações rápidas
+                    (d.acoesRapidas || []).forEach(a => adicionarAcao(a));
+
+                    // Links úteis
+                    (d.links || []).forEach(l => adicionarLink(l));
+                }
+            } catch(e) {
+                console.error(e);
+                showFeedback('Erro ao carregar configurações.', true);
+            } finally {
+                overlay.classList.add('hidden');
+            }
+            atualizarVazioAcoes();
+            atualizarVazioLinks();
+        }
+
+        // ─── SALVAR ───────────────────────────────────────────────────
+        window.salvar = async () => {
             const btn = document.getElementById('btnSalvar');
             btn.disabled = true;
             btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...';
-            if (window.lucide) lucide.createIcons();
+            lucide.createIcons();
+
+            const novoTexto = document.getElementById('avisoTexto').value.trim();
+            // Gera novo avisoId se o texto foi alterado (invalida confirmações antigas)
+            if (novoTexto !== avisoTextoOriginal) {
+                avisoIdAtual = 'aviso_' + Date.now();
+                avisoTextoOriginal = novoTexto;
+                document.getElementById('avisoIdDisplay').textContent = avisoIdAtual;
+            }
+
+            const acoesRapidas = coletarLinhas('lista-acoes', ['icone','titulo','url','tipo','formato','obs']);
+            const links        = coletarLinhas('lista-links',  ['icone','titulo','url','descricao']);
 
             const payload = {
-                avisoTexto: document.getElementById('avisoTexto').value.trim(),
-                avisoTipo: document.getElementById('avisoTipo').value,
-                valorSeguro: parseFloat(document.getElementById('valorSeguro').value) || 0,
-                taxaRegionalFixa: 4, // 4% fixado
-                taxaCoordFixa: 100,  // R$ 100 fixado
+                avisoTexto:       novoTexto,
+                avisoTipo:        document.getElementById('avisoTipo').value,
+                avisoId:          avisoIdAtual,
+                valorSeguro:      parseFloat(document.getElementById('valorSeguro').value) || 0,
+                taxaRegionalFixa: 4,
+                taxaCoordFixa:    100,
                 linkWhatsappGrupo: document.getElementById('linkWhatsappGrupo').value.trim(),
-                links: [
-                    {
-                        titulo: document.getElementById('link1Titulo').value.trim(),
-                        url: document.getElementById('link1Url').value.trim()
-                    },
-                    {
-                        titulo: document.getElementById('link2Titulo').value.trim(),
-                        url: document.getElementById('link2Url').value.trim()
-                    }
-                ],
+                acoesRapidas,
+                links,
                 updatedAt: serverTimestamp(),
                 updatedBy: localStorage.getItem('userEmail') || 'admin'
             };
 
             try {
                 await setDoc(docRef, payload, { merge: true });
-                showFeedback("Configurações atualizadas e ativas!");
-            } catch (error) {
-                console.error("Erro ao salvar:", error);
-                showFeedback("Erro ao salvar no banco de dados.", true);
+                showFeedback('Configurações salvas com sucesso!');
+            } catch(e) {
+                console.error(e);
+                showFeedback('Erro ao salvar.', true);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Salvar Configurações';
-                if (window.lucide) lucide.createIcons();
+                btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Salvar Todas as Configurações';
+                lucide.createIcons();
             }
-        });
+        };
 
-        // Iniciar
         carregarDados();
     </script>
 </body>
