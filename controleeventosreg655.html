@@ -412,7 +412,7 @@
                     });
 
                     presencasDoEvento.forEach(presenca => {
-                        if (!allPastores.some(p => p.nome === presenca.nome)) {
+                        if (!displayList.some(d => d.id === presenca.id)) {
                             if (presenca.status === 'Ausente' && !eventoInativo) return;
                             displayList.push({ ...presenca, dataEvento: evento.data });
                         }
@@ -459,9 +459,9 @@
                         }
                     });
 
-                    // Visitantes (não estão na lista de pastores)
+                    // Visitantes e pastores não cobertos pelo loop acima (ex: início posterior ao evento)
                     presencasDoEvento.forEach(presenca => {
-                        if (!allPastores.some(p => p.nome === presenca.nome)) {
+                        if (!displayList.some(d => d.id === presenca.id)) {
                             if (presenca.status === 'Ausente' && !eventoInativo) return;
                             displayList.push({ ...presenca, dataEvento: evento.data });
                         }
