@@ -551,14 +551,13 @@
             }
 
             try {
-                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap, layoutSnap, eventosSnap, pastoresSnap, debManuaisSnap] = await Promise.all([
+                const [cfgSnap, igSnap, saldosSnap, recibosSnap, agendaSnap, presencasSnap, eventosSnap, pastoresSnap, debManuaisSnap] = await Promise.all([
                     getDoc(doc(db, 'configuracoes', 'painel_pastores')),
                     getDocs(query(collection(db, 'igrejas'), where('nome','==',igrejaAtiva))),
                     getDocs(collection(db, 'saldos_virada')),
                     getDocs(collection(db, 'recibos')),
                     getDocs(query(collection(db, 'agenda'), orderBy('data','asc'))),
                     getDocs(collection(db, 'presencas')),
-                    getDoc(doc(db, 'configuracoes', 'layout')),
                     getDocs(collection(db, 'eventos')),
                     getDocs(collection(db, 'pastores')),
                     getDocs(collection(db, 'pendencias_manuais'))
@@ -581,16 +580,8 @@
                     } catch(e) { /* sem ciencia cadastrada ainda */ }
                 }
 
-                // Ações rápidas: usa painel_pastores se configurado, senão usa layout
-                let pastorLinks = [];
-                if (configPainel.acoesRapidas?.length) {
-                    pastorLinks = configPainel.acoesRapidas;
-                } else if (layoutSnap.exists()) {
-                    const sortedGrupos = [...(layoutSnap.data().grupos||[])].sort((a,b)=>(a.ordem||0)-(b.ordem||0));
-                    sortedGrupos.forEach(g => {
-                        [...(g.itens||[])].filter(it=>it.perm==='pastor_titular'&&it.visivel!==false).sort((a,b)=>(a.ordem||0)-(b.ordem||0)).forEach(it=>pastorLinks.push(it));
-                    });
-                }
+                // Ações rápidas: apenas o que foi configurado em editpagpastores.html
+                const pastorLinks = configPainel.acoesRapidas || [];
 
                 // Confirmação via URL (?confirmar_aviso=ID)
                 const urlParams = new URLSearchParams(window.location.search);
