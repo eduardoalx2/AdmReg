@@ -15,6 +15,7 @@
         if (!_ps || !_em) window.location.replace('login.html');
     </script>
     <style>
+        html { overflow-x: hidden; }
         :root {
             --bg: #0c0f1a;
             --surface: #111827;
@@ -73,7 +74,8 @@
             font-weight: 800; letter-spacing: -0.03em; color: #fff; line-height: 1.1; margin-bottom: 8px;
         }
         .portal-subtitle { font-size: 12px; color: var(--text-secondary); letter-spacing: 0.05em; }
-        main { flex: 1; width: 100%; margin: 0 auto; padding: 0 16px 64px; position: relative; z-index: 1; }
+        main { flex: 1; width: 100%; max-width: 100vw; margin: 0 auto; padding: 0 16px 64px; position: relative; z-index: 1; overflow-x: hidden; }
+        @media(max-width:480px){ main { padding: 0 10px 64px; } }
 
         /* ===== ADMIN CARDS ===== */
         .admin-main { max-width: 860px; margin: 0 auto; }
@@ -116,9 +118,10 @@
         .link-card:hover .card-arrow { color: var(--accent); transform: translate(2px,-2px); }
 
         /* ===== PASTOR VIEW ===== */
-        .pastor-main { max-width: 1020px; margin: 0 auto; }
+        .pastor-main { max-width: 1020px; margin: 0 auto; width: 100%; }
         .pastor-grid { display: grid; grid-template-columns: 300px 1fr; gap: 18px; align-items: start; }
-        @media(max-width:760px){.pastor-grid{grid-template-columns:1fr;}}
+        .pastor-grid > * { min-width: 0; }
+        @media(max-width:760px){.pastor-grid{grid-template-columns:1fr;gap:12px;}}
         .p-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
         .p-card-hdr {
             background: rgba(255,255,255,0.04); border-bottom: 1px solid var(--border);
@@ -129,8 +132,8 @@
             color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.18em;
             display: flex; align-items: center; gap: 8px;
         }
-        .p-card-body { padding: 18px 16px; }
-        .p-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .p-card-body { padding: 18px 16px; min-width: 0; overflow: hidden; }
+        .p-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-width: 0; }
         .p-action-btn {
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
             padding: 13px 8px; border-radius: 14px; text-decoration: none; border: none; cursor: pointer;
@@ -162,7 +165,7 @@
         .p-tag.violet{background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.25);}
         .p-tag.slate{background:rgba(100,116,139,0.15);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);}
         .p-divider{height:1px;background:var(--border);}
-        .p-row{padding:11px 16px;border-bottom:1px solid var(--border);}
+        .p-row{padding:11px 16px;border-bottom:1px solid var(--border);min-width:0;overflow:hidden;}
         .p-row:last-child{border-bottom:none;}
         .p-debito-wrap{border:1px solid rgba(239,68,68,0.2);border-radius:18px;overflow:hidden;}
         .p-debito-hdr{background:rgba(239,68,68,0.08);border-bottom:1px solid rgba(239,68,68,0.15);padding:13px 16px;display:flex;align-items:center;gap:8px;}
@@ -171,7 +174,7 @@
         .p-link-a{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;border:1px solid var(--border);text-decoration:none;color:var(--text-secondary);background:rgba(255,255,255,0.02);transition:all 0.2s;margin-bottom:7px;font-size:12px;font-weight:600;}
         .p-link-a:hover{border-color:rgba(99,179,237,0.3);color:var(--accent);background:rgba(99,179,237,0.05);}
         .p-link-a:last-child{margin-bottom:0;}
-        .agenda-item{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);}
+        .agenda-item{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);min-width:0;overflow:hidden;}
         .agenda-item:last-child{border-bottom:none;}
         .agenda-date{flex-shrink:0;min-width:50px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:7px;text-align:center;}
         .skel{background:rgba(255,255,255,0.06);border-radius:8px;animation:skelPulse 1.5s ease-in-out infinite;}
@@ -1054,7 +1057,7 @@
                 ${debitosManuaisHtml}
                 <div class="pastor-grid">
                     <!-- COL ESQUERDA -->
-                    <div style="display:flex;flex-direction:column;gap:14px;">
+                    <div style="display:flex;flex-direction:column;gap:14px;min-width:0;overflow:hidden;">
 
                         <!-- Status do Mês -->
                         <div class="p-card">
@@ -1076,7 +1079,7 @@
                     </div>
 
                     <!-- COL DIREITA -->
-                    <div style="display:flex;flex-direction:column;gap:14px;">
+                    <div style="display:flex;flex-direction:column;gap:14px;min-width:0;overflow:hidden;">
 
                         <!-- Meus Últimos Recibos -->
                         <div class="p-card">
