@@ -583,6 +583,24 @@
                 // Ações rápidas: apenas o que foi configurado em editpagpastores.html
                 const pastorLinks = configPainel.acoesRapidas || [];
 
+                // Garante que o layout_cache reconhece acesso do pastor_titular às ações rápidas internas
+                try {
+                    let lc = JSON.parse(localStorage.getItem('layout_cache') || '[]');
+                    if (!Array.isArray(lc)) lc = [];
+                    lc = lc.filter(g => g.id !== '__pastor_acoes__');
+                    const acoesInternas = pastorLinks.filter(l => l.tipo !== 'externo' && l.url);
+                    if (acoesInternas.length) {
+                        lc.push({
+                            id: '__pastor_acoes__', nome: 'Ações Rápidas (Pastor)', ordem: 9999,
+                            itens: acoesInternas.map((l, i) => ({
+                                id: `__pa_${i}__`, tipo: 'sistema', titulo: l.titulo || '', obs: '',
+                                url: l.url, icone: l.icone || '🔗', perm: 'pastor_titular', visivel: true, ordem: i
+                            }))
+                        });
+                    }
+                    localStorage.setItem('layout_cache', JSON.stringify(lc));
+                } catch(e) {}
+
                 // Confirmação via URL (?confirmar_aviso=ID)
                 const urlParams = new URLSearchParams(window.location.search);
                 const confirmarId = urlParams.get('confirmar_aviso');
