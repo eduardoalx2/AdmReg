@@ -26,7 +26,7 @@
         </a>
         <div class="flex-1">
             <h1 class="text-sm font-bold text-white">Gerenciar Layout</h1>
-            <p class="text-[10px] text-slate-500">Organize grupos, ordem e links externos do Painel Admin</p>
+            <p class="text-[10px] text-slate-500">Organize grupos, ordem e níveis de acesso do Painel Admin (layout do painel do pastor em Editar Painel)</p>
         </div>
         <button onclick="restaurarPadrao()" class="text-xs text-slate-500 hover:text-amber-400 border border-slate-700 hover:border-amber-500/40 px-3 py-1.5 rounded-lg transition-colors">
             ↺ Restaurar Padrão
@@ -114,20 +114,11 @@
                         <option value="admin">Gestor Master (Apenas Eu)</option>
                         <option value="secretario">Secretário Regional</option>
                         <option value="superintendente">Superintendente</option>
-                        <option value="pastor_titular">Pastor Titular ✦ aparece no painel do pastor</option>
+                        <option value="pastor_titular">Pastor Titular</option>
                         <option value="coordenador">Coordenador</option>
                         <option value="obreiro">Obreiro</option>
                         <option value="membro">Membro</option>
                     </select>
-                </div>
-
-                <div id="f-formato-wrap" class="hidden">
-                    <label class="block text-[10px] font-bold text-violet-400 uppercase mb-1">Formato no Painel do Pastor</label>
-                    <select id="f-formato" class="w-full bg-slate-800 border border-violet-600/50 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-violet-500">
-                        <option value="quadrado">⬛ Quadrado (2 por linha)</option>
-                        <option value="retangular">▬ Retangular (1 por linha, com descrição)</option>
-                    </select>
-                    <p class="text-[9px] mt-1 text-violet-500/70">Controla como este link aparece no painel do pastor</p>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -233,9 +224,6 @@
             const permLabel = !item.perm ? '—' : item.perm === 'admin' ? '🔐 admin' : item.perm;
             const isExterno = item.tipo === 'externo';
             const oculto = item.visivel === false;
-            const formatoBadge = item.perm === 'pastor_titular'
-                ? `<span class="text-[9px] bg-violet-900/40 text-violet-400 px-1.5 py-0.5 rounded flex-shrink-0" title="Formato no painel do pastor">${item.formato==='retangular'?'▬':'⬛'}</span>`
-                : '';
             return `
                 <div class="flex items-center gap-2 ${oculto?'opacity-40':''} bg-[#0c0f1a]/60 border border-slate-700/30 rounded-lg px-3 py-2">
                     <div class="flex flex-col">
@@ -249,7 +237,6 @@
                     </div>
                     ${isExterno?'<span class="text-[9px] text-amber-400 font-bold flex-shrink-0">EXT</span>':''}
                     <span class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded flex-shrink-0 max-w-[100px] truncate">${esc(permLabel)}</span>
-                    ${formatoBadge}
                     <button onclick="toggleVisivel('${grupoId}','${item.id}')" title="${oculto?'Oculto — clique para mostrar':'Visível — clique para ocultar'}" class="flex-shrink-0 text-base ${oculto?'grayscale opacity-50':''}">👁️</button>
                     <button onclick="abrirModalItem('${grupoId}','${item.id}')" class="flex-shrink-0 text-slate-600 hover:text-blue-400 text-xs transition-colors">✏️</button>
                     <button onclick="excluirItem('${grupoId}','${item.id}')" class="flex-shrink-0 text-slate-600 hover:text-red-400 text-xs transition-colors">🗑️</button>
@@ -355,12 +342,6 @@
             document.getElementById('f-icone').value = item?.icone || '🔗';
             document.getElementById('f-perm').value = item?.perm || '';
             document.getElementById('f-visivel').checked = item?.visivel !== false;
-            document.getElementById('f-formato').value = item?.formato || 'quadrado';
-            const fFormatoWrap = document.getElementById('f-formato-wrap');
-            fFormatoWrap.classList.toggle('hidden', (item?.perm || '') !== 'pastor_titular');
-            document.getElementById('f-perm').onchange = function() {
-                fFormatoWrap.classList.toggle('hidden', this.value !== 'pastor_titular');
-            };
             document.getElementById('modal-item').classList.remove('hidden');
             setTimeout(() => document.getElementById('f-titulo').focus(), 50);
         }
@@ -389,7 +370,6 @@
                 icone: document.getElementById('f-icone').value.trim() || '🔗',
                 perm: document.getElementById('f-perm').value || null,
                 visivel: document.getElementById('f-visivel').checked,
-                formato: document.getElementById('f-perm').value === 'pastor_titular' ? (document.getElementById('f-formato').value || 'quadrado') : null,
             };
             if (itemId) {
                 if (novoGrupoId !== grupoId) {
