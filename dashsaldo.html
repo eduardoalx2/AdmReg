@@ -250,7 +250,7 @@
                 const igrejasSnapshot = await getDocs(collection(db, "igrejas"));
                 igrejasSnapshot.forEach(doc => {
                     const data = doc.data();
-                    const cod = String(data.codigo).padStart(4, '0');
+                    const cod = String(data.codigo);
                     const originalName = `${cod} - ${data.nome}`;
                     const normName = normalizeString(originalName);
                     masterChurches.set(normName, originalName);
@@ -386,7 +386,7 @@
             const submissionMap = new Map();
             submissions.forEach(s => submissionMap.set(s.normNome, s));
 
-            const excludeList = ["655 - REGIÃO", "0252 - IEQ CENTRAL"];
+            const excludeList = ["655 - REGIÃO", "252 - IEQ CENTRAL"];
 
             let pendingChurches = [];
             masterChurches.forEach((originalName, normName) => {
