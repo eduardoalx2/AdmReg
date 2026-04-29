@@ -584,7 +584,7 @@
                 </div>
             `;
 
-            document.getElementById('statTotalIgrejas').innerText = isAll ? countEntregue : masterChurches.size;
+            document.getElementById('statTotalIgrejas').innerText = masterChurches.size;
             document.getElementById('statEntregues').innerText = countEntregue;
             document.getElementById('statPendentes').innerText = countPendente;
             document.getElementById('statSomaTotal').innerText = totalGeralSoma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
