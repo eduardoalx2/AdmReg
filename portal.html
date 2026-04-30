@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Região 655 | Agenda & Presença</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0/dist/umd/lucide.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+        .tab-active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: 800; }
+        .tab-inactive { color: #94a3b8; font-weight: 600; border-bottom: 3px solid transparent; }
+        .event-card { transition: all 0.2s ease; }
+        .event-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.07); }
+        .loader { border-top-color: #4f46e5; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .tipo-btn { transition: all 0.2s; }
+        .tipo-btn.ativo-sim { border-color: #3b82f6; background: #eff6ff; }
+        .tipo-btn.ativo-nao { border-color: #10b981; background: #ecfdf5; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
+
+    <!-- Header -->
+    <header class="w-full bg-white border-b shadow-sm sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+            <img src="logo.png" alt="Logo" class="h-9 w-auto object-contain">
+            <div class="border-l border-slate-200 pl-3">
+                <div class="text-sm font-black tracking-tight text-slate-800 uppercase leading-none">Região 655</div>
+                <div class="text-[9px] font-bold text-slate-400 tracking-widest uppercase mt-0.5">Londrina — PR</div>
+            </div>
+        </div>
+
+        <!-- Abas -->
+        <div class="max-w-4xl mx-auto px-4 flex gap-8 overflow-x-auto scrollbar-hide">
+            <button id="tabAgendaBtn"   onclick="setTab('agenda')"   class="tab-active   py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider">📅 Agenda</button>
+            <button id="tabPresencaBtn" onclick="setTab('presenca')" class="tab-inactive py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider">✅ Lançar Presença</button>
+        </div>
+    </header>
+
+    <!-- ======== ABA AGENDA ======== -->
+    <div id="abaAgenda" class="max-w-4xl mx-auto px-4 mt-6">
+
+        <!-- Filtros -->
+        <div class="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="col-span-2 md:col-span-1 space-y-1">
+                <label class="text-[9px] font-bold text-slate-400 tracking-widest uppercase ml-1">Buscar</label>
+                <input type="text" id="filterSearch" oninput="renderAgenda()" placeholder="Filtrar evento..."
+                    class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium uppercase">
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-400 tracking-widest uppercase ml-1">Mês</label>
+                <select id="filterMonth" onchange="renderAgenda()" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm bg-white outline-none font-medium cursor-pointer uppercase">
+                    <option value="">Todos</option>
+                    <option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option>
+                    <option value="04">Abr</option><option value="05">Mai</option><option value="06">Jun</option>
+                    <option value="07">Jul</option><option value="08">Ago</option><option value="09">Set</option>
+                    <option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[9px] font-bold text-slate-400 tracking-widest uppercase ml-1">Tipo</label>
+                <select id="filterType" onchange="renderAgenda()" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm bg-white outline-none font-medium cursor-pointer uppercase">
+                    <option value="">Todos</option>
+                    <option value="REGIONAL">Regional</option>
+                    <option value="CED">CED</option>
+                    <option value="CND">CND</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Sub-abas agenda -->
+        <div class="flex gap-6 border-b border-slate-200 mb-6 overflow-x-auto scrollbar-hide px-1">
+            <button onclick="setAgendaTab('upcoming')" id="tUpcoming" class="tab-active   py-3 text-[10px] font-bold whitespace-nowrap transition-all uppercase">Próximos</button>
+            <button onclick="setAgendaTab('all')"      id="tAll"      class="tab-inactive py-3 text-[10px] font-bold text-slate-400 whitespace-nowrap transition-all uppercase">Todos</button>
+            <button onclick="setAgendaTab('past')"     id="tPast"     class="tab-inactive py-3 text-[10px] font-bold text-slate-400 whitespace-nowrap transition-all uppercase">Anteriores</button>
+        </div>
+
+        <div id="eventList" class="space-y-4">
+            <div class="flex justify-center py-20 text-indigo-500 font-bold text-xs animate-pulse uppercase tracking-widest">Carregando agenda...</div>
+        </div>
+    </div>
+
+    <!-- ======== ABA PRESENÇA ======== -->
+    <div id="abaPresenca" class="hidden max-w-lg mx-auto px-4 mt-6">
+        <div class="bg-white p-6 rounded-3xl shadow-xl border border-slate-100">
+
+            <form id="presenceForm" class="space-y-5">
+
+                <!-- Evento -->
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">1. Selecione o Evento</label>
+                    <select id="activeEvent" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                        <option value="" disabled selected>CARREGANDO EVENTOS...</option>
+                    </select>
+                </div>
+
+                <div id="publicoBadge" class="hidden px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-center"></div>
+
+                <div id="formResto" class="hidden space-y-5">
+                    <div class="border-t border-slate-100 pt-1"></div>
+
+                    <!-- Tipo participante (PublicoGeral) -->
+                    <div id="tipoParticipanteSection" class="hidden">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">2. Você é Pastor / Membro do Ministério?</label>
+                        <div class="flex gap-3">
+                            <label id="btnSim" class="tipo-btn flex-1 flex items-center gap-3 p-3 bg-slate-50 border-2 border-slate-200 rounded-xl cursor-pointer">
+                                <input type="radio" name="tipoParticipante" value="sim" id="tipoSim" class="h-4 w-4 text-blue-600">
+                                <span class="text-sm font-bold text-slate-700 uppercase">Sim</span>
+                            </label>
+                            <label id="btnNao" class="tipo-btn flex-1 flex items-center gap-3 p-3 bg-slate-50 border-2 border-slate-200 rounded-xl cursor-pointer">
+                                <input type="radio" name="tipoParticipante" value="nao" id="tipoNao" class="h-4 w-4 text-emerald-600">
+                                <span class="text-sm font-bold text-slate-700 uppercase">Não (Visitante)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Lista de pastores -->
+                    <div id="pastorNameSection" class="hidden">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1" id="labelNome">Seu Nome</label>
+                        <select id="pastorName" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                            <option value="" disabled selected>SELECIONE SEU NOME</option>
+                        </select>
+                    </div>
+
+                    <!-- Nome livre visitante -->
+                    <div id="visitanteNameSection" class="hidden">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Seu Nome Completo <span class="text-red-500">*</span></label>
+                        <input type="text" id="visitanteName" placeholder="DIGITE SEU NOME COMPLETO"
+                            class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    </div>
+
+                    <!-- Igreja -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Igreja / Congregação <span class="text-red-500">*</span></label>
+                        <select id="church" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                            <option value="" disabled selected>SELECIONE A IGREJA</option>
+                        </select>
+                        <div id="outraIgrejaSection" class="hidden mt-2">
+                            <input type="text" id="outraIgreja" placeholder="QUAL O NOME DA SUA IGREJA?"
+                                class="w-full p-3 bg-emerald-50 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-semibold">
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Status de Presença</label>
+                        <select id="status" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
+                            <option value="Presente">PRESENTE</option>
+                            <option value="Justificado">AUSÊNCIA JUSTIFICADA</option>
+                        </select>
+                    </div>
+
+                    <!-- Motivo -->
+                    <div id="motivoContainer" class="hidden">
+                        <label id="motivoLabel" class="block text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1 ml-1">Justificativa (Obrigatório)</label>
+                        <textarea id="motivo" rows="3" placeholder="Descreva o motivo da ausência..."
+                            class="w-full p-3 bg-amber-50 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none resize-none text-sm"></textarea>
+                    </div>
+
+                    <!-- Declaração -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" id="declaration" class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600">
+                            <span class="text-[11px] font-bold text-slate-600 leading-tight uppercase">Declaro que esta resposta é verdadeira</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" id="submitBtn"
+                        class="w-full bg-slate-900 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all text-sm tracking-widest uppercase">
+                        Confirmar e Enviar
+                    </button>
+                </div>
+            </form>
+
+            <div id="feedback" class="hidden mt-5 p-4 rounded-xl text-center text-[10px] font-black uppercase tracking-widest"></div>
+
+            <footer class="mt-8 pt-5 border-t border-slate-100 text-center text-[10px] text-slate-400 leading-relaxed">
+                <p>Desenvolvido por: <strong class="text-slate-500">Escritório Regional | Região 655 – Londrina/PR</strong></p>
+                <p>Superintendente: <strong class="text-slate-500">Rev. Valdir Ávila Ramos</strong></p>
+                <p>Secretário Regional: <strong class="text-slate-500">Pr. Eduardo Silva</strong></p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-3xl flex flex-col items-center shadow-2xl">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-100 h-10 w-10 mb-3"></div>
+            <p class="text-[10px] font-black text-slate-800 tracking-widest uppercase">Gravando...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, addDoc, updateDoc, getDocs, doc, query, where, orderBy, serverTimestamp }
+            from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // ─── ABAS PRINCIPAIS ───────────────────────────────────────────────────
+        window.setTab = (tab) => {
+            document.getElementById('abaAgenda').classList.toggle('hidden',   tab !== 'agenda');
+            document.getElementById('abaPresenca').classList.toggle('hidden', tab !== 'presenca');
+            document.getElementById('tabAgendaBtn').className   = tab === 'agenda'   ? 'tab-active   py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider'
+                                                                                      : 'tab-inactive py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider';
+            document.getElementById('tabPresencaBtn').className = tab === 'presenca' ? 'tab-active   py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider'
+                                                                                      : 'tab-inactive py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider';
+        };
+
+        // ─── AGENDA ────────────────────────────────────────────────────────────
+        let events = [];
+        let currentAgendaTab = 'upcoming';
+        const MONTHS   = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+        const WEEKDAYS = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+
+        window.setAgendaTab = (t) => {
+            currentAgendaTab = t;
+            ['tUpcoming','tAll','tPast'].forEach(id => {
+                document.getElementById(id).className = 'tab-inactive py-3 text-[10px] font-bold text-slate-400 whitespace-nowrap transition-all uppercase';
+            });
+            const map = { upcoming:'tUpcoming', all:'tAll', past:'tPast' };
+            document.getElementById(map[t]).className = 'tab-active py-3 text-[10px] font-bold whitespace-nowrap transition-all uppercase';
+            renderAgenda();
+        };
+
+        window.renderAgenda = () => {
+            const list   = document.getElementById('eventList');
+            const search = document.getElementById('filterSearch').value.toLowerCase();
+            const monthF = document.getElementById('filterMonth').value;
+            const typeF  = document.getElementById('filterType').value;
+            const today  = new Date().toISOString().split('T')[0];
+
+            let filtered = events.filter(e => {
+                const isPast     = e.data < today;
+                const isRegional = e.tipo !== 'LOCAL';
+                if (currentAgendaTab === 'upcoming' && (isPast || !isRegional)) return false;
+                if (currentAgendaTab === 'all'      && !isRegional)             return false;
+                if (currentAgendaTab === 'past'     && (!isPast || !isRegional)) return false;
+                if (search && !(e.evento||'').toLowerCase().includes(search))   return false;
+                if (monthF && e.data.split('-')[1] !== monthF)                  return false;
+                if (typeF  && (e.tipo||'').toUpperCase() !== typeF)             return false;
+                return true;
+            });
+
+            filtered.sort((a,b) => currentAgendaTab === 'past'
+                ? b.data.localeCompare(a.data)
+                : a.data.localeCompare(b.data));
+
+            if (!filtered.length) {
+                list.innerHTML = `<div class="text-center py-16 text-slate-400 text-xs font-bold uppercase">Nenhum evento encontrado.</div>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map(e => {
+                const [y,m,d] = e.data.split('-');
+                const dow = WEEKDAYS[new Date(e.data+'T12:00:00').getDay()];
+                const hasLink    = e.link && e.link.trim().length > 5;
+                const hasAddress = e.local && !e.local.toUpperCase().includes('ONLINE') && !e.local.toUpperCase().includes('DEFINIR');
+                return `
+                <div class="event-card bg-white rounded-2xl p-5 flex flex-col md:flex-row items-center gap-5 shadow-sm border border-slate-100">
+                    <div class="flex flex-row md:flex-col items-center justify-center md:w-16 border-b md:border-b-0 md:border-r border-slate-100 pb-3 md:pb-0 md:pr-5 text-center min-w-[64px] gap-3 md:gap-0">
+                        <span class="text-[9px] font-bold text-indigo-400 tracking-tight">${dow}</span>
+                        <span class="text-3xl font-black text-slate-800 leading-none">${d}</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">${MONTHS[parseInt(m)-1]}</span>
+                    </div>
+                    <div class="flex-1 text-center md:text-left">
+                        <div class="flex flex-wrap justify-center md:justify-start gap-1.5 mb-1.5">
+                            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[8px] font-bold border border-slate-200">${e.tipo}</span>
+                            ${(e.ministerio||'').split(',').map(min=>min.trim()?`<span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[8px] font-bold border border-indigo-100 uppercase">${min.trim()}</span>`:'').join('')}
+                        </div>
+                        <h3 class="text-base font-bold text-slate-800 leading-snug mb-1.5 uppercase">${e.evento}</h3>
+                        <div class="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1 text-[10px] font-medium text-slate-400">
+                            <span>🕒 ${e.horario||'A definir'}</span>
+                            <span>📍 ${e.local||'A definir'}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-2 w-full md:w-auto">
+                        ${hasLink ? `<a href="${e.link}" target="_blank" class="px-3 py-2 rounded-xl bg-slate-800 text-white text-[9px] font-bold hover:bg-black transition-all">Detalhes</a>` : ''}
+                        ${hasAddress ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.local)}" target="_blank" class="px-3 py-2 rounded-xl bg-blue-500 text-white text-[9px] font-bold hover:bg-blue-600 transition-all">Mapa</a>` : ''}
+                        <button onclick="shareWhatsApp('${e.evento}','${d}/${m}/${y}','${e.horario}','${e.local}')" class="px-3 py-2 rounded-xl bg-green-500 text-white text-[9px] font-bold hover:bg-green-600 transition-all">Enviar</button>
+                    </div>
+                </div>`;
+            }).join('');
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.shareWhatsApp = (title,date,time,local) => {
+            const msg = `*REGIÃO 655 - EVENTO*\n📌 *${title}*\n📅 DATA: ${date}\n🕒 HORA: ${time}\n📍 LOCAL: ${local}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
+        };
+
+        async function loadAgenda() {
+            try {
+                const snap = await getDocs(query(collection(db,'agenda'), orderBy('data','asc')));
+                events = [];
+                snap.forEach(d => events.push({id:d.id,...d.data()}));
+                renderAgenda();
+            } catch(err) {
+                console.error(err);
+                document.getElementById('eventList').innerHTML =
+                    `<div class="text-center py-16 text-red-400 text-xs font-bold uppercase">Erro ao carregar agenda.</div>`;
+            }
+        }
+
+        // ─── PRESENÇA ──────────────────────────────────────────────────────────
+        const form                 = document.getElementById('presenceForm');
+        const churchSelect         = document.getElementById('church');
+        const pastorSelect         = document.getElementById('pastorName');
+        const activeEventSelect    = document.getElementById('activeEvent');
+        const statusSelect         = document.getElementById('status');
+        const motivoContainer      = document.getElementById('motivoContainer');
+        const motivoTextarea       = document.getElementById('motivo');
+        const feedback             = document.getElementById('feedback');
+        const loadingOverlay       = document.getElementById('loadingOverlay');
+        const formResto            = document.getElementById('formResto');
+        const publicoBadge         = document.getElementById('publicoBadge');
+        const tipoSection          = document.getElementById('tipoParticipanteSection');
+        const pastorNameSection    = document.getElementById('pastorNameSection');
+        const visitanteNameSection = document.getElementById('visitanteNameSection');
+        const visitanteNameInput   = document.getElementById('visitanteName');
+        const outraIgrejaSection   = document.getElementById('outraIgrejaSection');
+        const outraIgrejaInput     = document.getElementById('outraIgreja');
+        const btnSim               = document.getElementById('btnSim');
+        const btnNao               = document.getElementById('btnNao');
+
+        let todosPastores = [];
+        let presencasDoEvento = new Map();
+        let eventoPublico = 'Todos';
+
+        visitanteNameInput.addEventListener('input', () => { visitanteNameInput.value = visitanteNameInput.value.toUpperCase(); });
+        outraIgrejaInput.addEventListener('input',   () => { outraIgrejaInput.value   = outraIgrejaInput.value.toUpperCase(); });
+
+        const getTipo      = () => document.querySelector('input[name="tipoParticipante"]:checked')?.value || null;
+        const isVisitante  = () => eventoPublico === 'PublicoGeral' && getTipo() === 'nao';
+
+        function preencherPastores(publico) {
+            let lista = todosPastores;
+            if (publico === 'Titulares')                lista = todosPastores.filter(p => p.funcao === 'Pastor Titular');
+            else if (publico === 'Coordenadores')       lista = todosPastores.filter(p => p.coordenador === true);
+            else if (publico === 'TitularesECoordenadores') lista = todosPastores.filter(p => p.funcao === 'Pastor Titular' || p.coordenador === true);
+
+            pastorSelect.innerHTML = '<option value="" disabled selected>SELECIONE SEU NOME</option>';
+            lista.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.nome;
+                const tags = [];
+                if (p.funcao === 'Pastor Titular') tags.push('TITULAR');
+                if (p.coordenador) tags.push('COORD');
+                const reg = presencasDoEvento.get(p.nome);
+                const statusTag = reg ? ` • ${reg.status.toUpperCase()}` : '';
+                opt.textContent = tags.length ? `${p.nome} (${tags.join(' | ')}${statusTag})` : `${p.nome}${statusTag}`;
+                pastorSelect.appendChild(opt);
+            });
+        }
+
+        function mostrarBadge(publico) {
+            const cfg = {
+                'Todos':                   { text:'Todos os pastores e coordenadores cadastrados', cls:'bg-slate-100 text-slate-600' },
+                'Titulares':               { text:'Exclusivo — Pastores Titulares', cls:'bg-blue-100 text-blue-700' },
+                'Coordenadores':           { text:'Exclusivo — Coordenadores', cls:'bg-purple-100 text-purple-700' },
+                'TitularesECoordenadores': { text:'Pastores Titulares e Coordenadores', cls:'bg-indigo-100 text-indigo-700' },
+                'PublicoGeral':            { text:'Aberto ao Público — pastores registrados + convidados', cls:'bg-emerald-100 text-emerald-700' }
+            };
+            const c = cfg[publico] || cfg['Todos'];
+            publicoBadge.textContent = c.text;
+            publicoBadge.className = `px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-center ${c.cls}`;
+            publicoBadge.classList.remove('hidden');
+        }
+
+        function onTipoChange() {
+            const tipo = getTipo();
+            btnSim.classList.remove('ativo-sim','ativo-nao');
+            btnNao.classList.remove('ativo-sim','ativo-nao');
+            if (tipo === 'sim') btnSim.classList.add('ativo-sim');
+            if (tipo === 'nao') btnNao.classList.add('ativo-nao');
+            pastorSelect.value = '';
+            visitanteNameInput.value = '';
+            churchSelect.value = '';
+            outraIgrejaSection.classList.add('hidden');
+            statusSelect.value = 'Presente';
+            motivoContainer.classList.add('hidden');
+            if (tipo === 'sim') { pastorNameSection.classList.remove('hidden');   visitanteNameSection.classList.add('hidden'); }
+            else                { pastorNameSection.classList.add('hidden');      visitanteNameSection.classList.remove('hidden'); visitanteNameInput.focus(); }
+        }
+
+        document.querySelectorAll('input[name="tipoParticipante"]').forEach(r => r.addEventListener('change', onTipoChange));
+
+        activeEventSelect.addEventListener('change', async () => {
+            const opt = activeEventSelect.options[activeEventSelect.selectedIndex];
+            eventoPublico = opt.dataset.publico || 'Todos';
+            const eventoId = opt.value;
+
+            presencasDoEvento.clear();
+            try {
+                const snap = await getDocs(query(collection(db,'presencas'), where('eventoId','==',eventoId)));
+                snap.forEach(d => { const da = d.data(); presencasDoEvento.set(da.nome, {docId:d.id,status:da.status,motivo:da.motivo||''}); });
+            } catch(e) { console.error(e); }
+
+            mostrarBadge(eventoPublico);
+            preencherPastores(eventoPublico);
+
+            pastorSelect.value = ''; visitanteNameInput.value = ''; churchSelect.value = '';
+            outraIgrejaSection.classList.add('hidden'); statusSelect.value = 'Presente';
+            motivoContainer.classList.add('hidden');
+            document.querySelectorAll('input[name="tipoParticipante"]').forEach(r => r.checked = false);
+            btnSim.classList.remove('ativo-sim','ativo-nao');
+            btnNao.classList.remove('ativo-sim','ativo-nao');
+
+            if (eventoPublico === 'PublicoGeral') {
+                tipoSection.classList.remove('hidden'); pastorNameSection.classList.add('hidden'); visitanteNameSection.classList.add('hidden');
+            } else {
+                tipoSection.classList.add('hidden'); pastorNameSection.classList.remove('hidden'); visitanteNameSection.classList.add('hidden');
+            }
+            formResto.classList.remove('hidden');
+        });
+
+        pastorSelect.addEventListener('change', () => {
+            const nome = pastorSelect.value;
+            if (!nome) return;
+            const reg = presencasDoEvento.get(nome);
+            if (reg) {
+                statusSelect.value = reg.status === 'Ausente' ? 'Presente' : reg.status;
+                motivoTextarea.value = reg.motivo || '';
+                motivoContainer.classList.toggle('hidden', statusSelect.value !== 'Justificado');
+            } else {
+                statusSelect.value = 'Presente'; motivoContainer.classList.add('hidden'); motivoTextarea.value = '';
+            }
+            const pastor = todosPastores.find(p => p.nome === nome);
+            if (!pastor) return;
+            const igrejas = Array.isArray(pastor.igreja) ? pastor.igreja : (pastor.igreja ? [pastor.igreja] : []);
+            if (igrejas.length) {
+                for (let i = 0; i < churchSelect.options.length; i++) {
+                    if (churchSelect.options[i].value.includes(igrejas[0])) { churchSelect.selectedIndex = i; break; }
+                }
+            }
+        });
+
+        churchSelect.addEventListener('change', () => {
+            const isOutra = churchSelect.value === '__OUTRA__';
+            outraIgrejaSection.classList.toggle('hidden', !isOutra);
+            if (isOutra) outraIgrejaInput.focus(); else outraIgrejaInput.value = '';
+        });
+
+        statusSelect.addEventListener('change', () => {
+            const precisa = statusSelect.value === 'Justificado';
+            motivoContainer.classList.toggle('hidden', !precisa);
+            if (!precisa) motivoTextarea.value = '';
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (eventoPublico === 'PublicoGeral' && !getTipo()) { showFeedback('INFORME SE VOCÊ É PASTOR OU VISITANTE!','error'); return; }
+            let nome = isVisitante() ? visitanteNameInput.value.trim() : pastorSelect.value;
+            if (!nome) { showFeedback(isVisitante()?'INFORME SEU NOME COMPLETO!':'SELECIONE SEU NOME NA LISTA!','error'); return; }
+            let igreja = churchSelect.value;
+            if (!igreja) { showFeedback('SELECIONE A IGREJA!','error'); return; }
+            if (igreja === '__OUTRA__') {
+                igreja = outraIgrejaInput.value.trim();
+                if (!igreja) { showFeedback('INFORME O NOME DA SUA IGREJA!','error'); return; }
+            }
+            if (!document.getElementById('declaration').checked) { showFeedback('MARQUE A DECLARAÇÃO PARA CONTINUAR!','error'); return; }
+            if (statusSelect.value === 'Justificado' && !motivoTextarea.value.trim()) { showFeedback('PREENCHA A JUSTIFICATIVA!','error'); return; }
+
+            const opt = activeEventSelect.options[activeEventSelect.selectedIndex];
+            const payload = {
+                nome, igreja,
+                eventoId:    opt.value,
+                dataEvento:  opt.dataset.data,
+                tipoEvento:  opt.dataset.nome,
+                status:      statusSelect.value,
+                motivo:      motivoTextarea.value.trim(),
+                declaracao:  'Sim',
+                dataPostagem: new Date().toLocaleString('pt-BR'),
+                updatedAt:   serverTimestamp()
+            };
+
+            loadingOverlay.classList.remove('hidden');
+            try {
+                const reg = !isVisitante() ? presencasDoEvento.get(nome) : null;
+                if (reg) { await updateDoc(doc(db,'presencas',reg.docId), payload); }
+                else     { payload.createdAt = serverTimestamp(); await addDoc(collection(db,'presencas'), payload); }
+                loadingOverlay.classList.add('hidden');
+                showFeedback(payload.status==='Presente'?'PRESENÇA CONFIRMADA COM SUCESSO!':'AUSÊNCIA JUSTIFICADA REGISTRADA!','success');
+                form.reset();
+                [formResto,publicoBadge,tipoSection,pastorNameSection,visitanteNameSection,outraIgrejaSection,motivoContainer]
+                    .forEach(el => el.classList.add('hidden'));
+                btnSim.classList.remove('ativo-sim','ativo-nao');
+                btnNao.classList.remove('ativo-sim','ativo-nao');
+                eventoPublico = 'Todos';
+            } catch(err) {
+                console.error(err);
+                showFeedback('ERRO AO GRAVAR. TENTE NOVAMENTE.','error');
+                loadingOverlay.classList.add('hidden');
+            }
+        });
+
+        function showFeedback(msg, type) {
+            feedback.textContent = msg;
+            feedback.className = `mt-5 p-4 rounded-xl text-center text-[10px] font-black uppercase tracking-widest ${type==='success'?'bg-green-50 text-green-600':'bg-red-50 text-red-600'}`;
+            feedback.classList.remove('hidden');
+            if (type === 'success') setTimeout(() => feedback.classList.add('hidden'), 4000);
+        }
+
+        async function loadPresenca() {
+            try {
+                const [igrejasSnap, pastoresSnap, eventosSnap] = await Promise.all([
+                    getDocs(collection(db,'igrejas')),
+                    getDocs(collection(db,'pastores')),
+                    getDocs(query(collection(db,'eventos'), where('status','==','Ativo')))
+                ]);
+                const igrejas = [];
+                igrejasSnap.forEach(d => igrejas.push(d.data()));
+                igrejas.sort((a,b) => parseInt(a.codigo||0)-parseInt(b.codigo||0));
+                churchSelect.innerHTML = '<option value="" disabled selected>SELECIONE A IGREJA</option>';
+                igrejas.forEach(ig => {
+                    const opt = document.createElement('option');
+                    const cod = String(ig.codigo).padStart(4,'0');
+                    opt.value = opt.textContent = `${cod} - ${ig.nome}`;
+                    churchSelect.appendChild(opt);
+                });
+                const outraOpt = document.createElement('option');
+                outraOpt.value = '__OUTRA__'; outraOpt.textContent = 'OUTRA IGREJA (NÃO LISTADA)';
+                churchSelect.appendChild(outraOpt);
+
+                pastoresSnap.forEach(d => todosPastores.push(d.data()));
+                todosPastores.sort((a,b) => {
+                    const aT = a.funcao==='Pastor Titular', bT = b.funcao==='Pastor Titular';
+                    if (aT&&!bT) return -1; if (!aT&&bT) return 1;
+                    return a.nome.localeCompare(b.nome);
+                });
+
+                activeEventSelect.innerHTML = '<option value="" disabled selected>SELECIONE O EVENTO</option>';
+                if (eventosSnap.empty) {
+                    activeEventSelect.innerHTML = '<option value="" disabled selected>NENHUM EVENTO ATIVO</option>';
+                } else {
+                    eventosSnap.forEach(d => {
+                        const ev = d.data();
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        opt.textContent = `${ev.nome} - ${(ev.data||'').split('-').reverse().join('/')}`;
+                        opt.dataset.nome = ev.nome; opt.dataset.data = ev.data; opt.dataset.publico = ev.publico||'Todos';
+                        activeEventSelect.appendChild(opt);
+                    });
+                }
+            } catch(err) {
+                console.error(err);
+                activeEventSelect.innerHTML = '<option value="" disabled selected>ERRO AO CARREGAR</option>';
+            }
+        }
+
+        // Inicializa as duas fontes de dados em paralelo
+        await Promise.all([loadAgenda(), loadPresenca()]);
+    </script>
+</body>
+</html>
