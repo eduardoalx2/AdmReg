@@ -30,7 +30,7 @@
     <header class="w-full bg-white border-b shadow-sm sticky top-0 z-30">
         <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-                <img src="logo.png" alt="Logo" class="h-9 w-auto object-contain" onerror="this.src='https://via.placeholder.com/36?text=IEQ'">
+                <img src="logo.png" alt="Logo" class="h-9 w-auto object-contain" onerror="this.style.display='none'">
                 <div class="border-l border-slate-200 pl-3">
                     <div class="text-sm font-black tracking-tight text-slate-800 uppercase leading-none">Região 655</div>
                     <div class="text-[9px] font-bold text-slate-400 tracking-widest uppercase mt-0.5">Portal Público — Londrina/PR</div>
@@ -75,43 +75,9 @@
             </a>
         </div>
 
-        <!-- Agendas -->
-        <div class="max-w-4xl mx-auto px-4 mt-6">
-            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">📅 Agendas</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <a href="agendareg655.html" class="link-card bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-indigo-200">
-                    <span class="text-2xl flex-shrink-0">📋</span>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-slate-800">Agenda Região 655</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">CED · CND · Regional</p>
-                    </div>
-                    <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <a href="agendarapidareg655.html" class="link-card bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-indigo-200">
-                    <span class="text-2xl flex-shrink-0">⚡</span>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-slate-800">Agenda Rápida Reg. 655</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Visualização simplificada</p>
-                    </div>
-                    <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <a href="agendaieqcentral.html" class="link-card bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-indigo-200">
-                    <span class="text-2xl flex-shrink-0">⛪</span>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-slate-800">Agenda IEQ Central</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Eventos da Igreja Central</p>
-                    </div>
-                    <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <a href="agendarapidaieqcentral.html" class="link-card bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-indigo-200">
-                    <span class="text-2xl flex-shrink-0">⚡</span>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-slate-800">Agenda Rápida IEQ Central</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Visualização simplificada</p>
-                    </div>
-                    <svg class="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-            </div>
+        <!-- Botões de Destaque -->
+        <div id="botoesSection" class="hidden max-w-4xl mx-auto px-4 mt-4">
+            <div id="botoesGrid" class="flex flex-col gap-3"></div>
         </div>
 
         <!-- Links Úteis -->
@@ -122,42 +88,6 @@
 
         <!-- ======== ABA AGENDA ======== -->
         <div id="abaAgenda" class="hidden max-w-4xl mx-auto px-4 mt-6">
-
-            <!-- Filtros -->
-            <div class="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="col-span-2 md:col-span-1 space-y-1">
-                    <label class="text-[9px] font-bold text-slate-400 tracking-widest uppercase ml-1">Buscar</label>
-                    <input type="text" id="filterSearch" oninput="renderAgenda()" placeholder="Filtrar evento..."
-                        class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium uppercase">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[9px] font-bold text-slate-400 tracking-widest uppercase ml-1">Mês</label>
-                    <select id="filterMonth" onchange="renderAgenda()" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm bg-white outline-none font-medium cursor-pointer uppercase">
-                        <option value="">Todos</option>
-                        <option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option>
-                        <option value="04">Abr</option><option value="05">Mai</option><option value="06">Jun</option>
-                        <option value="07">Jul</option><option value="08">Ago</option><option value="09">Set</option>
-                        <option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[9px] font-bold text-slate-400 tracking-widest uppercase ml-1">Tipo</label>
-                    <select id="filterType" onchange="renderAgenda()" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm bg-white outline-none font-medium cursor-pointer uppercase">
-                        <option value="">Todos</option>
-                        <option value="REGIONAL">Regional</option>
-                        <option value="CED">CED</option>
-                        <option value="CND">CND</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Sub-abas agenda -->
-            <div class="flex gap-6 border-b border-slate-200 mb-6 overflow-x-auto scrollbar-hide px-1">
-                <button onclick="setAgendaTab('upcoming')" id="tUpcoming" class="tab-active   py-3 text-[10px] font-bold whitespace-nowrap transition-all uppercase">Próximos</button>
-                <button onclick="setAgendaTab('all')"      id="tAll"      class="tab-inactive py-3 text-[10px] font-bold text-slate-400 whitespace-nowrap transition-all uppercase">Todos</button>
-                <button onclick="setAgendaTab('past')"     id="tPast"     class="tab-inactive py-3 text-[10px] font-bold text-slate-400 whitespace-nowrap transition-all uppercase">Anteriores</button>
-            </div>
-
             <div id="eventList" class="space-y-4">
                 <div class="flex justify-center py-20 text-indigo-500 font-bold text-xs animate-pulse uppercase tracking-widest">Carregando agenda...</div>
             </div>
@@ -276,6 +206,16 @@
 
     </div>
 
+    <!-- Rodapé -->
+    <footer class="mt-16 bg-white border-t border-slate-200">
+        <div class="max-w-4xl mx-auto px-4 py-8 text-center">
+            <img src="logo.png" alt="Logo Região 655" class="h-12 mx-auto mb-4 object-contain" onerror="this.style.display='none'">
+            <p class="text-[11px] font-bold text-slate-600">Escritório Regional — <span class="text-slate-800">Região 655 / Londrina-PR</span></p>
+            <p class="text-[10px] text-slate-400 mt-1">Superintendente: <span class="font-semibold text-slate-500">Rev. Valdir Ávila Ramos</span></p>
+            <p class="text-[10px] text-slate-400">Secretário Regional: <span class="font-semibold text-slate-500">Pr. Eduardo Silva</span></p>
+        </div>
+    </footer>
+
     <!-- Loading overlay (gravação) -->
     <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-3xl flex flex-col items-center shadow-2xl">
@@ -297,7 +237,8 @@
             mostrarAgenda:      true,
             mostrarPresenca:    true,
             linkWhatsappGrupo:  '',
-            links:              []
+            links:              [],
+            botoes:             []
         };
 
         async function carregarConfig() {
@@ -310,6 +251,7 @@
                     portalConfig.mostrarPresenca    = d.mostrarPresenca !== false;
                     portalConfig.linkWhatsappGrupo  = d.linkWhatsappGrupo || '';
                     portalConfig.links              = d.links || [];
+                    portalConfig.botoes             = d.botoes || [];
                 }
             } catch(e) {
                 console.error('Erro ao carregar config do portal:', e);
@@ -322,7 +264,7 @@
             document.getElementById('loadingConfig').classList.add('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
 
-            const { mensagemBoasVindas, mostrarAgenda, mostrarPresenca, linkWhatsappGrupo, links } = portalConfig;
+            const { mensagemBoasVindas, mostrarAgenda, mostrarPresenca, linkWhatsappGrupo, links, botoes } = portalConfig;
 
             // Mensagem de boas-vindas
             if (mensagemBoasVindas) {
@@ -334,6 +276,19 @@
             if (linkWhatsappGrupo) {
                 document.getElementById('whatsappLink').href = linkWhatsappGrupo;
                 document.getElementById('whatsappSection').classList.remove('hidden');
+            }
+
+            // Botões de destaque
+            if (botoes && botoes.length > 0) {
+                const corMap = { indigo:'#4f46e5', emerald:'#10b981', blue:'#3b82f6', amber:'#f59e0b', rose:'#f43f5e', slate:'#475569' };
+                const grid = document.getElementById('botoesGrid');
+                grid.innerHTML = botoes.map(b => {
+                    const cor = corMap[b.cor] || corMap.indigo;
+                    return `<a href="${b.url || '#'}" target="_blank" rel="noopener noreferrer"
+                        class="flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl text-white font-bold text-sm uppercase tracking-wider shadow-md active:scale-95 transition-all"
+                        style="background:${cor}">${b.icone ? `<span>${b.icone}</span>` : ''} ${b.titulo || ''}</a>`;
+                }).join('');
+                document.getElementById('botoesSection').classList.remove('hidden');
             }
 
             // Links úteis
@@ -385,7 +340,7 @@
             }
 
             // Verifica se tudo está desativado e sem links
-            const temConteudo = mostrarAgenda || mostrarPresenca || (links && links.length > 0) || linkWhatsappGrupo;
+            const temConteudo = mostrarAgenda || mostrarPresenca || (links && links.length > 0) || (botoes && botoes.length > 0) || linkWhatsappGrupo;
             if (!temConteudo) {
                 document.getElementById('emBreveSection').classList.remove('hidden');
             }
@@ -419,45 +374,20 @@
 
         // ─── AGENDA ────────────────────────────────────────────────────────────
         let events = [];
-        let currentAgendaTab = 'upcoming';
         const MONTHS   = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
         const WEEKDAYS = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
-        window.setAgendaTab = (t) => {
-            currentAgendaTab = t;
-            ['tUpcoming','tAll','tPast'].forEach(id => {
-                document.getElementById(id).className = 'tab-inactive py-3 text-[10px] font-bold text-slate-400 whitespace-nowrap transition-all uppercase';
-            });
-            const map = { upcoming:'tUpcoming', all:'tAll', past:'tPast' };
-            document.getElementById(map[t]).className = 'tab-active py-3 text-[10px] font-bold whitespace-nowrap transition-all uppercase';
-            renderAgenda();
-        };
-
         window.renderAgenda = () => {
-            const list   = document.getElementById('eventList');
-            const search = document.getElementById('filterSearch').value.toLowerCase();
-            const monthF = document.getElementById('filterMonth').value;
-            const typeF  = document.getElementById('filterType').value;
-            const today  = new Date().toISOString().split('T')[0];
+            const list  = document.getElementById('eventList');
+            const today = new Date().toISOString().split('T')[0];
+            const d30   = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
 
-            let filtered = events.filter(e => {
-                const isPast     = e.data < today;
-                const isRegional = e.tipo !== 'LOCAL';
-                if (currentAgendaTab === 'upcoming' && (isPast || !isRegional)) return false;
-                if (currentAgendaTab === 'all'      && !isRegional)             return false;
-                if (currentAgendaTab === 'past'     && (!isPast || !isRegional)) return false;
-                if (search && !(e.evento||'').toLowerCase().includes(search))   return false;
-                if (monthF && e.data.split('-')[1] !== monthF)                  return false;
-                if (typeF  && (e.tipo||'').toUpperCase() !== typeF)             return false;
-                return true;
-            });
+            let filtered = events.filter(e => e.tipo !== 'LOCAL' && e.data >= today && e.data <= d30);
 
-            filtered.sort((a,b) => currentAgendaTab === 'past'
-                ? b.data.localeCompare(a.data)
-                : a.data.localeCompare(b.data));
+            filtered.sort((a,b) => a.data.localeCompare(b.data));
 
             if (!filtered.length) {
-                list.innerHTML = `<div class="text-center py-16 text-slate-400 text-xs font-bold uppercase">Nenhum evento encontrado.</div>`;
+                list.innerHTML = `<div class="text-center py-16 text-slate-400 text-xs font-bold uppercase">Nenhum evento nos próximos 30 dias.</div>`;
                 return;
             }
 
