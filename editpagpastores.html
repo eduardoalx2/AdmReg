@@ -7,11 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        const permsStr = localStorage.getItem('userPerms');
-        let isAdmin = false;
-        try { if (permsStr) isAdmin = JSON.parse(permsStr).includes('admin'); } catch(e) {}
-        if (!isAdmin) window.location.replace('index.html');
+    <script type="module">
+        import { requireAuth, isAdmin } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!isAdmin()) window.location.replace('index.html');
+        } catch (error) {}
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }

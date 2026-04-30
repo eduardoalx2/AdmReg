@@ -7,15 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        const permsStr = localStorage.getItem('userPerms');
-        const email = localStorage.getItem('userEmail');
-        let isAdmin = false;
+    <script type="module">
+        import { requireAuth, isAdmin } from './js/auth.js';
         try {
-            if (permsStr) isAdmin = JSON.parse(permsStr).includes('admin');
-        } catch(e) {}
-        if (!email || !isAdmin) {
-            window.location.replace('login.html');
+            // Garante que o usuário está logado e ativo
+            await requireAuth();
+            // Garante que apenas administradores acessem esta página
+            if (!isAdmin()) window.location.replace('index.html');
+        } catch (error) {
+            // O próprio requireAuth já redireciona para o login em caso de falha.
         }
     </script>
     <style>

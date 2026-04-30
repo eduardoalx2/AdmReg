@@ -6,9 +6,12 @@
     <title>Gerenciar Layout — Região 655</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        if (!localStorage.getItem('userPerms') || !localStorage.getItem('userEmail')) window.location.replace('login.html');
-        try { const p = JSON.parse(localStorage.getItem('userPerms')||'[]'); if (!p.includes('admin')) window.location.replace('index.html'); } catch(e) { window.location.replace('login.html'); }
+    <script type="module">
+        import { requireAuth, isAdmin } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!isAdmin()) window.location.replace('index.html');
+        } catch (error) {}
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0c0f1a; }
@@ -439,24 +442,17 @@
     </script>
 
     <script type="module">
-        import { auth, db } from './firebase-config.js';
-        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { db } from './firebase-config.js';
         import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { logout } from './js/auth.js';
 
-        const userEmail = localStorage.getItem('userEmail');
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user || user.email !== userEmail) {
-                localStorage.clear(); window.location.replace('login.html'); return;
-            }
-            try {
-                const snap = await getDoc(doc(db, 'configuracoes', 'layout'));
-                window.onLayoutLoaded(snap.exists() ? snap.data() : null);
-            } catch(e) {
-                console.error(e);
-                window.onLayoutLoaded(null);
-            }
-        });
+        try {
+            const snap = await getDoc(doc(db, 'configuracoes', 'layout'));
+            window.onLayoutLoaded(snap.exists() ? snap.data() : null);
+        } catch(e) {
+            console.error(e);
+            window.onLayoutLoaded(null);
+        }
 
         window.salvarLayout = async () => {
             const btn = document.getElementById('btn-salvar');
@@ -476,9 +472,7 @@
         };
 
         window.fazerLogout = async () => {
-            await signOut(auth);
-            localStorage.clear();
-            window.location.replace('login.html');
+            await logout();
         };
     </script>
 </body>

@@ -1,0 +1,44 @@
+/* ============================================================
+   styles/admin.css — Estilos do painel administrativo
+   Portal Região 655 — Cards grid, link-card, section-label
+   ============================================================ */
+
+/* ===== ADMIN MAIN & CARDS ===== */
+.admin-main { max-width: 860px; margin: 0 auto; }
+.section-label { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; margin-top: 32px; }
+.section-label-line { height: 1px; flex: 1; background: var(--border); }
+.section-label span {
+    font-family: 'Sora', sans-serif; font-size: 9px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.2em; white-space: nowrap;
+}
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 8px; }
+@media(max-width:480px){.cards-grid{grid-template-columns:1fr;gap:6px;}}
+.link-card {
+    display: flex; align-items: center; gap: 11px;
+    background: rgba(255,255,255,0.025); border: 1px solid var(--border);
+    border-radius: 12px; padding: 11px 14px; cursor: pointer; text-decoration: none;
+    transition: all 0.22s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden;
+}
+.link-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg,rgba(99,179,237,0.05) 0%,transparent 60%);
+    opacity: 0; transition: opacity 0.25s;
+}
+.link-card:hover::before { opacity: 1; }
+.link-card:hover {
+    border-color: var(--border-hover); background: rgba(99,179,237,0.06);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(99,179,237,0.1);
+}
+.card-icon {
+    flex-shrink: 0; width: 36px; height: 36px; border-radius: 9px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 17px; transition: all 0.22s;
+}
+.link-card:hover .card-icon { background: rgba(99,179,237,0.12); border-color: rgba(99,179,237,0.25); }
+.card-texts { flex: 1; min-width: 0; }
+.card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.35; transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.link-card:hover .card-title { color: var(--accent); }
+.card-obs { font-size: 10px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-arrow { flex-shrink: 0; font-size: 14px; color: var(--text-muted); transition: color 0.2s,transform 0.2s; }
+.link-card:hover .card-arrow { color: var(--accent); transform: translate(2px,-2px); }

@@ -1,0 +1,73 @@
+/* ============================================================
+   styles/pastor.css — Estilos do painel do pastor
+   Portal Região 655 — p-card, p-action, p-tag, etc.
+   ============================================================ */
+
+.pastor-main { max-width: 1020px; margin: 0 auto; width: 100%; }
+.pastor-grid { display: grid; grid-template-columns: 300px 1fr; gap: 18px; align-items: start; }
+.pastor-grid > * { min-width: 0; }
+@media(max-width:760px){.pastor-grid{grid-template-columns:1fr;gap:12px;}}
+.p-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+.p-card-hdr {
+    background: rgba(255,255,255,0.04); border-bottom: 1px solid var(--border);
+    padding: 13px 16px; display: flex; align-items: center; justify-content: space-between;
+}
+.p-card-hdr-title {
+    font-family: 'Sora', sans-serif; font-size: 9px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.18em;
+    display: flex; align-items: center; gap: 8px;
+}
+.p-card-body { padding: 18px 16px; min-width: 0; overflow: hidden; }
+.p-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-width: 0; }
+.p-action-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+    padding: 13px 8px; border-radius: 14px; text-decoration: none; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em; transition: all 0.2s; color: white;
+}
+.p-action-btn.blue{background:rgba(59,130,246,0.25);border:1px solid rgba(59,130,246,0.35);}
+.p-action-btn.blue:hover{background:rgba(59,130,246,0.4);}
+.p-action-btn.violet{background:rgba(139,92,246,0.25);border:1px solid rgba(139,92,246,0.35);}
+.p-action-btn.violet:hover{background:rgba(139,92,246,0.4);}
+.p-action-btn.emerald{background:rgba(16,185,129,0.25);border:1px solid rgba(16,185,129,0.35);}
+.p-action-btn.emerald:hover{background:rgba(16,185,129,0.4);}
+.p-action-btn.amber{background:rgba(245,158,11,0.25);border:1px solid rgba(245,158,11,0.35);}
+.p-action-btn.amber:hover{background:rgba(245,158,11,0.4);}
+.p-collapsible-btn {
+    width: 100%; background: none; border: none; cursor: pointer; color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+}
+.p-chevron {
+    transition: transform 0.25s; display: inline-block;
+}
+.p-chevron.open { transform: rotate(180deg); }
+.p-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 100px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+}
+.p-tag.green{background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.25);}
+.p-tag.red{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.25);}
+.p-tag.amber{background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);}
+.p-tag.blue{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);}
+.p-tag.violet{background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.25);}
+.p-tag.slate{background:rgba(100,116,139,0.15);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);}
+.p-divider{height:1px;background:var(--border);}
+.p-row{padding:11px 16px;border-bottom:1px solid var(--border);min-width:0;overflow:hidden;}
+.p-row:last-child{border-bottom:none;}
+.p-debito-wrap{border:1px solid rgba(239,68,68,0.2);border-radius:18px;overflow:hidden;}
+.p-debito-hdr{background:rgba(239,68,68,0.08);border-bottom:1px solid rgba(239,68,68,0.15);padding:13px 16px;display:flex;align-items:center;gap:8px;}
+.presenca-grupo{border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px;}
+.presenca-hdr{background:rgba(139,92,246,0.08);border-bottom:1px solid rgba(139,92,246,0.12);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.p-link-a{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;border:1px solid var(--border);text-decoration:none;color:var(--text-secondary);background:rgba(255,255,255,0.02);transition:all 0.2s;margin-bottom:7px;font-size:12px;font-weight:600;}
+.p-link-a:hover{border-color:rgba(99,179,237,0.3);color:var(--accent);background:rgba(99,179,237,0.05);}
+.p-link-a:last-child{margin-bottom:0;}
+.agenda-item{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);min-width:0;overflow:hidden;}
+.agenda-item:last-child{border-bottom:none;}
+.agenda-date{flex-shrink:0;min-width:50px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:7px;text-align:center;}
+.skel{background:rgba(255,255,255,0.06);border-radius:8px;animation:skelPulse 1.5s ease-in-out infinite;}
+.aviso-danger{animation:pulse-border 2s infinite;}
+
+/* Admin bar (for pastor view simulation) */
+.admin-bar{background:rgba(245,158,11,0.07);border-bottom:1px solid rgba(245,158,11,0.15);padding:10px 20px;position:relative;z-index:30;}
+.admin-bar-inner{max-width:1020px;margin:0 auto;display:flex;align-items:center;gap:12px;}
+.admin-bar select{flex:1;max-width:400px;background:rgba(255,255,255,0.06);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--text-primary);outline:none;font-family:'DM Sans',sans-serif;}

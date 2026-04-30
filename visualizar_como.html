@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizar Como — Região 655</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script>
+    <script type="module">
+        import { requireAuth, isAdmin } from './js/auth.js';
         try {
-            const bk = localStorage.getItem('__view_as_backup__');
-            const raw = bk ? JSON.parse(bk).userPerms : localStorage.getItem('userPerms');
-            if (!JSON.parse(raw || '[]').includes('admin')) window.location.replace('index.html');
-        } catch(e) { window.location.replace('login.html'); }
+            await requireAuth();
+            if (!isAdmin()) window.location.replace('index.html');
+        } catch (error) {}
     </script>
     <style>
         :root { --bg:#0c0f1a; --surface:#111827; --border:rgba(255,255,255,0.07); --accent:#63b3ed; --text-primary:#e2e8f0; --text-secondary:#94a3b8; --text-muted:#4a5568; }
@@ -104,11 +104,9 @@
     </main>
 
     <script type="module">
-        import { auth, db } from './firebase-config.js';
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { db } from './firebase-config.js';
         import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        const userEmail = localStorage.getItem('userEmail');
         const viewAs = localStorage.getItem('__view_as__');
 
         if (viewAs) {
@@ -116,14 +114,7 @@
             document.getElementById('banner-sim-label').textContent = viewAs;
         }
 
-        onAuthStateChanged(auth, async (user) => {
-            const bk = localStorage.getItem('__view_as_backup__');
-            const realEmail = bk ? JSON.parse(bk).userEmail : userEmail;
-            if (!user || user.email !== (realEmail || userEmail)) {
-                localStorage.clear(); window.location.replace('login.html'); return;
-            }
-            await carregarUsuarios();
-        });
+        await carregarUsuarios();
 
         // Presets de nível
         const PRESETS = [
