@@ -268,25 +268,28 @@
             document.getElementById('loadingConfig').classList.add('hidden');
             const mc = document.getElementById('mainContent');
             mc.style.display = 'flex';
+            mc.classList.remove('hidden');
 
             const { mensagemBoasVindas, linkWhatsappGrupo, links, botoes, secoes } = portalConfig;
 
+            // Verifica se as seções realmente possuem conteúdo para serem exibidas
+            const hasWelcome = !!mensagemBoasVindas;
+            const hasWhatsapp = !!linkWhatsappGrupo;
+            const hasBotoes = !!(botoes && botoes.length);
+            const hasLinks = !!(links && links.length);
+
             // Mensagem de boas-vindas
-            if (mensagemBoasVindas) {
+            if (hasWelcome) {
                 document.getElementById('welcomeMsg').textContent = mensagemBoasVindas;
-            } else {
-                document.getElementById('sec-welcome').classList.add('hidden');
             }
 
             // WhatsApp
-            if (linkWhatsappGrupo) {
+            if (hasWhatsapp) {
                 document.getElementById('whatsappLink').href = linkWhatsappGrupo;
-            } else {
-                document.getElementById('sec-whatsapp').classList.add('hidden');
             }
 
             // Botões de destaque
-            if (botoes && botoes.length) {
+            if (hasBotoes) {
                 const corMap = { indigo:'#4f46e5', emerald:'#10b981', blue:'#3b82f6', amber:'#f59e0b', rose:'#f43f5e', slate:'#475569' };
                 document.getElementById('botoesGrid').innerHTML = botoes.map(b => {
                     const bg = corMap[b.cor] || corMap.indigo;
@@ -294,12 +297,10 @@
                         <span>${b.icone||''}</span> ${b.titulo||''}
                     </a>`;
                 }).join('');
-            } else {
-                document.getElementById('sec-botoes').classList.add('hidden');
             }
 
             // Links úteis
-            if (links && links.length) {
+            if (hasLinks) {
                 document.getElementById('linksGrid').innerHTML = links.map(l => `
                     <a href="${l.url||'#'}" target="_blank" rel="noopener noreferrer"
                         class="link-card bg-white rounded-2xl p-4 flex items-start gap-3 shadow-sm border border-slate-100 hover:border-indigo-200">
@@ -310,25 +311,37 @@
                         </div>
                         <svg class="w-4 h-4 text-slate-300 flex-shrink-0 mt-0.5 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>`).join('');
-                document.getElementById('sec-links').classList.remove('hidden');
             }
+
+            // Identificar visibilidade das seções dinâmicas
+            const secAgenda = secoes.find(s => s.id === 'agenda');
+            const secPresenca = secoes.find(s => s.id === 'presenca');
+            const agendaVisivel = secAgenda && secAgenda.visivel !== false;
+            const presencaVisivel = secPresenca && secPresenca.visivel !== false;
+
+            if (agendaVisivel) loadAgenda();
+            if (presencaVisivel) loadPresenca();
+
+            // Sobrescreve a configuração caso a seção esteja vazia
+            if (!hasWelcome) { const s = secoes.find(s => s.id === 'welcome'); if (s) s.visivel = false; }
+            if (!hasWhatsapp) { const s = secoes.find(s => s.id === 'whatsapp'); if (s) s.visivel = false; }
+            if (!hasBotoes) { const s = secoes.find(s => s.id === 'botoes'); if (s) s.visivel = false; }
+            if (!hasLinks) { const s = secoes.find(s => s.id === 'links'); if (s) s.visivel = false; }
 
             // Aplicar ordem e visibilidade das seções
             secoes.sort((a,b) => a.ordem - b.ordem).forEach((s, idx) => {
                 const el = document.getElementById(`sec-${s.id}`);
                 if (!el) return;
                 el.style.order = idx;
-                if (!s.visivel) el.classList.add('hidden');
+                if (!s.visivel) {
+                    el.classList.add('hidden');
+                } else {
+                    el.classList.remove('hidden');
+                }
             });
 
-            // Carregar dados dinâmicos
-            const agendaVisivel  = secoes.find(s => s.id === 'agenda')?.visivel  !== false;
-            const presencaVisivel = secoes.find(s => s.id === 'presenca')?.visivel !== false;
-            if (agendaVisivel)  loadAgenda();
-            if (presencaVisivel) loadPresenca();
-
             // Em breve
-            const temConteudo = mensagemBoasVindas || linkWhatsappGrupo || (botoes&&botoes.length) || (links&&links.length) || agendaVisivel || presencaVisivel;
+            const temConteudo = hasWelcome || hasWhatsapp || hasBotoes || hasLinks || agendaVisivel || presencaVisivel;
             if (!temConteudo) document.getElementById('emBreveSection').classList.remove('hidden');
 
             if (window.lucide) lucide.createIcons();
@@ -425,6 +438,7 @@
         const btnSim               = document.getElementById('btnSim');
         const btnNao               = document.getElementById('btnNao');
 
+        // ─── PRESENÇA ──────────────────────────────────────────────────────────
         let todosPastores = [];
         let presencasDoEvento = new Map();
         let eventoPublico = 'Todos';
@@ -651,7 +665,9 @@
         }
 
         // Inicia carregando a configuração do portal
-        await carregarConfig();
+        (async () => {
+            await carregarConfig();
+        })();
     </script>
 </body>
 </html>
