@@ -95,9 +95,12 @@
                     <div style="display:flex;justify-content:space-between;padding:6px 8px;background:#f9fafb;margin-bottom:4px;"><span>Taxa Coordenadoria</span><span id="pdf-coord" style="font-family:monospace;font-weight:700;"></span></div>
                     <div style="display:flex;justify-content:space-between;padding:6px 8px;margin-bottom:4px;"><span id="pdf-label-seguros">Seguro de Vida</span><span id="pdf-seguros" style="font-family:monospace;font-weight:700;"></span></div>
                     <div id="pdf-outros-container" style="display:none;justify-content:space-between;padding:6px 8px;background:#f9fafb;margin-bottom:4px;"><span id="pdf-label-outros">Outros</span><span id="pdf-outros" style="font-family:monospace;font-weight:700;"></span></div>
-                    <div style="margin-top:24px;background:#111827;color:white;padding:16px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-                        <span style="font-weight:700;text-transform:uppercase;font-size:14px;">Total Pago</span>
-                        <span id="pdf-total" style="font-size:24px;font-weight:900;font-family:monospace;"></span>
+                    <div style="margin-top:24px;background:#111827;color:white;padding:16px;border-radius:8px;display:flex;flex-direction:column;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-weight:700;text-transform:uppercase;font-size:14px;">Total Pago</span>
+                            <span id="pdf-total" style="font-size:24px;font-weight:900;font-family:monospace;"></span>
+                        </div>
+                        <div id="pdf-extenso" style="font-size:11px;color:#9ca3af;margin-top:8px;border-top:1px solid #374151;padding-top:8px;text-align:right;font-style:italic;text-transform:uppercase;"></div>
                     </div>
                 </div>
                 <div style="margin-top:24px;display:flex;justify-content:flex-end;">
@@ -959,6 +962,36 @@
             return `${meses[parseInt(mm,10)-1]}/${yyyy}`;
         };
 
+        const numeroPorExtenso = (v) => {
+            if (v === 0) return "zero reais";
+            const unidades = ["","um","dois","três","quatro","cinco","seis","sete","oito","nove"];
+            const dezenas = ["","dez","vinte","trinta","quarenta","cinquenta","sessenta","setenta","oitenta","noventa"];
+            const dezenasEspeciais = ["dez","onze","doze","treze","quatorze","quinze","dezesseis","dezessete","dezoito","dezenouve"];
+            const centenas = ["","cento","duzentos","trezentos","quatrocentos","quinhentos","seiscentos","setecentos","oitocentos","novecentos"];
+            const converterGrupo = (n) => {
+                if (n === 0) return "";
+                if (n === 100) return "cem";
+                let c = Math.floor(n/100), d = Math.floor((n%100)/10), u = n%10, texto = "";
+                if (c > 0) texto += centenas[c];
+                if (d === 1) { if (texto) texto += " e "; texto += dezenasEspeciais[u]; return texto; }
+                if (d > 1) { if (texto) texto += " e "; texto += dezenas[d]; }
+                if (u > 0) { if (texto) texto += " e "; texto += unidades[u]; }
+                return texto;
+            };
+            let inteiro = Math.floor(v), centavos = Math.round((v - inteiro) * 100), extenso = "";
+            if (inteiro > 0) {
+                if (inteiro >= 1000) {
+                    let milhar = Math.floor(inteiro/1000); inteiro = inteiro%1000;
+                    if (milhar === 1) extenso += "mil"; else extenso += converterGrupo(milhar) + " mil";
+                    if (inteiro > 0) { if (inteiro < 100 || (inteiro%100 === 0)) extenso += " e "; else extenso += " "; }
+                }
+                if (inteiro > 0) extenso += converterGrupo(inteiro);
+                extenso += inteiro === 1 ? " real" : " reais";
+            }
+            if (centavos > 0) { if (extenso) extenso += " e "; extenso += converterGrupo(centavos); extenso += centavos === 1 ? " centavo" : " centavos"; }
+            return extenso.charAt(0).toUpperCase() + extenso.slice(1);
+        };
+
         function preencherPdf(r) {
             document.getElementById('pdf-data-emissao').textContent = r.dataEmissao||'S/D';
             document.getElementById('pdf-referencia').textContent = fmtRefExtenso(r.referenceDate);
@@ -976,6 +1009,7 @@
                 outrosEl.style.display = 'flex';
             } else { outrosEl.style.display = 'none'; }
             document.getElementById('pdf-total').textContent = fmt(r.total);
+            document.getElementById('pdf-extenso').textContent = numeroPorExtenso(r.total||0);
         }
 
         function showToast(msg, duration = 3500) {
