@@ -247,7 +247,7 @@
             if (nivelStr && !hierarquia[nivelStr]) nivelStr = 'secretario';
             if (!nivelStr) nivelStr = 'secretario';
             const nivel = isAdmin ? 100 : (hierarquia[nivelStr] || 50);
-            const has = (p) => { if(!p) return true; if(nivel===100) return true; return nivel >= (hierarquia[p]||100); };
+            const has = (p) => { if(!p) return true; if(nivel===100) return true; if(perms.includes(p)) return true; return nivel >= (hierarquia[p]||100); };
 
             const main = document.getElementById('main-content');
             main.innerHTML = '<div class="admin-main">';
