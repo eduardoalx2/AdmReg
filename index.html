@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal — Região 655</title>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+    <script src="https://unpkg.com/lucide@0.300.0/dist/umd/lucide.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/admin.css">
-    <link rel="stylesheet" href="styles/pastor.css">
+    <link rel="stylesheet" href="styles/main.css?v=2">
+    <link rel="stylesheet" href="styles/admin.css?v=2">
+    <link rel="stylesheet" href="styles/pastor.css?v=2">
     <script>
         // Auth gate: verificação inicial rápida (proteção real via requireAuth no módulo abaixo)
         const _ps = localStorage.getItem('userPerms');
@@ -131,7 +131,7 @@
         import { auth, db } from './firebase-config.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
         import { collection, getDocs, addDoc, doc, getDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-        import { esc, escA, fmt, periodoRefToChave, calcQuintoDiaUtil } from './js/utils.js';
+        import { esc, escA, fmt, periodoRefToChave, calcQuintoDiaUtil } from './js/utils.js?v=2';
         import { requireAuth, hasPermission, hasAnyPermission, isAdmin as checkIsAdmin, logout } from './js/auth.js';
 
         // ===== DADOS DO USUÁRIO (verificação segura via Firestore) =====
@@ -556,7 +556,7 @@
             const mesPrevNum = mesAtualNum===0?11:mesAtualNum-1;
             const anoPrev = mesAtualNum===0 ? anoAtual-1 : anoAtual;
             const strMesRef = `${String(mesPrevNum+1).padStart(2,'0')}/${anoPrev}`;
-            const quintoDia = calcQintoDiaUtil(anoAtual, mesAtualNum);
+        const quintoDia = calcQuintoDiaUtil(anoAtual, mesAtualNum);
             const atrasado = hoje > quintoDia;
 
             const saldoRef  = saldos.find(s=>saldoMatchMes(s,strMesRef));

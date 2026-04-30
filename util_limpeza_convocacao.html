@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <title>Limpeza — Convocação Regional 09/02/2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { requireAuth, isAdmin } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!isAdmin()) window.location.replace('index.html');
+        } catch (e) {}
+    </script>
 </head>
 <body class="bg-slate-900 min-h-screen flex items-center justify-center p-6">
 

@@ -72,11 +72,11 @@
 - [x] Extrair CSS compartilhado em `styles/main.css` (variáveis, reset, scrollbar, animações base)
 - [x] Extrair CSS do pastor em `styles/pastor.css` (p-card, p-action, presenca, agenda, etc.)
 - [x] Extrair CSS do admin em `styles/admin.css` (cards-grid, link-card, section-label, admin-bar)
-- [ ] Extrair CSS de componentes em `styles/components.css` (tags, badges, skeleton, footer)
-- [ ] Padronizar auth gate nas páginas restantes (~6 páginas) usando `js/auth.js`
+- [x] Extrair CSS de componentes em `styles/components.css` (tags, badges, skeleton, footer)
+- [x] Padronizar auth gate nas páginas restantes usando `js/auth.js`
 - [x] Criar módulo `js/utils.js` com funções utilitárias (esc, escA, fmt, periodoRefToChave, etc.)
-- [ ] Criar módulo `js/firebase-helpers.js` com funções reutilizáveis de Firestore
-- [ ] Fixar versões CDN (lucide@0.300.0, phosphor-icons, html2pdf@0.10.1)
+- [x] Criar módulo `js/firebase-helpers.js` com funções reutilizáveis de Firestore
+- [x] Fixar versões CDN (lucide@0.300.0, phosphor-icons, html2pdf@0.10.1)
 
 #### Páginas para padronizar auth (Fase 2):
 Prioridade alta (acesso admin/sensível):
@@ -104,18 +104,18 @@ Prioridade média (acesso operacional):
 Prioridade baixa (dashboards/ferramentas):
 - ~~`dashreg655.html`~~ ✅
 - ~~`dashsaldo.html`~~ ✅
-- `agendaieqcentral.html`
-- `agendarapidaieqcentral.html`
+- ~~`agendaieqcentral.html`~~ ✅
+- ~~`agendarapidaieqcentral.html`~~ ✅
 - ~~`controle_avisos.html`~~ ✅
 - ~~`debitos_manuais.html`~~ ✅
-- `importador_presencas.html`
-- `importador_recibos.html`
-- `migrar_agenda.html`
-- `migrar_nomes_igrejas.html`
-- `migrar_periodoChave.html`
-- `migrar_periodos.html`
-- `sorteio.html`
-- `util_limpeza_convocacao.html`
+- ~~`importador_presencas.html`~~ ✅
+- ~~`importador_recibos.html`~~ ✅
+- ~~`migrar_agenda.html`~~ ✅
+- ~~`migrar_nomes_igrejas.html`~~ ✅
+- ~~`migrar_periodoChave.html`~~ ✅
+- ~~`migrar_periodos.html`~~ ✅
+- ~~`sorteio.html`~~ ✅
+- ~~`util_limpeza_convocacao.html`~~ ✅
 
 ### 🟡 Fase 3 — Performance
 - [ ] Otimizar queries Firestore com filtros `where()` no servidor
