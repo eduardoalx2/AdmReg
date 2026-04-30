@@ -978,6 +978,14 @@
             document.getElementById('pdf-total').textContent = fmt(r.total);
         }
 
+        function showToast(msg, duration = 3500) {
+            const t = document.createElement('div');
+            t.textContent = msg;
+            t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1f2937;color:#f3f4f6;font-size:13px;font-weight:600;padding:12px 20px;border-radius:12px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.4);text-align:center;max-width:80vw;pointer-events:none;';
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), duration);
+        }
+
         window.baixarPdf = (id) => {
             const r = globalRecibos.find(i=>i.id===id);
             if (!r) return;
@@ -996,11 +1004,8 @@
             const txt = `*RECIBO DE ENTRADAS - IEQ*\n*Referência:* ${fmtRefExtenso(r.referenceDate)}\n*Total Pago:* ${fmt(r.total)}`;
             const zapUrl = `https://wa.me/?text=${encodeURIComponent(txt)}`;
 
-            // No mobile o gesto do usuário expira antes do html2pdf terminar,
-            // bloqueando window.open e navigator.share silenciosamente.
-            // Abrimos o WhatsApp de forma síncrona para preservar o gesto.
             if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-                window.open(zapUrl, '_blank');
+                showToast('⚠️ Esta função está disponível apenas no computador.');
                 return;
             }
 
