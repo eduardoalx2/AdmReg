@@ -248,9 +248,23 @@
 
         lucide.createIcons();
 
-        // ── Se já está logado, vai direto pro painel ─────────────────────────
-        onAuthStateChanged(auth, user => {
-            if (user) window.location.replace('index.html');
+        // ── Se já está logado, sincroniza localStorage e vai pro painel ────────
+        onAuthStateChanged(auth, async user => {
+            if (!user) return;
+            try {
+                const q    = query(collection(db, 'usuarios'), where('email', '==', user.email.toLowerCase()));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    const ud = snap.docs[0].data();
+                    if (ud.status === 'Ativo') {
+                        localStorage.setItem('userEmail',  user.email.toLowerCase());
+                        localStorage.setItem('userName',   ud.nome || '');
+                        localStorage.setItem('userPerms',  JSON.stringify(ud.permissoes || []));
+                        localStorage.setItem('userIgreja', ud.igrejaNome || '');
+                    }
+                }
+            } catch(e) { /* segue mesmo assim, requireAuth() vai validar */ }
+            window.location.replace('index.html');
         });
 
         // ── Toggle painel de login ────────────────────────────────────────────
