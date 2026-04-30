@@ -79,28 +79,11 @@
                     <p class="text-[9px] mt-1 text-slate-400">Aparece no topo do portal público. Deixe em branco para ocultar.</p>
                 </div>
 
-                <!-- Toggles -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                        <div>
-                            <p class="text-sm font-semibold text-slate-700">Exibir aba Agenda</p>
-                            <p class="text-[10px] text-slate-400 mt-0.5">Mostra a aba "📅 Agenda" no portal</p>
-                        </div>
-                        <label class="toggle-switch ml-4">
-                            <input type="checkbox" id="mostrarAgenda" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                        <div>
-                            <p class="text-sm font-semibold text-slate-700">Exibir aba Lançar Presença</p>
-                            <p class="text-[10px] text-slate-400 mt-0.5">Mostra a aba "✅ Lançar Presença" no portal</p>
-                        </div>
-                        <label class="toggle-switch ml-4">
-                            <input type="checkbox" id="mostrarPresenca" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
+                <!-- Seções e Ordem -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Seções do Portal — Ordem e Visibilidade</label>
+                    <p class="text-[9px] text-slate-400 mb-3">Arraste para reordenar. O toggle liga/desliga a seção no portal.</p>
+                    <div id="lista-secoes" class="space-y-2"></div>
                 </div>
             </div>
         </div>
@@ -313,6 +296,68 @@
             });
         }
 
+        // ─── SEÇÕES DO PORTAL ─────────────────────────────────────────
+        const SECOES_LABELS = {
+            welcome:  '🙏 Mensagem de Boas-vindas',
+            whatsapp: '💬 Grupo WhatsApp',
+            botoes:   '⭐ Botões de Destaque',
+            agenda:   '📅 Agenda (próximos 30 dias)',
+            presenca: '✅ Lançar Presença',
+            links:    '🔗 Links Úteis',
+        };
+        const SECOES_DEFAULT = [
+            { id:'welcome',  visivel:true,  ordem:0 },
+            { id:'whatsapp', visivel:true,  ordem:1 },
+            { id:'botoes',   visivel:false, ordem:2 },
+            { id:'agenda',   visivel:true,  ordem:3 },
+            { id:'presenca', visivel:true,  ordem:4 },
+            { id:'links',    visivel:true,  ordem:5 },
+        ];
+
+        function inicializarSecoes(secoesData) {
+            const lista = document.getElementById('lista-secoes');
+            lista.innerHTML = '';
+            const secoes = SECOES_DEFAULT.map(def => {
+                const saved = (secoesData||[]).find(s => s.id === def.id);
+                return saved ? { ...def, ...saved } : def;
+            }).sort((a,b) => a.ordem - b.ordem);
+
+            secoes.forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'item-row';
+                row.dataset.secaoId = s.id;
+                row.setAttribute('draggable', 'true');
+                row.innerHTML = `
+                    <div class="drag-handle" title="Arrastar"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
+                    <span class="flex-1 text-sm font-semibold text-slate-700">${SECOES_LABELS[s.id]||s.id}</span>
+                    <label class="toggle-switch ml-4">
+                        <input type="checkbox" data-secao-visivel="${s.id}" ${s.visivel?'checked':''}>
+                        <span class="toggle-slider"></span>
+                    </label>`;
+                addDragEventsSecao(row);
+                lista.appendChild(row);
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        let dragSecaoSrc = null;
+        function addDragEventsSecao(el) {
+            el.addEventListener('dragstart', e => { dragSecaoSrc = el; e.dataTransfer.effectAllowed = 'move'; });
+            el.addEventListener('dragover',  e => { e.preventDefault(); el.classList.add('drag-row-over'); });
+            el.addEventListener('dragleave', () => el.classList.remove('drag-row-over'));
+            el.addEventListener('drop', e => {
+                e.preventDefault(); el.classList.remove('drag-row-over');
+                if (dragSecaoSrc && dragSecaoSrc !== el) {
+                    const parent = el.parentNode;
+                    const nodes = [...parent.children];
+                    const srcIdx = nodes.indexOf(dragSecaoSrc);
+                    const tgtIdx = nodes.indexOf(el);
+                    if (srcIdx < tgtIdx) parent.insertBefore(dragSecaoSrc, el.nextSibling);
+                    else parent.insertBefore(dragSecaoSrc, el);
+                }
+            });
+        }
+
         // ─── helpers ──────────────────────────────────────────────────
         function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -332,19 +377,23 @@
                     const d = snap.data();
 
                     document.getElementById('mensagemBoasVindas').value = d.mensagemBoasVindas || '';
-                    document.getElementById('mostrarAgenda').checked   = d.mostrarAgenda !== false;
-                    document.getElementById('mostrarPresenca').checked = d.mostrarPresenca !== false;
                     document.getElementById('linkWhatsappGrupo').value = d.linkWhatsappGrupo || '';
+
+                    // Seções do portal
+                    inicializarSecoes(d.secoes);
 
                     // Botões de destaque
                     (d.botoes || []).forEach(b => adicionarBotao(b));
 
                     // Links úteis
                     (d.links || []).forEach(l => adicionarLink(l));
+                } else {
+                    inicializarSecoes([]);
                 }
             } catch(e) {
                 console.error(e);
                 showFeedback('Erro ao carregar configurações.', true);
+                inicializarSecoes([]);
             } finally {
                 overlay.classList.add('hidden');
             }
@@ -362,13 +411,19 @@
             const botoes = coletarLinhas('lista-botoes', ['icone','titulo','url','cor']);
             const links  = coletarLinhas('lista-links',  ['icone','titulo','url','descricao']);
 
+            const secoesRows = [...document.getElementById('lista-secoes').children];
+            const secoes = secoesRows.map((row, idx) => ({
+                id: row.dataset.secaoId,
+                visivel: row.querySelector('[data-secao-visivel]')?.checked !== false,
+                ordem: idx
+            }));
+
             const payload = {
                 mensagemBoasVindas: document.getElementById('mensagemBoasVindas').value.trim(),
-                mostrarAgenda:      document.getElementById('mostrarAgenda').checked,
-                mostrarPresenca:    document.getElementById('mostrarPresenca').checked,
                 linkWhatsappGrupo:  document.getElementById('linkWhatsappGrupo').value.trim(),
                 botoes,
                 links,
+                secoes,
                 updatedAt: serverTimestamp(),
                 updatedBy: localStorage.getItem('userEmail') || 'admin'
             };

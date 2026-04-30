@@ -41,11 +41,6 @@
             </a>
         </div>
 
-        <!-- Abas principais (renderizadas dinamicamente) -->
-        <div id="tabBar" class="max-w-4xl mx-auto px-4 flex gap-8 overflow-x-auto scrollbar-hide hidden">
-            <button id="tabAgendaBtn"   onclick="setTab('agenda')"   class="tab-active   py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider hidden">📅 Agenda</button>
-            <button id="tabPresencaBtn" onclick="setTab('presenca')" class="tab-inactive py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider hidden">✅ Lançar Presença</button>
-        </div>
     </header>
 
     <!-- ======== LOADING INICIAL ======== -->
@@ -55,17 +50,17 @@
     </div>
 
     <!-- ======== CONTEÚDO PRINCIPAL (oculto até config carregar) ======== -->
-    <div id="mainContent" class="hidden">
+    <div id="mainContent" class="hidden" style="display:none;flex-direction:column;">
 
         <!-- Mensagem de Boas-vindas -->
-        <div id="welcomeSection" class="hidden max-w-4xl mx-auto px-4 mt-6">
+        <div id="sec-welcome" class="hidden max-w-4xl mx-auto px-4 mt-6">
             <div class="bg-indigo-600 rounded-2xl px-6 py-4 text-center shadow-sm">
                 <p id="welcomeMsg" class="text-white font-bold text-sm tracking-wide"></p>
             </div>
         </div>
 
         <!-- Botão WhatsApp -->
-        <div id="whatsappSection" class="hidden max-w-4xl mx-auto px-4 mt-4">
+        <div id="sec-whatsapp" class="hidden max-w-4xl mx-auto px-4 mt-4">
             <a id="whatsappLink" href="#" target="_blank"
                 class="flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-md transition-all active:scale-95 text-sm uppercase tracking-wider">
                 <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -76,25 +71,25 @@
         </div>
 
         <!-- Botões de Destaque -->
-        <div id="botoesSection" class="hidden max-w-4xl mx-auto px-4 mt-4">
+        <div id="sec-botoes" class="hidden max-w-4xl mx-auto px-4 mt-4">
             <div id="botoesGrid" class="flex flex-col gap-3"></div>
         </div>
 
         <!-- Links Úteis -->
-        <div id="linksSection" class="hidden max-w-4xl mx-auto px-4 mt-6">
+        <div id="sec-links" class="hidden max-w-4xl mx-auto px-4 mt-6">
             <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Links Úteis</h2>
             <div id="linksGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
         </div>
 
         <!-- ======== ABA AGENDA ======== -->
-        <div id="abaAgenda" class="hidden max-w-4xl mx-auto px-4 mt-6">
+        <div id="sec-agenda" class="hidden max-w-4xl mx-auto px-4 mt-6">
             <div id="eventList" class="space-y-4">
                 <div class="flex justify-center py-20 text-indigo-500 font-bold text-xs animate-pulse uppercase tracking-widest">Carregando agenda...</div>
             </div>
         </div>
 
         <!-- ======== ABA PRESENÇA ======== -->
-        <div id="abaPresenca" class="hidden max-w-lg mx-auto px-4 mt-6">
+        <div id="sec-presenca" class="hidden max-w-lg mx-auto px-4 mt-6">
             <div class="bg-white p-6 rounded-3xl shadow-xl border border-slate-100">
 
                 <form id="presenceForm" class="space-y-5">
@@ -234,11 +229,17 @@
         // ─── CONFIGURAÇÃO DO PORTAL ────────────────────────────────────────────
         let portalConfig = {
             mensagemBoasVindas: '',
-            mostrarAgenda:      true,
-            mostrarPresenca:    true,
             linkWhatsappGrupo:  '',
             links:              [],
-            botoes:             []
+            botoes:             [],
+            secoes: [
+                { id:'welcome',  visivel:true,  ordem:0 },
+                { id:'whatsapp', visivel:true,  ordem:1 },
+                { id:'botoes',   visivel:false, ordem:2 },
+                { id:'agenda',   visivel:true,  ordem:3 },
+                { id:'presenca', visivel:true,  ordem:4 },
+                { id:'links',    visivel:true,  ordem:5 },
+            ]
         };
 
         async function carregarConfig() {
@@ -247,11 +248,15 @@
                 if (snap.exists()) {
                     const d = snap.data();
                     portalConfig.mensagemBoasVindas = d.mensagemBoasVindas || '';
-                    portalConfig.mostrarAgenda      = d.mostrarAgenda !== false;
-                    portalConfig.mostrarPresenca    = d.mostrarPresenca !== false;
                     portalConfig.linkWhatsappGrupo  = d.linkWhatsappGrupo || '';
                     portalConfig.links              = d.links || [];
                     portalConfig.botoes             = d.botoes || [];
+                    if (d.secoes && d.secoes.length) {
+                        portalConfig.secoes = portalConfig.secoes.map(def => {
+                            const saved = d.secoes.find(s => s.id === def.id);
+                            return saved ? { ...def, ...saved } : def;
+                        });
+                    }
                 }
             } catch(e) {
                 console.error('Erro ao carregar config do portal:', e);
@@ -260,117 +265,74 @@
         }
 
         function renderPortal() {
-            // Oculta spinner inicial
             document.getElementById('loadingConfig').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
+            const mc = document.getElementById('mainContent');
+            mc.style.display = 'flex';
 
-            const { mensagemBoasVindas, mostrarAgenda, mostrarPresenca, linkWhatsappGrupo, links, botoes } = portalConfig;
+            const { mensagemBoasVindas, linkWhatsappGrupo, links, botoes, secoes } = portalConfig;
 
             // Mensagem de boas-vindas
             if (mensagemBoasVindas) {
                 document.getElementById('welcomeMsg').textContent = mensagemBoasVindas;
-                document.getElementById('welcomeSection').classList.remove('hidden');
+            } else {
+                document.getElementById('sec-welcome').classList.add('hidden');
             }
 
-            // Botão WhatsApp
+            // WhatsApp
             if (linkWhatsappGrupo) {
                 document.getElementById('whatsappLink').href = linkWhatsappGrupo;
-                document.getElementById('whatsappSection').classList.remove('hidden');
+            } else {
+                document.getElementById('sec-whatsapp').classList.add('hidden');
             }
 
             // Botões de destaque
-            if (botoes && botoes.length > 0) {
+            if (botoes && botoes.length) {
                 const corMap = { indigo:'#4f46e5', emerald:'#10b981', blue:'#3b82f6', amber:'#f59e0b', rose:'#f43f5e', slate:'#475569' };
-                const grid = document.getElementById('botoesGrid');
-                grid.innerHTML = botoes.map(b => {
-                    const cor = corMap[b.cor] || corMap.indigo;
-                    return `<a href="${b.url || '#'}" target="_blank" rel="noopener noreferrer"
-                        class="flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl text-white font-bold text-sm uppercase tracking-wider shadow-md active:scale-95 transition-all"
-                        style="background:${cor}">${b.icone ? `<span>${b.icone}</span>` : ''} ${b.titulo || ''}</a>`;
+                document.getElementById('botoesGrid').innerHTML = botoes.map(b => {
+                    const bg = corMap[b.cor] || corMap.indigo;
+                    return `<a href="${b.url||'#'}" target="_blank" class="flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl text-white font-bold text-sm uppercase tracking-wider shadow-md active:scale-95 transition-all" style="background:${bg}">
+                        <span>${b.icone||''}</span> ${b.titulo||''}
+                    </a>`;
                 }).join('');
-                document.getElementById('botoesSection').classList.remove('hidden');
+            } else {
+                document.getElementById('sec-botoes').classList.add('hidden');
             }
 
             // Links úteis
-            if (links && links.length > 0) {
-                const grid = document.getElementById('linksGrid');
-                grid.innerHTML = links.map(l => `
-                    <a href="${l.url || '#'}" target="_blank" rel="noopener noreferrer"
+            if (links && links.length) {
+                document.getElementById('linksGrid').innerHTML = links.map(l => `
+                    <a href="${l.url||'#'}" target="_blank" rel="noopener noreferrer"
                         class="link-card bg-white rounded-2xl p-4 flex items-start gap-3 shadow-sm border border-slate-100 hover:border-indigo-200">
-                        <span class="text-2xl flex-shrink-0 mt-0.5">${l.icone || '🔗'}</span>
+                        <span class="text-2xl flex-shrink-0 mt-0.5">${l.icone||'🔗'}</span>
                         <div class="min-w-0">
-                            <p class="text-sm font-bold text-slate-800 truncate">${l.titulo || ''}</p>
-                            ${l.descricao ? `<p class="text-[10px] text-slate-400 mt-0.5 line-clamp-2">${l.descricao}</p>` : ''}
+                            <p class="text-sm font-bold text-slate-800 truncate">${l.titulo||''}</p>
+                            ${l.descricao?`<p class="text-[10px] text-slate-400 mt-0.5 line-clamp-2">${l.descricao}</p>`:''}
                         </div>
                         <svg class="w-4 h-4 text-slate-300 flex-shrink-0 mt-0.5 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                    </a>
-                `).join('');
-                document.getElementById('linksSection').classList.remove('hidden');
+                    </a>`).join('');
+                document.getElementById('sec-links').classList.remove('hidden');
             }
 
-            // Tab bar e abas
-            const tabBar = document.getElementById('tabBar');
-            const tabAgendaBtn   = document.getElementById('tabAgendaBtn');
-            const tabPresencaBtn = document.getElementById('tabPresencaBtn');
+            // Aplicar ordem e visibilidade das seções
+            secoes.sort((a,b) => a.ordem - b.ordem).forEach((s, idx) => {
+                const el = document.getElementById(`sec-${s.id}`);
+                if (!el) return;
+                el.style.order = idx;
+                if (!s.visivel) el.classList.add('hidden');
+            });
 
-            if (mostrarAgenda || mostrarPresenca) {
-                tabBar.classList.remove('hidden');
-            }
+            // Carregar dados dinâmicos
+            const agendaVisivel  = secoes.find(s => s.id === 'agenda')?.visivel  !== false;
+            const presencaVisivel = secoes.find(s => s.id === 'presenca')?.visivel !== false;
+            if (agendaVisivel)  loadAgenda();
+            if (presencaVisivel) loadPresenca();
 
-            if (mostrarAgenda) {
-                tabAgendaBtn.classList.remove('hidden');
-            }
-            if (mostrarPresenca) {
-                tabPresencaBtn.classList.remove('hidden');
-            }
-
-            // Determina aba inicial
-            if (mostrarAgenda) {
-                setTab('agenda');
-                loadAgenda();
-            } else if (mostrarPresenca) {
-                // Sem aba agenda — exibe presença direto, ajusta estilo
-                tabAgendaBtn.classList.add('hidden');
-                tabPresencaBtn.className = 'tab-active py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider';
-                setTab('presenca');
-            }
-
-            if (mostrarPresenca) {
-                loadPresenca();
-            }
-
-            // Verifica se tudo está desativado e sem links
-            const temConteudo = mostrarAgenda || mostrarPresenca || (links && links.length > 0) || (botoes && botoes.length > 0) || linkWhatsappGrupo;
-            if (!temConteudo) {
-                document.getElementById('emBreveSection').classList.remove('hidden');
-            }
+            // Em breve
+            const temConteudo = mensagemBoasVindas || linkWhatsappGrupo || (botoes&&botoes.length) || (links&&links.length) || agendaVisivel || presencaVisivel;
+            if (!temConteudo) document.getElementById('emBreveSection').classList.remove('hidden');
 
             if (window.lucide) lucide.createIcons();
         }
-
-        // ─── ABAS PRINCIPAIS ───────────────────────────────────────────────────
-        window.setTab = (tab) => {
-            const { mostrarAgenda, mostrarPresenca } = portalConfig;
-            if (tab === 'agenda' && !mostrarAgenda) return;
-            if (tab === 'presenca' && !mostrarPresenca) return;
-
-            document.getElementById('abaAgenda').classList.toggle('hidden',   tab !== 'agenda');
-            document.getElementById('abaPresenca').classList.toggle('hidden', tab !== 'presenca');
-
-            const tabAgendaBtn   = document.getElementById('tabAgendaBtn');
-            const tabPresencaBtn = document.getElementById('tabPresencaBtn');
-
-            tabAgendaBtn.className   = tab === 'agenda'
-                ? 'tab-active   py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider'
-                : 'tab-inactive py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider';
-            tabPresencaBtn.className = tab === 'presenca'
-                ? 'tab-active   py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider'
-                : 'tab-inactive py-3 text-[11px] whitespace-nowrap transition-all uppercase tracking-wider';
-
-            // Garante que abas ocultas permaneçam ocultas
-            if (!mostrarAgenda)   tabAgendaBtn.classList.add('hidden');
-            if (!mostrarPresenca) tabPresencaBtn.classList.add('hidden');
-        };
 
         // ─── AGENDA ────────────────────────────────────────────────────────────
         let events = [];
