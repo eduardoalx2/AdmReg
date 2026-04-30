@@ -739,7 +739,7 @@
             const atrasado = hoje > quintoDia;
 
             const saldoRef  = saldos.find(s=>saldoMatchMes(s,strMesRef));
-            const reciboRef = recibos.find(r=>r.referenceDate===strMesRef);
+            const reciboRef = recibos.find(r=>r.referenceDate===strMesRef && (parseFloat(r.regionalTax)||0)>0);
 
             // === STATUS BOX ===
             let statusHtml = '';
