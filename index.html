@@ -160,8 +160,9 @@
             { id:'g-master', nome:'Segurança & Acessos', ordem:0, itens:[
                 { id:'i-usuarios',    tipo:'sistema', titulo:'Gestão de Usuários',   obs:'Controle de níveis e permissões',       url:'gestao_usuarios.html',    icone:'🔐', perm:'admin', visivel:true, ordem:0 },
                 { id:'i-layout',      tipo:'sistema', titulo:'Gerenciar Layout',      obs:'Organizar grupos e links do painel',    url:'gerenciar_layout.html',   icone:'🎛️', perm:'admin', visivel:true, ordem:1 },
-                { id:'i-configpast',  tipo:'sistema', titulo:'Config. Pastores',      obs:'Avisos e configurações do painel',      url:'editpagpastores.html',    icone:'📢', perm:'admin', visivel:true, ordem:2 },
-                { id:'i-viewpastor',  tipo:'interno',  titulo:'Ver Painel do Pastor', obs:'Visualizar a tela do pastor',           url:'#',                       icone:'👀', perm:'admin', visivel:true, ordem:3 }
+                { id:'i-configpast',   tipo:'sistema', titulo:'Config. Pastores',        obs:'Avisos e configurações do painel',      url:'editpagpastores.html',  icone:'📢', perm:'admin', visivel:true, ordem:2 },
+                { id:'i-configmembro', tipo:'sistema', titulo:'Config. Portal Público', obs:'Links e seções do portal sem login',    url:'editpagmembros.html',   icone:'🌐', perm:'admin', visivel:true, ordem:3 },
+                { id:'i-viewpastor',   tipo:'interno', titulo:'Ver Painel do Pastor',   obs:'Visualizar a tela do pastor',           url:'#',                     icone:'👀', perm:'admin', visivel:true, ordem:4 }
             ]},
             { id:'g-cadastros', nome:'Cadastros', ordem:1, itens:[
                 { id:'i-pastores', tipo:'sistema', titulo:'Pastores',        obs:'Obreiros, Aspirantes e Ministros',           url:'s_pastores.html',      icone:'👨‍💼', perm:'pastores',       visivel:true, ordem:0 },
