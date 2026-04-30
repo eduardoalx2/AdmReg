@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script>
-        // Protege antes do render — sem redirecionamento por role (pastores ficam aqui)
+        // Auth gate: verificação inicial rápida (proteção real via requireAuth no módulo abaixo)
         const _ps = localStorage.getItem('userPerms');
         const _em = localStorage.getItem('userEmail');
         if (!_ps || !_em) window.location.replace('login.html');
@@ -316,15 +316,23 @@
         import { auth, db } from './firebase-config.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
         import { collection, getDocs, addDoc, doc, getDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { requireAuth, hasPermission, hasAnyPermission, isAdmin as checkIsAdmin, logout } from './js/auth.js';
 
-        // ===== DADOS DO USUÁRIO =====
-        const userEmail  = localStorage.getItem('userEmail');
-        const userName   = localStorage.getItem('userName');
-        const userIgreja = localStorage.getItem('userIgreja');
-        let userPerms = [];
-        try { userPerms = JSON.parse(localStorage.getItem('userPerms') || '[]'); } catch(e) {}
+        // ===== DADOS DO USUÁRIO (verificação segura via Firestore) =====
+        let authData;
+        try {
+            authData = await requireAuth();
+        } catch (e) {
+            // requireAuth já redirecionou para login.html
+            throw e;
+        }
 
-        const isAdmin  = userPerms.includes('admin');
+        const userEmail  = authData.email;
+        const userName   = authData.nome;
+        const userIgreja = authData.igrejaNome;
+        const userPerms  = authData.permissoes;
+
+        const isAdmin  = checkIsAdmin();
         const isEquipe = userPerms.length > 0 && !userIgreja && !isAdmin;
         const isPastor = !isAdmin && !isEquipe;
 
@@ -1205,9 +1213,7 @@
         };
 
         window.fazerLogout = async () => {
-            await signOut(auth);
-            localStorage.clear();
-            window.location.replace('login.html');
+            await logout();
         };
 
         function esc(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }

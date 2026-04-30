@@ -69,6 +69,7 @@
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, senha);
                 
+                // Buscar dados do usuário no Firestore (fonte autoritativa)
                 const q = query(collection(db, "usuarios"), where("email", "==", email));
                 const querySnapshot = await getDocs(q);
 
@@ -82,6 +83,9 @@
                     throw new Error("Sua conta está inativa. Fale com o Gestor Master.");
                 }
 
+                // Salvar no localStorage para compatibilidade com código legado
+                // IMPORTANTE: As páginas agora verificam permissões via Firestore (js/auth.js)
+                // O localStorage é apenas cache para exibição de nome/igreja no header
                 localStorage.setItem('userEmail', email);
                 localStorage.setItem('userName', userData.nome);
                 
