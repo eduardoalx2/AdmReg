@@ -105,7 +105,32 @@ export async function requireAuth({ requireActive = true } = {}) {
         throw new Error('Conta inativa');
     }
 
-    // 4. Atualizar cache e localStorage (para compatibilidade com código legado)
+    // 4. Modo simulação: admin visualizando como outro usuário.
+    // Verifica que o usuário real é admin antes de honrar a simulação.
+    const viewAs = localStorage.getItem('__view_as__');
+    const viewAsBackup = localStorage.getItem('__view_as_backup__');
+    if (viewAs && viewAsBackup && (userData.permissoes || []).includes('admin')) {
+        const simPerms  = JSON.parse(localStorage.getItem('userPerms')  || '[]');
+        const simIgreja = localStorage.getItem('userIgreja') || '';
+        const simNome   = localStorage.getItem('userName')   || '';
+
+        _cachedUser  = firebaseUser;
+        _cachedPerms = simPerms;
+        _cachedIgreja = simIgreja;
+        _cachedNome  = simNome;
+
+        return {
+            email,
+            nome: simNome,
+            permissoes: simPerms,
+            igrejaNome: simIgreja,
+            status: 'Ativo',
+            rawData: userData,
+            isSimulation: true
+        };
+    }
+
+    // 5. Atualizar cache e localStorage (para compatibilidade com código legado)
     const permissoes = userData.permissoes || [];
     const igrejaNome = userData.igrejaNome || '';
 
