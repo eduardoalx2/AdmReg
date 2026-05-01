@@ -250,7 +250,7 @@
         import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         const _userPerms = JSON.parse(localStorage.getItem('userPerms') || '[]');
-        const isAdmin = _userPerms.includes('admin') || _userPerms.includes('secretario');
+        const isAdmin = _userPerms.includes('admin') || _userPerms.includes('secretario') || _userPerms.includes('superintendente');
         const userIgreja = localStorage.getItem('userIgreja') || '';
 
         let allPresencas = [];

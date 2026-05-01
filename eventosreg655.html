@@ -9,7 +9,7 @@
         import { requireAuth, hasAnyPermission } from './js/auth.js';
         try {
             await requireAuth();
-            if (!hasAnyPermission(['admin', 'gestao_eventos'])) {
+            if (!hasAnyPermission(['admin', 'gestao_eventos', 'secretario', 'superintendente'])) {
                 window.location.replace('index.html');
             }
         } catch (e) {}

@@ -194,8 +194,8 @@
             ]},
             { id:'g-regional', nome:'Regional', ordem:4, itens:[
                 { id:'i-agenda',       tipo:'sistema', titulo:'Agenda Regional',   obs:'Cronograma de eventos CED e CND',    url:'agendareg655.html',    icone:'📅', perm:'agenda',    visivel:true, ordem:0 },
-                { id:'i-pendencias',   tipo:'sistema', titulo:'Pendências',        obs:'Igrejas com taxas em aberto',        url:'pendenciasreg655.html',icone:'⚠️', perm:'admin',     visivel:true, ordem:1 },
-                { id:'i-relpend',      tipo:'sistema', titulo:'Rel. Pendências',   obs:'Relatório detalhado de pendências',  url:'relatorio_pendencias.html',icone:'📋',perm:'admin',  visivel:true, ordem:2 }
+                { id:'i-pendencias',   tipo:'sistema', titulo:'Pendências',        obs:'Igrejas com taxas em aberto',        url:'pendenciasreg655.html',icone:'⚠️', perm:'secretario',     visivel:true, ordem:1 },
+                { id:'i-relpend',      tipo:'sistema', titulo:'Rel. Pendências',   obs:'Relatório detalhado de pendências',  url:'relatorio_pendencias.html',icone:'📋',perm:'secretario',  visivel:true, ordem:2 }
             ]},
             { id:'g-eventos', nome:'Eventos & Presença', ordem:5, itens:[
                 { id:'i-gestaoev', tipo:'sistema', titulo:'Gestão de Eventos',    obs:'Criar e gerenciar eventos ativos',       url:'eventosreg655.html',       icone:'⚙️', perm:'gestao_eventos',   visivel:true, ordem:0 },
@@ -263,7 +263,13 @@
             if (nivelStr && !hierarquia[nivelStr]) nivelStr = 'secretario';
             if (!nivelStr) nivelStr = 'secretario';
             const nivel = isAdmin ? 100 : (hierarquia[nivelStr] || 50);
-            const has = (p) => { if(!p) return true; if(nivel===100) return true; if(perms.includes(p)) return true; return nivel >= (hierarquia[p]||100); };
+            const permMinLevel = {
+                admin:100, secretario:90, superintendente:80, pastor_titular:70, coordenador:60, obreiro:50, membro:10,
+                pastores:80, igrejas:80, saldo_virada:70, gerenciar_saldos:100, recibos:80, gerenciar_recibos:100,
+                dash_recibos:80, dash_saldos:80, agenda:80, gestao_eventos:80, presenca:80, controle_presencas:80,
+                debitos_manuais:90, relatorio_pendencias:90, pendencias:90, sorteio:80, coordenadorias:100
+            };
+            const has = (p) => { if(!p) return true; if(nivel===100) return true; if(perms.includes(p)) return true; return nivel >= (permMinLevel[p] || 100); };
 
             const main = document.getElementById('main-content');
             main.innerHTML = '<div class="admin-main">';

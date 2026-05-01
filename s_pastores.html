@@ -12,7 +12,7 @@
         try {
             await requireAuth();
             // Acesso para admin OU quem tem a permissão 'pastores'
-            if (!hasAnyPermission(['admin', 'pastores'])) {
+            if (!hasAnyPermission(['admin', 'pastores', 'secretario', 'superintendente'])) {
                 window.location.replace('index.html');
             }
         } catch (error) {}

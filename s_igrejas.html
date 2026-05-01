@@ -8,10 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.300.0"></script>
     <script type="module">
-        import { requireAuth, isAdmin } from './js/auth.js';
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
         try {
             await requireAuth();
-            if (!isAdmin()) window.location.replace('index.html');
+            if (!hasAnyPermission(['admin', 'secretario', 'superintendente'])) window.location.replace('index.html');
         } catch (error) {}
     </script>
     <style>
