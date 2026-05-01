@@ -147,7 +147,15 @@
                     </label>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Conteúdo (HTML ou URL da Imagem)</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Conteúdo (HTML ou URL da Imagem)</label>
+                        <div class="flex gap-1">
+                            <button onclick="inserirTag(this, '<strong>', '</strong>')" title="Negrito" class="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-[10px] font-bold">B</button>
+                            <button onclick="inserirTag(this, '<span style=\\\'color:#d32f2f\\\'>', '</span>')" title="Texto Vermelho" class="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 text-red-400 rounded text-[10px] font-bold">Cor</button>
+                            <button onclick="inserirTag(this, '<span style=\\\'font-size:14pt\\\'>', '</span>')" title="Letra Grande" class="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-[10px]">Tamanho</button>
+                            <button onclick="inserirTag(this, '<br>', '')" title="Pular Linha" class="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-[10px]">Enter</button>
+                        </div>
+                    </div>
                     <textarea class="item-conteudo w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 font-mono h-24" placeholder="<strong>Título</strong><br>• Texto normal ou https://link.com/imagem.png"></textarea>
                 </div>
             </div>
@@ -310,6 +318,24 @@
         window.removerSecao = (btn) => {
             if(confirm('Remover esta seção inteira?')) {
                 btn.closest('.secao-wrapper').remove();
+            }
+        };
+
+        window.inserirTag = (btn, tagInicio, tagFim) => {
+            const textarea = btn.closest('div').nextElementSibling;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            const selectedText = text.substring(start, end);
+            
+            textarea.value = text.substring(0, start) + tagInicio + selectedText + tagFim + text.substring(end);
+            
+            // Reposicionar o cursor
+            textarea.focus();
+            if (selectedText.length === 0) {
+                textarea.selectionStart = textarea.selectionEnd = start + tagInicio.length;
+            } else {
+                textarea.selectionStart = textarea.selectionEnd = start + tagInicio.length + selectedText.length + tagFim.length;
             }
         };
 
