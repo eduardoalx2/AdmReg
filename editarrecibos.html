@@ -300,7 +300,7 @@
         </div>
 
         <!-- Container Oculto para Geração de PDF -->
-        <div id="receipt-wrapper" style="position:fixed;left:0;top:0;visibility:hidden;z-index:-1;width:21cm;height:29cm;">
+        <div style="position:absolute;left:0;top:0;z-index:-1;">
             <div id="receipt-content"
                 style="font-family:'Inter',sans-serif;padding:24px;background:white;width:21cm;height:29cm;overflow:hidden;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;">
                 <div
@@ -624,15 +624,8 @@
             const r = recibosList.find(i => i.id === id);
             if (!r) return;
             preencherDadosPdf(r);
-            const source = document.getElementById('receipt-content');
-            const clone = source.cloneNode(true);
-            clone.style.position = 'fixed';
-            clone.style.left = '0';
-            clone.style.top = '0';
-            clone.style.visibility = 'visible';
-            clone.style.zIndex = '-1';
-            document.body.appendChild(clone);
-            html2pdf().set(getPdfOpt(getNomeArquivoPdf(r))).from(clone).save().finally(() => clone.remove());
+            const element = document.getElementById('receipt-content');
+            html2pdf().set(getPdfOpt(getNomeArquivoPdf(r))).from(element).save();
         };
 
         window.limparFiltros = () => {
@@ -792,19 +785,11 @@
             preencherDadosPdf(r);
             await new Promise(resolve => setTimeout(resolve, 80));
 
-            const source = document.getElementById('receipt-content');
-            const clone = source.cloneNode(true);
-            clone.style.position = 'fixed';
-            clone.style.left = '0';
-            clone.style.top = '0';
-            clone.style.visibility = 'visible';
-            clone.style.zIndex = '-1';
-            document.body.appendChild(clone);
+            const element = document.getElementById('receipt-content');
             const nomeArquivo = getNomeArquivoPdf(r);
 
             try {
-                const pdfBlob = await html2pdf().set(getPdfOpt(nomeArquivo)).from(clone).output('blob');
-                clone.remove();
+                const pdfBlob = await html2pdf().set(getPdfOpt(nomeArquivo)).from(element).output('blob');
                 const pdfFile = new File([pdfBlob], nomeArquivo, { type: 'application/pdf' });
 
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
@@ -818,7 +803,6 @@
             } catch (err) {
                 if (err.name === 'AbortError') return;
             } finally {
-                try { clone.remove(); } catch(e) {}
                 if (btn) { btn.disabled = false; btn.style.opacity = ''; }
             }
 
