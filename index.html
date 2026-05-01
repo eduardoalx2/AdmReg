@@ -56,8 +56,8 @@
         <div class="fade-in" style="animation-delay:.12s">
             <div class="badge-regional"><div class="badge-dot"></div>Escritório Regional</div>
         </div>
-        <h1 class="portal-title fade-in" id="portalTitle" style="animation-delay:.18s">Portal</h1>
-        <p class="portal-subtitle fade-in" id="portalSubtitle" style="animation-delay:.24s">Região 655 · Londrina/PR</p>
+        <h1 class="portal-title fade-in" id="portalTitle" style="animation-delay:.18s;opacity:0">&nbsp;</h1>
+        <p class="portal-subtitle fade-in" id="portalSubtitle" style="animation-delay:.24s;opacity:0">&nbsp;</p>
     </header>
 
     <!-- Barra Admin (visão de pastor) -->
@@ -241,7 +241,9 @@
 
         async function mostrarViewAdmin() {
             document.getElementById('portalTitle').textContent = 'Painel Admin';
+            document.getElementById('portalTitle').style.opacity = '';
             document.getElementById('portalSubtitle').textContent = 'Gestão Eclesiástica & Administração — Região 655 · Londrina/PR';
+            document.getElementById('portalSubtitle').style.opacity = '';
             document.getElementById('top-user-role').textContent = isAdmin ? 'GESTOR MASTER' : 'ACESSO PERSONALIZADO';
             document.getElementById('main-content').style.maxWidth = '860px';
             document.getElementById('barraAdmin').style.display = 'none';
@@ -342,6 +344,7 @@
                 sel.addEventListener('change', () => {
                     igrejaAtiva = sel.value;
                     document.getElementById('portalSubtitle').textContent = igrejaAtiva || 'Selecione uma igreja';
+                    document.getElementById('portalSubtitle').style.opacity = '';
                     carregarDadosPastor();
                 });
             } catch(e) { console.error(e); }
@@ -350,7 +353,9 @@
         // ===== VIEW PASTOR =====
         async function mostrarViewPastor() {
             document.getElementById('portalTitle').textContent = isPastor ? (userName?.split(' ')[0] || 'Portal') : 'Painel do Pastor';
+            document.getElementById('portalTitle').style.opacity = '';
             document.getElementById('portalSubtitle').textContent = igrejaAtiva || (isPastor ? 'Carregando...' : 'Selecione uma igreja');
+            document.getElementById('portalSubtitle').style.opacity = '';
             document.getElementById('top-user-role').textContent = isPastor ? 'PASTOR' : 'ADMIN — VISÃO PASTOR';
             document.getElementById('main-content').style.maxWidth = '1020px';
 
