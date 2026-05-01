@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Completa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="logo.png" alt="Logo" class="h-10 w-auto object-contain">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 leading-none">Agenda Completa</h1>
+                    <p class="text-xs text-slate-500 uppercase tracking-wide mt-1">Todos os Eventos</p>
+                </div>
+            </div>
+            <a href="index.html" class="text-sm font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto py-8 px-4 space-y-6">
+        <!-- Filtros -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-sm font-bold text-slate-700 uppercase mb-4 flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4"></i> Filtros Livres
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Busca Geral</label>
+                    <input type="text" id="filtro-texto" oninput="window.renderizarAgenda()" placeholder="Nome, Local, Ministério..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700 uppercase font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mês/Ano</label>
+                    <input type="month" id="filtro-mes" onchange="window.renderizarAgenda()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700 uppercase font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Evento</label>
+                    <select id="filtro-tipo" onchange="window.renderizarAgenda()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700 uppercase font-medium">
+                        <option value="">Todos os Tipos</option>
+                        <option value="REGIONAL">Regional</option>
+                        <option value="CED">CED</option>
+                        <option value="CND">CND</option>
+                        <option value="LOCAL">Local</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="window.limparFiltros()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-lg transition-colors uppercase text-xs tracking-wider flex items-center justify-center gap-2">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Limpar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de Eventos -->
+        <div id="loading" class="text-center py-12">
+            <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4"></i>
+            <p class="text-slate-500 font-medium">Carregando todos os eventos...</p>
+        </div>
+
+        <div id="grid-agenda" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            <!-- Eventos renderizados via JS -->
+        </div>
+
+        <div id="empty-state" class="text-center py-12 hidden bg-white rounded-xl border border-slate-200">
+            <i data-lucide="calendar-x" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+            <p class="text-slate-500 font-medium">Nenhum evento encontrado com os filtros atuais.</p>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        let agendaList = [];
+        lucide.createIcons();
+
+        async function carregarAgenda() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "agenda"));
+                agendaList = [];
+                querySnapshot.forEach((doc) => {
+                    agendaList.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Ordenar por data
+                agendaList.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('grid-agenda').classList.remove('hidden');
+                
+                window.renderizarAgenda();
+            } catch (error) {
+                console.error("Erro ao carregar agenda:", error);
+                document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Erro ao carregar dados.</p>';
+            }
+        }
+
+        window.limparFiltros = () => {
+            document.getElementById('filtro-texto').value = '';
+            document.getElementById('filtro-mes').value = '';
+            document.getElementById('filtro-tipo').value = '';
+            window.renderizarAgenda();
+        };
+
+        window.renderizarAgenda = () => {
+            const filtroTexto = document.getElementById('filtro-texto').value.toUpperCase();
+            const filtroMes = document.getElementById('filtro-mes').value;
+            const filtroTipo = document.getElementById('filtro-tipo').value.toUpperCase();
+
+            const filtrados = agendaList.filter(e => {
+                let textoConcatenado = `${e.evento || ''} ${e.local || ''} ${e.ministerio || ''} ${e.endereco || ''}`.toUpperCase();
+                
+                if (filtroTexto && !textoConcatenado.includes(filtroTexto)) return false;
+                if (filtroMes && !(e.data || '').startsWith(filtroMes)) return false;
+                if (filtroTipo && (e.tipo || '').toUpperCase() !== filtroTipo) return false;
+                
+                return true;
+            });
+
+            const grid = document.getElementById('grid-agenda');
+            const emptyState = document.getElementById('empty-state');
+            
+            grid.innerHTML = '';
+
+            if (filtrados.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                grid.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+            }
+
+            filtrados.forEach(e => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow relative flex flex-col";
+                
+                const dataFormatada = e.data ? e.data.split('-').reverse().join('/') : 'Data não definida';
+                let diaSemana = '';
+                if (e.data) {
+                    const [y, m, d] = e.data.split('-');
+                    const dateObj = new Date(y, m - 1, d);
+                    const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+                    diaSemana = dias[dateObj.getDay()];
+                }
+
+                const isLocal = (e.tipo || '').toUpperCase() === 'LOCAL';
+                const tipoCor = isLocal ? 'bg-purple-100 text-purple-700' :
+                                e.tipo === 'REGIONAL' ? 'bg-blue-100 text-blue-700' : 
+                                e.tipo === 'CED' ? 'bg-amber-100 text-amber-700' :
+                                e.tipo === 'CND' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600';
+
+                // Logo definition
+                const logoSrc = isLocal ? 'mini.png' : 'logo.png';
+                const logoClass = isLocal ? 'h-10 w-10 object-contain rounded-full shadow-sm bg-white p-1' : 'h-8 w-auto object-contain';
+
+                card.innerHTML = `
+                    <div class="p-5 flex-1">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${tipoCor}">${e.tipo || 'OUTRO'}</span>
+                                <div class="mt-2 text-xs font-bold text-slate-400 uppercase tracking-wider">${e.ministerio || 'GERAL'}</div>
+                            </div>
+                            <img src="${logoSrc}" alt="Logo" class="${logoClass}" onerror="this.style.display='none'">
+                        </div>
+                        
+                        <h3 class="text-lg font-bold text-slate-800 uppercase leading-tight mb-3">${e.evento || 'Evento sem nome'}</h3>
+                        
+                        <div class="space-y-2 mt-4">
+                            <div class="flex items-center gap-2 text-slate-600">
+                                <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                                <span class="text-sm font-semibold">${dataFormatada} <span class="text-slate-400 font-normal">(${diaSemana})</span></span>
+                            </div>
+                            ${e.horario ? `
+                            <div class="flex items-center gap-2 text-slate-600">
+                                <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+                                <span class="text-sm font-semibold">${e.horario} ${e.duracao ? `<span class="text-slate-400 font-normal">(${e.duracao}h)</span>` : ''}</span>
+                            </div>` : ''}
+                            ${e.local ? `
+                            <div class="flex items-center gap-2 text-slate-600">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+                                <span class="text-sm font-semibold truncate" title="${e.local}">${e.local}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                    ${e.link ? `
+                    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100">
+                        <a href="${e.link}" target="_blank" class="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1 w-full justify-center">
+                            Acessar Link / Inscrição <i data-lucide="external-link" class="w-3 h-3"></i>
+                        </a>
+                    </div>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        };
+
+        carregarAgenda();
+    </script>
+</body>
+</html>
