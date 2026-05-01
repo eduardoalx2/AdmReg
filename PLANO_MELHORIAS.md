@@ -1,7 +1,7 @@
 # 📋 Plano de Melhorias — Portal Região 655
 
-> **Última atualização:** 30/04/2026
-> **Status:** Fase 3 concluída — Fase 4 pronta para iniciar
+> **Última atualização:** 01/05/2026
+> **Status:** Fase 4 concluída — Fase 5 pronta para iniciar
 
 ---
 
@@ -44,11 +44,11 @@
 6. ~~Dependências CDN sem versão fixa (`lucide@latest`)~~ → **MITIGADO na Fase 3** (fixado em `@0.300.0`)
 7. ~~Queries Firestore sem filtros (baixa performance)~~ → **PARCIALMENTE MITIGADO na Fase 3** (helpers criados, paginação implementada)
 8. Sem testes automatizados
-9. Sem PWA/Service Worker
+9. ~~Sem PWA/Service Worker~~ → **MITIGADO na Fase 4** (manifest.json + sw.js)
 10. Sem TypeScript
 11. HTML inline extenso no JS (template literals)
-12. Sem tratamento de erro global
-13. Acessibilidade limitada
+12. ~~Sem tratamento de erro global~~ → **MITIGADO na Fase 4** (js/toast.js + window.onerror + unhandledrejection)
+13. ~~Acessibilidade limitada~~ → **MITIGADO na Fase 4** (aria-*, roles, focus-visible, contrastes)
 
 ---
 
@@ -125,18 +125,25 @@ Prioridade baixa (dashboards/ferramentas):
 - [x] Commits `24113fd` e `db62485` — push para GitHub
 - [x] Deploy Firebase Hosting (https://regiao655-admin.web.app)
 - [ ] Otimizar queries Firestore com filtros `where()` no servidor (adiado — requer análise caso a caso)
-- [ ] Adicionar lazy loading de módulos JS (adiado para Fase 4)
-- [ ] Otimizar imagens (WebP, dimensões definidas) (adiado para Fase 4)
+- [ ] Adicionar lazy loading de módulos JS (adiado para Fase 5)
+- [ ] Otimizar imagens (WebP, dimensões definidas) (adiado para Fase 5)
 
-### 🟡 Fase 4 — Qualidade e UX (PRÓXIMA)
-- [ ] Implementar tratamento de erro global (toast notifications)
-- [ ] Adicionar skeleton screens consistentes
-- [ ] Melhorar acessibilidade (aria-*, roles, contraste)
-- [ ] Implementar PWA (manifest.json, service worker, cache)
-- [ ] Lazy loading de módulos JS
-- [ ] Otimizar imagens (WebP, dimensões definidas)
+### ✅ Fase 4 — Qualidade e UX (CONCLUÍDA em 01/05/2026)
+- [x] Implementar tratamento de erro global — módulo `js/toast.js` (toastSuccess, toastError, toastWarning, toastInfo)
+- [x] setupGlobalErrorHandling() — captura window.onerror + unhandledrejection e exibe toast
+- [x] Adicionar skeleton screens consistentes em `index.html`, `gestao_usuarios.html`, `editarrecibos.html`, `gerenciar_saldos.html`
+- [x] Melhorar acessibilidade — aria-label, role="alert", role="status", autocomplete, :focus-visible no `styles/main.css`
+- [x] Implementar PWA — `manifest.json` + `sw.js` (cache-first para assets, network-first para HTML)
+- [x] Registrar service worker em `index.html` e `login.html`
+- [x] Adicionar `styles/components.css` ao `index.html` (skeleton + toast CSS)
+- [x] Commit `7464067` — push para GitHub
+- [x] Deploy Firebase Hosting (https://regiao655-admin.web.app)
+- [ ] Lazy loading de módulos JS (adiado para Fase 5)
+- [ ] Otimizar imagens para WebP com dimensões definidas (adiado para Fase 5)
 
-### 🔵 Fase 5 — Modernização (Opcional)
+### 🔵 Fase 5 — Modernização (PRÓXIMA)
+- [ ] Lazy loading de módulos JS (dinâmico via import())
+- [ ] Otimizar imagens para WebP com dimensões definidas
 - [ ] Avaliar migração para framework (React/Vue/Vite)
 - [ ] Migrar gradualmente para TypeScript
 - [ ] Adicionar testes E2E (Playwright)
@@ -154,12 +161,15 @@ Prioridade baixa (dashboards/ferramentas):
 ├── js/
 │   ├── auth.js             ← ✅ Módulo centralizado de autenticação
 │   ├── utils.js            ← ✅ Funções utilitárias (esc, fmt, etc.)
-│   └── firebase-helpers.js ← ✅ Funções reutilizáveis Firestore
+│   ├── firebase-helpers.js ← ✅ Funções reutilizáveis Firestore
+│   └── toast.js            ← ✅ Toast notifications + erro global (Fase 4)
 ├── styles/
-│   ├── main.css            ← ✅ Estilos base compartilhados
+│   ├── main.css            ← ✅ Estilos base + acessibilidade (focus-visible, sr-only)
 │   ├── admin.css           ← ✅ Estilos painel admin
 │   ├── pastor.css          ← ✅ Estilos painel pastor
-│   └── components.css      ← ✅ Cards, tags, badges, etc.
+│   └── components.css      ← ✅ Cards, tags, badges, skeleton, toast
+├── manifest.json           ← ✅ PWA manifest (Fase 4)
+├── sw.js                   ← ✅ Service Worker cache-first (Fase 4)
 ├── gestao_usuarios.html    ← Gestão de usuários
 ├── gerenciar_layout.html   ← Layout do painel
 ├── editpagpastores.html    ← Config pastores
@@ -226,8 +236,8 @@ Prioridade baixa (dashboards/ferramentas):
 1. **Sempre começar verificando este arquivo** para saber onde paramos
 2. **Cada fase deve resultar em código funcional** — o site não pode quebrar
 3. **Testar manualmente** após cada mudança antes de avançar
-4. **Fases 0, 1, 2 e 3 concluídas** — segurança, modularização e performance implementadas
-5. **Fase 4 é a próxima** — qualidade de UX (toasts, skeleton, acessibilidade, PWA)
+4. **Fases 0, 1, 2, 3 e 4 concluídas** — segurança, modularização, performance e UX implementadas
+5. **Fase 5 é a próxima** — modernização (lazy loading, WebP, framework, TypeScript, testes, CI/CD)
 6. O arquivo `historico_projeto.txt` já existe e contém histórico anterior do projeto
 7. O repositório Git está configurado: `origin: https://github.com/eduardoalx2/AdmReg.git`
 8. Servidor local para testes: `npx serve -l 3000 .`
@@ -255,3 +265,13 @@ Prioridade baixa (dashboards/ferramentas):
 - **Commits:** `24113fd` (fixar CDN), `db62485` (paginação gerenciar_saldos)
 - **Deploy:** Firebase Hosting — https://regiao655-admin.web.app
 - **Próximo:** Fase 4 — Qualidade e UX (toasts, skeleton, acessibilidade, PWA)
+
+### Sessão 4 — 01/05/2026
+- **Feito:** Fase 4 concluída — `js/toast.js` criado (toastSuccess/Error/Warning/Info + setupGlobalErrorHandling)
+- **Feito:** Skeletons adicionados em 4 páginas (index, gestao_usuarios, editarrecibos, gerenciar_saldos)
+- **Feito:** Acessibilidade — aria-label, role="alert", role="status", autocomplete, :focus-visible
+- **Feito:** PWA — `manifest.json` + `sw.js` com cache-first/network-first, registrado em index e login
+- **Feito:** `styles/components.css` incluído no `index.html`
+- **Commit:** `7464067` — "feat: Fase 4 — Toast notifications, global error handling, skeleton screens, acessibilidade e PWA"
+- **Deploy:** Firebase Hosting — https://regiao655-admin.web.app
+- **Próximo:** Fase 5 — Modernização (lazy loading, WebP, framework, TypeScript, testes, CI/CD)
