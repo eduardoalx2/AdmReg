@@ -300,9 +300,9 @@
         </div>
 
         <!-- Container Oculto para Geração de PDF -->
-        <div style="position:absolute;left:-9999px;top:0;">
+        <div style="position:absolute;left:-9999px;top:0;width:794px;">
             <div id="receipt-content"
-                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:21cm;height:29cm;overflow:hidden;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;">
+                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;min-height:1123px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;">
                 <div
                     style="border:2px solid #1f2937;padding:24px;height:100%;display:flex;flex-direction:column;position:relative;">
                     <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
@@ -584,9 +584,9 @@
             if (r.otherValueParsed > 0) {
                 document.getElementById('pdf-label-outros').textContent = `Outros (${r.otherDesc || ''})`;
                 document.getElementById('pdf-outros').textContent = window.formatMoeda(r.otherValueParsed);
-                containerOutros.classList.remove('hidden');
+                containerOutros.style.display = 'flex';
             } else {
-                containerOutros.classList.add('hidden');
+                containerOutros.style.display = 'none';
             }
             document.getElementById('pdf-total').textContent = window.formatMoeda(r.total);
             document.getElementById('pdf-extenso').textContent = numeroPorExtenso(r.total);
@@ -620,23 +620,38 @@
         }
 
         // Função que aciona a geração do PDF baseada num Recibo Específico
-        window.gerarPdfRecibo = (id) => {
+        window.gerarPdfRecibo = async (id) => {
             const r = recibosList.find(i => i.id === id);
             if (!r) return;
             preencherDadosPdf(r);
             const source = document.getElementById('receipt-content');
             const clone = source.cloneNode(true);
+            clone.removeAttribute('id');
             Object.assign(clone.style, {
-                position: 'fixed', left: '0', top: '0',
+                position: 'absolute', left: '0', top: '0',
                 zIndex: '99999', background: 'white',
-                width: '21cm', height: '29cm',
+                width: '794px', minHeight: '1123px',
                 boxSizing: 'border-box', margin: '0',
-                visibility: 'visible', opacity: '1'
+                visibility: 'visible', opacity: '1', overflow: 'visible'
             });
+            const savedScroll = window.scrollY;
+            window.scrollTo(0, 0);
             document.body.appendChild(clone);
-            setTimeout(() => {
-                html2pdf().set(getPdfOpt(getNomeArquivoPdf(r))).from(clone).save().finally(() => clone.remove());
-            }, 100);
+            await new Promise(resolve => setTimeout(resolve, 300));
+            const opt = {
+                margin: 0,
+                filename: getNomeArquivoPdf(r),
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 794 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: 'avoid-all' }
+            };
+            try {
+                await html2pdf().set(opt).from(clone).save();
+            } finally {
+                clone.remove();
+                window.scrollTo(0, savedScroll);
+            }
         };
 
         window.limparFiltros = () => {
@@ -794,24 +809,35 @@
             if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
 
             preencherDadosPdf(r);
-            await new Promise(resolve => setTimeout(resolve, 80));
 
             const source = document.getElementById('receipt-content');
             const clone = source.cloneNode(true);
+            clone.removeAttribute('id');
             Object.assign(clone.style, {
-                position: 'fixed', left: '0', top: '0',
+                position: 'absolute', left: '0', top: '0',
                 zIndex: '99999', background: 'white',
-                width: '21cm', height: '29cm',
+                width: '794px', minHeight: '1123px',
                 boxSizing: 'border-box', margin: '0',
-                visibility: 'visible', opacity: '1'
+                visibility: 'visible', opacity: '1', overflow: 'visible'
             });
+            const savedScroll = window.scrollY;
+            window.scrollTo(0, 0);
             document.body.appendChild(clone);
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 300));
             const nomeArquivo = getNomeArquivoPdf(r);
 
             try {
-                const pdfBlob = await html2pdf().set(getPdfOpt(nomeArquivo)).from(clone).output('blob');
+                const shareOpt = {
+                    margin: 0,
+                    filename: nomeArquivo,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 794 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: 'avoid-all' }
+                };
+                const pdfBlob = await html2pdf().set(shareOpt).from(clone).output('blob');
                 clone.remove();
+                window.scrollTo(0, savedScroll);
                 const pdfFile = new File([pdfBlob], nomeArquivo, { type: 'application/pdf' });
 
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
@@ -822,9 +848,9 @@
                     });
                     return;
                 }
-                clone.remove();
             } catch (err) {
                 clone.remove();
+                window.scrollTo(0, savedScroll);
                 if (err.name === 'AbortError') return;
             } finally {
                 if (btn) { btn.disabled = false; btn.style.opacity = ''; }
