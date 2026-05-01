@@ -201,6 +201,17 @@
                       .trim();
         }
 
+        function normalizeChurchKey(name) {
+            if (!name) return "";
+            const match = name.match(/^(\d{1,4})\s*[-–—]\s*(.+)$/);
+            if (match) {
+                const code = String(parseInt(match[1])).padStart(4, '0');
+                const rest = normalizeString(match[2]);
+                return `${code} - ${rest}`;
+            }
+            return normalizeString(name);
+        }
+
         function quintoUtilDoMes(ano, mes) {
             let d = new Date(ano, mes, 1);
             let uteis = 0;
@@ -234,7 +245,7 @@
                     const data = doc.data();
                     const cod = String(data.codigo);
                     const originalName = `${cod} - ${data.nome}`;
-                    const normName = normalizeString(originalName);
+                    const normName = normalizeChurchKey(originalName);
                     masterChurches.set(normName, originalName);
                 });
 
@@ -246,7 +257,7 @@
                 saldosSnapshot.forEach(doc => {
                     const s = doc.data();
                     const originalName = s.igrejaFormatada || s.igrejaNome || `Igreja ${s.igrejaCodigo || '-'}`;
-                    const normName = normalizeString(originalName);
+                    const normName = normalizeChurchKey(originalName);
                     const comp = getComp(s);
                     const periodoDisplay = s.periodo || s.periodoLabel || comp;
 
@@ -368,12 +379,12 @@
             const submissionMap = new Map();
             submissions.forEach(s => submissionMap.set(s.normNome, s));
 
-            const excludeList = ["655 - REGIÃO", "252 - IEQ CENTRAL"];
+            const excludeList = ["655 - REGIÃO", "252 - IEQ CENTRAL"].map(e => normalizeChurchKey(e));
 
             let pendingChurches = [];
             masterChurches.forEach((originalName, normName) => {
                 if (!submissionMap.has(normName)) {
-                    const isExcluded = excludeList.some(ex => normName.includes(ex));
+                    const isExcluded = excludeList.some(ex => normName === ex);
                     if (!isExcluded) {
                         pendingChurches.push(originalName);
                     }
@@ -486,6 +497,7 @@
         function renderReport() {
             const selectedComp = document.getElementById('competenceSelect').value;
             const selectedIgreja = document.getElementById('churchSelect').value;
+            const selectedIgrejaNorm = selectedIgreja ? normalizeChurchKey(selectedIgreja) : '';
             const grid = document.getElementById('churchGrid');
             const isAll = selectedComp === 'TODOS';
             let listItems = [];
@@ -496,7 +508,7 @@
             if (isAll) {
                 // Mostra todos os lançamentos de rawData (um card por período × igreja)
                 rawData.forEach(d => {
-                    if (selectedIgreja && d.nomeOriginal !== selectedIgreja) return;
+                    if (selectedIgrejaNorm && d.normNome !== selectedIgrejaNorm) return;
                     countEntregue++;
                     totalGeralSoma += getNumericValue(d.total);
                     if (!showOnlyPending) {
@@ -514,7 +526,7 @@
                     const submissionMap = new Map();
                     rawData.filter(d => d.competencia === comp).forEach(s => submissionMap.set(s.normNome, s));
                     masterChurches.forEach((originalName, normName) => {
-                        if (selectedIgreja && originalName !== selectedIgreja) return;
+                        if (selectedIgrejaNorm && normName !== selectedIgrejaNorm) return;
                         if (!submissionMap.has(normName)) {
                             countPendente++;
                             listItems.push({
@@ -532,7 +544,7 @@
                 const sortedMaster = Array.from(masterChurches.entries());
 
                 sortedMaster.forEach(([normName, originalName]) => {
-                    if (selectedIgreja && originalName !== selectedIgreja) return;
+                    if (selectedIgrejaNorm && normName !== selectedIgrejaNorm) return;
                     const sub = submissionMap.get(normName);
                     if (!!sub) {
                         countEntregue++;
