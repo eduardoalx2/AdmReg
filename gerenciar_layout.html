@@ -121,6 +121,25 @@
                         <option value="coordenador">Coordenador</option>
                         <option value="obreiro">Obreiro</option>
                         <option value="membro">Membro</option>
+                        <optgroup label="Permissões específicas (legado)">
+                            <option value="pastores">pastores</option>
+                            <option value="igrejas">igrejas</option>
+                            <option value="coordenadorias">coordenadorias</option>
+                            <option value="saldo_virada">saldo_virada</option>
+                            <option value="gerenciar_saldos">gerenciar_saldos</option>
+                            <option value="recibos">recibos</option>
+                            <option value="gerenciar_recibos">gerenciar_recibos</option>
+                            <option value="dash_recibos">dash_recibos</option>
+                            <option value="dash_saldos">dash_saldos</option>
+                            <option value="agenda">agenda</option>
+                            <option value="gestao_eventos">gestao_eventos</option>
+                            <option value="presenca">presenca</option>
+                            <option value="controle_presencas">controle_presencas</option>
+                            <option value="debitos_manuais">debitos_manuais</option>
+                            <option value="relatorio_pendencias">relatorio_pendencias</option>
+                            <option value="pendencias">pendencias</option>
+                            <option value="sorteio">sorteio</option>
+                        </optgroup>
                     </select>
                 </div>
 
@@ -142,45 +161,49 @@
                 id: 'g-master', nome: 'Segurança & Acessos', ordem: 0,
                 itens: [
                     { id: 'i-usuarios', tipo: 'sistema', titulo: 'Gestão de Usuários', obs: 'Controle de níveis e permissões', url: 'gestao_usuarios.html', icone: '🔐', perm: 'admin', visivel: true, ordem: 0 },
-                    { id: 'i-layout', tipo: 'sistema', titulo: 'Gerenciar Layout', obs: 'Organizar grupos e links do painel', url: 'gerenciar_layout.html', icone: '🎛️', perm: 'admin', visivel: true, ordem: 1 }
+                    { id: 'i-layout', tipo: 'sistema', titulo: 'Gerenciar Layout', obs: 'Organizar grupos e links do painel', url: 'gerenciar_layout.html', icone: '🎛️', perm: 'admin', visivel: true, ordem: 1 },
+                    { id: 'i-configpast', tipo: 'sistema', titulo: 'Config. Pastores', obs: 'Avisos e configurações do painel', url: 'editpagpastores.html', icone: '📢', perm: 'admin', visivel: true, ordem: 2 },
+                    { id: 'i-viewpastor', tipo: 'interno', titulo: 'Ver Painel do Pastor', obs: 'Visualizar a tela do pastor', url: '#', icone: '👀', perm: 'admin', visivel: true, ordem: 3 }
                 ]
             },
             {
                 id: 'g-cadastros', nome: 'Cadastros', ordem: 1,
                 itens: [
-                    { id: 'i-pastores', tipo: 'sistema', titulo: 'Pastores', obs: 'Obreiros, Aspirantes e Ministros', url: 's_pastores.html', icone: '👨‍💼', perm: 'pastores', visivel: true, ordem: 0 },
-                    { id: 'i-igrejas', tipo: 'sistema', titulo: 'Igrejas', obs: 'Unidades Locais e vinculação de Pastores', url: 's_igrejas.html', icone: '⛪', perm: 'admin', visivel: true, ordem: 1 },
+                    { id: 'i-pastores', tipo: 'sistema', titulo: 'Pastores', obs: 'Obreiros, Aspirantes e Ministros', url: 's_pastores.html', icone: '👨‍💼', perm: 'superintendente', visivel: true, ordem: 0 },
+                    { id: 'i-igrejas', tipo: 'sistema', titulo: 'Igrejas', obs: 'Unidades Locais e vinculação de Pastores', url: 's_igrejas.html', icone: '⛪', perm: 'superintendente', visivel: true, ordem: 1 },
                     { id: 'i-coord', tipo: 'sistema', titulo: 'Coordenadorias', obs: 'Coordenadores e departamentos regionais', url: 'coordenadorias.html', icone: '🏛️', perm: 'admin', visivel: true, ordem: 2 }
                 ]
             },
             {
                 id: 'g-financeiro', nome: 'Financeiro', ordem: 2,
                 itens: [
-                    { id: 'i-saldo', tipo: 'sistema', titulo: 'Saldo de Virada', obs: 'Lançador financeiro de virada de mês', url: 'saldodeviradareg655.html', icone: '💰', perm: 'admin', visivel: true, ordem: 0 },
+                    { id: 'i-saldo', tipo: 'sistema', titulo: 'Saldo de Virada', obs: 'Lançador financeiro de virada de mês', url: 'saldodeviradareg655.html', icone: '💰', perm: 'pastor_titular', visivel: true, ordem: 0 },
                     { id: 'i-gersaldos', tipo: 'sistema', titulo: 'Gerenciar Saldos', obs: 'Edição e exclusão de lançamentos', url: 'gerenciar_saldos.html', icone: '⚙️', perm: 'admin', visivel: true, ordem: 1 },
-                    { id: 'i-recibos', tipo: 'sistema', titulo: 'Recibos', obs: 'Emissor de recibos e controle financeiro', url: 'recibosreg655.html', icone: '🧾', perm: 'admin', visivel: true, ordem: 2 },
+                    { id: 'i-recibos', tipo: 'sistema', titulo: 'Recibos', obs: 'Emissor de recibos e controle financeiro', url: 'recibosreg655.html', icone: '🧾', perm: 'superintendente', visivel: true, ordem: 2 },
                     { id: 'i-gerrecibos', tipo: 'sistema', titulo: 'Gerenciar Recibos', obs: 'Edição e visualização de recibos', url: 'editarrecibos.html', icone: '📝', perm: 'admin', visivel: true, ordem: 3 }
                 ]
             },
             {
                 id: 'g-dash', nome: 'Dashboards', ordem: 3,
                 itens: [
-                    { id: 'i-dashrecibos', tipo: 'sistema', titulo: 'Dash Recibos', obs: 'Dashboard analítico de arrecadações', url: 'dashreg655.html', icone: '📊', perm: 'admin', visivel: true, ordem: 0 },
-                    { id: 'i-dashsaldos', tipo: 'sistema', titulo: 'Dash Saldos', obs: 'Dashboard financeiro consolidado', url: 'dashsaldo.html', icone: '📈', perm: 'admin', visivel: true, ordem: 1 }
+                    { id: 'i-dashrecibos', tipo: 'sistema', titulo: 'Dash Recibos', obs: 'Dashboard analítico de arrecadações', url: 'dashreg655.html', icone: '📊', perm: 'superintendente', visivel: true, ordem: 0 },
+                    { id: 'i-dashsaldos', tipo: 'sistema', titulo: 'Dash Saldos', obs: 'Dashboard financeiro consolidado', url: 'dashsaldo.html', icone: '📈', perm: 'superintendente', visivel: true, ordem: 1 }
                 ]
             },
             {
                 id: 'g-regional', nome: 'Regional', ordem: 4,
                 itens: [
-                    { id: 'i-agenda', tipo: 'sistema', titulo: 'Agenda Regional', obs: 'Cronograma de eventos CED e CND', url: 'agendareg655.html', icone: '📅', perm: 'agenda', visivel: true, ordem: 0 }
+                    { id: 'i-agenda', tipo: 'sistema', titulo: 'Agenda Regional', obs: 'Cronograma de eventos CED e CND', url: 'agendareg655.html', icone: '📅', perm: 'superintendente', visivel: true, ordem: 0 },
+                    { id: 'i-pendencias', tipo: 'sistema', titulo: 'Pendências', obs: 'Igrejas com taxas em aberto', url: 'pendenciasreg655.html', icone: '⚠️', perm: 'secretario', visivel: true, ordem: 1 },
+                    { id: 'i-relpend', tipo: 'sistema', titulo: 'Rel. Pendências', obs: 'Relatório detalhado de pendências', url: 'relatorio_pendencias.html', icone: '📋', perm: 'secretario', visivel: true, ordem: 2 }
                 ]
             },
             {
                 id: 'g-eventos', nome: 'Eventos & Presença', ordem: 5,
                 itens: [
-                    { id: 'i-gestaoev', tipo: 'sistema', titulo: 'Gestão de Eventos', obs: 'Criar e gerenciar eventos ativos', url: 'eventosreg655.html', icone: '⚙️', perm: 'admin', visivel: true, ordem: 0 },
-                    { id: 'i-presenca', tipo: 'sistema', titulo: 'Lançar Presença', obs: 'Registro individual nas convocações', url: 'presencareg655.html', icone: '✅', perm: 'admin', visivel: true, ordem: 1 },
-                    { id: 'i-controle', tipo: 'sistema', titulo: 'Controle de Presenças', obs: 'Painel de acompanhamento e faltas', url: 'controleeventosreg655.html', icone: '📋', perm: 'admin', visivel: true, ordem: 2 }
+                    { id: 'i-gestaoev', tipo: 'sistema', titulo: 'Gestão de Eventos', obs: 'Criar e gerenciar eventos ativos', url: 'eventosreg655.html', icone: '⚙️', perm: 'superintendente', visivel: true, ordem: 0 },
+                    { id: 'i-presenca', tipo: 'sistema', titulo: 'Lançar Presença', obs: 'Registro individual nas convocações', url: 'presencareg655.html', icone: '✅', perm: 'superintendente', visivel: true, ordem: 1 },
+                    { id: 'i-controle', tipo: 'sistema', titulo: 'Controle de Presenças', obs: 'Painel de acompanhamento e faltas', url: 'controleeventosreg655.html', icone: '📋', perm: 'superintendente', visivel: true, ordem: 2 }
                 ]
             }
         ];
