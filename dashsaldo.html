@@ -41,6 +41,11 @@
             color: #991b1b;
         }
 
+        .status-badge-waiting {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
         .btn-toggle {
             transition: all 0.2s;
         }
@@ -129,7 +134,7 @@
         </div>
 
         <!-- Summary Stats Cards -->
-        <div id="statsContainer" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <div id="statsContainer" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
             <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total Unidades</p>
                 <span id="statTotalIgrejas" class="text-xl font-extrabold text-slate-900">-</span>
@@ -137,6 +142,10 @@
             <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm border-b-2 border-b-emerald-500">
                 <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Entregues</p>
                 <span id="statEntregues" class="text-xl font-extrabold text-slate-900">-</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm border-b-2 border-b-blue-500">
+                <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-0.5">Aguardando</p>
+                <span id="statAguardando" class="text-xl font-extrabold text-slate-900">-</span>
             </div>
             <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm border-b-2 border-b-rose-500">
                 <p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-0.5">Pendentes</p>
@@ -229,6 +238,17 @@
                 ? new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)
                 : new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1);
             return `${limite.getFullYear()}-${String(limite.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        function getMesEmPrazo() {
+            const hoje = new Date();
+            const prazo = quintoUtilDoMes(hoje.getFullYear(), hoje.getMonth());
+            if (hoje <= prazo) {
+                const mes = hoje.getMonth() === 0 ? 11 : hoje.getMonth() - 1;
+                const ano = hoje.getMonth() === 0 ? hoje.getFullYear() - 1 : hoje.getFullYear();
+                return `${ano}-${String(mes + 1).padStart(2, '0')}`;
+            }
+            return null;
         }
 
         // Retorna periodoChave (AAAA-MM) do documento; normaliza MM/AAAA antigo
@@ -408,6 +428,10 @@
 
         function generateCardHtml(churchName, comp, status, dataEnvio, cc, din, total, extraData) {
             const isDelivered = status === 'Entregue';
+            const isWaiting = status === 'Aguardando';
+            const barColor = isDelivered ? 'bg-emerald-500' : (isWaiting ? 'bg-blue-500' : 'bg-rose-500');
+            const badgeClass = isDelivered ? 'status-badge-delivered' : (isWaiting ? 'status-badge-waiting' : 'status-badge-pending');
+            const badgeLabel = isDelivered ? 'OK' : (isWaiting ? 'Aguardando' : 'Pendente');
             const compDisplay = (comp && /^\d{4}-\d{2}$/.test(comp)) ? chaveParaLabel(comp) : comp;
             
             let fullReportHtml = '';
@@ -454,15 +478,15 @@
 
             return `
                 <div class="church-card bg-white rounded-xl border border-slate-200 p-4 shadow-sm relative overflow-hidden flex flex-col h-full">
-                    <div class="absolute top-0 left-0 w-1 h-full ${isDelivered ? 'bg-emerald-500' : 'bg-rose-500'}"></div>
+                    <div class="absolute top-0 left-0 w-1 h-full ${barColor}"></div>
                     
                     <div class="flex justify-between items-start mb-3">
                         <div class="overflow-hidden">
                             <h3 class="font-bold text-slate-900 text-sm leading-tight truncate pr-1" title="${churchName}">${churchName}</h3>
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${compDisplay}</span>
                         </div>
-                        <span class="px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider whitespace-nowrap ${isDelivered ? 'status-badge-delivered' : 'status-badge-pending'}">
-                            ${status === 'Entregue' ? 'OK' : 'Pendente'}
+                        <span class="px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider whitespace-nowrap ${badgeClass}">
+                            ${badgeLabel}
                         </span>
                     </div>
 
@@ -498,11 +522,13 @@
             const selectedComp = document.getElementById('competenceSelect').value;
             const selectedIgreja = document.getElementById('churchSelect').value;
             const selectedIgrejaNorm = selectedIgreja ? normalizeChurchKey(selectedIgreja) : '';
+            const mesEmPrazo = getMesEmPrazo();
             const grid = document.getElementById('churchGrid');
             const isAll = selectedComp === 'TODOS';
             let listItems = [];
             let countEntregue = 0;
             let countPendente = 0;
+            let countAguardando = 0;
             let totalGeralSoma = 0;
 
             if (isAll) {
@@ -528,10 +554,12 @@
                     masterChurches.forEach((originalName, normName) => {
                         if (selectedIgrejaNorm && normName !== selectedIgrejaNorm) return;
                         if (!submissionMap.has(normName)) {
-                            countPendente++;
+                            const noPrazo = mesEmPrazo && comp === mesEmPrazo;
+                            const status = noPrazo ? 'Aguardando' : 'Pendente';
+                            if (noPrazo) countAguardando++; else countPendente++;
                             listItems.push({
-                                html: generateCardHtml(originalName, comp, 'Pendente', '--', 0, 0, 0, {}),
-                                status: 'Pendente',
+                                html: generateCardHtml(originalName, comp, status, '--', 0, 0, 0, {}),
+                                status: status,
                                 nome: originalName
                             });
                         }
@@ -557,10 +585,12 @@
                             });
                         }
                     } else {
-                        countPendente++;
+                        const noPrazo = mesEmPrazo && selectedComp === mesEmPrazo;
+                        const status = noPrazo ? 'Aguardando' : 'Pendente';
+                        if (noPrazo) countAguardando++; else countPendente++;
                         listItems.push({
-                            html: generateCardHtml(originalName, selectedComp, 'Pendente', '--', 0, 0, 0, {}),
-                            status: 'Pendente',
+                            html: generateCardHtml(originalName, selectedComp, status, '--', 0, 0, 0, {}),
+                            status: status,
                             nome: originalName
                         });
                     }
@@ -569,7 +599,8 @@
 
             listItems.sort((a, b) => {
                 if (a.status === b.status) return a.nome.localeCompare(b.nome);
-                return a.status === 'Entregue' ? -1 : 1;
+                const ordem = { 'Entregue': 0, 'Aguardando': 1, 'Pendente': 2 };
+                return (ordem[a.status] || 1) - (ordem[b.status] || 1);
             });
 
             grid.innerHTML = listItems.map(item => item.html).join('') || `
@@ -580,6 +611,7 @@
 
             document.getElementById('statTotalIgrejas').innerText = masterChurches.size;
             document.getElementById('statEntregues').innerText = countEntregue;
+            document.getElementById('statAguardando').innerText = countAguardando;
             document.getElementById('statPendentes').innerText = countPendente;
             document.getElementById('statSomaTotal').innerText = totalGeralSoma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             
