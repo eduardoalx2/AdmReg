@@ -149,16 +149,16 @@
 
         <!-- Modal de Cadastro/Edição -->
         <div id="modal-pastor" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-                <div class="bg-slate-800 px-5 py-4 flex justify-between items-center">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[95vh] overflow-hidden">
+                <div class="bg-slate-800 px-5 py-4 flex justify-between items-center shrink-0">
                     <h2 id="modal-titulo" class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
                         <i data-lucide="user-plus" class="w-4 h-4"></i> Novo Pastor
                     </h2>
-                    <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <button type="button" onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <form id="form-pastor" class="p-6 space-y-4">
+                <form id="form-pastor" class="p-6 space-y-4 overflow-y-auto">
                     <input type="hidden" id="pastor-id">
                     
                     <!-- Apenas Nome Obrigatório -->
