@@ -1,7 +1,7 @@
 # 📋 Plano de Melhorias — Portal Região 655
 
 > **Última atualização:** 01/05/2026
-> **Status:** Fase 4 concluída — Fase 5 pronta para iniciar
+> **Status:** Fase 5 em andamento
 
 ---
 
@@ -141,13 +141,17 @@ Prioridade baixa (dashboards/ferramentas):
 - [ ] Lazy loading de módulos JS (adiado para Fase 5)
 - [ ] Otimizar imagens para WebP com dimensões definidas (adiado para Fase 5)
 
-### 🔵 Fase 5 — Modernização (PRÓXIMA)
-- [ ] Lazy loading de módulos JS (dinâmico via import())
-- [ ] Otimizar imagens para WebP com dimensões definidas
+### 🔵 Fase 5 — Modernização (EM ANDAMENTO)
+- [x] Converter imagens para WebP — logo.webp (16KB, -88%), mini.webp (73KB, -74%), assinatura.webp (26KB, -65%)
+- [x] Atualizar index.html e login.html com `<picture>` (WebP + fallback PNG)
+- [x] Adicionar `loading="lazy"` e `width`/`height` nas imagens do index.html e login.html
+- [x] Service Worker — cache v2 com WebP, manifest.json com ícones WebP
+- [ ] Lazy loading em todas as páginas (loading="lazy" em ~50 img tags)
+- [x] Criar `.github/workflows/deploy.yml` para CI/CD
+- [ ] Configurar Firebase CI token: `firebase login:ci` e adicionar secrets.FIREBASE_TOKEN no GitHub
 - [ ] Avaliar migração para framework (React/Vue/Vite)
 - [ ] Migrar gradualmente para TypeScript
 - [ ] Adicionar testes E2E (Playwright)
-- [ ] Implementar CI/CD com GitHub Actions
 
 ---
 
