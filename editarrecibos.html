@@ -370,7 +370,7 @@
                             </div>
                         </div>
                     </div>
-                    <div style="margin-top:24px;display:flex;justify-content:flex-end;">
+                    <div style="margin-top:88px;display:flex;justify-content:flex-end;">
                         <div style="text-align:center;min-width:280px;position:relative;">
                             <div
                                 style="position:absolute;top:-64px;left:0;right:0;display:flex;justify-content:center;">
@@ -629,17 +629,21 @@
             overlay.scrollTop = 0;
             preencherDadosPdf(r);
             await new Promise(resolve => setTimeout(resolve, 400));
+            receiptEl.style.height = '1123px';
+            receiptEl.style.overflow = 'hidden';
             const opt = {
-                margin: 0,
+                margin: [4, 4, 4, 4],
                 filename: getNomeArquivoPdf(r),
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
+                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false, width: 794, height: 1123 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
             try {
                 await html2pdf().set(opt).from(receiptEl).save();
             } finally {
+                receiptEl.style.height = '';
+                receiptEl.style.overflow = '';
                 overlay.style.display = 'none';
             }
         };
@@ -804,18 +808,22 @@
             overlay.scrollTop = 0;
             preencherDadosPdf(r);
             await new Promise(resolve => setTimeout(resolve, 400));
+            receiptEl.style.height = '1123px';
+            receiptEl.style.overflow = 'hidden';
             const nomeArquivo = getNomeArquivoPdf(r);
 
             try {
                 const shareOpt = {
-                    margin: 0,
+                    margin: [4, 4, 4, 4],
                     filename: nomeArquivo,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
+                    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false, width: 794, height: 1123 },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                     pagebreak: { mode: 'avoid-all' }
                 };
                 const pdfBlob = await html2pdf().set(shareOpt).from(receiptEl).output('blob');
+                receiptEl.style.height = '';
+                receiptEl.style.overflow = '';
                 overlay.style.display = 'none';
                 const pdfFile = new File([pdfBlob], nomeArquivo, { type: 'application/pdf' });
 
@@ -828,6 +836,8 @@
                     return;
                 }
             } catch (err) {
+                receiptEl.style.height = '';
+                receiptEl.style.overflow = '';
                 overlay.style.display = 'none';
                 if (err.name === 'AbortError') return;
             } finally {
