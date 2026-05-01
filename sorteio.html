@@ -225,13 +225,15 @@
                     const nome = d.nome || '';
                     const endereco = d.endereco || '';
                     if (nome) {
+                        const isRegiao = cod === '655' || nome.toUpperCase().includes('REGIÃO');
                         loaded.push({
                             id: doc.id,
                             code: cod,
                             name: nome,
                             fullName: cod ? `${cod} - ${nome}` : nome,
                             address: endereco,
-                            active: true,
+                            active: !isRegiao,
+                            locked: isRegiao,
                             color: `hsl(${(loaded.length * 360) / Math.max(loaded.length + 1, 1)}, 65%, 50%)`
                         });
                     }
@@ -296,9 +298,11 @@
         function renderList() {
             churchListEl.innerHTML = '';
             churches.forEach(church => {
+                const locked = church.locked;
+                const clickable = !locked && !isSpinning;
                 const div = document.createElement('div');
-                div.className = `church-card flex items-center justify-between p-2.5 rounded-xl border-2 cursor-pointer ${church.active ? 'active' : 'inactive'}`;
-                div.onclick = () => toggleChurch(church.id);
+                div.className = `church-card flex items-center justify-between p-2.5 rounded-xl border-2 ${clickable ? 'cursor-pointer' : 'cursor-not-allowed'} ${church.active ? 'active' : 'inactive'} ${locked ? 'opacity-60' : ''}`;
+                if (clickable) div.onclick = () => toggleChurch(church.id);
                 
                 div.innerHTML = `
                     <div class="flex items-center gap-3 overflow-hidden min-w-0">
@@ -308,9 +312,10 @@
                             ${church.address ? `<span class="text-[9px] text-slate-400 truncate block">${escHtml(church.address)}</span>` : ''}
                         </div>
                     </div>
+                    ${locked ? '<span class="text-[8px] font-bold text-slate-400 uppercase tracking-wider flex-shrink-0 ml-2">Fixo</span>' : `
                     <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ml-2 ${church.active ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 bg-white'}">
                         ${church.active ? '<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
-                    </div>
+                    </div>`}
                 `;
                 churchListEl.appendChild(div);
             });
@@ -324,7 +329,8 @@
         window.toggleChurch = function(id) {
             if (isSpinning) return;
             const church = churches.find(c => c.id === id);
-            if (church) church.active = !church.active;
+            if (!church || church.locked) return;
+            church.active = !church.active;
             renderList();
             drawWheel();
             updateCount();
@@ -332,7 +338,7 @@
 
         window.toggleAll = function(status) {
             if (isSpinning) return;
-            churches.forEach(c => c.active = status);
+            churches.forEach(c => { if (!c.locked) c.active = status; });
             renderList();
             drawWheel();
             updateCount();
