@@ -611,7 +611,7 @@
             const customFileName = `${safeChurch} - REC REG REF(${safeDate}).pdf`;
 
             const opt = { 
-                margin: 0, 
+                margin: [10, 10, 10, 10], 
                 filename: customFileName, 
                 image: { type: 'jpeg', quality: 0.98 }, 
                 html2canvas: { 
@@ -619,7 +619,8 @@
                     useCORS: true, 
                     allowTaint: true,
                     scrollY: 0,
-                    scrollX: 0
+                    scrollX: 0,
+                    windowWidth: 794
                 }, 
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }

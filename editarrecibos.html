@@ -302,7 +302,7 @@
         <!-- Container Oculto para Geração de PDF -->
         <div style="position:absolute;left:-9999px;top:0;z-index:-9999;">
             <div id="receipt-content"
-                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:21cm;height:29cm;overflow:hidden;display:flex;flex-direction:column;color:#1f2937;">
+                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:21cm;height:29cm;overflow:hidden;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;">
                 <div
                     style="border:2px solid #1f2937;padding:24px;height:100%;display:flex;flex-direction:column;position:relative;">
                     <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
@@ -604,7 +604,7 @@
 
         function getPdfOpt(filename) {
             return {
-                margin: 0,
+                margin: [10, 10, 10, 10],
                 filename,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, allowTaint: true, scrollY: 0, scrollX: 0, windowWidth: 794 },
