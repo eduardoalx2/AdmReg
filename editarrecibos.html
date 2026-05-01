@@ -300,9 +300,9 @@
         </div>
 
         <!-- Overlay para Geração de PDF (visível temporariamente durante captura) -->
-        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:white;display:none;overflow:auto;">
+        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:white;display:none;overflow:visible;padding:0;margin:0;">
             <div id="receipt-content"
-                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;min-height:1122px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0 auto;">
+                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0 auto;">
                 <div
                     style="border:2px solid #1f2937;padding:24px;display:flex;flex-direction:column;position:relative;">
                     <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
@@ -619,28 +619,46 @@
             return `${safeChurch} - REC REG REF(${safeDate}).pdf`;
         }
 
-        // Função que aciona a geração do PDF baseada num Recibo Específico
-        window.gerarPdfRecibo = async (id) => {
-            const r = recibosList.find(i => i.id === id);
-            if (!r) return;
-            const overlay = document.getElementById('pdf-overlay');
+        function clonarReceiptNoTopo() {
             const receiptEl = document.getElementById('receipt-content');
-            overlay.style.display = 'block';
-            overlay.scrollTop = 0;
-            preencherDadosPdf(r);
-            await new Promise(resolve => setTimeout(resolve, 400));
-            const opt = {
+            const clone = receiptEl.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.style.cssText = [
+                'position:absolute', 'top:0', 'left:0', 'z-index:2147483647',
+                'width:794px', 'min-height:1122px', 'background:white',
+                'font-family:Inter,sans-serif', 'padding:24px',
+                'display:flex', 'flex-direction:column',
+                'color:#1f2937', 'box-sizing:border-box', 'margin:0'
+            ].join(';');
+            document.body.insertBefore(clone, document.body.firstChild);
+            return clone;
+        }
+
+        function getPdfOptFinal(filename) {
+            return {
                 margin: 0,
-                filename: getNomeArquivoPdf(r),
+                filename,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false, scrollY: 0, scrollX: 0 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
+        }
+
+        // Função que aciona a geração do PDF baseada num Recibo Específico
+        window.gerarPdfRecibo = async (id) => {
+            const r = recibosList.find(i => i.id === id);
+            if (!r) return;
+            preencherDadosPdf(r);
+            const clone = clonarReceiptNoTopo();
+            const savedScroll = window.scrollY;
+            window.scrollTo(0, 0);
+            await new Promise(resolve => setTimeout(resolve, 400));
             try {
-                await html2pdf().set(opt).from(receiptEl).save();
+                await html2pdf().set(getPdfOptFinal(getNomeArquivoPdf(r))).from(clone).save();
             } finally {
-                overlay.style.display = 'none';
+                clone.remove();
+                window.scrollTo(0, savedScroll);
             }
         };
 
@@ -798,25 +816,17 @@
             const btn = document.querySelector(`button[onclick="enviarWhatsapp('${id}')"]`);
             if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
 
-            const overlay = document.getElementById('pdf-overlay');
-            const receiptEl = document.getElementById('receipt-content');
-            overlay.style.display = 'block';
-            overlay.scrollTop = 0;
             preencherDadosPdf(r);
+            const clone = clonarReceiptNoTopo();
+            const savedScroll = window.scrollY;
+            window.scrollTo(0, 0);
             await new Promise(resolve => setTimeout(resolve, 400));
             const nomeArquivo = getNomeArquivoPdf(r);
 
             try {
-                const shareOpt = {
-                    margin: 0,
-                    filename: nomeArquivo,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false, scrollY: 0, scrollX: 0 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: 'avoid-all' }
-                };
-                const pdfBlob = await html2pdf().set(shareOpt).from(receiptEl).output('blob');
-                overlay.style.display = 'none';
+                const pdfBlob = await html2pdf().set(getPdfOptFinal(nomeArquivo)).from(clone).output('blob');
+                clone.remove();
+                window.scrollTo(0, savedScroll);
                 const pdfFile = new File([pdfBlob], nomeArquivo, { type: 'application/pdf' });
 
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
@@ -828,7 +838,8 @@
                     return;
                 }
             } catch (err) {
-                overlay.style.display = 'none';
+                clone.remove();
+                window.scrollTo(0, savedScroll);
                 if (err.name === 'AbortError') return;
             } finally {
                 if (btn) { btn.disabled = false; btn.style.opacity = ''; }
