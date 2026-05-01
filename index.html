@@ -597,8 +597,8 @@
                 const qtdSeg  = igrejaObj?.seguros||0;
                 const total   = (taxadas*0.04)+100+(qtdSeg*segVal);
                 statusHtml = `<div style="width:56px;height:56px;border-radius:50%;background:rgba(59,130,246,0.15);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:28px;">⏳</div>
-                    <p style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;color:#60a5fa;margin-bottom:6px;">Aguardando Escritório</p>
-                    <p style="font-size:11px;color:var(--text-muted);">Saldo enviado. Recibo em emissão.</p>
+                    <p style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;color:#60a5fa;margin-bottom:6px;">Aguardando pagamento</p>
+                    <p style="font-size:11px;color:var(--text-muted);">Saldo enviado, aguardando pagamento da taxa até o quinto dia útil.</p>
                     <div style="margin-top:14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:left;">
                         <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;"><span style="color:var(--text-muted);">Taxas + Coord.</span><span style="color:var(--text-secondary);font-weight:600;">${fmt((taxadas*0.04)+100)}</span></div>
                         <div style="display:flex;justify-content:space-between;font-size:10px;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:8px;"><span style="color:var(--text-muted);">Seguro (${qtdSeg} vidas)</span><span style="color:var(--text-secondary);font-weight:600;">${fmt(qtdSeg*segVal)}</span></div>
@@ -636,20 +636,32 @@
             if (debitos.length > 0) {
                 const totalC = debitos.filter(d=>d.est!==null).reduce((s,d)=>s+d.est,0);
                 const temDesc = debitos.some(d=>d.est===null);
+                const todosNoPrazo = debitos.length === 1 && debitos[0].mes === strMesRef && !atrasado;
+                const corDebHeader = todosNoPrazo ? '#60a5fa' : '#f87171';
+                const iconeHeader = todosNoPrazo ? '⏳' : '🔴';
+                const tituloHeader = todosNoPrazo ? 'Aguardando pagamento' : 'Débitos em Aberto';
                 debitosHtml = `
                 <div class="p-debito-wrap" style="margin-bottom:14px;">
                     <div class="p-debito-hdr">
-                        <span style="font-size:16px;">🔴</span>
-                        <span style="font-family:'Sora',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#f87171;">Débitos em Aberto</span>
+                        <span style="font-size:16px;">${iconeHeader}</span>
+                        <span style="font-family:'Sora',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:${corDebHeader};">${tituloHeader}</span>
                     </div>
-                    ${debitos.map(d=>`
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(239,68,68,0.08);">
-                        <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">Ref. ${d.mes}</span>
-                        <span style="font-size:12px;font-weight:700;${d.est!==null?'color:#f87171;':'color:var(--text-muted);font-style:italic;'}">${d.est!==null?fmt(d.est):'sem saldo'}</span>
-                    </div>`).join('')}
+                    ${debitos.map(d=>{
+                        const noPrazo = d.mes === strMesRef && !atrasado;
+                        const corValor = d.est!==null ? (noPrazo ? '#60a5fa' : '#f87171') : 'var(--text-muted)';
+                        const borderColor = noPrazo ? 'rgba(59,130,246,0.08)' : 'rgba(239,68,68,0.08)';
+                        const label = noPrazo ? '<span style="font-size:10px;color:#60a5fa;">Pagamento até o 5º dia útil</span>' : '';
+                        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid ${borderColor};">
+                            <div style="display:flex;flex-direction:column;">
+                                <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">Ref. ${d.mes}</span>
+                                ${label}
+                            </div>
+                            <span style="font-size:12px;font-weight:700;color:${corValor};${d.est===null?'font-style:italic;':''}">${d.est!==null?fmt(d.est):'sem saldo'}</span>
+                        </div>`;
+                    }).join('')}
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
-                        <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:#f87171;">Total estimado</span>
-                        <span style="font-size:15px;font-weight:900;color:#f87171;">${fmt(totalC)}${temDesc?'*':''}</span>
+                        <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:${corDebHeader};">Total estimado</span>
+                        <span style="font-size:15px;font-weight:900;color:${corDebHeader};">${fmt(totalC)}${temDesc?'*':''}</span>
                     </div>
                     ${temDesc?`<p style="font-size:10px;color:var(--text-muted);font-style:italic;padding:0 16px 12px;">* Meses sem saldo não incluídos.</p>`:''}
                 </div>`;
