@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pauta Reunião Ministerial</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #000;
+            --accent-color: #d32f2f;
+            --bg-light: #f9f9f9;
+            --border-color: #333;
+            --whatsapp-color: #25D366;
+            --highlight-bg: #fff9e6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @media print {
+            body { background: white !important; padding: 0 !important; }
+            .container { box-shadow: none !important; max-width: 100% !important; padding: 10mm !important; margin: 0 !important; }
+            .no-print { display: none !important; }
+            [contenteditable="true"] { outline: none; background: transparent !important; border: 1px dashed #666 !important; }
+        }
+
+        @page { size: A4; margin: 10mm; }
+
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #e0e0e0; color: #1a1a1a; line-height: 1.4; font-size: 10pt; padding: 20px 0; }
+
+        .container { width: 210mm; min-height: 297mm; margin: 0 auto; background: white; padding: 15mm; box-shadow: 0 0 20px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
+
+        .pdf-block { background: white; width: 100%; margin-bottom: 10px; display: block; clear: both; }
+
+        .header { text-align: center; border-bottom: 3px solid var(--primary-color); padding-bottom: 15px; margin-bottom: 20px; }
+        .header-logo { width: 70px; height: auto; margin: 0 auto 10px; display: block; }
+        .header h1 { font-size: 18pt; text-transform: uppercase; letter-spacing: 1px; }
+        .header p { font-size: 10pt; font-weight: bold; color: #444; }
+
+        .section { margin-bottom: 20px; }
+        .section-title { font-size: 12pt; font-weight: bold; background: #eee; padding: 5px 10px; border-left: 5px solid var(--primary-color); margin-bottom: 10px; text-transform: uppercase; }
+
+        .item { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background: #fff; }
+        
+        .item-featured { border: 2px solid #ffc107; background: var(--highlight-bg); padding: 12px; margin-bottom: 15px; position: relative; }
+        .item-featured::after { content: "DESTAQUE"; position: absolute; top: -10px; right: 10px; background: #ffc107; color: #000; font-size: 7pt; padding: 2px 6px; font-weight: bold; border-radius: 3px; }
+
+        .highlight-box { border: 2px solid var(--primary-color); background: #fffdf0; padding: 15px; margin: 15px 0; position: relative; }
+        
+        .avante-box { border: 3px double #000; background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%); padding: 20px; text-align: center; margin: 20px 0; }
+        .avante-box h2 { font-size: 16pt; color: #d32f2f; margin-bottom: 5px; text-decoration: underline; }
+
+        .notes-area { border: 1px dashed #999; padding: 8px; margin-top: 8px; min-height: 50px; background: #fdfdfd; font-style: italic; font-size: 9pt; word-wrap: break-word; }
+        [contenteditable="true"]:focus { outline: 2px solid #007bff; background: #fff; }
+
+        .footer-regional { margin-top: 30px; padding-top: 10px; border-top: 2px solid #000; text-align: center; font-size: 9pt; }
+
+        .action-buttons { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
+        .btn { padding: 12px 20px; border-radius: 25px; border: none; background: #333; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 180px; transition: transform 0.2s; -webkit-tap-highlight-color: transparent; }
+        .btn:active { transform: scale(0.95); }
+        .btn-save { background: #28a745; }
+        .btn-whatsapp { background: var(--whatsapp-color); }
+
+        #status-msg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 5px; display: none; z-index: 2000; color: white; font-weight: bold; text-align: center; }
+
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; text-align: center; padding: 20px; }
+
+        @media screen and (max-width: 210mm) {
+            body { padding: 0; overflow-x: hidden; }
+            .container { width: 100vw; min-width: 100vw; padding: 15px; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="status-msg"></div>
+    <div class="loading-overlay" id="loading">
+        <h3 style="margin-bottom: 10px;" id="loading-title">Gerando PDF para WhatsApp...</h3>
+        <p id="loading-desc">Ajustando layout e otimizando tamanho.</p>
+    </div>
+
+    <div class="action-buttons no-print hidden" id="action-buttons">
+        <button class="btn btn-save" onclick="saveNotes()">💾 SALVAR ANOTAÇÕES</button>
+        <button class="btn btn-whatsapp" onclick="shareToWhatsApp()">📲 ENVIAR WHATSAPP</button>
+    </div>
+
+    <!-- MENSAGEM DE ERRO (oculta por padrão) -->
+    <div id="error-container" class="hidden text-center py-20" style="font-family: Arial;">
+        <h2 style="color: #d32f2f;">Pauta Não Encontrada</h2>
+        <p>A pauta solicitada não existe ou foi removida.</p>
+    </div>
+
+    <div class="container hidden" id="agenda-content">
+        <!-- HEADER -->
+        <div class="header pdf-block" id="block-header">
+            <img src="https://portalreg655.pages.dev/logo.png" alt="Logo Região 655" class="header-logo">
+            <h1 id="r-titulo">REUNIÃO MINISTERIAL</h1>
+            <p id="r-datalocal"></p>
+        </div>
+
+        <div id="dynamic-sections">
+            <!-- Renderizado via JS -->
+        </div>
+
+        <footer class="footer-regional pdf-block" id="block-footer">
+            <p><b>Escritório Regional | Região 655 - Londrina/PR</b></p>
+            <p>Superintendente: <b>Rev. Valdir Ávila Ramos</b> | Secretário: <b>Pr. Eduardo Silva</b></p>
+        </footer>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // Parâmetro de URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const pautaId = urlParams.get('id');
+
+        window.storageKey = `pauta_655_notes_${pautaId}`;
+
+        async function carregarPauta() {
+            if (!pautaId) {
+                mostrarErro();
+                return;
+            }
+
+            const l = document.getElementById('loading');
+            document.getElementById('loading-title').innerText = "Carregando Pauta...";
+            document.getElementById('loading-desc').innerText = "Aguarde um momento.";
+            l.style.display = 'flex';
+
+            try {
+                const snap = await getDoc(doc(db, 'pautas', pautaId));
+                if (!snap.exists()) {
+                    mostrarErro();
+                    return;
+                }
+                const data = snap.data();
+                renderizarPauta(data);
+                
+                document.getElementById('action-buttons').classList.remove('hidden');
+                document.getElementById('agenda-content').classList.remove('hidden');
+                
+                // Carregar notas locais depois de renderizar
+                setTimeout(loadNotes, 100);
+            } catch (e) {
+                console.error(e);
+                mostrarErro();
+            } finally {
+                l.style.display = 'none';
+                document.getElementById('loading-title').innerText = "Gerando PDF para WhatsApp...";
+                document.getElementById('loading-desc').innerText = "Ajustando layout e otimizando tamanho.";
+            }
+        }
+
+        function mostrarErro() {
+            document.getElementById('error-container').classList.remove('hidden');
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function renderizarPauta(d) {
+            document.title = "Pauta - " + (d.titulo || "Reunião");
+            document.getElementById('r-titulo').innerText = d.titulo || "REUNIÃO MINISTERIAL";
+            document.getElementById('r-datalocal').innerText = d.data_local || "";
+
+            const cont = document.getElementById('dynamic-sections');
+            cont.innerHTML = '';
+
+            if (d.secoes && Array.isArray(d.secoes)) {
+                d.secoes.forEach((sec, sIdx) => {
+                    const secDiv = document.createElement('div');
+                    secDiv.className = 'section pdf-block';
+                    
+                    if (sec.titulo) {
+                        secDiv.innerHTML += `<div class="section-title">${sec.titulo}</div>`;
+                    }
+
+                    if (sec.itens && Array.isArray(sec.itens)) {
+                        sec.itens.forEach((item, iIdx) => {
+                            let className = 'item';
+                            if (item.tipo === 'item-featured') className = 'item item-featured';
+                            if (item.tipo === 'highlight-box') className = 'highlight-box';
+                            if (item.tipo === 'avante-box') className = 'avante-box';
+
+                            let html = `<div class="${className}">${item.conteudo}`;
+                            if (item.notes) {
+                                html += `<div class="notes-area" contenteditable="true" id="note_${sIdx}_${iIdx}">Anotações...</div>`;
+                            }
+                            html += `</div>`;
+                            secDiv.innerHTML += html;
+                        });
+                    }
+                    cont.appendChild(secDiv);
+                });
+            }
+        }
+
+        carregarPauta();
+    </script>
+
+    <script>
+        // --- FUNÇÕES GLOBAIS DE MANIPULAÇÃO (Anotações e PDF) ---
+
+        function showStatus(msg, color) {
+            const s = document.getElementById("status-msg");
+            s.innerText = msg; s.style.background = color; s.style.display = "block";
+            setTimeout(() => s.style.display = "none", 3000);
+        }
+
+        window.saveNotes = function() {
+            if(!window.storageKey) return;
+            const notes = {};
+            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                notes[el.id] = el.innerHTML;
+            });
+            localStorage.setItem(window.storageKey, JSON.stringify(notes));
+            showStatus("Anotações salvas!", "#28a745");
+        };
+
+        window.loadNotes = function() {
+            if(!window.storageKey) return;
+            const saved = localStorage.getItem(window.storageKey);
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.keys(data).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = data[id];
+                });
+            }
+        };
+
+        // --- GERADOR DE PDF ---
+        async function createSmartPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 10;
+            let currentY = margin;
+            const container = document.getElementById('agenda-content');
+            const blocks = document.querySelectorAll('.pdf-block');
+
+            const originalWidth = container.style.width;
+            const originalMinWidth = container.style.minWidth;
+            container.style.width = "210mm";
+            container.style.minWidth = "210mm";
+
+            for (let i = 0; i < blocks.length; i++) {
+                const block = blocks[i];
+                const canvas = await html2canvas(block, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    width: block.offsetWidth,
+                    windowWidth: 794
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.8);
+                const imgWidth = pageWidth - (margin * 2);
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                if (currentY + imgHeight > pageHeight - margin) {
+                    pdf.addPage();
+                    currentY = margin;
+                }
+
+                pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, imgHeight);
+                currentY += imgHeight + 3;
+            }
+
+            container.style.width = originalWidth;
+            container.style.minWidth = originalMinWidth;
+            return pdf;
+        }
+
+        window.shareToWhatsApp = async function() {
+            if (!navigator.share) {
+                showStatus("Use um celular para enviar direto.", "#dc3545");
+                return;
+            }
+            const loading = document.getElementById('loading');
+            loading.style.display = 'flex';
+            try {
+                window.saveNotes();
+                const pdf = await createSmartPDF();
+                const blob = pdf.output('blob');
+                
+                const dataStr = document.getElementById('r-datalocal').innerText.split(' - ')[0] || "Pauta";
+                const pautaName = dataStr.replace(/[^a-zA-Z0-9]/g, '_');
+                
+                const file = new File([blob], `Pauta_${pautaName}.pdf`, { type: "application/pdf" });
+
+                await navigator.share({
+                    files: [file],
+                    title: 'Pauta Ministerial',
+                    text: `Pauta da Reunião Ministerial - ${dataStr}.`
+                });
+            } catch (e) {
+                if(e.name !== "AbortError") showStatus("Erro ao enviar PDF.", "#dc3545");
+            } finally {
+                loading.style.display = 'none';
+            }
+        };
+
+        // Auto-save a cada 1 minuto
+        setInterval(() => {
+            if(window.storageKey && document.getElementById('agenda-content').classList.contains('hidden') === false) {
+                window.saveNotes();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>
