@@ -321,9 +321,14 @@
                     await addDoc(collection(db, "coordenadorias"), payload);
                 }
 
-                // Marca novo coordenador
+                // Marca novo coordenador E sincroniza dados
                 if (coordenadorId) {
-                    await updateDoc(doc(db, "pastores", coordenadorId), { coordenador: true });
+                    await updateDoc(doc(db, "pastores", coordenadorId), { 
+                        coordenador: true,
+                        telefone: payload.whatsapp,
+                        email: payload.email,
+                        updatedAt: serverTimestamp()
+                    });
                 }
 
                 // Se trocou o coordenador, verifica se o antigo ainda coordena algo

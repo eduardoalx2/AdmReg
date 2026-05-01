@@ -267,7 +267,7 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         let pastoresList = [];
         let igrejasList = [];
@@ -492,6 +492,20 @@
 
                 if(id) {
                     await updateDoc(doc(db, "pastores", id), payload);
+                    
+                    // SINCRONIZAR COM COORDENADORIAS
+                    // Atualiza o nome, email e telefone nas coordenadorias caso este pastor seja coordenador
+                    const coordQuery = query(collection(db, "coordenadorias"), where("coordenadorId", "==", id));
+                    const coordSnap = await getDocs(coordQuery);
+                    coordSnap.forEach(async (coordDoc) => {
+                        await updateDoc(doc(db, "coordenadorias", coordDoc.id), {
+                            coordenadorNome: payload.nome,
+                            whatsapp: payload.telefone,
+                            email: payload.email,
+                            updatedAt: serverTimestamp()
+                        });
+                    });
+
                 } else {
                     payload.createdAt = serverTimestamp();
                     await addDoc(collection(db, "pastores"), payload);
