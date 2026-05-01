@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +13,7 @@
         try {
             await requireAuth();
             if (!isAdmin()) window.location.replace('index.html');
-        } catch (error) {}
+        } catch (error) { }
     </script>
     <style>
         body {
@@ -20,7 +21,7 @@
             background-color: #f1f5f9;
             color: #334155;
         }
-        
+
         .header-gradient {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
@@ -28,14 +29,14 @@
         .table-custom {
             font-size: 0.8rem;
         }
-        
+
         .table-custom th {
             padding: 8px 12px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.025em;
         }
-        
+
         .table-custom td {
             padding: 8px 12px;
             border-bottom: 1px solid #e2e8f0;
@@ -47,6 +48,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <!-- CABEÇALHO -->
@@ -54,13 +56,16 @@
         <div class="max-w-6xl mx-auto px-4 py-1.5">
             <div class="flex justify-between items-center">
                 <a href="index.html" class="flex items-center gap-2">
-                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain"
+                        onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
                     <div class="border-l border-gray-200 pl-2">
                         <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
-                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR
+                        </div>
                     </div>
                 </a>
-                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                <a href="index.html"
+                    class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
                     <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
                 </a>
             </div>
@@ -76,27 +81,32 @@
     </header>
 
     <main class="max-w-6xl mx-auto py-6 px-4">
-        
+
         <!-- Filtro e Busca -->
         <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar por Igreja</label>
-                    <input type="text" id="filtro-igreja" oninput="aplicarFiltros()" placeholder="Nome da igreja..." class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <input type="text" id="filtro-igreja" oninput="aplicarFiltros()" placeholder="Nome da igreja..."
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Período</label>
-                    <select id="filtro-periodo" onchange="aplicarFiltros()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <select id="filtro-periodo" onchange="aplicarFiltros()"
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
                         <option value="">Todos os períodos</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Saldo Mínimo</label>
-                    <input type="text" id="filtro-valor-min" oninput="mascaraMoedaFiltro(this)" placeholder="Ex: R$ 1.000,00" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <input type="text" id="filtro-valor-min" oninput="mascaraMoedaFiltro(this)"
+                        placeholder="Ex: R$ 1.000,00"
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ordenar por</label>
-                    <select id="filtro-ordem" onchange="aplicarFiltros()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <select id="filtro-ordem" onchange="aplicarFiltros()"
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
                         <option value="recentes">Mais Recentes</option>
                         <option value="alfabetica">Igreja (A-Z)</option>
                         <option value="periodo">Período</option>
@@ -112,15 +122,18 @@
             </div>
             <div class="flex justify-between items-center border-t border-slate-100 pt-3">
                 <div class="flex gap-2">
-                    <button onclick="limparFiltros()" class="text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+                    <button onclick="limparFiltros()"
+                        class="text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
                         <i data-lucide="filter-x" class="w-3.5 h-3.5"></i> Limpar Filtros
                     </button>
-                    <button onclick="abrirRelatorio()" class="text-[11px] font-bold text-green-600 hover:text-green-700 transition-colors flex items-center gap-1 bg-green-50 px-2.5 py-1 rounded border border-green-200">
+                    <button onclick="abrirRelatorio()"
+                        class="text-[11px] font-bold text-green-600 hover:text-green-700 transition-colors flex items-center gap-1 bg-green-50 px-2.5 py-1 rounded border border-green-200">
                         <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Gerar Relatório
                     </button>
                 </div>
                 <div class="text-right">
-                    <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Lançamentos encontrados: </span>
+                    <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Lançamentos encontrados:
+                    </span>
                     <span id="total-lancamentos" class="text-lg font-black text-blue-600">0</span>
                 </div>
             </div>
@@ -141,14 +154,20 @@
                         </tr>
                     </thead>
                     <tbody id="tabela-saldos" class="divide-y divide-slate-100">
-                        <tr><td colspan="6" class="text-center py-6 text-slate-400">Carregando dados do Firebase...</td></tr>
+                        <tr>
+                            <td colspan="6" class="text-center py-6 text-slate-400">Carregando dados do Firebase...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
+        <!-- Paginação -->
+        <div id="paginacao-saldos"></div>
+
         <!-- Modal de Relatório -->
-        <div id="modal-relatorio" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div id="modal-relatorio"
+            class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden">
                 <div class="bg-slate-800 px-5 py-4 flex justify-between items-center sticky top-0 z-10">
                     <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
@@ -162,17 +181,20 @@
                 <div class="p-6 max-h-[80vh] overflow-y-auto">
                     <div id="relatorio-conteudo" class="text-sm space-y-4"></div>
                     <div class="pt-6 border-t border-slate-200 flex gap-3">
-                        <button onclick="imprimirRelatorio()" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded uppercase text-[11px] hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2">
+                        <button onclick="imprimirRelatorio()"
+                            class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded uppercase text-[11px] hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2">
                             <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
                         </button>
-                        <button onclick="fecharRelatorio()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded uppercase text-[11px] hover:bg-slate-200 transition-colors">Fechar</button>
+                        <button onclick="fecharRelatorio()"
+                            class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded uppercase text-[11px] hover:bg-slate-200 transition-colors">Fechar</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Modal de Edição -->
-        <div id="modal-saldo" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div id="modal-saldo"
+            class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden my-auto">
                 <div class="bg-slate-800 px-5 py-4 flex justify-between items-center sticky top-0 z-10">
                     <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
@@ -182,10 +204,10 @@
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                
+
                 <form id="form-saldo" class="p-6 space-y-5">
                     <input type="hidden" id="saldo-id">
-                    
+
                     <!-- Header Info (Readonly) -->
                     <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <div>
@@ -201,41 +223,59 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Coluna 1: Valores Financeiros -->
                         <div class="space-y-4">
-                            <h3 class="text-xs font-bold text-slate-800 uppercase border-b pb-1">Valores Financeiros</h3>
-                            
+                            <h3 class="text-xs font-bold text-slate-800 uppercase border-b pb-1">Valores Financeiros
+                            </h3>
+
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Entradas Taxadas (R$)</label>
-                                <input type="text" id="saldo-taxadas" required class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" oninput="mascaraMoeda(this)">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Entradas
+                                    Taxadas (R$)</label>
+                                <input type="text" id="saldo-taxadas" required
+                                    class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold"
+                                    oninput="mascaraMoeda(this)">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Missões (R$)</label>
-                                <input type="text" id="saldo-missoes" required class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" oninput="mascaraMoeda(this)">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Missões
+                                    (R$)</label>
+                                <input type="text" id="saldo-missoes" required
+                                    class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold"
+                                    oninput="mascaraMoeda(this)">
                             </div>
                             <div class="pt-2">
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Saldo em Conta Corrente (R$)</label>
-                                <input type="text" id="saldo-banco" required class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" oninput="mascaraMoeda(this)">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Saldo em Conta
+                                    Corrente (R$)</label>
+                                <input type="text" id="saldo-banco" required
+                                    class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold"
+                                    oninput="mascaraMoeda(this)">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Saldo em Dinheiro (R$)</label>
-                                <input type="text" id="saldo-dinheiro" required class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold" oninput="mascaraMoeda(this)">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Saldo em
+                                    Dinheiro (R$)</label>
+                                <input type="text" id="saldo-dinheiro" required
+                                    class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold"
+                                    oninput="mascaraMoeda(this)">
                             </div>
                         </div>
 
                         <!-- Coluna 2: Estatísticas -->
                         <div class="space-y-4">
                             <h3 class="text-xs font-bold text-slate-800 uppercase border-b pb-1">Estatísticas</h3>
-                            
+
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Santa Ceia (Participantes)</label>
-                                <input type="number" id="saldo-ceia" required class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Santa Ceia
+                                    (Participantes)</label>
+                                <input type="number" id="saldo-ceia" required
+                                    class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Batismos</label>
-                                <input type="number" id="saldo-batismos" required class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                <label
+                                    class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Batismos</label>
+                                <input type="number" id="saldo-batismos" required
+                                    class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Células</label>
-                                <input type="number" id="saldo-celulas" required class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                <input type="number" id="saldo-celulas" required
+                                    class="w-full p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
                             </div>
                         </div>
                     </div>
@@ -246,8 +286,11 @@
                     </div>
 
                     <div class="pt-2 flex gap-3">
-                        <button type="button" onclick="fecharModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded uppercase text-[11px] hover:bg-slate-200 transition-colors">Cancelar</button>
-                        <button type="submit" id="btn-salvar" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded uppercase text-[11px] hover:bg-blue-700 transition-colors shadow-md">Salvar Alterações</button>
+                        <button type="button" onclick="fecharModal()"
+                            class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded uppercase text-[11px] hover:bg-slate-200 transition-colors">Cancelar</button>
+                        <button type="submit" id="btn-salvar"
+                            class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded uppercase text-[11px] hover:bg-blue-700 transition-colors shadow-md">Salvar
+                            Alterações</button>
                     </div>
                 </form>
             </div>
@@ -267,11 +310,11 @@
             value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
             input.value = 'R$ ' + value;
         };
-        
+
         window.mascaraMoedaFiltro = (input) => {
             let value = input.value.replace(/\D/g, '');
-            if (value === '') { 
-                input.value = ''; 
+            if (value === '') {
+                input.value = '';
             } else {
                 value = (parseInt(value) / 100).toFixed(2);
                 value = value.replace('.', ',');
@@ -282,10 +325,10 @@
             if (_uj) { const el = document.getElementById('filtro-igreja'); el.value = _uj; el.readOnly = true; }
             window.aplicarFiltros();
         };
-        
+
         window.parseMoeda = (str) => {
-            if(typeof str === 'number') return str;
-            if(!str) return 0;
+            if (typeof str === 'number') return str;
+            if (!str) return 0;
             return parseFloat(str.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
         };
 
@@ -300,15 +343,17 @@
 
         let saldosList = [];
         let periodosSet = new Set();
+        let paginaAtual = 1;
+        const POR_PAGINA = 20;
 
         function labelToChave(label) {
             const meses = {
-                'janeiro':'01','fevereiro':'02','março':'03','abril':'04',
-                'maio':'05','junho':'06','julho':'07','agosto':'08',
-                'setembro':'09','outubro':'10','novembro':'11','dezembro':'12',
-                'jan':'01','fev':'02','mar':'03','abr':'04',
-                'mai':'05','jun':'06','jul':'07','ago':'08',
-                'set':'09','out':'10','nov':'11','dez':'12'
+                'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04',
+                'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08',
+                'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12',
+                'jan': '01', 'fev': '02', 'mar': '03', 'abr': '04',
+                'mai': '05', 'jun': '06', 'jul': '07', 'ago': '08',
+                'set': '09', 'out': '10', 'nov': '11', 'dez': '12'
             };
             const partes = (label || '').split(/➔|>/).map(s => s.trim()).filter(Boolean);
             const dest = partes[partes.length - 1] || '';
@@ -320,24 +365,24 @@
 
         function chaveParaLabel(chave) {
             if (!chave || !chave.includes('-')) return chave;
-            const nomes = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const nomes = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
             const [yyyy, mm] = chave.split('-');
             return `${nomes[parseInt(mm)] || mm}/${yyyy}`;
         }
-        
+
         if (window.lucide) lucide.createIcons();
-        
+
         const tabela = document.getElementById('tabela-saldos');
         const form = document.getElementById('form-saldo');
 
         async function carregarSaldos() {
             try {
                 tabela.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-slate-400"><div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div>Carregando...</td></tr>';
-                
+
                 const querySnapshot = await getDocs(collection(db, "saldos_virada"));
                 saldosList = [];
                 periodosSet.clear();
-                
+
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     saldosList.push({ id: doc.id, ...data });
@@ -392,7 +437,7 @@
                 return matchIgreja && matchPeriodo && matchValorMin;
             });
 
-            filtrados.sort((a,b) => {
+            filtrados.sort((a, b) => {
                 if (filtroOrdem === 'recentes') {
                     const dateA = a.createdAt?.seconds || 0;
                     const dateB = b.createdAt?.seconds || 0;
@@ -423,13 +468,22 @@
 
             document.getElementById('total-lancamentos').textContent = filtrados.length.toString().padStart(2, '0');
             tabela.innerHTML = '';
-            
+
             if (filtrados.length === 0) {
                 tabela.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-slate-400">Nenhum lançamento encontrado.</td></tr>';
+                const pagNav = document.getElementById('paginacao-saldos');
+                if (pagNav) pagNav.innerHTML = '';
                 return;
             }
 
-            filtrados.forEach(s => {
+            // Paginação client-side
+            const totalPaginas = Math.ceil(filtrados.length / POR_PAGINA);
+            if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+            if (paginaAtual < 1) paginaAtual = 1;
+            const inicio = (paginaAtual - 1) * POR_PAGINA;
+            const paginaDados = filtrados.slice(inicio, inicio + POR_PAGINA);
+
+            paginaDados.forEach(s => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-blue-50/50 transition-colors group";
                 tr.innerHTML = `
@@ -457,36 +511,62 @@
                 tabela.appendChild(tr);
             });
             lucide.createIcons();
+
+            // Renderizar controles de paginação
+            const pagNav = document.getElementById('paginacao-saldos');
+            if (pagNav) {
+                if (totalPaginas <= 1) {
+                    pagNav.innerHTML = '';
+                } else {
+                    pagNav.innerHTML = `
+                        <div class="flex items-center justify-between mt-3 px-2">
+                            <span class="text-[10px] text-slate-400 font-semibold uppercase">
+                                Página ${paginaAtual} de ${totalPaginas} · ${filtrados.length} lançamentos
+                            </span>
+                            <div class="flex gap-2">
+                                <button onclick="window.irPaginaSaldos(${paginaAtual - 1})" ${paginaAtual <= 1 ? 'disabled' : ''} class="px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg border ${paginaAtual <= 1 ? 'border-slate-200 text-slate-300 cursor-not-allowed' : 'border-blue-200 text-blue-600 hover:bg-blue-50'} transition-colors">← Anterior</button>
+                                <button onclick="window.irPaginaSaldos(${paginaAtual + 1})" ${paginaAtual >= totalPaginas ? 'disabled' : ''} class="px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg border ${paginaAtual >= totalPaginas ? 'border-slate-200 text-slate-300 cursor-not-allowed' : 'border-blue-200 text-blue-600 hover:bg-blue-50'} transition-colors">Próximo →</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
         }
+
+        window.irPaginaSaldos = (p) => {
+            paginaAtual = p;
+            renderizarTabela();
+            tabela.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
 
         window.editarSaldo = (id) => {
             const s = saldosList.find(i => i.id === id);
-            if(!s) return;
-            
+            if (!s) return;
+
             document.getElementById('saldo-id').value = s.id;
             document.getElementById('info-igreja').innerText = s.igrejaFormatada;
             document.getElementById('info-periodo').innerText = s.periodo;
-            
+
             // Valores Financeiros
             document.getElementById('saldo-taxadas').value = window.formatMoeda(s.entradasTaxadas || 0);
             document.getElementById('saldo-missoes').value = window.formatMoeda(s.missoes || 0);
             document.getElementById('saldo-banco').value = window.formatMoeda(s.saldoBanco || 0);
             document.getElementById('saldo-dinheiro').value = window.formatMoeda(s.saldoDinheiro || 0);
-            
+
             // Estatísticas
             document.getElementById('saldo-ceia').value = s.santaCeia || 0;
             document.getElementById('saldo-batismos').value = s.batismos || 0;
             document.getElementById('saldo-celulas').value = s.celulas || 0;
-            
+
             document.getElementById('modal-saldo').classList.remove('hidden');
         };
 
         window.excluirSaldo = async (id) => {
-            if(confirm("Tem certeza que deseja excluir este lançamento permanentemente?")) {
+            if (confirm("Tem certeza que deseja excluir este lançamento permanentemente?")) {
                 try {
                     await deleteDoc(doc(db, "saldos_virada", id));
                     carregarSaldos();
-                } catch(e) {
+                } catch (e) {
                     alert("Erro ao excluir!");
                     console.error(e);
                 }
@@ -612,7 +692,7 @@
 
             try {
                 const id = document.getElementById('saldo-id').value;
-                
+
                 const vTaxadas = window.parseMoeda(document.getElementById('saldo-taxadas').value);
                 const vMissoes = window.parseMoeda(document.getElementById('saldo-missoes').value);
                 const vBanco = window.parseMoeda(document.getElementById('saldo-banco').value);
@@ -631,10 +711,10 @@
                 };
 
                 await updateDoc(doc(db, "saldos_virada", id), payload);
-                
+
                 window.fecharModal();
                 carregarSaldos();
-                
+
             } catch (error) {
                 console.error("Erro ao atualizar:", error);
                 alert("Erro ao salvar as alterações.");
@@ -648,4 +728,5 @@
         carregarSaldos();
     </script>
 </body>
+
 </html>
