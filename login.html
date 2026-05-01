@@ -86,9 +86,9 @@
                                 if (aviso.tipo === 'urgente') { colors = 'bg-red-50 text-red-700 border-red-200'; icon = 'alert-octagon'; }
                                 
                                 cont.innerHTML += `
-                                    <div class="p-3 rounded-lg border \${colors} flex items-start gap-3">
-                                        <i data-lucide="\${icon}" class="w-5 h-5 shrink-0 mt-0.5"></i>
-                                        <p class="text-xs font-semibold leading-relaxed">\${aviso.texto}</p>
+                                    <div class="p-3 rounded-lg border ${colors} flex items-start gap-3">
+                                        <i data-lucide="${icon}" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                                        <p class="text-xs font-semibold leading-relaxed">${aviso.texto}</p>
                                     </div>
                                 `;
                             });
@@ -103,8 +103,8 @@
                             contLinks.innerHTML = '';
                             linksAtivos.forEach(link => {
                                 contLinks.innerHTML += `
-                                    <a href="\${link.url}" class="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-colors text-[11px] font-semibold uppercase tracking-wider">
-                                        <i data-lucide="\${link.icone || 'link'}" class="w-3.5 h-3.5"></i> \${link.titulo}
+                                    <a href="${link.url}" class="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-colors text-[11px] font-semibold uppercase tracking-wider">
+                                        <i data-lucide="${link.icone || 'link'}" class="w-3.5 h-3.5"></i> ${link.titulo}
                                     </a>
                                 `;
                             });
