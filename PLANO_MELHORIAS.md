@@ -279,3 +279,22 @@ Prioridade baixa (dashboards/ferramentas):
 - **Commit:** `7464067` — "feat: Fase 4 — Toast notifications, global error handling, skeleton screens, acessibilidade e PWA"
 - **Deploy:** Firebase Hosting — https://regiao655-admin.web.app
 - **Próximo:** Fase 5 — Modernização (lazy loading, WebP, framework, TypeScript, testes, CI/CD)
+
+### Sessão 5 — 01/05/2026 (tarde)
+- **Feito:** Correção de acesso — superintendente e secretario não viam menus (permMinLevel em index.html)
+- **Feito:** Gates de 7 páginas ajustados para incluir superintendente/secretario
+- **Feito:** Dashsaldo — corrigido filtro "Todos" que excluía igrejas (código 0252 vs 252)
+- **Feito:** Dashsaldo — status "Aguardando" (azul) para mês dentro do prazo do 5º dia útil
+- **Feito:** Sorteio — redesign completo, sincronizado com Firestore (igrejas), endereço no WhatsApp
+- **Feito:** Sorteio — Região 655 sempre desmarcada e bloqueada
+- **Feito:** Fase 5 iniciada — WebP (logo -88%, mini -74%, assinatura -65%)
+- **Feito:** Fase 5 — `<picture>` WebP + fallback, lazy loading, width/height no index e login
+- **Feito:** Fase 5 — Service Worker cache v2, manifest com ícones WebP
+- **Feito:** Fase 5 — CI/CD GitHub Actions + FIREBASE_TOKEN configurado
+- **Feito:** Correção de PDF no editarrecibos — box-sizing, clone-on-top para cross-browser
+- **Feito:** Correção de PDF no dashreg655 e recibosreg655 (margens e windowWidth)
+- **Feito:** Flash "Portal" eliminado (opacity:0 até JS definir título)
+- **Feito:** Status do mês e débitos na página do pastor — mensagens corrigidas
+- **Feito:** Botão "Trocar" na simulação — verificava permissão simulada em vez da real
+- **Commits:** `b306c06` a `e77e9c2` (~15 commits)
+- **Deploy:** CI/CD automático via GitHub Actions + Firebase Hosting
