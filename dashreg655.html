@@ -198,82 +198,97 @@
             </div>
         </div>
 
-        <!-- Container Oculto para Geração de PDF do Recibo Individual -->
-        <div style="position: absolute; left: 0; top: 0; opacity: 0; pointer-events: none; z-index: -1;">
-            <div id="receipt-content" class="p-6 bg-white relative w-[21cm] h-[29cm] overflow-hidden flex flex-col text-gray-800" style="font-family: 'Inter', sans-serif;">
-                <div class="border-2 border-gray-800 p-6 h-full flex flex-col relative">
-                    <div class="flex justify-center items-center gap-6 mb-8">
-                        <div class="w-24 h-24 flex items-center justify-center">
-                            <img id="pdf-logo" src="logo.png" class="max-w-full max-h-full object-contain">
-                        </div>
+        <!-- Overlay para Geração de PDF (visível temporariamente durante captura) -->
+        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:white;display:none;overflow:visible;padding:0;margin:0;">
+            <div id="receipt-content"
+                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0 auto;">
+                <div
+                    style="border:2px solid #1f2937;padding:24px;display:flex;flex-direction:column;position:relative;">
+                    <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
+                        <img id="pdf-logo" src="logo.png" style="max-width:80px;max-height:80px;object-fit:contain;">
                         <div>
-                            <h1 class="text-3xl font-bold text-blue-900 uppercase leading-none">Igreja do Evangelho</h1>
-                            <h1 class="text-4xl font-black text-blue-900 uppercase leading-none tracking-wide">Quadrangular</h1>
-                            <p class="text-gray-600 font-bold tracking-widest text-lg mt-1 border-t-2 border-gray-300 inline-block pt-1">REGIÃO 655</p>
+                            <h1
+                                style="font-size:28px;font-weight:700;color:#1e3a8a;text-transform:uppercase;line-height:1.1;">
+                                Igreja do Evangelho</h1>
+                            <h1
+                                style="font-size:36px;font-weight:900;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.05em;line-height:1.1;">
+                                Quadrangular</h1>
+                            <p
+                                style="color:#6b7280;font-weight:700;letter-spacing:0.1em;font-size:14px;margin-top:4px;border-top:2px solid #e5e7eb;padding-top:4px;">
+                                REGIÃO 655</p>
                         </div>
                     </div>
-                    <h2 class="text-center text-2xl font-black border-b-4 border-gray-100 pb-4 mb-8 uppercase">Recibo</h2>
-                    <div class="space-y-4 text-lg flex-1">
-                        <div class="grid grid-cols-[180px_1fr]">
-                            <span class="font-bold text-gray-600 uppercase text-sm">Data Emissão</span>
-                            <span id="pdf-data-emissao" class="font-medium"></span>
+                    <h2
+                        style="text-align:center;font-size:22px;font-weight:900;border-bottom:3px solid #f3f4f6;padding-bottom:16px;margin-bottom:24px;text-transform:uppercase;">
+                        Recibo</h2>
+                    <div style="flex:1;font-size:15px;">
+                        <div style="display:grid;grid-template-columns:160px 1fr;margin-bottom:12px;"><span
+                                style="font-weight:700;color:#6b7280;text-transform:uppercase;font-size:12px;">Data
+                                Emissão</span><span id="pdf-data-emissao"></span></div>
+                        <div style="display:grid;grid-template-columns:160px 1fr;margin-bottom:12px;"><span
+                                style="font-weight:700;color:#6b7280;text-transform:uppercase;font-size:12px;">Referência</span><span
+                                id="pdf-referencia"></span></div>
+                        <div style="display:grid;grid-template-columns:160px 1fr;margin-bottom:12px;"><span
+                                style="font-weight:700;color:#6b7280;text-transform:uppercase;font-size:12px;">Igreja</span><span
+                                id="pdf-igreja" style="font-weight:700;"></span></div>
+                        <div style="display:grid;grid-template-columns:160px 1fr;margin-bottom:24px;"><span
+                                style="font-weight:700;color:#6b7280;text-transform:uppercase;font-size:12px;">Pastor</span><span
+                                id="pdf-pastor"></span></div>
+                        <hr style="border:1px dashed #d1d5db;margin-bottom:16px;">
+                        <div
+                            style="display:flex;justify-content:space-between;padding:6px 8px;background:#f9fafb;margin-bottom:4px;">
+                            <span>Subtotal Entradas</span><span id="pdf-entradas"
+                                style="font-family:monospace;font-weight:700;"></span>
                         </div>
-                        <div class="grid grid-cols-[180px_1fr]">
-                            <span class="font-bold text-gray-600 uppercase text-sm">Referência</span>
-                            <span id="pdf-referencia" class="font-medium"></span>
+                        <div style="display:flex;justify-content:space-between;padding:6px 8px;margin-bottom:4px;">
+                            <span>Taxa Regional (4%)</span><span id="pdf-regional"
+                                style="font-family:monospace;font-weight:700;"></span>
                         </div>
-                        <div class="grid grid-cols-[180px_1fr]">
-                            <span class="font-bold text-gray-600 uppercase text-sm">Igreja</span>
-                            <span id="pdf-igreja" class="font-bold"></span>
+                        <div
+                            style="display:flex;justify-content:space-between;padding:6px 8px;background:#f9fafb;margin-bottom:4px;">
+                            <span>Taxa Coordenadoria</span><span id="pdf-coord"
+                                style="font-family:monospace;font-weight:700;"></span>
                         </div>
-                        <div class="grid grid-cols-[180px_1fr]">
-                            <span class="font-bold text-gray-600 uppercase text-sm">Pastor</span>
-                            <span id="pdf-pastor" class="font-medium"></span>
+                        <div style="display:flex;justify-content:space-between;padding:6px 8px;margin-bottom:4px;"><span
+                                id="pdf-label-seguros">Seguro de Vida</span><span id="pdf-seguros"
+                                style="font-family:monospace;font-weight:700;"></span></div>
+                        <div id="pdf-outros-container"
+                            style="display:none;justify-content:space-between;padding:6px 8px;background:#f9fafb;margin-bottom:4px;">
+                            <span id="pdf-label-outros">Outros</span><span id="pdf-outros"
+                                style="font-family:monospace;font-weight:700;"></span>
                         </div>
-                        <hr class="border-dashed my-6 border-gray-300">
-                        <div class="flex justify-between py-1 px-2 bg-gray-50">
-                            <span>Subtotal Entradas</span>
-                            <span id="pdf-entradas" class="font-mono font-bold"></span>
-                        </div>
-                        <div class="flex justify-between py-1 px-2">
-                            <span>Taxa Regional (4%)</span>
-                            <span id="pdf-regional" class="font-mono font-bold"></span>
-                        </div>
-                        <div class="flex justify-between py-1 px-2 bg-gray-50">
-                            <span>Taxa Coordenadoria</span>
-                            <span id="pdf-coord" class="font-mono font-bold"></span>
-                        </div>
-                        <div class="flex justify-between py-1 px-2">
-                            <span id="pdf-label-seguros">Seguro de Vida</span>
-                            <span id="pdf-seguros" class="font-mono font-bold"></span>
-                        </div>
-                        <div id="pdf-outros-container" class="flex justify-between py-1 px-2 bg-gray-50 hidden">
-                            <span id="pdf-label-outros">Outros</span>
-                            <span id="pdf-outros" class="font-mono font-bold"></span>
-                        </div>
-                        <div class="mt-8 flex flex-col bg-gray-900 text-white p-4 rounded">
-                            <div class="flex justify-between items-center text-2xl">
-                                <span class="font-bold uppercase text-lg">Total Pago</span>
-                                <span id="pdf-total" class="font-bold font-mono"></span>
+                        <div
+                            style="margin-top:24px;background:#111827;color:white;padding:16px;border-radius:8px;display:flex;flex-direction:column;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-weight:700;text-transform:uppercase;font-size:14px;">Total Pago</span>
+                                <span id="pdf-total"
+                                    style="font-size:24px;font-weight:900;font-family:monospace;"></span>
                             </div>
-                            <div id="pdf-extenso" class="text-sm text-gray-400 mt-2 border-t border-gray-700 pt-2 text-right italic uppercase"></div>
-                        </div>
-                    </div>
-                    <div class="mt-8 flex justify-end items-end">
-                        <div class="text-center relative min-w-[300px]">
-                            <div class="absolute -top-16 left-0 right-0 flex justify-center">
-                                <img id="pdf-assinatura" src="assinatura.png" class="h-24 object-contain mix-blend-multiply opacity-90">
-                            </div>
-                            <div id="pdf-assinatura-texto" class="absolute -top-14 left-0 right-0 text-5xl text-blue-900 opacity-90 hidden" style="font-family: cursive;">Eduardo Silva</div>
-                            <div class="border-t-2 border-gray-800 pt-2 mt-4">
-                                <p class="font-bold uppercase text-sm">Pr. Eduardo Silva</p>
-                                <p class="text-xs uppercase text-gray-500">Região 655</p>
+                            <div id="pdf-extenso"
+                                style="font-size:11px;color:#9ca3af;margin-top:8px;border-top:1px solid #374151;padding-top:8px;text-align:right;font-style:italic;text-transform:uppercase;">
                             </div>
                         </div>
                     </div>
-                    <div class="absolute bottom-2 left-0 w-full text-center text-[10px] text-gray-400 uppercase">
-                        Documento gerado eletronicamente - IEQ REG655
+                    <div style="margin-top:88px;display:flex;justify-content:flex-end;">
+                        <div style="text-align:center;min-width:280px;position:relative;">
+                            <div
+                                style="position:absolute;top:-64px;left:0;right:0;display:flex;justify-content:center;">
+                                <img id="pdf-assinatura" src="assinatura.png"
+                                    style="height:80px;object-fit:contain;mix-blend-mode:multiply;opacity:0.9;"
+                                    onerror="this.style.display='none'">
+                            </div>
+                            <div id="pdf-assinatura-texto"
+                                style="position:absolute;top:-56px;left:0;right:0;font-size:48px;color:#1e3a8a;opacity:0.9;display:none;font-family:cursive;">
+                                Eduardo Silva</div>
+                            <div style="border-top:2px solid #1f2937;padding-top:8px;margin-top:16px;">
+                                <p style="font-weight:700;text-transform:uppercase;font-size:13px;">Pr. Eduardo Silva</p>
+                                <p style="font-size:11px;color:#9ca3af;text-transform:uppercase;">Região 655</p>
+                            </div>
+                        </div>
                     </div>
+                    <div
+                        style="margin-top:20px;text-align:center;font-size:10px;color:#9ca3af;text-transform:uppercase;">
+                        Documento gerado eletronicamente - IEQ REG655</div>
                 </div>
             </div>
         </div>
@@ -477,7 +492,7 @@
             return extenso.charAt(0).toUpperCase() + extenso.slice(1);
         };
 
-        window.gerarPdfRecibo = (id) => {
+        window.gerarPdfRecibo = async (id) => {
             const item = window.activeData.find(i => i.id === id);
             if(!item) return;
             const r = item.raw;
@@ -508,9 +523,9 @@
             if (r.otherValueParsed > 0) {
                 document.getElementById('pdf-label-outros').textContent = `Outros (${r.otherDesc || ''})`;
                 document.getElementById('pdf-outros').textContent = window.formatMoeda(r.otherValueParsed);
-                containerOutros.classList.remove('hidden');
+                containerOutros.style.display = 'flex';
             } else {
-                containerOutros.classList.add('hidden');
+                containerOutros.style.display = 'none';
             }
 
             document.getElementById('pdf-total').textContent = window.formatMoeda(r.total);
@@ -533,19 +548,24 @@
                 document.getElementById('pdf-assinatura').src = "assinatura.png";
             }
 
-            const element = document.getElementById('receipt-content');
+            const overlay = document.getElementById('pdf-overlay');
+            const receiptEl = document.getElementById('receipt-content');
+            overlay.style.display = 'block';
+            window.scrollTo(0, 0);
+            await new Promise(resolve => setTimeout(resolve, 400));
+
             const safeDate = (r.referenceDate || '').replace('/', '-');
             const safeChurch = (r.igrejaCodigo || 'UNID');
-            const customFileName = `${safeChurch} - REC REG REF(${safeDate}).pdf`;
-
             const opt = { 
-                margin: [10, 10, 10, 10], 
-                filename: customFileName, 
+                margin: 0, 
+                filename: `${safeChurch} - REC REG REF(${safeDate}).pdf`, 
                 image: { type: 'jpeg', quality: 0.98 }, 
                 html2canvas: { 
                     scale: 2, 
                     useCORS: true, 
                     allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
                     scrollY: 0,
                     scrollX: 0,
                     windowWidth: 794
@@ -554,7 +574,11 @@
                 pagebreak: { mode: 'avoid-all' }
             };
             
-            html2pdf().set(opt).from(element).save();
+            try {
+                await html2pdf().set(opt).from(receiptEl).save();
+            } finally {
+                overlay.style.display = 'none';
+            }
         };
 
         window.renderTable = () => {
