@@ -10,6 +10,9 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
         .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        /* Custom scrollbar for tabs */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -62,13 +65,40 @@
             </div>
         </div>
 
-        <!-- Grid de Eventos -->
+        <!-- Controles de Visualização -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-200 pb-4">
+            
+            <!-- Abas -->
+            <div class="flex gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm w-full sm:w-auto overflow-x-auto hide-scroll">
+                <button onclick="window.setTab('upcoming')" id="tab-upcoming" class="px-5 py-2.5 text-xs font-bold rounded-md transition-colors bg-blue-100 text-blue-700 whitespace-nowrap tracking-wider uppercase">Próximos</button>
+                <button onclick="window.setTab('past')" id="tab-past" class="px-5 py-2.5 text-xs font-bold rounded-md transition-colors text-slate-500 hover:bg-slate-50 whitespace-nowrap tracking-wider uppercase">Anteriores</button>
+                <button onclick="window.setTab('all')" id="tab-all" class="px-5 py-2.5 text-xs font-bold rounded-md transition-colors text-slate-500 hover:bg-slate-50 whitespace-nowrap tracking-wider uppercase">Todos</button>
+            </div>
+            
+            <!-- Botões -->
+            <div class="flex gap-3 w-full sm:w-auto justify-end">
+                <button onclick="window.toggleGroupByMonth()" id="btn-group-month" class="px-4 py-2.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2 uppercase tracking-wider whitespace-nowrap">
+                    <i data-lucide="calendar-days" class="w-4 h-4"></i> <span id="text-group-month">Agrupar por Mês</span>
+                </button>
+                
+                <div class="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm shrink-0">
+                    <button onclick="window.setViewMode('grid')" id="view-grid" class="p-2 rounded-md bg-blue-100 text-blue-700 transition-colors" title="Visualização em Grade">
+                        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="window.setViewMode('list')" id="view-list" class="p-2 rounded-md text-slate-500 hover:bg-slate-50 transition-colors" title="Visualização em Lista">
+                        <i data-lucide="list" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área de Eventos -->
         <div id="loading" class="text-center py-12">
             <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4"></i>
             <p class="text-slate-500 font-medium">Carregando todos os eventos...</p>
         </div>
 
-        <div id="grid-agenda" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+        <div id="grid-agenda" class="hidden">
             <!-- Eventos renderizados via JS -->
         </div>
 
@@ -84,6 +114,10 @@
         import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         let agendaList = [];
+        let currentTab = 'upcoming'; // 'upcoming', 'past', 'all'
+        let viewMode = 'grid'; // 'grid', 'list'
+        let groupByMonth = false;
+
         lucide.createIcons();
 
         async function carregarAgenda() {
@@ -93,9 +127,6 @@
                 querySnapshot.forEach((doc) => {
                     agendaList.push({ id: doc.id, ...doc.data() });
                 });
-                
-                // Ordenar por data
-                agendaList.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
 
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('grid-agenda').classList.remove('hidden');
@@ -107,6 +138,43 @@
             }
         }
 
+        window.setTab = (tab) => {
+            currentTab = tab;
+            ['upcoming', 'past', 'all'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tab) {
+                    btn.className = "px-5 py-2.5 text-xs font-bold rounded-md transition-colors bg-blue-100 text-blue-700 whitespace-nowrap tracking-wider uppercase";
+                } else {
+                    btn.className = "px-5 py-2.5 text-xs font-bold rounded-md transition-colors text-slate-500 hover:bg-slate-50 whitespace-nowrap tracking-wider uppercase";
+                }
+            });
+            window.renderizarAgenda();
+        };
+
+        window.setViewMode = (mode) => {
+            viewMode = mode;
+            document.getElementById('view-grid').className = mode === 'grid' 
+                ? "p-2 rounded-md bg-blue-100 text-blue-700 transition-colors" 
+                : "p-2 rounded-md text-slate-500 hover:bg-slate-50 transition-colors";
+            document.getElementById('view-list').className = mode === 'list' 
+                ? "p-2 rounded-md bg-blue-100 text-blue-700 transition-colors" 
+                : "p-2 rounded-md text-slate-500 hover:bg-slate-50 transition-colors";
+            window.renderizarAgenda();
+        };
+
+        window.toggleGroupByMonth = () => {
+            groupByMonth = !groupByMonth;
+            const btn = document.getElementById('btn-group-month');
+            if (groupByMonth) {
+                btn.className = "px-4 py-2.5 text-xs font-bold rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition-colors shadow-sm flex items-center gap-2 uppercase tracking-wider whitespace-nowrap";
+                document.getElementById('text-group-month').innerText = "Desagrupar Mês";
+            } else {
+                btn.className = "px-4 py-2.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2 uppercase tracking-wider whitespace-nowrap";
+                document.getElementById('text-group-month').innerText = "Agrupar por Mês";
+            }
+            window.renderizarAgenda();
+        };
+
         window.limparFiltros = () => {
             document.getElementById('filtro-texto').value = '';
             document.getElementById('filtro-mes').value = '';
@@ -114,59 +182,33 @@
             window.renderizarAgenda();
         };
 
-        window.renderizarAgenda = () => {
-            const filtroTexto = document.getElementById('filtro-texto').value.toUpperCase();
-            const filtroMes = document.getElementById('filtro-mes').value;
-            const filtroTipo = document.getElementById('filtro-tipo').value.toUpperCase();
-
-            const filtrados = agendaList.filter(e => {
-                let textoConcatenado = `${e.evento || ''} ${e.local || ''} ${e.ministerio || ''} ${e.endereco || ''}`.toUpperCase();
-                
-                if (filtroTexto && !textoConcatenado.includes(filtroTexto)) return false;
-                if (filtroMes && !(e.data || '').startsWith(filtroMes)) return false;
-                if (filtroTipo && (e.tipo || '').toUpperCase() !== filtroTipo) return false;
-                
-                return true;
-            });
-
-            const grid = document.getElementById('grid-agenda');
-            const emptyState = document.getElementById('empty-state');
+        function createCard(e, mode) {
+            const el = document.createElement('div');
             
-            grid.innerHTML = '';
-
-            if (filtrados.length === 0) {
-                grid.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                return;
-            } else {
-                grid.classList.remove('hidden');
-                emptyState.classList.add('hidden');
+            const dataFormatada = e.data ? e.data.split('-').reverse().join('/') : 'Data não definida';
+            let diaSemana = '', dia = '', mes = '';
+            if (e.data) {
+                const [y, m, d] = e.data.split('-');
+                const dateObj = new Date(y, m - 1, d);
+                const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                diaSemana = dias[dateObj.getDay()];
+                dia = d;
+                mes = dateObj.toLocaleString('pt-BR', { month: 'short' }).toUpperCase().replace('.', '');
             }
 
-            filtrados.forEach(e => {
-                const card = document.createElement('div');
-                card.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow relative flex flex-col";
-                
-                const dataFormatada = e.data ? e.data.split('-').reverse().join('/') : 'Data não definida';
-                let diaSemana = '';
-                if (e.data) {
-                    const [y, m, d] = e.data.split('-');
-                    const dateObj = new Date(y, m - 1, d);
-                    const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-                    diaSemana = dias[dateObj.getDay()];
-                }
+            const isLocal = (e.tipo || '').toUpperCase() === 'LOCAL';
+            const tipoCor = isLocal ? 'bg-purple-100 text-purple-700' :
+                            e.tipo === 'REGIONAL' ? 'bg-blue-100 text-blue-700' : 
+                            e.tipo === 'CED' ? 'bg-amber-100 text-amber-700' :
+                            e.tipo === 'CND' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600';
 
-                const isLocal = (e.tipo || '').toUpperCase() === 'LOCAL';
-                const tipoCor = isLocal ? 'bg-purple-100 text-purple-700' :
-                                e.tipo === 'REGIONAL' ? 'bg-blue-100 text-blue-700' : 
-                                e.tipo === 'CED' ? 'bg-amber-100 text-amber-700' :
-                                e.tipo === 'CND' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600';
+            const logoSrc = isLocal ? 'mini.png' : 'logo.png';
 
-                // Logo definition
-                const logoSrc = isLocal ? 'mini.png' : 'logo.png';
+            if (mode === 'grid') {
+                el.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow relative flex flex-col";
                 const logoClass = isLocal ? 'h-10 w-10 object-contain rounded-full shadow-sm bg-white p-1' : 'h-8 w-auto object-contain';
-
-                card.innerHTML = `
+                
+                el.innerHTML = `
                     <div class="p-5 flex-1">
                         <div class="flex justify-between items-start mb-4">
                             <div>
@@ -202,8 +244,138 @@
                         </a>
                     </div>` : ''}
                 `;
-                grid.appendChild(card);
+            } else {
+                // List Mode
+                el.className = "bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow flex flex-col sm:flex-row overflow-hidden";
+                const logoClass = isLocal ? 'h-8 w-8 object-contain rounded-full shadow-sm bg-white p-0.5' : 'h-6 w-auto object-contain';
+                
+                el.innerHTML = `
+                    <div class="flex flex-1 p-4 gap-4 items-center">
+                        <div class="flex flex-col items-center justify-center w-14 shrink-0 border-r border-slate-100 pr-4">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${mes}</span>
+                            <span class="text-2xl font-black text-slate-800 leading-none my-1">${dia}</span>
+                            <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">${diaSemana}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${tipoCor}">${e.tipo || 'OUTRO'}</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">${e.ministerio || 'GERAL'}</span>
+                            </div>
+                            <h3 class="text-sm sm:text-base font-bold text-slate-800 uppercase leading-tight mb-2 truncate" title="${e.evento}">${e.evento || 'Evento sem nome'}</h3>
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+                                ${e.horario ? `<div class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i><span class="font-semibold">${e.horario}</span></div>` : ''}
+                                ${e.local ? `<div class="flex items-center gap-1.5 truncate"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i><span class="font-semibold truncate">${e.local}</span></div>` : ''}
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex flex-col items-end justify-center shrink-0 pl-4 border-l border-slate-100 gap-3">
+                            <img src="${logoSrc}" alt="Logo" class="${logoClass}" onerror="this.style.display='none'">
+                            ${e.link ? `<a href="${e.link}" target="_blank" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors">Inscrição</a>` : ''}
+                        </div>
+                    </div>
+                    <!-- Mobile footer -->
+                    ${e.link ? `
+                    <div class="sm:hidden px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                        <img src="${logoSrc}" alt="Logo" class="${logoClass}" onerror="this.style.display='none'">
+                        <a href="${e.link}" target="_blank" class="text-blue-600 hover:text-blue-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">Inscrição <i data-lucide="external-link" class="w-3 h-3"></i></a>
+                    </div>` : `
+                    <div class="sm:hidden px-4 py-2 bg-slate-50 border-t border-slate-100 flex justify-start items-center">
+                        <img src="${logoSrc}" alt="Logo" class="${logoClass}" onerror="this.style.display='none'">
+                    </div>`}
+                `;
+            }
+            return el;
+        }
+
+        window.renderizarAgenda = () => {
+            const filtroTexto = document.getElementById('filtro-texto').value.toUpperCase();
+            const filtroMes = document.getElementById('filtro-mes').value;
+            const filtroTipo = document.getElementById('filtro-tipo').value.toUpperCase();
+
+            // Setup Date for filtering
+            const today = new Date().toISOString().split('T')[0];
+
+            let filtrados = agendaList.filter(e => {
+                let textoConcatenado = `${e.evento || ''} ${e.local || ''} ${e.ministerio || ''} ${e.endereco || ''}`.toUpperCase();
+                
+                if (filtroTexto && !textoConcatenado.includes(filtroTexto)) return false;
+                if (filtroMes && !(e.data || '').startsWith(filtroMes)) return false;
+                if (filtroTipo && (e.tipo || '').toUpperCase() !== filtroTipo) return false;
+                
+                const isPast = (e.data || '') < today;
+                
+                if (currentTab === 'upcoming' && isPast) return false;
+                if (currentTab === 'past' && !isPast) return false;
+                
+                return true;
             });
+
+            // Sorting
+            filtrados.sort((a, b) => {
+                const dataA = a.data || '';
+                const dataB = b.data || '';
+                // Se 'past', decrescente (mais recente para mais antigo)
+                // Se 'upcoming' ou 'all', crescente (mais próximo para mais distante)
+                return currentTab === 'past' ? dataB.localeCompare(dataA) : dataA.localeCompare(dataB);
+            });
+
+            const grid = document.getElementById('grid-agenda');
+            const emptyState = document.getElementById('empty-state');
+            
+            grid.innerHTML = '';
+            grid.className = '';
+
+            if (filtrados.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                grid.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+            }
+
+            if (groupByMonth) {
+                grid.classList.add('space-y-8');
+                
+                const grupos = {};
+                filtrados.forEach(e => {
+                    const monthKey = e.data ? e.data.substring(0, 7) : 'Sem Data'; // YYYY-MM
+                    if (!grupos[monthKey]) grupos[monthKey] = [];
+                    grupos[monthKey].push(e);
+                });
+
+                const monthKeys = Object.keys(grupos).sort((a, b) => {
+                    if (a === 'Sem Data') return 1;
+                    if (b === 'Sem Data') return -1;
+                    return currentTab === 'past' ? b.localeCompare(a) : a.localeCompare(b);
+                });
+
+                monthKeys.forEach(key => {
+                    let title = key;
+                    if (key !== 'Sem Data') {
+                        const [y, m] = key.split('-');
+                        const dateObj = new Date(parseInt(y), parseInt(m) - 1, 1);
+                        title = dateObj.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                    }
+                    
+                    const groupDiv = document.createElement('div');
+                    groupDiv.innerHTML = `
+                        <div class="mb-4 flex items-center gap-3">
+                            <h3 class="text-lg font-bold text-slate-800 capitalize tracking-wide">${title}</h3>
+                            <span class="bg-blue-100 text-blue-700 text-xs font-black px-2.5 py-1 rounded-full">${grupos[key].length} evento${grupos[key].length !== 1 ? 's' : ''}</span>
+                            <div class="h-px bg-slate-200 flex-1"></div>
+                        </div>
+                        <div class="${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-4'}">
+                        </div>
+                    `;
+                    const innerContainer = groupDiv.querySelector('div:last-child');
+                    grupos[key].forEach(e => innerContainer.appendChild(createCard(e, viewMode)));
+                    grid.appendChild(groupDiv);
+                });
+            } else {
+                grid.className = viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-4';
+                filtrados.forEach(e => grid.appendChild(createCard(e, viewMode)));
+            }
+
             lucide.createIcons();
         };
 
