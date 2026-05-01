@@ -29,10 +29,6 @@
 
         /* === HEADER ENTRAR === */
         .header-entrar {
-            position: absolute;
-            top: 24px;
-            right: 24px;
-            z-index: 20;
             background: linear-gradient(135deg, rgba(99, 179, 237, 0.25), rgba(99, 179, 237, 0.1));
             border: 1.5px solid rgba(99, 179, 237, 0.5);
             color: #63b3ed;
@@ -44,11 +40,12 @@
             text-transform: uppercase;
             letter-spacing: 0.12em;
             transition: all 0.25s;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
             box-shadow: 0 0 20px rgba(99, 179, 237, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
             animation: pulse-entrar 2.5s ease-in-out infinite;
+            margin-top: 14px;
         }
 
         .header-entrar:hover {
@@ -501,8 +498,6 @@
         /* === MOBILE / iPHONE === */
         @media(max-width:430px) {
             .header-entrar {
-                top: 16px;
-                right: 12px;
                 padding: 8px 14px;
                 font-size: 10px;
                 border-radius: 10px;
@@ -593,8 +588,6 @@
         /* iPhone SE / small devices */
         @media(max-width:376px) {
             .header-entrar {
-                top: 12px;
-                right: 8px;
                 padding: 7px 12px;
                 font-size: 9px;
             }
@@ -622,11 +615,6 @@
 
         /* Safe area for iPhone with notch */
         @supports(padding: max(0px)) {
-            .header-entrar {
-                top: max(24px, env(safe-area-inset-top));
-                right: max(24px, env(safe-area-inset-right));
-            }
-
             footer {
                 padding-bottom: max(16px, env(safe-area-inset-bottom));
             }
@@ -911,15 +899,6 @@
 <body>
 
     <header class="brand-header">
-        <a href="login.html" class="header-entrar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                <polyline points="10 17 15 12 10 7" />
-                <line x1="15" y1="12" x2="3" y2="12" />
-            </svg>
-            Entrar
-        </a>
         <div class="header-glow"></div>
         <div class="header-ring"></div>
         <div class="fade-in" style="animation-delay:.05s">
@@ -934,6 +913,15 @@
         </div>
         <h1 class="portal-title fade-in" style="animation-delay:.18s">Portal Público</h1>
         <p class="portal-subtitle fade-in" style="animation-delay:.24s">Região 655 · Londrina/PR</p>
+        <a href="login.html" class="header-entrar fade-in" style="animation-delay:.30s">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            Entrar
+        </a>
     </header>
 
     <main>
@@ -1205,7 +1193,7 @@
                 };
                 document.getElementById('botoesGrid').innerHTML = botoes.map(b => {
                     const c = corMap[b.cor] || corMap.indigo;
-                    return `<a href="${b.url || '#'}" target="_blank" class="portal-btn" style="background:${c.bg};border-color:${c.border};color:${c.color};">
+                    return `<a href="${b.url || '#'}" class="portal-btn" style="background:${c.bg};border-color:${c.border};color:${c.color};">
                         <span>${b.icone || ''}</span>${b.titulo || ''}
                     </a>`;
                 }).join('');
