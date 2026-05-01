@@ -148,7 +148,7 @@ Prioridade baixa (dashboards/ferramentas):
 - [x] Service Worker — cache v2 com WebP, manifest.json com ícones WebP
 - [ ] Lazy loading em todas as páginas (loading="lazy" em ~50 img tags)
 - [x] Criar `.github/workflows/deploy.yml` para CI/CD
-- [ ] Configurar Firebase CI token: `firebase login:ci` e adicionar secrets.FIREBASE_TOKEN no GitHub
+- [x] Configurar secrets.FIREBASE_TOKEN no GitHub via API
 - [ ] Avaliar migração para framework (React/Vue/Vite)
 - [ ] Migrar gradualmente para TypeScript
 - [ ] Adicionar testes E2E (Playwright)
