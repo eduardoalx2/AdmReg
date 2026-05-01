@@ -299,10 +299,10 @@
             </div>
         </div>
 
-        <!-- Container Oculto para Geração de PDF -->
-        <div style="position:absolute;left:-9999px;top:0;width:794px;">
+        <!-- Overlay para Geração de PDF (visível temporariamente durante captura) -->
+        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:white;display:none;overflow:auto;">
             <div id="receipt-content"
-                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;min-height:1123px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;">
+                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;min-height:1123px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0 auto;">
                 <div
                     style="border:2px solid #1f2937;padding:24px;height:100%;display:flex;flex-direction:column;position:relative;">
                     <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
@@ -623,34 +623,24 @@
         window.gerarPdfRecibo = async (id) => {
             const r = recibosList.find(i => i.id === id);
             if (!r) return;
+            const overlay = document.getElementById('pdf-overlay');
+            const receiptEl = document.getElementById('receipt-content');
+            overlay.style.display = 'block';
+            overlay.scrollTop = 0;
             preencherDadosPdf(r);
-            const source = document.getElementById('receipt-content');
-            const clone = source.cloneNode(true);
-            clone.removeAttribute('id');
-            Object.assign(clone.style, {
-                position: 'absolute', left: '0', top: '0',
-                zIndex: '99999', background: 'white',
-                width: '794px', minHeight: '1123px',
-                boxSizing: 'border-box', margin: '0',
-                visibility: 'visible', opacity: '1', overflow: 'visible'
-            });
-            const savedScroll = window.scrollY;
-            window.scrollTo(0, 0);
-            document.body.appendChild(clone);
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 400));
             const opt = {
                 margin: 0,
                 filename: getNomeArquivoPdf(r),
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 794 },
+                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
             try {
-                await html2pdf().set(opt).from(clone).save();
+                await html2pdf().set(opt).from(receiptEl).save();
             } finally {
-                clone.remove();
-                window.scrollTo(0, savedScroll);
+                overlay.style.display = 'none';
             }
         };
 
@@ -808,22 +798,12 @@
             const btn = document.querySelector(`button[onclick="enviarWhatsapp('${id}')"]`);
             if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
 
+            const overlay = document.getElementById('pdf-overlay');
+            const receiptEl = document.getElementById('receipt-content');
+            overlay.style.display = 'block';
+            overlay.scrollTop = 0;
             preencherDadosPdf(r);
-
-            const source = document.getElementById('receipt-content');
-            const clone = source.cloneNode(true);
-            clone.removeAttribute('id');
-            Object.assign(clone.style, {
-                position: 'absolute', left: '0', top: '0',
-                zIndex: '99999', background: 'white',
-                width: '794px', minHeight: '1123px',
-                boxSizing: 'border-box', margin: '0',
-                visibility: 'visible', opacity: '1', overflow: 'visible'
-            });
-            const savedScroll = window.scrollY;
-            window.scrollTo(0, 0);
-            document.body.appendChild(clone);
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 400));
             const nomeArquivo = getNomeArquivoPdf(r);
 
             try {
@@ -831,13 +811,12 @@
                     margin: 0,
                     filename: nomeArquivo,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0, windowWidth: 794 },
+                    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                     pagebreak: { mode: 'avoid-all' }
                 };
-                const pdfBlob = await html2pdf().set(shareOpt).from(clone).output('blob');
-                clone.remove();
-                window.scrollTo(0, savedScroll);
+                const pdfBlob = await html2pdf().set(shareOpt).from(receiptEl).output('blob');
+                overlay.style.display = 'none';
                 const pdfFile = new File([pdfBlob], nomeArquivo, { type: 'application/pdf' });
 
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
@@ -849,8 +828,7 @@
                     return;
                 }
             } catch (err) {
-                clone.remove();
-                window.scrollTo(0, savedScroll);
+                overlay.style.display = 'none';
                 if (err.name === 'AbortError') return;
             } finally {
                 if (btn) { btn.disabled = false; btn.style.opacity = ''; }
