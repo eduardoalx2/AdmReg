@@ -21,7 +21,9 @@
             <p class="text-slate-400 text-sm mt-1">Região 655 • Londrina/PR</p>
         </div>
 
-        <form id="login-form" class="p-8 space-y-6">
+        <div id="avisos-login-container" class="hidden px-8 pt-6 space-y-3"></div>
+
+        <form id="login-form" class="p-8 space-y-6 pt-6">
             <div id="error-msg" class="hidden bg-red-50 text-red-600 p-3 rounded-lg text-[13px] font-semibold border border-red-200 text-center leading-tight"></div>
 
             <div>
@@ -44,8 +46,8 @@
                 <i data-lucide="log-in" class="w-5 h-5"></i> Entrar no Sistema
             </button>
 
-            <div class="border-t border-slate-100 pt-4 flex flex-col gap-2">
-                <a href="agendareg655.html" class="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300 transition-colors text-[11px] font-semibold uppercase tracking-wider">
+            <div id="links-login-container" class="border-t border-slate-100 pt-4 flex flex-col gap-2">
+                <a href="agendaregiao655.html" class="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300 transition-colors text-[11px] font-semibold uppercase tracking-wider">
                     <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Agenda
                 </a>
                 <a href="presencareg655.html" class="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300 transition-colors text-[11px] font-semibold uppercase tracking-wider">
@@ -58,9 +60,65 @@
     <script type="module">
         import { auth, db } from './firebase-config.js';
         import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         lucide.createIcons();
+
+        // Carregar configurações dinâmicas da tela de login
+        async function loadLoginLayout() {
+            try {
+                const snap = await getDoc(doc(db, 'configuracoes', 'layout_login'));
+                if (snap.exists()) {
+                    const dados = snap.data();
+                    
+                    // Renderizar Avisos
+                    if (dados.avisos && dados.avisos.length > 0) {
+                        const avisosAtivos = dados.avisos.filter(a => a.ativo);
+                        if (avisosAtivos.length > 0) {
+                            const cont = document.getElementById('avisos-login-container');
+                            cont.classList.remove('hidden');
+                            cont.innerHTML = '';
+                            
+                            avisosAtivos.forEach(aviso => {
+                                let colors = 'bg-blue-50 text-blue-700 border-blue-200';
+                                let icon = 'info';
+                                if (aviso.tipo === 'alerta') { colors = 'bg-amber-50 text-amber-700 border-amber-200'; icon = 'alert-triangle'; }
+                                if (aviso.tipo === 'urgente') { colors = 'bg-red-50 text-red-700 border-red-200'; icon = 'alert-octagon'; }
+                                
+                                cont.innerHTML += `
+                                    <div class="p-3 rounded-lg border \${colors} flex items-start gap-3">
+                                        <i data-lucide="\${icon}" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                                        <p class="text-xs font-semibold leading-relaxed">\${aviso.texto}</p>
+                                    </div>
+                                `;
+                            });
+                        }
+                    }
+
+                    // Renderizar Links
+                    if (dados.links && dados.links.length > 0) {
+                        const linksAtivos = dados.links.filter(l => l.ativo);
+                        if (linksAtivos.length > 0) {
+                            const contLinks = document.getElementById('links-login-container');
+                            contLinks.innerHTML = '';
+                            linksAtivos.forEach(link => {
+                                contLinks.innerHTML += `
+                                    <a href="\${link.url}" class="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-colors text-[11px] font-semibold uppercase tracking-wider">
+                                        <i data-lucide="\${link.icone || 'link'}" class="w-3.5 h-3.5"></i> \${link.titulo}
+                                    </a>
+                                `;
+                            });
+                        }
+                    }
+                    
+                    lucide.createIcons();
+                }
+            } catch (e) {
+                console.error("Erro ao carregar layout", e);
+            }
+        }
+        
+        loadLoginLayout();
 
         const form = document.getElementById('login-form');
         const btn = document.getElementById('btn-login');

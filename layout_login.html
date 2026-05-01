@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout do Login — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module">
+        import { requireAuth, isAdmin } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!isAdmin()) window.location.replace('index.html');
+        } catch (error) {}
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        .btn-mover { line-height: 1; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+        .btn-mover:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+        .btn-mover:disabled { opacity: 0.2; cursor: not-allowed; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200">
+
+    <!-- TOP BAR -->
+    <div class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center gap-4">
+        <a href="index.html" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-medium">
+            ← Painel
+        </a>
+        <div class="flex-1">
+            <h1 class="text-sm font-bold text-white">Layout do Login</h1>
+            <p class="text-[10px] text-slate-500">Controle dinâmico dos links e avisos exibidos na tela inicial do sistema</p>
+        </div>
+        <button id="btn-salvar" onclick="salvarLayout()" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
+        </button>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading" class="flex items-center justify-center h-64">
+        <div class="flex flex-col items-center gap-3">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p class="text-slate-500 text-sm">Carregando dados...</p>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content" class="hidden max-w-4xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        <!-- LADO ESQUERDO: AVISOS -->
+        <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden shadow-lg h-fit">
+            <div class="px-5 py-4 bg-slate-800/80 border-b border-slate-700/50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="bell" class="w-5 h-5 text-amber-400"></i>
+                    <h2 class="font-bold text-white text-sm uppercase tracking-wider">Avisos</h2>
+                </div>
+                <button onclick="adicionarAviso()" class="text-[11px] font-semibold bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Novo
+                </button>
+            </div>
+            <div id="avisos-container" class="p-4 space-y-3">
+                <!-- rendered by js -->
+            </div>
+        </div>
+
+        <!-- LADO DIREITO: LINKS RÁPIDOS -->
+        <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden shadow-lg h-fit">
+            <div class="px-5 py-4 bg-slate-800/80 border-b border-slate-700/50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="link" class="w-5 h-5 text-blue-400"></i>
+                    <h2 class="font-bold text-white text-sm uppercase tracking-wider">Links de Rodapé</h2>
+                </div>
+                <button onclick="adicionarLink()" class="text-[11px] font-semibold bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Novo
+                </button>
+            </div>
+            <div id="links-container" class="p-4 space-y-3">
+                <!-- rendered by js -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+        <div class="bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2">
+            ✓ Configuração salva com sucesso!
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        lucide.createIcons();
+
+        let dados = {
+            avisos: [],
+            links: [
+                { id: '1', titulo: 'Agenda', url: 'agendaregiao655.html', icone: 'calendar', ativo: true },
+                { id: '2', titulo: 'Registrar Presença', url: 'presencareg655.html', icone: 'check-square', ativo: true }
+            ]
+        };
+
+        function uid() { return '_' + Math.random().toString(36).substr(2, 9); }
+
+        function renderTodos() {
+            renderAvisos();
+            renderLinks();
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // AVISOS
+        // ==========================================
+        function renderAvisos() {
+            const container = document.getElementById('avisos-container');
+            container.innerHTML = '';
+            
+            if (dados.avisos.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-500 py-4 italic">Nenhum aviso configurado.</p>`;
+                return;
+            }
+
+            dados.avisos.forEach((aviso, idx) => {
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-lg border ${aviso.ativo ? 'border-slate-600 bg-slate-800/80' : 'border-slate-700 bg-slate-800/30 opacity-60'} flex flex-col gap-2 relative`;
+                
+                let badgeColor = 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+                let iconeAviso = 'info';
+                if (aviso.tipo === 'alerta') { badgeColor = 'bg-amber-500/20 text-amber-400 border-amber-500/30'; iconeAviso = 'alert-triangle'; }
+                if (aviso.tipo === 'urgente') { badgeColor = 'bg-red-500/20 text-red-400 border-red-500/30'; iconeAviso = 'alert-octagon'; }
+
+                div.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${badgeColor} flex items-center gap-1">
+                            <i data-lucide="${iconeAviso}" class="w-3 h-3"></i> ${aviso.tipo}
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <div class="flex flex-col">
+                                <button onclick="window.moverAviso(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="btn-mover text-slate-500 hover:text-white">▲</button>
+                                <button onclick="window.moverAviso(${idx}, 1)" ${idx === dados.avisos.length - 1 ? 'disabled' : ''} class="btn-mover text-slate-500 hover:text-white">▼</button>
+                            </div>
+                            <button onclick="window.toggleAviso(${idx})" class="text-slate-400 hover:text-white" title="${aviso.ativo ? 'Desativar' : 'Ativar'}">
+                                <i data-lucide="${aviso.ativo ? 'eye' : 'eye-off'}" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.editarAviso(${idx})" class="text-slate-400 hover:text-blue-400">
+                                <i data-lucide="edit-2" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.excluirAviso(${idx})" class="text-slate-400 hover:text-red-400">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-sm text-slate-200 mt-1">${aviso.texto}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.adicionarAviso = () => {
+            const texto = prompt("Digite o texto do aviso:");
+            if (!texto) return;
+            const tipo = prompt("Tipo (info, alerta, urgente):", "info") || "info";
+            dados.avisos.push({ id: uid(), texto, tipo: tipo.toLowerCase(), ativo: true });
+            renderTodos();
+        };
+
+        window.editarAviso = (idx) => {
+            const aviso = dados.avisos[idx];
+            const texto = prompt("Editar texto do aviso:", aviso.texto);
+            if (!texto) return;
+            const tipo = prompt("Editar tipo (info, alerta, urgente):", aviso.tipo);
+            aviso.texto = texto;
+            if (tipo) aviso.tipo = tipo.toLowerCase();
+            renderTodos();
+        };
+
+        window.excluirAviso = (idx) => {
+            if (confirm("Tem certeza que deseja excluir este aviso?")) {
+                dados.avisos.splice(idx, 1);
+                renderTodos();
+            }
+        };
+
+        window.toggleAviso = (idx) => {
+            dados.avisos[idx].ativo = !dados.avisos[idx].ativo;
+            renderTodos();
+        };
+
+        window.moverAviso = (idx, dir) => {
+            const newIdx = idx + dir;
+            if (newIdx >= 0 && newIdx < dados.avisos.length) {
+                const temp = dados.avisos[idx];
+                dados.avisos[idx] = dados.avisos[newIdx];
+                dados.avisos[newIdx] = temp;
+                renderTodos();
+            }
+        };
+
+        // ==========================================
+        // LINKS
+        // ==========================================
+        function renderLinks() {
+            const container = document.getElementById('links-container');
+            container.innerHTML = '';
+
+            if (dados.links.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-500 py-4 italic">Nenhum link configurado.</p>`;
+                return;
+            }
+
+            dados.links.forEach((link, idx) => {
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-lg border ${link.ativo ? 'border-slate-600 bg-slate-800/80' : 'border-slate-700 bg-slate-800/30 opacity-60'} flex items-center justify-between gap-3`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="p-2 bg-slate-900 rounded-lg shrink-0">
+                            <i data-lucide="${link.icone || 'link'}" class="w-4 h-4 text-slate-300"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-slate-200 uppercase truncate">${link.titulo}</p>
+                            <p class="text-[10px] text-slate-500 truncate">${link.url}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <div class="flex flex-col">
+                            <button onclick="window.moverLink(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="btn-mover text-slate-500 hover:text-white">▲</button>
+                            <button onclick="window.moverLink(${idx}, 1)" ${idx === dados.links.length - 1 ? 'disabled' : ''} class="btn-mover text-slate-500 hover:text-white">▼</button>
+                        </div>
+                        <button onclick="window.toggleLink(${idx})" class="text-slate-400 hover:text-white" title="${link.ativo ? 'Desativar' : 'Ativar'}">
+                            <i data-lucide="${link.ativo ? 'eye' : 'eye-off'}" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="window.editarLink(${idx})" class="text-slate-400 hover:text-blue-400">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="window.excluirLink(${idx})" class="text-slate-400 hover:text-red-400">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.adicionarLink = () => {
+            const titulo = prompt("Título do Link (ex: Agenda):");
+            if (!titulo) return;
+            const url = prompt("URL do Link (ex: agendaregiao655.html):");
+            if (!url) return;
+            const icone = prompt("Nome do ícone Lucide (ex: calendar, check-square, link):", "link") || "link";
+            
+            dados.links.push({ id: uid(), titulo, url, icone, ativo: true });
+            renderTodos();
+        };
+
+        window.editarLink = (idx) => {
+            const link = dados.links[idx];
+            const titulo = prompt("Editar Título:", link.titulo);
+            if (!titulo) return;
+            const url = prompt("Editar URL:", link.url);
+            const icone = prompt("Editar Ícone:", link.icone);
+            
+            link.titulo = titulo;
+            if (url) link.url = url;
+            if (icone) link.icone = icone;
+            renderTodos();
+        };
+
+        window.excluirLink = (idx) => {
+            if (confirm("Tem certeza que deseja excluir este link?")) {
+                dados.links.splice(idx, 1);
+                renderTodos();
+            }
+        };
+
+        window.toggleLink = (idx) => {
+            dados.links[idx].ativo = !dados.links[idx].ativo;
+            renderTodos();
+        };
+
+        window.moverLink = (idx, dir) => {
+            const newIdx = idx + dir;
+            if (newIdx >= 0 && newIdx < dados.links.length) {
+                const temp = dados.links[idx];
+                dados.links[idx] = dados.links[newIdx];
+                dados.links[newIdx] = temp;
+                renderTodos();
+            }
+        };
+
+        // ==========================================
+        // CARREGAR E SALVAR
+        // ==========================================
+        async function loadConfig() {
+            try {
+                const snap = await getDoc(doc(db, 'configuracoes', 'layout_login'));
+                if (snap.exists()) {
+                    const dbData = snap.data();
+                    if (dbData.avisos) dados.avisos = dbData.avisos;
+                    if (dbData.links) dados.links = dbData.links;
+                }
+            } catch (e) {
+                console.error("Erro ao carregar configurações de login", e);
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+                renderTodos();
+            }
+        }
+
+        window.salvarLayout = async () => {
+            const btn = document.getElementById('btn-salvar');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Salvando...';
+            
+            try {
+                await setDoc(doc(db, 'configuracoes', 'layout_login'), dados);
+                const t = document.getElementById('toast');
+                t.classList.remove('hidden');
+                setTimeout(() => t.classList.add('hidden'), 3000);
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao salvar: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
+        };
+
+        // Iniciar
+        loadConfig();
+    </script>
+</body>
+</html>
