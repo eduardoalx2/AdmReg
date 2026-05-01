@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        /* Custom scrollbar for tabs */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="logo.png" alt="Logo" class="h-10 w-auto object-contain">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 leading-none">Agenda Região 655</h1>
+                    <p class="text-xs text-slate-500 uppercase tracking-wide mt-1">Todos os Eventos</p>
+                </div>
+            </div>
+            <a href="index.html" class="text-sm font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto py-8 px-4 space-y-6">
+        <!-- Filtros -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-sm font-bold text-slate-700 uppercase mb-4 flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4"></i> Filtros Livres
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Busca Geral</label>
+                    <input type="text" id="filtro-texto" oninput="window.renderizarAgenda()" placeholder="Nome, Local, Ministério..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700 uppercase font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mês/Ano</label>
+                    <input type="month" id="filtro-mes" onchange="window.renderizarAgenda()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700 uppercase font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Evento</label>
+                    <select id="filtro-tipo" onchange="window.renderizarAgenda()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700 uppercase font-medium">
+                        <option value="">Todos os Tipos</option>
+                        <option value="REGIONAL">Regional</option>
+                        <option value="CED">CED</option>
+                        <option value="CND">CND</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="window.limparFiltros()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-lg transition-colors uppercase text-xs tracking-wider flex items-center justify-center gap-2">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Limpar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles de Visualização -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-200 pb-4">
+            
+            <!-- Abas -->
+            <div class="flex gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm w-full sm:w-auto overflow-x-auto hide-scroll">
+                <button onclick="window.setTab('upcoming')" id="tab-upcoming" class="px-5 py-2.5 text-xs font-bold rounded-md transition-colors bg-blue-100 text-blue-700 whitespace-nowrap tracking-wider uppercase">Próximos</button>
+                <button onclick="window.setTab('past')" id="tab-past" class="px-5 py-2.5 text-xs font-bold rounded-md transition-colors text-slate-500 hover:bg-slate-50 whitespace-nowrap tracking-wider uppercase">Anteriores</button>
+                <button onclick="window.setTab('all')" id="tab-all" class="px-5 py-2.5 text-xs font-bold rounded-md transition-colors text-slate-500 hover:bg-slate-50 whitespace-nowrap tracking-wider uppercase">Todos</button>
+            </div>
+            
+            <!-- Botões -->
+            <div class="flex gap-3 w-full sm:w-auto justify-end">
+                <button onclick="window.toggleGroupByMonth()" id="btn-group-month" class="px-4 py-2.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2 uppercase tracking-wider whitespace-nowrap">
+                    <i data-lucide="calendar-days" class="w-4 h-4"></i> <span id="text-group-month">Agrupar por Mês</span>
+                </button>
+                
+                <div class="flex gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm shrink-0">
+                    <button onclick="window.setViewMode('grid')" id="view-grid" class="p-2 rounded-md bg-blue-100 text-blue-700 transition-colors" title="Visualização em Grade">
+                        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="window.setViewMode('list')" id="view-list" class="p-2 rounded-md text-slate-500 hover:bg-slate-50 transition-colors" title="Visualização em Lista">
+                        <i data-lucide="list" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área de Eventos -->
+        <div id="loading" class="text-center py-12">
+            <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4"></i>
+            <p class="text-slate-500 font-medium">Carregando todos os eventos...</p>
+        </div>
+
+        <div id="grid-agenda" class="hidden">
+            <!-- Eventos renderizados via JS -->
+        </div>
+
+        <div id="empty-state" class="text-center py-12 hidden bg-white rounded-xl border border-slate-200">
+            <i data-lucide="calendar-x" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+            <p class="text-slate-500 font-medium">Nenhum evento encontrado com os filtros atuais.</p>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        let agendaList = [];
+        let currentTab = 'upcoming'; // 'upcoming', 'past', 'all'
+        let viewMode = 'grid'; // 'grid', 'list'
+        let groupByMonth = false;
+
+        lucide.createIcons();
+
+        async function carregarAgenda() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "agenda"));
+                agendaList = [];
+                querySnapshot.forEach((doc) => {
+                    agendaList.push({ id: doc.id, ...doc.data() });
+                });
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('grid-agenda').classList.remove('hidden');
+                
+                window.renderizarAgenda();
+            } catch (error) {
+                console.error("Erro ao carregar agenda:", error);
+                document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Erro ao carregar dados.</p>';
+            }
+        }
+
+        window.setTab = (tab) => {
+            currentTab = tab;
+            ['upcoming', 'past', 'all'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tab) {
+                    btn.className = "px-5 py-2.5 text-xs font-bold rounded-md transition-colors bg-blue-100 text-blue-700 whitespace-nowrap tracking-wider uppercase";
+                } else {
+                    btn.className = "px-5 py-2.5 text-xs font-bold rounded-md transition-colors text-slate-500 hover:bg-slate-50 whitespace-nowrap tracking-wider uppercase";
+                }
+            });
+            window.renderizarAgenda();
+        };
+
+        window.setViewMode = (mode) => {
+            viewMode = mode;
+            document.getElementById('view-grid').className = mode === 'grid' 
+                ? "p-2 rounded-md bg-blue-100 text-blue-700 transition-colors" 
+                : "p-2 rounded-md text-slate-500 hover:bg-slate-50 transition-colors";
+            document.getElementById('view-list').className = mode === 'list' 
+                ? "p-2 rounded-md bg-blue-100 text-blue-700 transition-colors" 
+                : "p-2 rounded-md text-slate-500 hover:bg-slate-50 transition-colors";
+            window.renderizarAgenda();
+        };
+
+        window.toggleGroupByMonth = () => {
+            groupByMonth = !groupByMonth;
+            const btn = document.getElementById('btn-group-month');
+            if (groupByMonth) {
+                btn.className = "px-4 py-2.5 text-xs font-bold rounded-lg border border-blue-200 bg-blue-50 text-blue-700 transition-colors shadow-sm flex items-center gap-2 uppercase tracking-wider whitespace-nowrap";
+                document.getElementById('text-group-month').innerText = "Desagrupar Mês";
+            } else {
+                btn.className = "px-4 py-2.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2 uppercase tracking-wider whitespace-nowrap";
+                document.getElementById('text-group-month').innerText = "Agrupar por Mês";
+            }
+            window.renderizarAgenda();
+        };
+
+        window.limparFiltros = () => {
+            document.getElementById('filtro-texto').value = '';
+            document.getElementById('filtro-mes').value = '';
+            document.getElementById('filtro-tipo').value = '';
+            window.renderizarAgenda();
+        };
+
+        function createCard(e, mode) {
+            const el = document.createElement('div');
+            
+            const dataFormatada = e.data ? e.data.split('-').reverse().join('/') : 'Data não definida';
+            let diaSemana = '', dia = '', mes = '';
+            if (e.data) {
+                const [y, m, d] = e.data.split('-');
+                const dateObj = new Date(y, m - 1, d);
+                const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                diaSemana = dias[dateObj.getDay()];
+                dia = d;
+                mes = dateObj.toLocaleString('pt-BR', { month: 'short' }).toUpperCase().replace('.', '');
+            }
+
+            const isLocal = (e.tipo || '').toUpperCase() === 'LOCAL';
+            const tipoCor = isLocal ? 'bg-purple-100 text-purple-700' :
+                            e.tipo === 'REGIONAL' ? 'bg-blue-100 text-blue-700' : 
+                            e.tipo === 'CED' ? 'bg-amber-100 text-amber-700' :
+                            e.tipo === 'CND' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600';
+
+            const logoSrc = isLocal ? 'mini.png' : 'logo.png';
+
+            if (mode === 'grid') {
+                el.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow relative flex flex-col";
+                const logoClass = isLocal ? 'h-10 w-10 object-contain rounded-full shadow-sm bg-white p-1' : 'h-8 w-auto object-contain';
+                
+                el.innerHTML = `
+                    <div class="p-5 flex-1">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${tipoCor}">${e.tipo || 'OUTRO'}</span>
+                                <div class="mt-2 text-xs font-bold text-slate-400 uppercase tracking-wider">${e.ministerio || 'GERAL'}</div>
+                            </div>
+                            <img src="${logoSrc}" alt="Logo" class="${logoClass}" onerror="this.style.display='none'">
+                        </div>
+                        
+                        <h3 class="text-lg font-bold text-slate-800 uppercase leading-tight mb-3">${e.evento || 'Evento sem nome'}</h3>
+                        
+                        <div class="space-y-2 mt-4">
+                            <div class="flex items-center gap-2 text-slate-600">
+                                <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                                <span class="text-sm font-semibold">${dataFormatada} <span class="text-slate-400 font-normal">(${diaSemana})</span></span>
+                            </div>
+                            ${e.horario ? `
+                            <div class="flex items-center gap-2 text-slate-600">
+                                <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+                                <span class="text-sm font-semibold">${e.horario} ${e.duracao ? `<span class="text-slate-400 font-normal">(${e.duracao}h)</span>` : ''}</span>
+                            </div>` : ''}
+                            ${e.endereco || e.local ? `
+                            <div class="flex items-center gap-2 text-slate-600">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                                ${e.endereco 
+                                    ? `<a href="https://maps.google.com/?q=${encodeURIComponent(e.endereco)}" target="_blank" class="text-sm font-semibold truncate hover:text-blue-600 border-b border-dashed border-slate-300 hover:border-blue-400 transition-colors" title="Abrir no Google Maps: ${e.endereco}">${e.local || e.endereco}</a>`
+                                    : `<span class="text-sm font-semibold truncate" title="${e.local}">${e.local}</span>`
+                                }
+                            </div>` : ''}
+                        </div>
+                    </div>
+                    ${e.link ? `
+                    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100">
+                        <a href="${e.link}" target="_blank" class="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1 w-full justify-center">
+                            Acessar Link / Inscrição <i data-lucide="external-link" class="w-3 h-3"></i>
+                        </a>
+                    </div>` : ''}
+                `;
+            } else {
+                // List Mode
+                el.className = "bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow flex flex-col sm:flex-row overflow-hidden";
+                const logoClass = isLocal ? 'h-8 w-8 object-contain rounded-full shadow-sm bg-white p-0.5' : 'h-6 w-auto object-contain';
+                
+                el.innerHTML = `
+                    <div class="flex flex-1 p-4 gap-4 items-center">
+                        <div class="flex flex-col items-center justify-center w-14 shrink-0 border-r border-slate-100 pr-4">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${mes}</span>
+                            <span class="text-2xl font-black text-slate-800 leading-none my-1">${dia}</span>
+                            <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">${diaSemana}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${tipoCor}">${e.tipo || 'OUTRO'}</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">${e.ministerio || 'GERAL'}</span>
+                            </div>
+                            <h3 class="text-sm sm:text-base font-bold text-slate-800 uppercase leading-tight mb-2 truncate" title="${e.evento}">${e.evento || 'Evento sem nome'}</h3>
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+                                ${e.horario ? `<div class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i><span class="font-semibold">${e.horario}</span></div>` : ''}
+                                ${e.endereco || e.local ? `<div class="flex items-center gap-1.5 min-w-0"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                    ${e.endereco 
+                                        ? `<a href="https://maps.google.com/?q=${encodeURIComponent(e.endereco)}" target="_blank" class="font-semibold truncate hover:text-blue-600 border-b border-dashed border-slate-300 hover:border-blue-400 transition-colors" title="Abrir no Google Maps: ${e.endereco}">${e.local || e.endereco}</a>`
+                                        : `<span class="font-semibold truncate">${e.local}</span>`
+                                    }
+                                </div>` : ''}
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex flex-col items-end justify-center shrink-0 pl-4 border-l border-slate-100 gap-3">
+                            <img src="${logoSrc}" alt="Logo" class="${logoClass}" onerror="this.style.display='none'">
+                            ${e.link ? `<a href="${e.link}" target="_blank" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors">Inscrição</a>` : ''}
+                        </div>
+                    </div>
+                    <!-- Mobile footer -->
+                    ${e.link ? `
+                    <div class="sm:hidden px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                        <img src="${logoSrc}" alt="Logo" class="${logoClass}" onerror="this.style.display='none'">
+                        <a href="${e.link}" target="_blank" class="text-blue-600 hover:text-blue-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">Inscrição <i data-lucide="external-link" class="w-3 h-3"></i></a>
+                    </div>` : `
+                    <div class="sm:hidden px-4 py-2 bg-slate-50 border-t border-slate-100 flex justify-start items-center">
+                        <img src="${logoSrc}" alt="Logo" class="${logoClass}" onerror="this.style.display='none'">
+                    </div>`}
+                `;
+            }
+            return el;
+        }
+
+        window.renderizarAgenda = () => {
+            const filtroTexto = document.getElementById('filtro-texto').value.toUpperCase();
+            const filtroMes = document.getElementById('filtro-mes').value;
+            const filtroTipo = document.getElementById('filtro-tipo').value.toUpperCase();
+
+            // Setup Date for filtering
+            const today = new Date().toISOString().split('T')[0];
+
+            let filtrados = agendaList.filter(e => {
+                let textoConcatenado = `${e.evento || ''} ${e.local || ''} ${e.ministerio || ''} ${e.endereco || ''}`.toUpperCase();
+                
+                if ((e.tipo || '').toUpperCase() === 'LOCAL') return false;
+                
+                if (filtroTexto && !textoConcatenado.includes(filtroTexto)) return false;
+                if (filtroMes && !(e.data || '').startsWith(filtroMes)) return false;
+                if (filtroTipo && (e.tipo || '').toUpperCase() !== filtroTipo) return false;
+                
+                const isPast = (e.data || '') < today;
+                
+                if (currentTab === 'upcoming' && isPast) return false;
+                if (currentTab === 'past' && !isPast) return false;
+                
+                return true;
+            });
+
+            // Sorting
+            filtrados.sort((a, b) => {
+                const dataA = a.data || '';
+                const dataB = b.data || '';
+                // Se 'past', decrescente (mais recente para mais antigo)
+                // Se 'upcoming' ou 'all', crescente (mais próximo para mais distante)
+                return currentTab === 'past' ? dataB.localeCompare(dataA) : dataA.localeCompare(dataB);
+            });
+
+            const grid = document.getElementById('grid-agenda');
+            const emptyState = document.getElementById('empty-state');
+            
+            grid.innerHTML = '';
+            grid.className = '';
+
+            if (filtrados.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                grid.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+            }
+
+            if (groupByMonth) {
+                grid.className = 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start';
+                
+                const grupos = {};
+                filtrados.forEach(e => {
+                    const monthKey = e.data ? e.data.substring(0, 7) : 'Sem Data'; // YYYY-MM
+                    if (!grupos[monthKey]) grupos[monthKey] = [];
+                    grupos[monthKey].push(e);
+                });
+
+                const monthKeys = Object.keys(grupos).sort((a, b) => {
+                    if (a === 'Sem Data') return 1;
+                    if (b === 'Sem Data') return -1;
+                    return currentTab === 'past' ? b.localeCompare(a) : a.localeCompare(b);
+                });
+
+                monthKeys.forEach(key => {
+                    let title = key;
+                    let yearStr = '';
+                    if (key !== 'Sem Data') {
+                        const [y, m] = key.split('-');
+                        const dateObj = new Date(parseInt(y), parseInt(m) - 1, 1);
+                        title = dateObj.toLocaleString('pt-BR', { month: 'long' }).toUpperCase();
+                        yearStr = y;
+                    }
+                    
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = "flex flex-col rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-white";
+                    
+                    let htmlBody = '';
+                    grupos[key].forEach((e, idx) => {
+                        const isLocal = (e.tipo || '').toUpperCase() === 'LOCAL';
+                        const tipoCor = isLocal ? 'bg-purple-50 text-purple-600 border border-purple-200' :
+                                        e.tipo === 'REGIONAL' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 
+                                        e.tipo === 'CED' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                                        e.tipo === 'CND' ? 'bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200' : 'bg-slate-50 text-slate-600 border border-slate-200';
+                        
+                        let dia = '', diaSemana = '';
+                        if (e.data) {
+                            const [y, m, d] = e.data.split('-');
+                            const dateObj = new Date(y, m - 1, d);
+                            dia = d;
+                            const dias = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+                            diaSemana = dias[dateObj.getDay()];
+                        }
+                        
+                        const borderClass = idx !== grupos[key].length - 1 ? 'border-b border-slate-100' : '';
+
+                        htmlBody += `
+                            <div class="flex gap-4 p-4 ${borderClass} hover:bg-slate-50 transition-colors">
+                                <div class="flex flex-col items-center justify-start w-10 shrink-0">
+                                    <span class="text-xl font-black text-slate-800 leading-none">${dia}</span>
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase mt-1 tracking-widest">${diaSemana}</span>
+                                </div>
+                                <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                    <h4 class="text-[11px] font-bold text-slate-800 uppercase leading-snug mb-1" title="${e.evento || ''}">${e.evento || 'Evento sem nome'}</h4>
+                                    <div class="flex flex-wrap items-center gap-2 mt-0.5">
+                                        <span class="inline-block px-1.5 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wider ${tipoCor} shrink-0">${e.tipo || 'OUTRO'}</span>
+                                        ${e.endereco || e.local ? `
+                                            <div class="flex items-center gap-1 text-slate-500 min-w-0">
+                                                <i data-lucide="map-pin" class="w-2.5 h-2.5 shrink-0"></i>
+                                                ${e.endereco 
+                                                    ? `<a href="https://maps.google.com/?q=${encodeURIComponent(e.endereco)}" target="_blank" class="text-[9px] font-semibold truncate hover:text-blue-600 border-b border-dashed border-slate-300 hover:border-blue-400 transition-colors" title="Abrir no Google Maps: ${e.endereco}">${e.local || e.endereco}</a>`
+                                                    : `<span class="text-[9px] font-semibold truncate" title="${e.local}">${e.local}</span>`
+                                                }
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    groupDiv.innerHTML = `
+                        <div class="bg-[#1e293b] text-white px-5 py-3 flex justify-between items-center shrink-0">
+                            <h3 class="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                                ${title} <span class="text-slate-400 font-medium">${yearStr}</span>
+                            </h3>
+                            <span class="bg-slate-700/80 text-slate-200 w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-black border border-slate-600/50">${grupos[key].length}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            ${htmlBody}
+                        </div>
+                    `;
+                    grid.appendChild(groupDiv);
+                });
+            } else {
+                grid.className = viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-4';
+                filtrados.forEach(e => grid.appendChild(createCard(e, viewMode)));
+            }
+
+            lucide.createIcons();
+        };
+
+        carregarAgenda();
+    </script>
+</body>
+</html>
