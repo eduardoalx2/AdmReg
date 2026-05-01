@@ -182,8 +182,16 @@
                             if (item.tipo === 'item-featured') className = 'item item-featured';
                             if (item.tipo === 'highlight-box') className = 'highlight-box';
                             if (item.tipo === 'avante-box') className = 'avante-box';
+                            if (item.tipo === 'imagem') className = 'item'; // Usar caixa básica para imagem
 
-                            let html = `<div class="${className}">${item.conteudo}`;
+                            let html = `<div class="${className}">`;
+                            
+                            if (item.tipo === 'imagem') {
+                                html += `<img src="${item.conteudo}" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 4px;" alt="Imagem da pauta">`;
+                            } else {
+                                html += item.conteudo;
+                            }
+
                             if (item.notes) {
                                 html += `<div class="notes-area" contenteditable="true" id="note_${sIdx}_${iIdx}">Anotações...</div>`;
                             }
