@@ -630,7 +630,7 @@
             preencherDadosPdf(r);
             await new Promise(resolve => setTimeout(resolve, 400));
             const opt = {
-                margin: [6, 6, 6, 6],
+                margin: 0,
                 filename: getNomeArquivoPdf(r),
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
@@ -808,7 +808,7 @@
 
             try {
                 const shareOpt = {
-                    margin: [6, 6, 6, 6],
+                    margin: 0,
                     filename: nomeArquivo,
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
