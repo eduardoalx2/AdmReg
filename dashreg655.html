@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caixa Região 655 - Gestão de Igrejas</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://unpkg.com/lucide@0.300.0"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -16,7 +16,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .chart-container { position: relative; height: 320px; width: 100%; }
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.9); display: flex;
@@ -126,13 +125,13 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 print:hidden">
+        <div class="grid grid-cols-1 gap-6 mb-8 print:hidden">
             <!-- Filtros -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
                 <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-filter text-blue-600"></i> Filtros de Análise
                 </h3>
-                <div class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label class="text-[11px] font-bold text-slate-400 uppercase">Igreja</label>
                         <select id="filterIgreja" onchange="window.applyFilters()" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
@@ -155,25 +154,11 @@
                             <option value="alfabetica">Igreja (A-Z)</option>
                         </select>
                     </div>
-                    <button onclick="window.clearFilters()" class="w-full pt-2 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors">
-                        Resetar Filtros
-                    </button>
-                </div>
-            </div>
-
-            <!-- Gráfico de Composição (Pizza) -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1">
-                <h3 class="font-bold text-slate-800 mb-6 text-sm uppercase tracking-wide">Divisão do Recebimento</h3>
-                <div class="chart-container">
-                    <canvas id="chartComposicao"></canvas>
-                </div>
-            </div>
-
-            <!-- Gráfico de Evolução (Barras Empilhadas) -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1">
-                <h3 class="font-bold text-slate-800 mb-6 text-sm uppercase tracking-wide">Evolução Mensal</h3>
-                <div class="chart-container">
-                    <canvas id="chartEvolucao"></canvas>
+                    <div class="flex items-end">
+                        <button onclick="window.clearFilters()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 rounded-xl text-xs uppercase tracking-wider transition-colors">
+                            Resetar Filtros
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -304,7 +289,6 @@
 
         window.appDb = [];
         window.activeData = [];
-        window.chartInstances = { composicao: null, evolucao: null };
 
         const safeParseDate = (s) => {
             if (!s || typeof s !== 'string' || !s.includes('/')) return new Date(0);
@@ -328,9 +312,12 @@
                 querySnapshot.forEach((doc) => {
                     const r = doc.data();
                     
-                    let comp = r.referenceDate;
-                    if (!comp && r.dataEmissao && r.dataEmissao.length >= 10) {
+                    let comp = '';
+                    if (r.dataEmissao && r.dataEmissao.length >= 10) {
                         comp = r.dataEmissao.substring(3);
+                    }
+                    if (!comp && r.referenceDate) {
+                        comp = r.referenceDate;
                     }
                     comp = comp || "S/D";
 
@@ -378,7 +365,7 @@
             }
 
             const meses = [...new Set(window.appDb.map(d => d.mesFiltro))].sort((a, b) => {
-                return safeParseDate(a) - safeParseDate(b);
+                return safeParseDate(b) - safeParseDate(a);
             });
             
             const mSel = document.getElementById('filterMes');
@@ -446,66 +433,7 @@
             const igrejasUnicas = new Set(window.activeData.map(d => d.igreja)).size;
             document.getElementById('resumoContagem').innerHTML = `<span class="text-blue-600">${totalRecibos}</span> recibo(s) gerado(s) &bull; <span class="text-blue-600">${igrejasUnicas}</span> igreja(s) pagante(s)`;
 
-            window.renderCharts(totals);
             window.renderTable();
-        };
-
-        window.renderCharts = (totals) => {
-            if(window.chartInstances.composicao) window.chartInstances.composicao.destroy();
-            window.chartInstances.composicao = new Chart(document.getElementById('chartComposicao'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Taxa Regional', 'Taxa Coord.', 'Seguro Vida', 'Outros'],
-                    datasets: [{
-                        data: [totals.reg, totals.coord, totals.seg, totals.out],
-                        backgroundColor: ['#2563eb', '#6366f1', '#8b5cf6', '#94a3b8'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '75%',
-                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 10 } } } }
-                }
-            });
-
-            const monthMap = {};
-            window.activeData.forEach(d => {
-                const mY = d.mesFiltro;
-                if(!monthMap[mY]) monthMap[mY] = { r: 0, c: 0, s: 0, o: 0 };
-                monthMap[mY].r += d.regional;
-                monthMap[mY].c += d.coord;
-                monthMap[mY].s += d.seguro;
-                monthMap[mY].o += d.outros;
-            });
-
-            const labels = Object.keys(monthMap).sort((a, b) => {
-                return safeParseDate(a) - safeParseDate(b);
-            });
-
-            if(window.chartInstances.evolucao) window.chartInstances.evolucao.destroy();
-            window.chartInstances.evolucao = new Chart(document.getElementById('chartEvolucao'), {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Regional', data: labels.map(l => monthMap[l].r), backgroundColor: '#2563eb' },
-                        { label: 'Coord', data: labels.map(l => monthMap[l].c), backgroundColor: '#6366f1' },
-                        { label: 'Seguro', data: labels.map(l => monthMap[l].s), backgroundColor: '#8b5cf6' },
-                        { label: 'Outros', data: labels.map(l => monthMap[l].o), backgroundColor: '#94a3b8' }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { 
-                        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } }, 
-                        y: { stacked: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } } 
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
         };
 
         const numeroPorExtenso = (v) => {
