@@ -322,7 +322,7 @@
         };
 
         window.inserirTag = (btn, tagInicio, tagFim) => {
-            const textarea = btn.closest('div').nextElementSibling;
+            const textarea = btn.closest('div.flex.items-center').nextElementSibling;
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
             const text = textarea.value;
