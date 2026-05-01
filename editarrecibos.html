@@ -152,9 +152,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabela-recibos" class="divide-y divide-slate-100">
-                        <tr>
-                            <td colspan="9" class="text-center py-6 text-slate-400">Carregando dados do Firebase...</td>
-                        </tr>
+                        ${Array.from({length:5},()=>`<tr class="animate-pulse"><td><div class="h-3 bg-slate-200 rounded w-16"></div></td><td><div class="h-3 bg-slate-200 rounded w-24"></div></td><td><div class="h-3 bg-slate-200 rounded w-20"></div></td><td><div class="h-3 bg-slate-200 rounded w-12"></div></td><td><div class="h-3 bg-slate-200 rounded w-14"></div></td><td><div class="h-3 bg-slate-200 rounded w-12"></div></td><td><div class="h-3 bg-slate-200 rounded w-14"></div></td><td><div class="h-3 bg-slate-200 rounded w-8 mx-auto"></div></td><td><div class="h-3 bg-slate-200 rounded w-8 mx-auto"></div></td></tr>`).join('')}
                     </tbody>
                 </table>
             </div>
@@ -456,7 +454,7 @@
 
         async function carregarRecibos() {
             try {
-                tabela.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-slate-400"><div class="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div>Carregando...</td></tr>';
+                tabela.innerHTML = Array.from({length:5},()=>`<tr class="animate-pulse"><td><div class="h-3 bg-slate-200 rounded w-16"></div></td><td><div class="h-3 bg-slate-200 rounded w-24"></div></td><td><div class="h-3 bg-slate-200 rounded w-20"></div></td><td><div class="h-3 bg-slate-200 rounded w-12"></div></td><td><div class="h-3 bg-slate-200 rounded w-14"></div></td><td><div class="h-3 bg-slate-200 rounded w-12"></div></td><td><div class="h-3 bg-slate-200 rounded w-14"></div></td><td><div class="h-3 bg-slate-200 rounded w-8 mx-auto"></div></td><td><div class="h-3 bg-slate-200 rounded w-8 mx-auto"></div></td></tr>`).join('');
 
                 const querySnapshot = await getDocs(collection(db, "recibos"));
                 recibosList = [];

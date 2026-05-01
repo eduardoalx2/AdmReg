@@ -73,7 +73,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabela-usuarios" class="divide-y divide-slate-100">
-                        <tr><td colspan="4" class="text-center py-6 text-slate-400">Carregando usuários...</td></tr>
+                        ${Array.from({length:5},()=>`<tr class="animate-pulse"><td><div class="h-4 bg-slate-200 rounded w-48"></div></td><td><div class="h-4 bg-slate-200 rounded w-32"></div></td><td><div class="h-4 bg-slate-200 rounded w-20"></div></td><td><div class="h-4 bg-slate-200 rounded w-12 mx-auto"></div></td></tr>`).join('')}
                     </tbody>
                 </table>
             </div>

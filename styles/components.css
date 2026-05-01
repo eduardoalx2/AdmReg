@@ -34,6 +34,15 @@
 .skeleton-line { height: 12px; margin-bottom: 8px; }
 .skeleton-line:last-child { width: 60%; }
 .skeleton-card { height: 80px; margin-bottom: 12px; }
+.skeleton-row {
+    display: flex; gap: 12px; align-items: center;
+    padding: 10px 14px; margin-bottom: 6px;
+    border-radius: 10px;
+}
+.skeleton-circle { border-radius: 50%; }
+.skeleton-text { height: 14px; border-radius: 6px; }
+.skeleton-btn { height: 32px; width: 80px; border-radius: 8px; }
+.skeleton-table-row { display: flex; gap: 16px; padding: 10px 0; }
 
 /* ===== TOAST NOTIFICATION ===== */
 .toast {
@@ -48,6 +57,7 @@
 .toast.show { transform: translateY(0); opacity: 1; }
 .toast-error { background: #dc2626; }
 .toast-warning { background: #d97706; }
+.toast-info { background: #3b82f6; }
 
 /* ===== MODAL ===== */
 .modal-overlay {

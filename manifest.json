@@ -1,0 +1,26 @@
+{
+  "name": "Portal Região 655",
+  "short_name": "Região 655",
+  "description": "Portal de gestão eclesiástica — IEQ Região 655, Londrina/PR",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0c0f1a",
+  "theme_color": "#0c0f1a",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/mini.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

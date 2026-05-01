@@ -8,20 +8,27 @@
     <script src="https://unpkg.com/lucide@0.300.0/dist/umd/lucide.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="styles/main.css?v=2">
     <link rel="stylesheet" href="styles/admin.css?v=2">
     <link rel="stylesheet" href="styles/pastor.css?v=2">
+    <link rel="stylesheet" href="styles/components.css?v=2">
     <script>
         // Auth gate: verificação inicial rápida (proteção real via requireAuth no módulo abaixo)
         const _ps = localStorage.getItem('userPerms');
         const _em = localStorage.getItem('userEmail');
         if (!_ps || !_em) window.location.replace('login.html');
+
+        // Registrar Service Worker (PWA)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
     </script>
 </head>
 <body>
 
     <!-- Banner modo simulação (visível apenas quando admin simula outro usuário) -->
-    <div id="banner-simulacao" style="display:none;background:rgba(245,158,11,0.1);border-bottom:1px solid rgba(245,158,11,0.25);padding:10px 20px;position:relative;z-index:50;align-items:center;gap:12px;">
+    <div id="banner-simulacao" role="status" style="display:none;background:rgba(245,158,11,0.1);border-bottom:1px solid rgba(245,158,11,0.25);padding:10px 20px;position:relative;z-index:50;align-items:center;gap:12px;">
         <span style="font-size:16px;flex-shrink:0;">👁</span>
         <span style="font-size:12px;font-weight:600;color:rgba(245,158,11,0.9);">Modo Simulação: <strong id="sim-label"></strong></span>
         <a href="visualizar_como.html" style="font-size:10px;color:rgba(245,158,11,0.6);text-decoration:none;font-weight:700;white-space:nowrap;flex-shrink:0;">Trocar ↗</a>
@@ -34,9 +41,9 @@
                 <p id="top-user-name" style="font-size:12px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px;"></p>
                 <p id="top-user-role" style="font-size:9px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.2em;line-height:1;"></p>
             </div>
-            <a id="btn-ir-simular" href="visualizar_como.html" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:8px 12px;border-radius:12px;font-size:10px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;" title="Simular visão de outro usuário/nível">👁 Simular</a>
-            <button onclick="fazerLogout()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:white;padding:10px;border-radius:12px;cursor:pointer;transition:all 0.2s;" title="Sair">
-                <i class="ph ph-sign-out" style="font-size:18px;"></i>
+            <a id="btn-ir-simular" href="visualizar_como.html" aria-label="Simular visão de outro usuário" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:8px 12px;border-radius:12px;font-size:10px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;" title="Simular visão de outro usuário/nível">👁 Simular</a>
+            <button onclick="fazerLogout()" aria-label="Sair do sistema" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:white;padding:10px;border-radius:12px;cursor:pointer;transition:all 0.2s;" title="Sair">
+                <i class="ph ph-sign-out" style="font-size:18px;" aria-hidden="true"></i>
             </button>
         </div>
         <div class="header-glow"></div>
@@ -63,10 +70,9 @@
     </div>
 
     <main id="main-content">
-        <div style="display:flex;align-items:center;justify-content:center;height:200px;">
-            <div style="text-align:center;">
-                <div style="width:32px;height:32px;border:2px solid rgba(99,179,237,0.3);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
-                <p style="color:var(--text-muted);font-size:13px;">Carregando...</p>
+        <div class="admin-main" style="max-width:860px;margin:0 auto;padding:20px 24px;">
+            <div class="cards-grid">
+                ${Array.from({length:9},()=>`<div class="skeleton" style="height:86px;"></div>`).join('')}
             </div>
         </div>
     </main>
@@ -136,6 +142,9 @@
         import { collection, getDocs, addDoc, doc, getDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { esc, escA, fmt, periodoRefToChave, calcQuintoDiaUtil } from './js/utils.js?v=2';
         import { requireAuth, hasPermission, hasAnyPermission, isAdmin as checkIsAdmin, logout } from './js/auth.js';
+        import { toastError, toastWarning, setupGlobalErrorHandling } from './js/toast.js';
+
+        setupGlobalErrorHandling();
 
         // ===== DADOS DO USUÁRIO (verificação segura via Firestore) =====
         let authData;
@@ -236,7 +245,7 @@
             try {
                 const snap = await getDoc(doc(db, 'configuracoes', 'layout'));
                 if (snap.exists() && snap.data().grupos?.length) grupos = snap.data().grupos;
-            } catch(e) { console.warn('Layout Firestore indisponível, usando padrão.', e); }
+            } catch(e) { console.warn('Layout Firestore indisponível, usando padrão.', e); toastWarning('Carregando layout padrão...'); }
 
             renderAdmin(grupos, userPerms);
         }
@@ -507,6 +516,7 @@
 
             } catch(e) {
                 console.error(e);
+                toastError('Falha ao carregar dados. Verifique sua conexão.');
                 document.getElementById('main-content').innerHTML = `<div class="pastor-main" style="text-align:center;padding:60px 16px;">
                     <p style="color:#f87171;font-size:14px;font-weight:700;">Erro de comunicação com o servidor.</p>
                     <p style="color:var(--text-muted);font-size:12px;margin-top:8px;">${e.message||e}</p>
@@ -847,6 +857,7 @@
                     </div>`;
                 } catch(e) {
                     console.error('Erro ao marcar ciente:', e);
+                    toastError('Erro ao confirmar leitura. Tente novamente.');
                     btn.disabled = false;
                     btn.textContent = '✓ Ciente — li e entendi';
                 }
