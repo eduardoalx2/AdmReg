@@ -3,31 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorteador de Igrejas - Região 655</title>
+    <title>Sorteio de Igrejas — Região 655</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
     <script type="module">
         import { requireAuth } from './js/auth.js';
         try { await requireAuth(); } catch (e) {}
     </script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: #f1f5f9;
-            color: #1e293b;
         }
 
         .header-gradient {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
-        .brand-text {
-            line-height: 1.2;
-        }
 
         .roulette-container {
             position: relative;
-            width: 300px;
-            height: 300px;
+            width: 320px;
+            height: 320px;
             margin: 0 auto;
         }
 
@@ -35,26 +33,26 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            border: 8px solid #fff;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-            transition: transform 6s cubic-bezier(0.15, 0, 0.15, 1);
+            border: 6px solid #fff;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.05);
+            transition: transform 6s cubic-bezier(0.12, 0, 0.12, 1);
         }
 
         .pointer {
             position: absolute;
-            top: -15px;
+            top: -18px;
             left: 50%;
             transform: translateX(-50%);
-            width: 30px;
-            height: 30px;
-            background: #6366f1;
+            width: 32px;
+            height: 32px;
+            background: #4f46e5;
             clip-path: polygon(50% 100%, 0 0, 100% 0);
             z-index: 10;
-            filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
+            filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.15));
         }
 
         .church-card {
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
             user-select: none;
         }
 
@@ -63,14 +61,14 @@
         }
 
         .church-card.active {
-            border-color: #6366f1;
+            border-color: #4f46e5;
             background-color: #fff;
         }
 
         .church-card.inactive {
-            opacity: 0.5;
+            opacity: 0.45;
             background-color: #f8fafc;
-            border-color: transparent;
+            border-color: #e2e8f0;
         }
 
         @keyframes confetti {
@@ -85,88 +83,74 @@
             z-index: 100;
             animation: confetti 3s linear forwards;
         }
-
-        .footer-regional {
-            margin-top: 40px;
-            padding: 30px 0;
-            border-top: 1px solid #e2e8f0;
-            text-align: center;
-            font-size: 12px;
-            color: #64748b;
-            line-height: 1.6;
-        }
-        .footer-regional b {
-            color: #334155;
-        }
     </style>
 </head>
-<body>
+<body class="min-h-screen">
 
-    <header class="w-full shadow-md bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <a href="javascript:history.back()" class="flex items-center gap-4 group transition-all duration-300">
-                    <img src="logo.png" alt="Logo IEQ" class="h-16 w-auto object-contain" onerror="this.src='https://via.placeholder.com/60?text=IEQ'">
-                    <div class="brand-text border-l-2 border-gray-200 pl-4">
-                        <div class="text-lg font-bold text-slate-800 group-hover:text-blue-700 transition-colors">
-                            Região 655 - Londrina/PR
-                        </div>
-                        <div class="text-sm font-medium text-slate-500 uppercase tracking-tight">
-                            Igreja do Evangelho Quadrangular
-                        </div>
+    <!-- CABEÇALHO -->
+    <header class="w-full shadow-sm bg-white border-b sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
                     </div>
                 </a>
-
-                <div class="flex items-center">
-                    <a href="javascript:history.back()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-slate-800 hover:bg-slate-700 focus:outline-none transition-all shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                        </svg>
-                        Voltar
-                    </a>
-                </div>
+                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                    <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
+                </a>
             </div>
         </div>
 
-        <div class="header-gradient py-8 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-7xl mx-auto">
-                <h1 class="text-3xl md:text-5xl font-extrabold text-white tracking-tight uppercase">
-                    Sorteio de Sexta
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase">
+                    🎯 Sorteio de Igrejas — Reunião de Oração
                 </h1>
-                <div class="mt-4 flex items-center gap-2">
-                    <span class="h-1 w-12 bg-blue-500 rounded-full"></span>
-                    <span class="h-1 w-4 bg-blue-400 rounded-full"></span>
-                </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-10">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
             
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-                
-                <div class="flex flex-col items-center">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-slate-800">Girar a Roleta</h2>
-                        <p class="text-slate-500 text-sm">Clique para sortear a igreja da semana</p>
-                    </div>
+            <!-- COLUNA ESQUERDA: Roleta -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
+                    <div class="flex flex-col items-center">
+                        <div class="text-center mb-6">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Gire a Roleta</p>
+                            <h2 class="text-lg font-extrabold text-slate-800">Sortear Igreja da Semana</h2>
+                        </div>
 
-                    <div class="roulette-container mb-8">
-                        <div class="pointer"></div>
-                        <canvas id="wheel"></canvas>
-                    </div>
+                        <div class="roulette-container mb-8">
+                            <div class="pointer"></div>
+                            <canvas id="wheel"></canvas>
+                        </div>
 
-                    <button id="spinBtn" class="w-full max-w-sm py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                        SORTEAR AGORA
-                    </button>
+                        <button id="spinBtn" class="w-full max-w-sm py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-95 text-sm uppercase tracking-wider">
+                            Sortear Agora
+                        </button>
+
+                        <p id="wheelHint" class="text-[10px] text-slate-400 mt-4 text-center">
+                            Selecione as igrejas participantes ao lado e clique para sortear
+                        </p>
+                    </div>
                 </div>
+            </div>
 
-                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                    <div class="flex items-center justify-between mb-6">
+            <!-- COLUNA DIREITA: Lista de Igrejas -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                    <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h3 class="font-bold text-slate-800">Igrejas Participantes</h3>
-                            <p class="text-xs text-slate-500">Total ativo: <span id="activeCount" class="font-bold text-indigo-600">0</span></p>
+                            <h3 class="font-bold text-slate-800 text-sm">Igrejas Participantes</h3>
+                            <p class="text-[10px] text-slate-400 mt-0.5">
+                                Ativas: <span id="activeCount" class="font-bold text-indigo-600">0</span> de <span id="totalCount" class="font-bold text-slate-600">0</span>
+                            </p>
                         </div>
                         <div class="flex flex-col text-right gap-1">
                             <button onclick="toggleAll(true)" class="text-[10px] font-bold text-indigo-600 hover:underline uppercase">Ativar Todas</button>
@@ -174,87 +158,114 @@
                         </div>
                     </div>
                     
-                    <div id="churchList" class="space-y-2"></div>
+                    <div id="churchListContainer" class="max-h-[480px] overflow-y-auto pr-1 space-y-1.5">
+                        <div id="churchList" class="space-y-1.5"></div>
+                        <div id="churchLoading" class="flex items-center justify-center py-12 gap-3">
+                            <div class="animate-spin rounded-full h-5 w-5 border-2 border-indigo-600 border-t-transparent"></div>
+                            <span class="text-xs text-slate-400">Carregando igrejas...</span>
+                        </div>
+                    </div>
                 </div>
-
             </div>
         </div>
-
-        <footer class="footer-regional">
-            <p>Desenvolvido por: <b>Escritório Regional | Região 655 - Londrina/PR |</b></p>
-            <p>Superintendente: <b>Rev. Valdir Ávila Ramos</b></p>
-            <p>Secretário Regional: <b>Pr. Eduardo Silva</b></p>
-        </footer>
     </main>
 
+    <!-- MODAL VENCEDOR -->
     <div id="winnerModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl transform transition-all scale-110">
             <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
+                <i data-lucide="sparkles" class="w-10 h-10"></i>
             </div>
-            <h3 class="text-slate-500 font-bold uppercase text-xs tracking-widest mb-2">Igreja Sorteada!</h3>
-            <h2 id="modalWinnerName" class="text-2xl font-extrabold text-slate-800 mb-1 leading-tight"></h2>
-            <p class="text-indigo-600 font-bold text-sm mb-6">Sexta-feira: 22:30h às 23:30h</p>
+            <h3 class="text-slate-500 font-bold uppercase text-[10px] tracking-widest mb-2">Igreja Sorteada!</h3>
+            <h2 id="modalWinnerName" class="text-xl font-extrabold text-slate-800 mb-1 leading-tight"></h2>
+            <p id="modalWinnerAddress" class="text-slate-500 text-xs mb-0.5"></p>
+            <p class="text-indigo-600 font-bold text-sm mb-6">Sexta-feira · 22:30h às 23:30h</p>
             
             <div class="space-y-3">
-                <button onclick="shareToWhatsApp()" class="w-full py-4 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-100">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.675 1.439 5.662 1.439h.005c6.554 0 11.89-5.335 11.893-11.892a11.826 11.826 0 00-3.48-8.413Z"/></svg>
-                    WhatsApp
+                <button onclick="shareToWhatsApp()" class="w-full py-3.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 text-sm">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
+                    Compartilhar no WhatsApp
                 </button>
                 <button onclick="closeModal()" class="w-full py-3 text-slate-400 font-semibold hover:text-slate-600 transition-colors text-sm">
-                    Voltar
+                    Fechar
                 </button>
             </div>
         </div>
     </div>
 
-    <script>
-        const churchData = [
-            "0252 - IEQ Central", "1328 - IEQ Piza", "3441 - IEQ Zona Norte",
-            "3744 - IEQ Alto da Boa Vista", "3852 - IEQ Indusville", "4016 - IEQ Monaco",
-            "4394 - IEQ Leste", "6018 - IEQ São Jorge", "9078 - IEQ Farid Libos",
-            "60205 - IEQ Sabará", "60328 - IEQ Conj. Luis de Sá", "63236 - IEQ Colúmbia",
-            "63288 - IEQ Carnascialli"
-        ];
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        let churches = churchData.map((name, index) => ({
-            id: index,
-            name: name,
-            active: true,
-            color: `hsl(${(index * 360) / churchData.length}, 70%, 55%)`
-        }));
+        let churches = [];
+        let lastWinner = "";
+        let lastWinnerAddress = "";
 
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
         const spinBtn = document.getElementById('spinBtn');
         const churchListEl = document.getElementById('churchList');
+        const churchLoadingEl = document.getElementById('churchLoading');
         const activeCountEl = document.getElementById('activeCount');
+        const totalCountEl = document.getElementById('totalCount');
         const winnerModal = document.getElementById('winnerModal');
         const modalWinnerName = document.getElementById('modalWinnerName');
+        const modalWinnerAddress = document.getElementById('modalWinnerAddress');
 
         let currentRotation = 0;
         let isSpinning = false;
-        let lastWinner = "";
 
-        // Função inteligente para calcular a data da próxima reunião (Sexta 22:30)
+        async function loadChurches() {
+            try {
+                const snap = await getDocs(collection(db, "igrejas"));
+                const loaded = [];
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const cod = String(d.codigo || '');
+                    const nome = d.nome || '';
+                    const endereco = d.endereco || '';
+                    if (nome) {
+                        loaded.push({
+                            id: doc.id,
+                            code: cod,
+                            name: nome,
+                            fullName: cod ? `${cod} - ${nome}` : nome,
+                            address: endereco,
+                            active: true,
+                            color: `hsl(${(loaded.length * 360) / Math.max(loaded.length + 1, 1)}, 65%, 50%)`
+                        });
+                    }
+                });
+
+                loaded.sort((a, b) => {
+                    const ca = parseInt(a.code) || 0;
+                    const cb = parseInt(b.code) || 0;
+                    return ca - cb;
+                });
+
+                loaded.forEach((c, i) => {
+                    c.color = `hsl(${(i * 360) / Math.max(loaded.length, 1)}, 65%, 50%)`;
+                });
+
+                churches = loaded;
+                churchLoadingEl.style.display = 'none';
+                renderList();
+                drawWheel();
+                updateCount();
+            } catch (e) {
+                churchLoadingEl.innerHTML = `<p class="text-rose-500 text-xs">Erro ao carregar igrejas: ${e.message}</p>`;
+            }
+        }
+
         function getNextFridayMeetingDate() {
             const now = new Date();
             const target = new Date();
-            
-            // Define o dia para a próxima sexta (5)
             target.setDate(now.getDate() + (7 + 5 - now.getDay()) % 7);
-            
-            // Define o horário limite de 22:35 para o dia da reunião
             const limitTime = new Date(target);
             limitTime.setHours(22, 35, 0, 0);
-
-            // Se hoje for sexta e já passou das 22:35, salta para a próxima semana
             if (now.getTime() > limitTime.getTime()) {
                 target.setDate(target.getDate() + 7);
             }
-            
             return target;
         }
 
@@ -286,15 +297,18 @@
             churchListEl.innerHTML = '';
             churches.forEach(church => {
                 const div = document.createElement('div');
-                div.className = `church-card flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer ${church.active ? 'active' : 'inactive'}`;
+                div.className = `church-card flex items-center justify-between p-2.5 rounded-xl border-2 cursor-pointer ${church.active ? 'active' : 'inactive'}`;
                 div.onclick = () => toggleChurch(church.id);
                 
                 div.innerHTML = `
-                    <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="flex items-center gap-3 overflow-hidden min-w-0">
                         <div class="w-1.5 h-6 rounded-full flex-shrink-0" style="background-color: ${church.color}"></div>
-                        <span class="text-xs font-bold truncate ${church.active ? 'text-slate-700' : 'text-slate-400'}">${church.name}</span>
+                        <div class="min-w-0">
+                            <span class="text-xs font-bold truncate block ${church.active ? 'text-slate-700' : 'text-slate-400'}">${escHtml(church.fullName)}</span>
+                            ${church.address ? `<span class="text-[9px] text-slate-400 truncate block">${escHtml(church.address)}</span>` : ''}
+                        </div>
                     </div>
-                    <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${church.active ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 bg-white'}">
+                    <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ml-2 ${church.active ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300 bg-white'}">
                         ${church.active ? '<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
                     </div>
                 `;
@@ -302,32 +316,38 @@
             });
         }
 
-        function toggleChurch(id) {
+        function escHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        window.toggleChurch = function(id) {
             if (isSpinning) return;
             const church = churches.find(c => c.id === id);
-            church.active = !church.active;
+            if (church) church.active = !church.active;
             renderList();
             drawWheel();
             updateCount();
-        }
+        };
 
-        function toggleAll(status) {
+        window.toggleAll = function(status) {
             if (isSpinning) return;
             churches.forEach(c => c.active = status);
             renderList();
             drawWheel();
             updateCount();
-        }
+        };
 
         function updateCount() {
             const active = churches.filter(c => c.active);
             activeCountEl.innerText = active.length;
+            totalCountEl.innerText = churches.length;
             spinBtn.disabled = active.length === 0;
         }
 
         function drawWheel() {
             const activeChurches = churches.filter(c => c.active);
-            const size = 300;
+            const size = 320;
             canvas.width = size * 2;
             canvas.height = size * 2;
             canvas.style.width = `${size}px`;
@@ -336,14 +356,14 @@
 
             const centerX = size / 2;
             const centerY = size / 2;
-            const radius = size / 2 - 5;
+            const radius = size / 2 - 6;
 
             ctx.clearRect(0, 0, size, size);
 
             if (activeChurches.length === 0) {
                 ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
                 ctx.fillStyle = '#f1f5f9'; ctx.fill();
-                ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center'; ctx.font = 'bold 12px Inter';
+                ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center'; ctx.font = 'bold 13px Plus Jakarta Sans';
                 ctx.fillText('Nenhuma igreja ativa', centerX, centerY);
                 return;
             }
@@ -362,9 +382,9 @@
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(startAngle + sliceAngle / 2);
-                ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Inter';
-                const displayName = church.name.split(' - ')[1] || church.name;
-                ctx.fillText(displayName.substring(0, 14), radius - 15, 3);
+                ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Plus Jakarta Sans';
+                const displayName = church.name.length > 20 ? church.name.substring(0, 18) + '…' : church.name;
+                ctx.fillText(displayName, radius - 18, 3);
                 ctx.restore();
             });
 
@@ -372,7 +392,7 @@
             ctx.fillStyle = '#fff'; ctx.fill();
         }
 
-        function spin() {
+        window.spin = function() {
             if (isSpinning) return;
             const activeChurches = churches.filter(c => c.active);
             if (activeChurches.length === 0) return;
@@ -394,21 +414,23 @@
                 index = index % activeChurches.length;
                 
                 const winner = activeChurches[index];
-                lastWinner = winner.name;
-                showWinner(winner.name);
+                lastWinner = winner.fullName;
+                lastWinnerAddress = winner.address || '';
+                showWinner(winner.fullName, winner.address);
             }, 6000);
-        }
+        };
 
-        function showWinner(name) {
+        function showWinner(name, address) {
             modalWinnerName.innerText = name;
+            modalWinnerAddress.innerText = address || '';
             winnerModal.classList.remove('hidden');
             playVictorySound();
-            for(let i=0; i<50; i++) createConfetti();
+            for(let i = 0; i < 50; i++) createConfetti();
         }
 
-        function closeModal() {
+        window.closeModal = function() {
             winnerModal.classList.add('hidden');
-        }
+        };
 
         function createConfetti() {
             const confetti = document.createElement('div');
@@ -422,39 +444,34 @@
             setTimeout(() => confetti.remove(), 4000);
         }
 
-        function shareToWhatsApp() {
+        window.shareToWhatsApp = function() {
             const meetingDate = getNextFridayMeetingDate();
             const dataFormatada = meetingDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-            
-            // Remove o código da igreja (ex: "0252 - ")
-            const cleanChurchName = lastWinner.split(' - ')[1] || lastWinner;
+            const cleanChurchName = lastWinner.split(' - ').slice(1).join(' - ') || lastWinner;
 
-            // Gerar link do Google Calendar
             const year = meetingDate.getFullYear();
             const month = String(meetingDate.getMonth() + 1).padStart(2, '0');
             const day = String(meetingDate.getDate()).padStart(2, '0');
             const startStr = `${year}${month}${day}T223000`;
             const endStr = `${year}${month}${day}T233000`;
             
-            // Título conforme solicitado: "Oração Região 655 - [nome da igreja]"
             const gCalTitle = encodeURIComponent(`Oração Região 655 - ${cleanChurchName}`);
-            const gCalDetails = encodeURIComponent(`Reunião Regional de Oração - Região 655\nLocal: ${cleanChurchName}`);
-            // Local conforme solicitado: apenas o nome limpo
-            const gCalLocation = encodeURIComponent(cleanChurchName);
-            
+            const gCalLocation = encodeURIComponent(lastWinnerAddress || cleanChurchName);
+            const gCalDetails = encodeURIComponent(`Reunião Regional de Oração — Região 655\nLocal: ${cleanChurchName}${lastWinnerAddress ? ' — ' + lastWinnerAddress : ''}`);
+
             const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${gCalTitle}&dates=${startStr}/${endStr}&details=${gCalDetails}&location=${gCalLocation}&sf=true&output=xml`;
 
-            // Mensagem do WhatsApp com o link embutido e nome limpo
-            const message = `🙌 *REUNIÃO DE ORAÇÃO* 🙌\n\nOlá, Pastores! Conforme sorteio regional, a nossa oração desta semana (${dataFormatada}) será na:\n\n📍 *${cleanChurchName}*\n⏰ *Horário: 22:30h às 23:30h*\n\n📅 *Adicionar à sua agenda:*\n${calendarUrl}\n\nAguardamos todos vocês para este momento de comunhão!`;
+            const addressLine = lastWinnerAddress ? `\n📍 *Endereço:* ${lastWinnerAddress}` : '';
+            const message = `🙌 *REUNIÃO DE ORAÇÃO* 🙌\n\nOlá, Pastores! Conforme sorteio regional, a nossa oração desta semana (${dataFormatada}) será na:\n\n⛪ *${cleanChurchName}*${addressLine}\n⏰ *Horário: 22:30h às 23:30h*\n\n📅 *Adicionar à sua agenda:*\n${calendarUrl}\n\nAguardamos todos vocês para este momento de comunhão!`;
             
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
-        }
+        };
 
-        spinBtn.addEventListener('click', spin);
+        document.getElementById('spinBtn').addEventListener('click', () => window.spin());
+
         window.onload = () => {
-            renderList();
-            drawWheel();
-            updateCount();
+            loadChurches();
+            if (window.lucide) window.lucide.createIcons();
         };
     </script>
 </body>
