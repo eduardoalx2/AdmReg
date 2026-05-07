@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Pendências Financeiras - Região 655</title>
+    <title>Relatório de Pendências - Região 655</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@0.300.0"></script>
     <script type="module">
@@ -49,7 +49,7 @@
         <div class="header-gradient py-3 px-4">
             <div class="max-w-6xl mx-auto flex justify-between items-center">
                 <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
-                    <i data-lucide="file-warning" class="w-5 h-5"></i> Relatório de Pendências
+                    <i data-lucide="file-warning" class="w-5 h-5"></i> Relatório de Pendências (Financeiro + Faltas)
                 </h1>
                 <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors uppercase shadow-md">
                     <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir
@@ -75,7 +75,7 @@
         
         <!-- Filters -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:hidden">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                 <div>
                     <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Igreja</label>
                     <select id="filterIgreja" onchange="window.renderTable()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
@@ -95,6 +95,13 @@
                         <option value="Aguardando Lançamento">Aguardando Lançamento do Pastor</option>
                         <option value="Aguardando Emissão">Aguardando Emissão do Recibo</option>
                         <option value="Débito Especial">Débitos Especiais</option>
+                        <option value="Falta em Evento">Faltas em Eventos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Filtrar por Evento</label>
+                    <select id="filterEvento" onchange="window.renderTable()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                        <option value="Todos">Todos os Eventos</option>
                     </select>
                 </div>
                 <div class="flex items-end">
@@ -104,7 +111,7 @@
         </div>
 
         <!-- KPIs -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total de Pendências</p>
                 <p id="kpi-total-pendencias" class="text-3xl font-black text-red-600 mt-1">0</p>
@@ -117,6 +124,14 @@
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Valor Estimado Pendente</p>
                 <p id="kpi-valor-estimado" class="text-3xl font-black text-blue-600 mt-1">R$ 0,00</p>
             </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-purple-500">
+                <p class="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Igrejas com Faltas</p>
+                <p id="kpi-igrejas-faltas" class="text-3xl font-black text-purple-600 mt-1">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 border-b-4 border-b-purple-500">
+                <p class="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Total de Faltas</p>
+                <p id="kpi-total-faltas" class="text-3xl font-black text-purple-600 mt-1">0</p>
+            </div>
         </div>
 
         <!-- Table -->
@@ -125,9 +140,9 @@
                 <table class="w-full text-left border-collapse min-w-[700px]">
                     <thead class="print:text-sm">
                         <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50">
-                            <th class="p-3">Igreja</th>
-                            <th class="p-3">Mês de Referência</th>
-                            <th class="p-3">Status da Pendência</th>
+                            <th class="p-3">Igreja / Pastor</th>
+                            <th class="p-3">Referência</th>
+                            <th class="p-3">Status</th>
                             <th class="p-3 text-right">Valor Estimado</th>
                         </tr>
                     </thead>
@@ -153,12 +168,15 @@
 
         async function loadData() {
             try {
-                const [igrejasSnap, recibosSnap, saldosSnap, configSnap, debManuaisSnap] = await Promise.all([
+                const [igrejasSnap, recibosSnap, saldosSnap, configSnap, debManuaisSnap, presencasSnap, eventosSnap, pastoresSnap] = await Promise.all([
                     getDocs(collection(db, "igrejas")),
                     getDocs(collection(db, "recibos")),
                     getDocs(collection(db, "saldos_virada")),
                     getDoc(doc(db, "configuracoes", "painel_pastores")),
-                    getDocs(collection(db, "pendencias_manuais"))
+                    getDocs(collection(db, "pendencias_manuais")),
+                    getDocs(collection(db, "presencas")),
+                    getDocs(collection(db, "eventos")),
+                    getDocs(collection(db, "pastores"))
                 ]);
 
                 igrejasSnap.forEach(d => allIgrejas.push({ id: d.id, ...d.data() }));
@@ -166,9 +184,18 @@
                 saldosSnap.forEach(d => allSaldos.push({ id: d.id, ...d.data() }));
                 if (configSnap.exists()) configPainel = configSnap.data();
 
+                const eventosMap = {};
+                eventosSnap.forEach(d => { eventosMap[d.id] = { id: d.id, ...d.data() }; });
+
+                const pastoresList = [];
+                pastoresSnap.forEach(d => pastoresList.push(d.data()));
+
+                const presencasList = [];
+                presencasSnap.forEach(d => presencasList.push(d.data()));
+
                 allIgrejas.sort((a,b) => (a.nome || '').localeCompare(b.nome || ''));
 
-                gerarRelatorioPendencias();
+                gerarRelatorioPendencias(pastoresList, eventosMap, presencasList);
 
                 // Adiciona débitos manuais em aberto ao relatório
                 debManuaisSnap.forEach(d => {
@@ -183,7 +210,9 @@
                         mesRef,
                         status: 'Débito Especial',
                         valorEstimado: saldo,
-                        descricao: dm.descricao || ''
+                        descricao: dm.descricao || '',
+                        pastorNome: '',
+                        pastorTelefone: ''
                     });
                 });
 
@@ -196,7 +225,7 @@
             }
         }
 
-        function gerarRelatorioPendencias() {
+        function gerarRelatorioPendencias(pastoresList, eventosMap, presencasList) {
             allPendencias = [];
             const hoje = new Date();
             const mesAtual = hoje.getMonth();
@@ -212,11 +241,21 @@
                 ? new Date(anoAtual, mesAtual - 1, 1)
                 : new Date(anoAtual, mesAtual - 2, 1);
 
-            const dataInicio = new Date(2026, 0, 1); // Janeiro de 2026
+            const dataInicio = new Date(2026, 0, 1);
 
             for (const igreja of allIgrejas) {
-                // Escritório regional não paga taxa
                 if (igreja.tipo === 'Região Eclesiástica' || igreja.tipo === 'Sede Regional') continue;
+
+                const cod = String(igreja.codigo || '').padStart(4, '0');
+
+                const titular = pastoresList.find(p =>
+                    p.funcao === 'Pastor Titular' &&
+                    (Array.isArray(p.igreja) ? p.igreja.includes(igreja.nome) : p.igreja === igreja.nome)
+                );
+                const pastorNome = titular ? titular.nome : '';
+                const pastorTel = titular ? titular.telefone : '';
+
+                // Pendências financeiras (recibos + saldos)
                 let cursor = new Date(dataInicio);
                 while (cursor <= dataLimite) {
                     const mm = String(cursor.getMonth() + 1).padStart(2, '0');
@@ -225,14 +264,14 @@
 
                     const reciboPago = allRecibos.find(r => 
                         r.referenceDate === mesRef && 
-                        (r.igrejaNome === igreja.nome || (r.igrejaFormatada || '').includes(igreja.nome)) &&
+                        (r.igrejaCodigo === cod || r.igrejaNome === igreja.nome) &&
                         (parseFloat(r.regionalTax) || 0) > 0
                     );
 
                     if (!reciboPago) {
                         const saldoEnviado = allSaldos.find(s => 
                             s.periodoChave === `${yyyy}-${mm}` &&
-                            (s.igrejaNome === igreja.nome || (s.igrejaFormatada || '').includes(igreja.nome))
+                            (s.igrejaCodigo === cod || s.igrejaNome === igreja.nome)
                         );
 
                         let status = 'Aguardando Lançamento';
@@ -251,11 +290,38 @@
                             igrejaNome: igreja.nome,
                             mesRef,
                             status,
-                            valorEstimado
+                            valorEstimado,
+                            pastorNome,
+                            pastorTelefone: pastorTel
                         });
                     }
                     cursor.setMonth(cursor.getMonth() + 1);
                 }
+
+                // Ausências em eventos inativos
+                const ausenciasLista = presencasList.filter(p => {
+                    if (p.status !== 'Ausente') return false;
+                    if (!(p.igreja || '').includes(igreja.nome)) return false;
+                    const ev = eventosMap[p.eventoId];
+                    if (!ev || ev.status !== 'Inativo') return false;
+                    return true;
+                });
+
+                ausenciasLista.forEach(p => {
+                    const ev = eventosMap[p.eventoId] || {};
+                    const nomeEvento = ev.nome || p.tipoEvento || 'Evento Regional';
+                    const eventoData = ev.data || p.dataEvento || '';
+                    allPendencias.push({
+                        id: `${igreja.id}_${p.eventoId}_falta`,
+                        igrejaNome: igreja.nome,
+                        mesRef: eventoData ? eventoData.split('-').reverse().join('/') : '—',
+                        status: 'Falta em Evento',
+                        valorEstimado: 0,
+                        descricao: nomeEvento,
+                        pastorNome,
+                        pastorTelefone: pastorTel
+                    });
+                });
             }
         }
 
@@ -266,6 +332,7 @@
                 const [mB, yB] = b.split('/');
                 return new Date(yB, mB - 1) - new Date(yA, mA - 1);
             });
+            const eventosPendentes = [...new Set(allPendencias.filter(p => p.status === 'Falta em Evento').map(p => p.descricao).filter(Boolean))].sort();
 
             const selIgreja = document.getElementById('filterIgreja');
             selIgreja.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
@@ -274,27 +341,39 @@
             const selMes = document.getElementById('filterMes');
             selMes.innerHTML = '<option value="Todos">Todos os Meses</option>';
             mesesPendentes.forEach(mes => selMes.innerHTML += `<option value="${mes}">${mes}</option>`);
+
+            const selEvento = document.getElementById('filterEvento');
+            selEvento.innerHTML = '<option value="Todos">Todos os Eventos</option>';
+            eventosPendentes.forEach(ev => selEvento.innerHTML += `<option value="${ev}">${ev}</option>`);
         }
 
         window.renderTable = () => {
             const filterIgreja = document.getElementById('filterIgreja').value;
             const filterMes = document.getElementById('filterMes').value;
             const filterStatus = document.getElementById('filterStatus').value;
+            const filterEvento = document.getElementById('filterEvento').value;
 
             const filtered = allPendencias.filter(p => {
                 if (filterIgreja && filterIgreja !== 'Todas' && p.igrejaNome !== filterIgreja) return false;
                 if (filterMes && filterMes !== 'Todos' && p.mesRef !== filterMes) return false;
                 if (filterStatus && filterStatus !== 'Todos' && p.status !== filterStatus) return false;
+                if (filterEvento && filterEvento !== 'Todos' && p.descricao !== filterEvento) return false;
                 return true;
             });
 
             const totalPendencias = filtered.length;
             const igrejasUnicas = new Set(filtered.map(p => p.igrejaNome)).size;
-            const valorTotalEstimado = filtered.reduce((sum, p) => sum + p.valorEstimado, 0);
+            const valorTotalEstimado = filtered.filter(p => p.valorEstimado > 0).reduce((sum, p) => sum + p.valorEstimado, 0);
+
+            const faltasFiltradas = filtered.filter(p => p.status === 'Falta em Evento');
+            const igrejasComFaltas = new Set(faltasFiltradas.map(p => p.igrejaNome)).size;
+            const totalFaltas = faltasFiltradas.length;
 
             document.getElementById('kpi-total-pendencias').textContent = totalPendencias;
             document.getElementById('kpi-igrejas-pendentes').textContent = igrejasUnicas;
             document.getElementById('kpi-valor-estimado').textContent = formatMoeda(valorTotalEstimado);
+            document.getElementById('kpi-igrejas-faltas').textContent = igrejasComFaltas;
+            document.getElementById('kpi-total-faltas').textContent = totalFaltas;
             document.getElementById('print-subtitle').textContent = `Região 655 • ${totalPendencias} pendências encontradas`;
 
             const tbody = document.getElementById('tabela-pendencias');
@@ -313,21 +392,24 @@
                     ? 'bg-orange-100 text-orange-700'
                     : p.status === 'Aguardando Lançamento'
                         ? 'bg-red-100 text-red-700'
-                        : 'bg-amber-100 text-amber-700';
+                        : p.status === 'Aguardando Emissão'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-purple-100 text-purple-700';
 
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-slate-700">
-                        ${p.igrejaNome}
-                        ${p.descricao ? `<div class="text-[10px] text-slate-400 font-normal mt-0.5 italic">${p.descricao}</div>` : ''}
+                    <td class="p-3">
+                        <div class="font-bold text-slate-700 text-xs">${p.igrejaNome}</div>
+                        ${p.pastorNome ? `<div class="text-[10px] text-slate-400 font-medium mt-0.5">Pr. ${p.pastorNome}</div>` : ''}
+                        ${p.descricao ? `<div class="text-[10px] ${p.status === 'Falta em Evento' ? 'text-purple-500 font-semibold' : 'text-slate-400 font-normal'} mt-0.5 italic">${p.descricao}</div>` : ''}
                     </td>
-                    <td class="p-3 font-semibold text-blue-600">${p.mesRef}</td>
+                    <td class="p-3 font-semibold text-xs ${p.status === 'Falta em Evento' ? 'text-purple-600' : 'text-blue-600'}">${p.mesRef || '—'}</td>
                     <td class="p-3">
                         <span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider ${statusClass}">
                             ${p.status}
                         </span>
                     </td>
-                    <td class="p-3 text-right font-semibold text-slate-600">
-                        ${p.valorEstimado > 0 ? formatMoeda(p.valorEstimado) : '-'}
+                    <td class="p-3 text-right font-semibold text-slate-600 text-xs">
+                        ${p.valorEstimado > 0 ? formatMoeda(p.valorEstimado) : p.status === 'Falta em Evento' ? '—' : '-'}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -338,6 +420,7 @@
             document.getElementById('filterIgreja').value = 'Todas';
             document.getElementById('filterMes').value = 'Todos';
             document.getElementById('filterStatus').value = 'Todos';
+            document.getElementById('filterEvento').value = 'Todos';
             window.renderTable();
         };
 
