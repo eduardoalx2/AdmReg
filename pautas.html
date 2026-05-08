@@ -102,20 +102,8 @@
                         <i data-lucide="plus" class="w-3 h-3"></i> Nova
                     </button>
                 </div>
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left whitespace-nowrap">
-                        <thead>
-                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50">
-                                <th class="px-4 py-3">Título</th>
-                                <th class="px-4 py-3 text-center">Data da Reunião</th>
-                                <th class="px-4 py-3 text-center">Criada em</th>
-                                <th class="px-4 py-3 text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-pautas" class="text-sm divide-y divide-slate-50">
-                            <tr><td colspan="4" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Carregando pautas...</td></tr>
-                        </tbody>
-                    </table>
+                <div id="tabela-pautas" class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-slate-50 rounded-b-2xl">
+                    <div class="col-span-full text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Carregando pautas...</div>
                 </div>
             </div>
         </div>
@@ -204,6 +192,38 @@
         </div>
 
     </main>
+
+    <!-- Modal Anotações (Flutuante) -->
+    <div id="modal-anotacoes" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden" onclick="if(event.target===this)window.fecharAnotacoes()">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                        <i data-lucide="pen-tool" class="w-4 h-4 text-emerald-500"></i> Minhas Anotações
+                    </h2>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Visíveis apenas para você</p>
+                </div>
+                <button onclick="window.fecharAnotacoes()" class="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div id="anotacoes-lista" class="overflow-y-auto custom-scrollbar flex-1 p-5 space-y-3 bg-slate-50">
+            </div>
+            <div class="p-4 bg-white border-t border-slate-100 rounded-b-2xl">
+                <div class="flex items-center gap-2">
+                    <input id="inputAnotacaoPastor" type="text" placeholder="Escreva sua anotação..." class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs font-medium text-slate-700">
+                    <button onclick="window.salvarAnotacaoPastor()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-lg text-xs uppercase tracking-wider transition-colors shadow-sm whitespace-nowrap">
+                        Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAB Anotações (Aparece ao visualizar pauta) -->
+    <button id="fab-anotacoes" onclick="window.abrirAnotacoes()" class="hidden fixed bottom-6 right-6 z-50 bg-emerald-600 hover:bg-emerald-500 text-white w-14 h-14 rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-all print:hidden ring-4 ring-white">
+        <i data-lucide="pen-tool" class="w-6 h-6"></i>
+    </button>
 
     <div id="print-container" class="hidden print-only print:block" style="display:none;"></div>
 
@@ -504,9 +524,6 @@
         <img src="${fmtUrlImagem(item.imagem)}" alt="Banner" style="max-width:${maxW};height:auto;margin-top:6px;border-radius:4px;display:block;">`;
                     }
                     html += `
-        <div style="border:1px dashed #666;padding:6px;margin-top:6px;min-height:45px;background:#fafafa;">
-            <div style="font-size:8pt;font-weight:bold;margin-bottom:3px;">Anotações:</div>
-        </div>
     </div>
 `;
                 });
@@ -537,6 +554,9 @@
 
         window.fecharVisualizar = () => {
             document.getElementById('modal-visualizar').classList.add('hidden');
+            const fab = document.getElementById('fab-anotacoes');
+            if(fab) fab.classList.add('hidden');
+            window.fecharAnotacoes();
         };
 
         // ── Salvar ─────────────────────────────────────────────────────
@@ -600,7 +620,7 @@
         // ── Lista ──────────────────────────────────────────────────────
         async function carregarPautas() {
             const tbody = document.getElementById('tabela-pautas');
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-blue-500 text-xs font-bold uppercase tracking-wider"><div class="animate-spin inline-block w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full mr-2 align-middle"></div> Buscando pautas...</td></tr>';
+            tbody.innerHTML = '<div class="col-span-full text-center py-10 text-blue-500 text-xs font-bold uppercase tracking-wider"><div class="animate-spin inline-block w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full mr-2 align-middle"></div> Buscando pautas...</div>';
             try {
                 const snap = await getDocs(query(collection(db, "pautas"), orderBy("criadoEm", "desc")));
                 allPautas = [];
@@ -612,7 +632,7 @@
                 renderLista();
             } catch (e) {
                 console.error(e);
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-red-500 text-xs font-bold uppercase">Erro ao carregar pautas.</td></tr>';
+                tbody.innerHTML = '<div class="col-span-full text-center py-10 text-red-500 text-xs font-bold uppercase">Erro ao carregar pautas.</div>';
             }
         }
 
@@ -620,32 +640,40 @@
             const tbody = document.getElementById('tabela-pautas');
             tbody.innerHTML = '';
             if (allPautas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhuma pauta cadastrada.</td></tr>';
+                tbody.innerHTML = '<div class="col-span-full text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhuma pauta cadastrada.</div>';
                 return;
             }
             allPautas.forEach(p => {
                 const dataFmt = p.data ? p.data.split('-').reverse().join('/') : '—';
                 const criadoEm = p.criadoEm ? new Date(p.criadoEm.seconds * 1000).toLocaleDateString('pt-BR') : '—';
+                const visibilidadeBadge = !window.isPastor ? (p.visivel ? '<span class="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white shadow-sm" title="Visível no portal"></span>' : '<span class="absolute top-4 right-4 w-2.5 h-2.5 rounded-full bg-slate-300 border border-white shadow-sm" title="Oculto"></span>') : '';
+                
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-4 py-3">
-                            <div class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                ${p.titulo || 'Sem título'}
-                                ${!window.isPastor ? (p.visivel ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" title="Visível no portal"></span>' : '<span class="w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0" title="Oculto"></span>') : ''}
+                    <div class="relative bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group">
+                        ${visibilidadeBadge}
+                        <div class="mb-4">
+                            <h3 class="text-sm font-bold text-slate-800 leading-tight mb-2 pr-6">${p.titulo || 'Sem título'}</h3>
+                            <div class="flex items-center gap-1.5 text-xs font-semibold text-blue-600 mb-1.5">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Reunião: ${dataFmt}
                             </div>
-                        </td>
-                        <td class="px-4 py-3 text-center text-xs font-semibold text-blue-600">${dataFmt}</td>
-                        <td class="px-4 py-3 text-center text-xs text-slate-500">${criadoEm}</td>
-                        <td class="px-4 py-3 text-center">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="window.visualizarPauta('${p.id}')" class="bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 p-1.5 rounded-lg transition-colors" title="Visualizar"><i data-lucide="eye" class="w-4 h-4"></i></button>
-                                ${window.canEdit ? `
-                                <button onclick="window.editarPauta('${p.id}')" class="bg-slate-100 hover:bg-amber-50 text-slate-500 hover:text-amber-600 p-1.5 rounded-lg transition-colors" title="Editar"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                                <button onclick="window.excluirPauta('${p.id}')" class="bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 p-1.5 rounded-lg transition-colors" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                ` : ''}
+                            <div class="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
+                                <i data-lucide="clock" class="w-3 h-3"></i> Criada em ${criadoEm}
                             </div>
-                        </td>
-                    </tr>`;
+                        </div>
+                        <div class="flex items-center gap-2 mt-auto border-t border-slate-100 pt-4">
+                            <button onclick="window.visualizarPauta('${p.id}')" class="flex-1 bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5">
+                                <i data-lucide="eye" class="w-3.5 h-3.5"></i> Abrir
+                            </button>
+                            ${window.canEdit ? `
+                            <button onclick="window.editarPauta('${p.id}')" class="bg-slate-50 hover:bg-amber-500 text-slate-400 hover:text-white p-2 rounded-lg transition-colors" title="Editar">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.excluirPauta('${p.id}')" class="bg-slate-50 hover:bg-red-500 text-slate-400 hover:text-white p-2 rounded-lg transition-colors" title="Excluir">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>`;
             });
             if (window.lucide) lucide.createIcons();
         }
@@ -682,74 +710,105 @@
             document.getElementById('modal-data').textContent = 'Data da reunião: ' + dataFmt;
             document.getElementById('modal-conteudo').innerHTML = pautaSelecionada.html;
 
-            // Modo pastor: adiciona painel de anotações
+            // Mostrar FAB de anotações apenas se for isPastor
             if (window.isPastor) {
-                const pastorEmail = localStorage.getItem('userEmail') || '';
-                let minhasAnotacoes = [];
-                try {
-                    const snap = await getDocs(query(
-                        collection(db, "anotacoes_pautas"),
-                        where("pautaId", "==", id),
-                        where("pastorEmail", "==", pastorEmail)
-                    ));
-                    snap.forEach(d => minhasAnotacoes.push({ id: d.id, ...d.data() }));
-                    minhasAnotacoes.sort((a, b) => (a.criadoEm?.seconds || 0) - (b.criadoEm?.seconds || 0));
-                } catch (e) { console.error(e); }
-
-                const anotHtml = `
-                <div style="margin-top:20px;padding-top:16px;border-top:2px solid #e2e8f0;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                        <strong style="font-size:11pt;">📝 Minhas Anotações</strong>
-                        <span style="font-size:9pt;color:#64748b;">${minhasAnotacoes.length}</span>
-                    </div>
-                    <div id="anotacoes-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
-                        ${minhasAnotacoes.length === 0 ? '<p style="font-size:11px;color:#94a3b8;text-align:center;padding:12px;">Nenhuma anotação ainda.</p>' : ''}
-                        ${minhasAnotacoes.map(a => `
-                            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-                                <div style="flex:1;min-width:0;">
-                                    <p style="font-size:12px;color:#334155;line-height:1.5;word-break:break-word;">${a.texto}</p>
-                                    <p style="font-size:9px;color:#94a3b8;margin-top:4px;">${a.criadoEm ? new Date(a.criadoEm.seconds * 1000).toLocaleString('pt-BR') : ''}</p>
-                                </div>
-                                <button onclick="window.excluirAnotacaoPastor('${a.id}','${id}')" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;flex-shrink:0;font-size:14px;" title="Excluir">✕</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                        <input id="inputAnotacaoPastor" type="text" placeholder="Escreva sua anotação..." style="flex:1;border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;font-size:13px;outline:none;">
-                        <button onclick="window.salvarAnotacaoPastor('${id}')" style="background:#10b981;color:#fff;font-weight:700;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-size:11px;text-transform:uppercase;white-space:nowrap;">Salvar</button>
-                    </div>
-                </div>`;
-                document.getElementById('modal-conteudo').innerHTML += anotHtml;
-                setTimeout(() => {
-                    const inp = document.getElementById('inputAnotacaoPastor');
-                    if (inp) inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') window.salvarAnotacaoPastor(id); });
-                }, 100);
+                const fab = document.getElementById('fab-anotacoes');
+                if(fab) fab.classList.remove('hidden');
+            } else {
+                const fab = document.getElementById('fab-anotacoes');
+                if(fab) fab.classList.add('hidden');
             }
 
             document.getElementById('modal-visualizar').classList.remove('hidden');
             if (window.lucide) lucide.createIcons();
         };
 
-        window.salvarAnotacaoPastor = async (pautaId) => {
+        window.abrirAnotacoes = async () => {
+            if (!pautaSelecionada) return;
+            document.getElementById('modal-anotacoes').classList.remove('hidden');
+            await carregarAnotacoesPastor(pautaSelecionada.id);
+        };
+
+        window.fecharAnotacoes = () => {
+            const mod = document.getElementById('modal-anotacoes');
+            if(mod) mod.classList.add('hidden');
+        };
+
+        window.carregarAnotacoesPastor = async (pautaId) => {
+            const pastorEmail = localStorage.getItem('userEmail') || '';
+            let minhasAnotacoes = [];
+            const listaEl = document.getElementById('anotacoes-lista');
+            listaEl.innerHTML = '<div class="text-center text-xs text-slate-400 py-4"><div class="animate-spin inline-block w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full mr-2 align-middle"></div> Buscando...</div>';
+            
+            try {
+                const snap = await getDocs(query(
+                    collection(db, "anotacoes_pautas"),
+                    where("pautaId", "==", pautaId),
+                    where("pastorEmail", "==", pastorEmail)
+                ));
+                snap.forEach(d => minhasAnotacoes.push({ id: d.id, ...d.data() }));
+                minhasAnotacoes.sort((a, b) => (a.criadoEm?.seconds || 0) - (b.criadoEm?.seconds || 0));
+                
+                if (minhasAnotacoes.length === 0) {
+                    listaEl.innerHTML = '<p class="text-[11px] text-slate-400 text-center py-6 font-medium">Você ainda não fez anotações nesta pauta.</p>';
+                } else {
+                    listaEl.innerHTML = minhasAnotacoes.map(a => `
+                        <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm relative group flex justify-between gap-3">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs text-slate-700 leading-relaxed word-break">${(a.texto||'').replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+                                <p class="text-[9px] font-medium text-slate-400 mt-2">${a.criadoEm ? new Date(a.criadoEm.seconds * 1000).toLocaleString('pt-BR') : ''}</p>
+                            </div>
+                            <button onclick="window.excluirAnotacaoPastor('${a.id}', '${pautaId}')" class="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg p-1.5 transition-colors self-start flex-shrink-0" title="Excluir">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error(e);
+                listaEl.innerHTML = '<p class="text-xs text-red-500 text-center py-4">Erro ao carregar anotações.</p>';
+            }
+            if (window.lucide) lucide.createIcons();
+            
+            const inp = document.getElementById('inputAnotacaoPastor');
+            if (inp) {
+                inp.onkeydown = (e) => { if (e.key === 'Enter') window.salvarAnotacaoPastor(); };
+            }
+        };
+
+        window.salvarAnotacaoPastor = async () => {
+            if (!pautaSelecionada) return;
             const input = document.getElementById('inputAnotacaoPastor');
             const texto = input?.value.trim();
             if (!texto) return;
+            
+            const btn = event.currentTarget;
+            if (btn && btn.tagName === 'BUTTON') btn.disabled = true;
+            
             const pastorEmail = localStorage.getItem('userEmail') || '';
             try {
                 await addDoc(collection(db, "anotacoes_pautas"), {
-                    pautaId, pastorEmail,
+                    pautaId: pautaSelecionada.id, 
+                    pastorEmail,
                     pastorNome: localStorage.getItem('userName') || pastorEmail,
-                    texto, criadoEm: new Date()
+                    texto, 
+                    criadoEm: new Date()
                 });
-                window.visualizarPauta(pautaId);
-            } catch (e) { console.error(e); alert('Erro ao salvar.'); }
+                input.value = '';
+                await carregarAnotacoesPastor(pautaSelecionada.id);
+            } catch (e) { 
+                console.error(e); 
+                alert('Erro ao salvar.'); 
+            } finally {
+                if (btn && btn.tagName === 'BUTTON') btn.disabled = false;
+            }
         };
 
         window.excluirAnotacaoPastor = async (anotId, pautaId) => {
             if (!confirm('Excluir esta anotação?')) return;
             try {
                 await deleteDoc(doc(db, "anotacoes_pautas", anotId));
-                window.visualizarPauta(pautaId);
+                await carregarAnotacoesPastor(pautaId);
             } catch (e) { console.error(e); alert('Erro ao excluir.'); }
         };
 
