@@ -127,12 +127,11 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Pendência</label>
-                        <select id="filtroTipo" onchange="window.renderizarTabela()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs font-semibold text-slate-700 shadow-sm">
-                            <option value="Todos">Todas as Pendências</option>
-                            <option value="Saldos">Apenas Saldos Atrasados</option>
-                            <option value="Taxas">Apenas Taxas Pendentes</option>
-                            <option value="Manuais">Apenas Débitos Especiais</option>
-                        </select>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="window.toggleTipo('Saldos')" data-tipo="Saldos" class="tipo-btn px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all bg-amber-100 text-amber-700 border border-amber-200">Saldos</button>
+                            <button onclick="window.toggleTipo('Taxas')" data-tipo="Taxas" class="tipo-btn px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all bg-red-100 text-red-700 border border-red-200">Taxas</button>
+                            <button onclick="window.toggleTipo('Manuais')" data-tipo="Manuais" class="tipo-btn px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all bg-slate-100 text-slate-400 border border-slate-200">Déb. Especial</button>
+                        </div>
                     </div>
                     <div class="flex items-end">
                         <button onclick="window.limparFiltros()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs uppercase transition-colors shadow-sm h-[34px]">Limpar Filtros</button>
@@ -256,6 +255,7 @@
         let dadosOriginais = [];
         let faltasOriginais = []; // { igrejaNome, pastor, celPastor, eventoNome, eventoData, eventoId }
         let abaAtiva = 'financeiro';
+        let activeTipos = new Set(['Saldos', 'Taxas']);
 
         window.formatMoeda = (val) => (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const fmtD = d => { if (!d) return '—'; const p = d.split('-'); return p.length === 2 ? `${p[1]}/${p[0]}` : p.reverse().join('/'); };
@@ -494,14 +494,16 @@
             const apenasPendentes = document.getElementById('checkApenasPendentes').checked;
             const filtroIgreja   = document.getElementById('filtroIgreja').value;
             const filtroMes      = document.getElementById('filtroMes').value;
-            const filtroTipo     = document.getElementById('filtroTipo').value;
 
             const filtrados = dadosOriginais.filter(d => {
                 if (apenasPendentes && d.totalPendenciasFinanceiras === 0) return false;
                 if (filtroIgreja !== 'Todas' && d.igrejaNome !== filtroIgreja) return false;
-                if (filtroTipo === 'Saldos'  && d.saldosPendentes.length === 0)  return false;
-                if (filtroTipo === 'Taxas'   && d.taxasPendentes.length === 0)   return false;
-                if (filtroTipo === 'Manuais' && d.debitosManuaisTotal === 0)     return false;
+                if (activeTipos.size > 0) {
+                    const temSaldo  = activeTipos.has('Saldos')  && d.saldosPendentes.length > 0;
+                    const temTaxa   = activeTipos.has('Taxas')   && d.taxasPendentes.length > 0;
+                    const temManual = activeTipos.has('Manuais') && d.debitosManuaisTotal > 0;
+                    if (!temSaldo && !temTaxa && !temManual) return false;
+                }
                 if (filtroMes !== 'Todos') {
                     const temS = d.saldosPendentes.includes(filtroMes);
                     const temT = d.taxasPendentes.includes(filtroMes);
@@ -597,11 +599,35 @@
             lucide.createIcons();
         };
 
+        window.toggleTipo = (tipo) => {
+            if (activeTipos.has(tipo)) {
+                activeTipos.delete(tipo);
+            } else {
+                activeTipos.add(tipo);
+            }
+            updateTipoButtons();
+            window.renderizarTabela();
+        };
+
+        function updateTipoButtons() {
+            const colors = {
+                'Saldos':  'bg-amber-100 text-amber-700 border border-amber-200',
+                'Taxas':   'bg-red-100 text-red-700 border border-red-200',
+                'Manuais': 'bg-orange-100 text-orange-700 border border-orange-200'
+            };
+            document.querySelectorAll('.tipo-btn').forEach(btn => {
+                const t = btn.dataset.tipo;
+                const base = 'tipo-btn px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ';
+                btn.className = base + (activeTipos.has(t) ? colors[t] : 'bg-slate-100 text-slate-400 border border-slate-200');
+            });
+        }
+
         window.limparFiltros = () => {
             document.getElementById('filtroIgreja').value = 'Todas';
             document.getElementById('filtroMes').value    = 'Todos';
-            document.getElementById('filtroTipo').value   = 'Todos';
             document.getElementById('checkApenasPendentes').checked = true;
+            activeTipos = new Set(['Saldos', 'Taxas']);
+            updateTipoButtons();
             window.renderizarTabela();
         };
 
