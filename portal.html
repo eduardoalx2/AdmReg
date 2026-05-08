@@ -1083,6 +1083,14 @@
                     </div>
                 </div>
 
+                <!-- Pautas -->
+                <div id="sec-pautas" class="hidden portal-sec">
+                    <div class="portal-sec-label"><span>Pautas da Reunião</span></div>
+                    <div id="pautasList">
+                        <p class="agenda-empty">Carregando pautas...</p>
+                    </div>
+                </div>
+
                 <!-- Restante da Agenda (após o conteúdo) -->
                 <div id="sec-agenda-restante" class="hidden portal-sec" style="order:99;">
                     <div class="portal-sec-label"><span>Agenda Completa</span></div>
@@ -1124,9 +1132,12 @@
     </div>
 
     <script type="module">
-        import { db } from './firebase-config.js';
-        import { collection, addDoc, updateDoc, getDocs, doc, getDoc, query, where, orderBy, serverTimestamp }
+        import { db, auth } from './firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { collection, addDoc, updateDoc, getDocs, doc, getDoc, deleteDoc, query, where, orderBy, serverTimestamp }
             from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        let usuarioLogado = null;
 
         // ─── CONFIGURAÇÃO DO PORTAL ────────────────────────────────────────────
         let portalConfig = {
@@ -1141,6 +1152,7 @@
                 { id: 'agenda', visivel: true, ordem: 3 },
                 { id: 'presenca', visivel: true, ordem: 4 },
                 { id: 'links', visivel: true, ordem: 5 },
+                { id: 'pautas', visivel: true, ordem: 6 },
             ]
         };
 
@@ -1213,11 +1225,14 @@
 
             const secAgenda = secoes.find(s => s.id === 'agenda');
             const secPresenca = secoes.find(s => s.id === 'presenca');
+            const secPautas = secoes.find(s => s.id === 'pautas');
             const agendaVisivel = secAgenda && secAgenda.visivel !== false;
             const presencaVisivel = secPresenca && secPresenca.visivel !== false;
+            const pautasVisivel = secPautas && secPautas.visivel !== false;
 
             if (agendaVisivel) loadAgenda();
             if (presencaVisivel) loadPresenca();
+            if (pautasVisivel) loadPautas();
 
             if (!hasWelcome) { const s = secoes.find(s => s.id === 'welcome'); if (s) s.visivel = false; }
             if (!hasWhatsapp) { const s = secoes.find(s => s.id === 'whatsapp'); if (s) s.visivel = false; }
@@ -1232,7 +1247,7 @@
                 else { el.classList.remove('hidden'); }
             });
 
-            const temConteudo = hasWelcome || hasWhatsapp || hasBotoes || hasLinks || agendaVisivel || presencaVisivel;
+            const temConteudo = hasWelcome || hasWhatsapp || hasBotoes || hasLinks || agendaVisivel || presencaVisivel || pautasVisivel;
             if (!temConteudo) document.getElementById('emBreveSection').classList.remove('hidden');
         }
 
@@ -1566,6 +1581,156 @@
                 activeEventSelect.innerHTML = '<option value="" disabled selected>ERRO AO CARREGAR</option>';
             }
         }
+
+        // ─── PAUTAS ─────────────────────────────────────────────────────────────
+        let allPautas = [];
+        let anotacoesPasta = [];
+
+        async function loadPautas() {
+            try {
+                const snap = await getDocs(query(collection(db, "pautas"), orderBy("criadoEm", "desc")));
+                allPautas = [];
+                snap.forEach(d => allPautas.push({ id: d.id, ...d.data() }));
+                renderPautas();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('pautasList').innerHTML = '<p class="agenda-empty" style="color:#f87171;">Erro ao carregar pautas.</p>';
+            }
+        }
+
+        function renderPautas() {
+            const container = document.getElementById('pautasList');
+            if (allPautas.length === 0) {
+                container.innerHTML = '<p class="agenda-empty">Nenhuma pauta disponível no momento.</p>';
+                return;
+            }
+            container.innerHTML = allPautas.map(p => {
+                const dataFmt = p.data ? p.data.split('-').reverse().join('/') : '—';
+                return `
+                <div class="portal-event-card" style="cursor:pointer;" onclick="window.abrirPauta('${p.id}')">
+                    <div class="event-date-box" style="display:flex;align-items:center;justify-content:center;">
+                        <span style="font-size:22px;">📋</span>
+                    </div>
+                    <div class="event-body">
+                        <p class="event-title">${p.titulo || 'Sem título'}</p>
+                        <p class="event-meta">📅 ${dataFmt}</p>
+                    </div>
+                </div>`;
+            }).join('');
+
+            if (!usuarioLogado) {
+                container.innerHTML += `
+                <div style="text-align:center;margin-top:16px;padding:20px;background:rgba(99,179,237,0.06);border:1px solid rgba(99,179,237,0.2);border-radius:14px;">
+                    <p style="font-size:12px;color:#94a3b8;margin-bottom:10px;">Faça login para ver as pautas e suas anotações</p>
+                    <a href="login.html" class="header-entrar" style="display:inline-flex;margin-top:0;">Entrar</a>
+                </div>`;
+            }
+        }
+
+        window.abrirPauta = async (id) => {
+            if (!usuarioLogado) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const pauta = allPautas.find(p => p.id === id);
+            if (!pauta) return;
+
+            const dataFmt = pauta.data ? pauta.data.split('-').reverse().join('/') : '—';
+
+            // Carrega anotações deste pastor para esta pauta
+            let minhasAnotacoes = [];
+            try {
+                const snap = await getDocs(query(
+                    collection(db, "anotacoes_pautas"),
+                    where("pautaId", "==", id),
+                    where("pastorEmail", "==", usuarioLogado.email)
+                ));
+                snap.forEach(d => minhasAnotacoes.push({ id: d.id, ...d.data() }));
+                minhasAnotacoes.sort((a, b) => (a.criadoEm?.seconds || 0) - (b.criadoEm?.seconds || 0));
+            } catch (e) { console.error(e); }
+
+            const container = document.getElementById('pautasList');
+            container.innerHTML = `
+                <div style="margin-bottom:12px;">
+                    <button onclick="window.fecharPauta()" class="event-btn e-dark" style="display:inline-flex;align-items:center;gap:6px;margin-bottom:12px;">
+                        ← Voltar
+                    </button>
+                    <div style="background:rgba(99,179,237,0.06);border:1px solid rgba(99,179,237,0.18);border-radius:14px;padding:14px 18px;margin-bottom:14px;">
+                        <p style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">${pauta.titulo}</p>
+                        <p style="font-size:11px;color:#94a3b8;">📅 ${dataFmt}</p>
+                    </div>
+                </div>
+                <div id="pauta-conteudo" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;max-height:60vh;overflow-y:auto;font-size:14px;line-height:1.7;color:#cbd5e1;">
+                    ${pauta.html}
+                </div>
+                <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:14px;padding:16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <p style="font-size:10px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:0.1em;">📝 Minhas Anotações</p>
+                        <span style="font-size:10px;color:#64748b;">${minhasAnotacoes.length}</span>
+                    </div>
+                    <div id="anotacoes-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+                        ${minhasAnotacoes.length === 0 ? '<p style="font-size:11px;color:#64748b;text-align:center;padding:12px;">Nenhuma anotação ainda.</p>' : ''}
+                        ${minhasAnotacoes.map(a => `
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                                <div style="flex:1;min-width:0;">
+                                    <p style="font-size:12px;color:#cbd5e1;line-height:1.5;word-break:break-word;">${a.texto}</p>
+                                    <p style="font-size:9px;color:#64748b;margin-top:4px;">${a.criadoEm ? new Date(a.criadoEm.seconds * 1000).toLocaleString('pt-BR') : ''}</p>
+                                </div>
+                                <button onclick="window.excluirAnotacao('${a.id}','${id}')" style="background:none;border:none;color:#64748b;cursor:pointer;padding:4px;flex-shrink:0;" title="Excluir">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <input id="inputAnotacao" type="text" placeholder="Escreva sua anotação..." style="flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:#e2e8f0;outline:none;font-family:inherit;">
+                        <button onclick="window.salvarAnotacao('${id}')" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;font-weight:700;padding:10px 16px;border-radius:10px;cursor:pointer;font-size:11px;text-transform:uppercase;white-space:nowrap;">Salvar</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('inputAnotacao')?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') window.salvarAnotacao(id);
+            });
+        };
+
+        window.fecharPauta = () => { renderPautas(); };
+
+        window.salvarAnotacao = async (pautaId) => {
+            const input = document.getElementById('inputAnotacao');
+            const texto = input?.value.trim();
+            if (!texto || !usuarioLogado) return;
+
+            try {
+                await addDoc(collection(db, "anotacoes_pautas"), {
+                    pautaId,
+                    pastorEmail: usuarioLogado.email,
+                    pastorNome: usuarioLogado.displayName || usuarioLogado.email,
+                    texto,
+                    criadoEm: new Date()
+                });
+                input.value = '';
+                window.abrirPauta(pautaId);
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao salvar anotação.');
+            }
+        };
+
+        window.excluirAnotacao = async (anotId, pautaId) => {
+            if (!confirm('Excluir esta anotação?')) return;
+            try {
+                await deleteDoc(doc(db, "anotacoes_pautas", anotId));
+                window.abrirPauta(pautaId);
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao excluir.');
+            }
+        };
+
+        // Escuta auth state
+        onAuthStateChanged(auth, (user) => {
+            usuarioLogado = user;
+            if (allPautas.length > 0) renderPautas();
+        });
 
         (async () => { await carregarConfig(); })();
     </script>
