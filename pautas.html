@@ -399,6 +399,7 @@
                                     </div>
                                     <div>
                                         <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">URL do Banner / Imagem (opcional)</label>
+                                        <p class="text-[7px] text-slate-400 mb-1">Links do Google Drive são convertidos automaticamente</p>
                                         <div class="flex gap-2">
                                             <input type="text" placeholder="Ex: https://...banner.jpg" value="${(item.imagem||'').replace(/"/g,'&quot;')}"
                                                 oninput="window.secoes[${si}].itens[${ii}].imagem = this.value"
@@ -449,6 +450,13 @@
                 r = r.replace(/\n/g, '<br>');
                 return r;
             }
+            function fmtUrlImagem(url) {
+                if (!url) return '';
+                // Converte link do Google Drive para embed direto
+                const m = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+                if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+                return url;
+            }
             const tamanhosImg = { pequeno: '200px', medio: '60%', grande: '100%' };
 
             const dataFmt = data ? data.split('-').reverse().join('/') : '';
@@ -481,7 +489,7 @@
                     if (item.imagem) {
                         const maxW = tamanhosImg[item.imagemTamanho] || '60%';
                         html += `
-        <img src="${item.imagem}" alt="Banner" style="max-width:${maxW};height:auto;margin-top:6px;border-radius:4px;display:block;">`;
+        <img src="${fmtUrlImagem(item.imagem)}" alt="Banner" style="max-width:${maxW};height:auto;margin-top:6px;border-radius:4px;display:block;">`;
                     }
                     html += `
         <div style="border:1px dashed #666;padding:6px;margin-top:6px;min-height:45px;background:#fafafa;">
