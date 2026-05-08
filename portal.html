@@ -1590,7 +1590,10 @@
             try {
                 const snap = await getDocs(query(collection(db, "pautas"), orderBy("criadoEm", "desc")));
                 allPautas = [];
-                snap.forEach(d => allPautas.push({ id: d.id, ...d.data() }));
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (data.visivel === true) allPautas.push({ id: d.id, ...data });
+                });
                 renderPautas();
             } catch (e) {
                 console.error(e);

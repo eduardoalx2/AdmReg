@@ -300,8 +300,18 @@
                                                 <option value="medio" ${(!item.imagemTamanho || item.imagemTamanho === 'medio') ? 'selected' : ''}>Médio</option>
                                                 <option value="grande" ${item.imagemTamanho === 'grande' ? 'selected' : ''}>Grande</option>
                                             </select>
-                                        </div>
-                                    </div>
+                </div>
+                <div class="flex items-center gap-3 pt-2">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="inputVisivel" class="sr-only peer">
+                        <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                    <div>
+                        <span class="text-xs font-bold text-slate-700">Visível para os pastores no portal</span>
+                        <p class="text-[9px] text-slate-400">Quando ativado, os pastores poderão ver e anotar esta pauta</p>
+                    </div>
+                </div>
+            </div>
                                 </div>
                             </div>
                         `).join('')}
@@ -398,6 +408,7 @@
             const titulo = document.getElementById('inputTitulo').value.trim();
             const data = document.getElementById('inputData').value;
             const local = document.getElementById('inputLocal').value.trim();
+            const visivel = document.getElementById('inputVisivel').checked;
             const msg = document.getElementById('msg-criar');
 
             if (!titulo || !data) {
@@ -414,7 +425,7 @@
 
             const html = gerarHtmlPauta(titulo, data, local);
             const payload = {
-                titulo, data, local, html,
+                titulo, data, local, visivel, html,
                 secoes: JSON.parse(JSON.stringify(secoes)),
                 atualizadoEm: new Date()
             };
@@ -435,6 +446,7 @@
                 document.getElementById('inputTitulo').value = '';
                 document.getElementById('inputData').value = '';
                 document.getElementById('inputLocal').value = '';
+                document.getElementById('inputVisivel').checked = false;
                 secoes = [];
                 pautaEditandoId = null;
                 document.getElementById('secoes-container').innerHTML = '';
@@ -475,7 +487,12 @@
                 const criadoEm = p.criadoEm ? new Date(p.criadoEm.seconds * 1000).toLocaleDateString('pt-BR') : '—';
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-4 py-3"><div class="text-xs font-bold text-slate-800">${p.titulo || 'Sem título'}</div></td>
+                        <td class="px-4 py-3">
+                            <div class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                ${p.titulo || 'Sem título'}
+                                ${p.visivel ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" title="Visível no portal"></span>' : '<span class="w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0" title="Oculto"></span>'}
+                            </div>
+                        </td>
                         <td class="px-4 py-3 text-center text-xs font-semibold text-blue-600">${dataFmt}</td>
                         <td class="px-4 py-3 text-center text-xs text-slate-500">${criadoEm}</td>
                         <td class="px-4 py-3 text-center">
@@ -497,6 +514,7 @@
             document.getElementById('inputTitulo').value = p.titulo || '';
             document.getElementById('inputData').value = p.data || '';
             document.getElementById('inputLocal').value = p.local || '';
+            document.getElementById('inputVisivel').checked = p.visivel === true;
             secoes = p.secoes && p.secoes.length ? JSON.parse(JSON.stringify(p.secoes)) : [];
             if (secoes.length === 0) secoes.push({ titulo: '', itens: [] });
             // Garante que itens antigos tenham imagemTamanho
