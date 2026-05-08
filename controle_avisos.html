@@ -256,7 +256,6 @@
                     </div>
                     ${ativo ? `<button
                         data-aviso-id="${esc(aviso.avisoId)}"
-                        data-aviso-texto="${esc(aviso.texto)}"
                         data-igreja="${esc(ig.nome)}"
                         data-telefone="${esc(titular?.telefone||'')}"
                         onclick="enviarWABtn(this)"
@@ -385,11 +384,10 @@
 
         window.enviarWABtn = (btn) => {
             const avisoId    = btn.dataset.avisoId;
-            const avisoTexto = btn.dataset.avisoTexto;
             const igrejaNome = btn.dataset.igreja;
             const telefone   = btn.dataset.telefone;
             const link = `${BASE_URL}?confirmar_aviso=${encodeURIComponent(avisoId)}`;
-            const msg  = `*ESCRITÓRIO REGIONAL — REGIÃO 655*\n_Londrina/PR_\n━━━━━━━━━━━━━━━━━━━━━━━━\n\nPrezado pastor,\n\nHá um aviso importante no seu painel que ainda aguarda sua confirmação de leitura.\n\n📋 *Aviso:* ${avisoTexto}\n\nPor favor, clique no link abaixo para confirmar a leitura:\n\n${link}\n\nAtenciosamente,\n*Escritório da Região 655*`;
+            const msg  = `*ESCRITÓRIO REGIONAL — REGIÃO 655*\n_Londrina/PR_\n━━━━━━━━━━━━━━━━━━━━━━━━\n\nPrezado pastor,\n\nHá um aviso pendente de confirmação de leitura no seu painel do Portal da Região 655.\n\nPor favor, acesse o portal pelo link abaixo e confirme a leitura:\n\n🔗 ${link}\n\nAtenciosamente,\n*Escritório da Região 655*`;
             let num = telefone.replace(/\D/g, '');
             if (num.length >= 10 && num.length <= 11) num = '55' + num;
             const wa = num ? `https://wa.me/${num}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
