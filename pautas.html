@@ -216,6 +216,7 @@
         window.secoes = [];
 
         window.mudarAba = (aba) => {
+            if (window.isPastor && aba !== 'lista') return;
             document.getElementById('tab-lista').classList.toggle('hidden', aba !== 'lista');
             document.getElementById('tab-criar').classList.toggle('hidden', aba !== 'criar');
             document.getElementById('tab-btn-lista').className = (aba === 'lista' ? 'bg-white/20 text-white' : 'bg-transparent text-white/70 hover:bg-white/10') + ' px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all';
@@ -326,6 +327,7 @@
         };
 
         window.adicionarSecao = () => {
+            if (window.isPastor) return;
             syncSecoes();
             window.secoes.push({ titulo: '', itens: [] });
             renderizarSecoes();
@@ -534,6 +536,7 @@
 
         // ── Salvar ─────────────────────────────────────────────────────
         window.salvarPauta = async () => {
+            if (window.isPastor) return;
             const titulo = document.getElementById('inputTitulo').value.trim();
             const data = document.getElementById('inputData').value;
             const local = document.getElementById('inputLocal').value.trim();
@@ -643,6 +646,7 @@
         }
 
         window.editarPauta = (id) => {
+            if (window.isPastor) return;
             try {
                 const p = allPautas.find(pa => pa.id === id);
                 if (!p) { alert('Pauta não encontrada.'); return; }
@@ -761,6 +765,7 @@
         };
 
         window.excluirPauta = async (id) => {
+            if (window.isPastor) return;
             if (!confirm('Excluir esta pauta e as anotações vinculadas?')) return;
             try {
                 const anotSnap = await getDocs(collection(db, "anotacoes_pautas"));
