@@ -8,289 +8,456 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root {
---primary-color: #000;
---accent-color: #d32f2f;
---bg-light: #f9f9f9;
---border-color: #333;
---whatsapp-color: #25D366;
---highlight-bg: #fff9e6;
+  --primary: #111827;
+  --accent: #b91c1c;
+  --gold: #d97706;
+  --gray-light: #f4f4f5;
+  --gray-border: #e4e4e7;
+  --text: #18181b;
+  --muted: #71717a;
 }
 
-* {
-margin: 0;
-padding: 0;
-box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+@page { size: A4; margin: 0; }
 
 @media print {
-body { background: white !important; padding: 0 !important; }
-.container { box-shadow: none !important; max-width: 100% !important; padding: 10mm !important; margin: 0 !important; }
-.no-print { display: none !important; }
-}
-
-@page {
-size: A4;
-margin: 10mm;
+  body { background: white !important; padding: 0 !important; }
+  .container { box-shadow: none !important; margin: 0 !important; }
+  .no-print { display: none !important; }
 }
 
 body {
-font-family: 'Segoe UI', Arial, sans-serif;
-background: #e0e0e0;
-color: #1a1a1a;
-line-height: 1.4;
-font-size: 10pt;
-padding: 20px 0;
+  font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+  background: #c8c8c8;
+  color: var(--text);
+  font-size: 9pt;
+  line-height: 1.4;
+  padding: 20px 0;
 }
 
 .container {
-width: 210mm;
-min-height: 297mm;
-margin: 0 auto;
-background: white;
-padding: 15mm;
-box-shadow: 0 0 20px rgba(0,0,0,0.2);
-position: relative;
-overflow: hidden;
+  width: 210mm;
+  min-height: 594mm;
+  margin: 0 auto;
+  background: white;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
 }
 
-.pdf-block {
-background: white;
-width: 100%;
-margin-bottom: 10px;
-display: block;
-clear: both;
-}
-
+/* ---- HEADER ---- */
 .header {
-text-align: center;
-border-bottom: 3px solid var(--primary-color);
-padding-bottom: 15px;
-margin-bottom: 20px;
+  background: var(--primary);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 5px solid var(--accent);
+}
+
+.header-logo-wrap {
+  background: white;
+  border-radius: 6px;
+  padding: 5px;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
 .header-logo {
-width: 70px;
-height: auto;
-margin: 0 auto 10px;
-display: block;
+  width: 46px;
+  height: auto;
+  display: block;
 }
 
-.header h1 {
-font-size: 18pt;
-text-transform: uppercase;
-letter-spacing: 1px;
+.header-center { flex: 1; }
+
+.header-center h1 {
+  font-size: 13.5pt;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: white;
+  line-height: 1.15;
 }
 
-.header p {
-font-size: 10pt;
-font-weight: bold;
-color: #444;
+.header-center .org {
+  font-size: 7.5pt;
+  color: #9ca3af;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.section {
-margin-bottom: 20px;
+.header-right { text-align: right; flex-shrink: 0; }
+
+.header-right .date-main {
+  display: block;
+  font-size: 12pt;
+  font-weight: 900;
+  color: #fbbf24;
+  line-height: 1.2;
+}
+
+.header-right .date-sub {
+  display: block;
+  font-size: 7.5pt;
+  color: #d1d5db;
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+/* ---- PORTAL BAR (screen only) ---- */
+.portal-bar {
+  background: #1d4ed8;
+  padding: 5px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 8pt;
+  color: white;
+}
+
+.portal-bar a {
+  color: #fbbf24;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* ---- CONTENT ---- */
+.content {
+  padding: 12px 14px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---- SECTION LABEL ---- */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+}
+
+.section-bar {
+  width: 4px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 .section-title {
-font-size: 12pt;
-font-weight: bold;
-background: #eee;
-padding: 5px 10px;
-border-left: 5px solid var(--primary-color);
-margin-bottom: 10px;
-text-transform: uppercase;
+  font-size: 8.5pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--primary);
 }
 
-.item {
-border: 1px solid #ddd;
-padding: 10px;
-margin-bottom: 10px;
-background: #fff;
+.section-line {
+  flex: 1;
+  height: 1px;
+  background: var(--gray-border);
 }
 
-.item-featured {
-border: 2px solid #ffc107;
-background: var(--highlight-bg);
-padding: 12px;
-margin-bottom: 15px;
-position: relative;
+/* ---- GRIDS ---- */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
-.item-featured::after {
-content: "DESTAQUE";
-position: absolute;
-top: -10px;
-right: 10px;
-background: #ffc107;
-color: #000;
-font-size: 7pt;
-padding: 2px 6px;
-font-weight: bold;
-border-radius: 3px;
+.grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
 }
 
-.item strong {
-display: block;
-font-size: 11pt;
-margin-bottom: 5px;
-color: #000;
+/* ---- CARDS ---- */
+.card {
+  background: var(--gray-light);
+  border: 1px solid var(--gray-border);
+  border-radius: 5px;
+  padding: 8px 10px;
 }
 
-.highlight-box {
-border: 2px solid var(--primary-color);
-background: #fffdf0;
-padding: 15px;
-margin: 15px 0;
-position: relative;
+.card-accent {
+  border-left: 3px solid var(--accent);
+  background: #fef2f2;
 }
 
-.avante-box {
-border: 3px double #000;
-background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
-padding: 20px;
-text-align: center;
-margin: 20px 0;
+.card-gold {
+  border: 2px solid var(--gold);
+  background: #fffbeb;
+  border-radius: 5px;
+  padding: 10px;
+  position: relative;
 }
 
-.avante-box h2 {
-font-size: 16pt;
-color: #d32f2f;
-margin-bottom: 5px;
-text-decoration: underline;
+.card-title {
+  font-weight: 700;
+  font-size: 9pt;
+  color: var(--primary);
+  margin-bottom: 3px;
 }
 
-.portal-box {
-background: #004085;
-color: white;
-padding: 15px;
-text-align: center;
-border-radius: 8px;
-margin: 20px 0;
+.card-sub {
+  font-size: 8pt;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
-.portal-box a {
-color: #ffc107;
-font-weight: bold;
-text-decoration: none;
-font-size: 10pt;
-display: block;
-margin-top: 5px;
+/* ---- BADGES ---- */
+.badge {
+  display: inline-block;
+  font-size: 6.5pt;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+.badge-gold {
+  background: var(--gold);
+  color: white;
+  position: absolute;
+  top: -9px;
+  right: 8px;
+}
+
+.badge-red {
+  background: var(--accent);
+  color: white;
+}
+
+/* ---- NOTES ---- */
 .notes-area {
-border: 1px dashed #999;
-padding: 8px;
-margin-top: 8px;
-min-height: 50px;
-background: #fdfdfd;
-font-style: italic;
-font-size: 9pt;
-word-wrap: break-word;
+  border: 1px dashed #b0b0b0;
+  border-radius: 3px;
+  padding: 5px 8px;
+  margin-top: 6px;
+  min-height: 26px;
+  background: white;
+  font-style: italic;
+  font-size: 8pt;
+  color: #9ca3af;
+  word-wrap: break-word;
 }
 
 [contenteditable="true"]:focus {
-outline: 2px solid #007bff;
-background: #fff;
+  outline: 2px solid #3b82f6;
+  background: #fefce8;
+  color: #333;
 }
 
-.grid-dates {
-display: grid;
-grid-template-columns: repeat(5, 1fr);
-gap: 5px;
-margin-top: 8px;
+/* ---- CONGRESSO ITEMS ---- */
+.cong-item {
+  background: var(--gray-light);
+  border: 1px solid var(--gray-border);
+  border-radius: 4px;
+  padding: 7px 9px;
 }
 
-.date-box {
-border: 1px solid #ccc;
-padding: 4px;
-text-align: center;
-font-size: 8pt;
-background: white;
+.cong-date {
+  font-size: 8pt;
+  font-weight: 800;
+  color: var(--accent);
+  display: block;
 }
 
-.date-box.past {
-background: #eee;
-color: #999;
-text-decoration: line-through;
+.cong-name {
+  font-size: 8.5pt;
+  font-weight: 600;
+  color: var(--text);
+  display: block;
+  line-height: 1.3;
 }
 
-.footer-regional {
-margin-top: 30px;
-padding-top: 10px;
-border-top: 2px solid #000;
-text-align: center;
-font-size: 9pt;
+.cong-place {
+  font-size: 7.5pt;
+  color: var(--muted);
+  display: block;
 }
 
+/* ---- MARCHA BOX ---- */
+.marcha-box {
+  background: var(--primary);
+  color: white;
+  border-radius: 7px;
+  padding: 16px 18px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.marcha-box::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--gold), var(--accent));
+}
+
+.marcha-eyebrow {
+  font-size: 7pt;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: #9ca3af;
+  margin-bottom: 5px;
+}
+
+.marcha-title {
+  font-size: 19pt;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: #fbbf24;
+  line-height: 1;
+}
+
+.marcha-date {
+  font-size: 12pt;
+  font-weight: 700;
+  color: white;
+  margin: 7px 0 4px;
+}
+
+.marcha-local {
+  font-size: 8pt;
+  color: #d1d5db;
+}
+
+.marcha-call {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  font-size: 7.5pt;
+  font-weight: 700;
+  padding: 4px 16px;
+  border-radius: 20px;
+  margin-top: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ---- CALENDAR ---- */
+.cal-month {
+  font-size: 8pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 5px;
+}
+
+.cal-item {
+  display: flex;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 8pt;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: baseline;
+}
+
+.cal-item:last-child { border-bottom: none; }
+
+.cal-date {
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 36px;
+  flex-shrink: 0;
+}
+
+.cal-today-mark {
+  background: #fef3c7;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-weight: 700;
+}
+
+/* ---- PAGE DIVIDER (visual hint) ---- */
+.page-break-hint {
+  border: none;
+  height: 1px;
+  background: #e4e4e7;
+  margin: 4px 0;
+  position: relative;
+}
+
+.page-break-hint::after {
+  content: "— página 2 —";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 0 10px;
+  font-size: 7pt;
+  color: #ccc;
+  font-style: italic;
+}
+
+/* ---- FOOTER ---- */
+.footer {
+  padding: 8px 14px;
+  border-top: 2px solid var(--primary);
+  background: var(--gray-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.footer-info { font-size: 8pt; line-height: 1.6; }
+.footer-info strong { color: var(--primary); }
+.footer-doc { font-size: 7pt; color: var(--muted); text-align: right; line-height: 1.6; }
+
+/* ---- BUTTONS ---- */
 .action-buttons {
-position: fixed;
-bottom: 20px;
-right: 20px;
-display: flex;
-flex-direction: column;
-gap: 10px;
-z-index: 1000;
+  position: fixed; bottom: 20px; right: 20px;
+  display: flex; flex-direction: column; gap: 10px; z-index: 1000;
 }
 
 .btn {
-padding: 12px 20px;
-border-radius: 25px;
-border: none;
-background: #333;
-color: white;
-font-weight: bold;
-cursor: pointer;
-box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-min-width: 180px;
-transition: transform 0.2s;
--webkit-tap-highlight-color: transparent;
+  padding: 11px 20px; border-radius: 25px; border: none;
+  color: white; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; min-width: 180px; font-size: 10pt;
+  transition: transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
-
 .btn:active { transform: scale(0.95); }
-.btn-save { background: #28a745; }
-.btn-whatsapp { background: var(--whatsapp-color); }
+.btn-save { background: #16a34a; }
+.btn-whatsapp { background: #25D366; }
 
 #status-msg {
-position: fixed;
-top: 20px;
-left: 50%;
-transform: translateX(-50%);
-padding: 10px 20px;
-border-radius: 5px;
-display: none;
-z-index: 2000;
-color: white;
-font-weight: bold;
-text-align: center;
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px; border-radius: 5px;
+  display: none; z-index: 2000; color: white;
+  font-weight: bold; text-align: center;
 }
 
 .loading-overlay {
-position: fixed;
-top: 0; left: 0; width: 100%; height: 100%;
-background: rgba(0,0,0,0.85);
-color: white;
-display: none;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-z-index: 9999;
-text-align: center;
-padding: 20px;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85); color: white;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 9999; text-align: center; padding: 20px;
 }
 
-@media screen and (max-width: 210mm) {
-body { padding: 0; overflow-x: hidden; }
-.container {
-width: 100vw;
-min-width: 100vw;
-padding: 15px;
-box-shadow: none;
-}
-.grid-dates { grid-template-columns: repeat(2, 1fr); }
+@media screen and (max-width: 800px) {
+  body { padding: 0; overflow-x: hidden; }
+  .container { width: 100vw; box-shadow: none; min-height: 0; }
+  .grid-2, .grid-2x2 { grid-template-columns: 1fr; }
+  .header { flex-wrap: wrap; }
+  .header-right { text-align: left; }
 }
 </style>
 </head>
@@ -298,215 +465,287 @@ box-shadow: none;
 
 <div id="status-msg"></div>
 <div class="loading-overlay" id="loading">
-<h3 style="margin-bottom: 10px;">Gerando PDF para WhatsApp...</h3>
-<p>Ajustando layout e otimizando tamanho.</p>
+  <h3 style="margin-bottom: 10px;">Gerando PDF para WhatsApp...</h3>
+  <p>Ajustando layout e otimizando tamanho.</p>
 </div>
 
 <div class="action-buttons no-print">
-<button class="btn btn-save" onclick="saveNotes()">💾 SALVAR ANOTAÇÕES</button>
-<button class="btn btn-whatsapp" onclick="shareToWhatsApp()">📲 ENVIAR WHATSAPP</button>
+  <button class="btn btn-save" onclick="saveNotes()">💾 SALVAR ANOTAÇÕES</button>
+  <button class="btn btn-whatsapp" onclick="shareToWhatsApp()">📲 ENVIAR WHATSAPP</button>
 </div>
 
 <div class="container" id="agenda-content">
-<!-- HEADER -->
-<div class="header pdf-block" id="block-header">
-<img src="logo.png" alt="Logo Região 655" class="header-logo">
-<h1>REUNIÃO MINISTERIAL REGIÃO 655</h1>
-<p id="meeting-date-info">09 de Maio de 2026 - 14:00h | IEQ Central - Londrina/PR</p>
-</div>
 
-<!-- PORTAL DESTAQUE -->
-<div class="portal-box no-print pdf-block" id="block-portal">
-<span>🚀 PORTAL DA REGIÃO 655:</span>
-<a href="https://portalreg655.pages.dev/" target="_blank">🔗 Portal Principal</a>
-<a href="https://regiao655.ieqlondrina.com.br/agendaregiao655.html" target="_blank" style="background: rgba(255,255,255,0.1); padding: 5px; border-radius: 4px;">📅 Agenda da Região</a>
-</div>
+  <!-- HEADER -->
+  <div class="header pdf-block" id="block-header">
+    <div class="header-logo-wrap">
+      <img src="logo.png" alt="Logo Região 655" class="header-logo">
+    </div>
+    <div class="header-center">
+      <h1>Reunião Ministerial<br>Região 655</h1>
+      <span class="org">Igreja do Evangelho Quadrangular</span>
+    </div>
+    <div class="header-right">
+      <span class="date-main" id="meeting-date-info">09 de Maio de 2026</span>
+      <span class="date-sub">14:00h<br>IEQ Central · Londrina/PR</span>
+    </div>
+  </div>
 
-<!-- ASSUNTOS ADMINISTRATIVOS -->
-<div class="section pdf-block" id="block-admin">
-<div class="section-title">📊 ASSUNTOS ADMINISTRATIVOS</div>
+  <!-- PORTAL BAR (screen only) -->
+  <div class="portal-bar no-print">
+    <span>🚀 Portal:</span>
+    <a href="https://portalreg655.pages.dev/" target="_blank">Portal Regional</a>
+    <a href="https://regiao655.ieqlondrina.com.br/agendaregiao655.html" target="_blank">Agenda da Região</a>
+  </div>
 
-<div class="item">
-<strong>1. Relatórios Financeiros</strong>
-<p>• Prazos de envio e organização do mês.</p>
-<div class="notes-area" contenteditable="true" id="note-1">Anotações...</div>
-</div>
+  <!-- CONTENT -->
+  <div class="content">
 
-<div class="item">
-<strong>2. Informações Estatísticas</strong>
-<p>• Controle de Células e Novos Convertidos.</p>
-<div class="notes-area" contenteditable="true" id="note-2">Anotações...</div>
-</div>
-</div>
+    <!-- ASSUNTOS ADMINISTRATIVOS -->
+    <div class="section pdf-block" id="block-admin">
+      <div class="section-label">
+        <div class="section-bar"></div>
+        <span class="section-title">Assuntos Administrativos</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">1. Relatórios Financeiros</div>
+          <div class="card-sub">Prazos de envio e organização do mês</div>
+          <div class="notes-area" contenteditable="true" id="note-1">Anotações...</div>
+        </div>
+        <div class="card">
+          <div class="card-title">2. Informações Estatísticas</div>
+          <div class="card-sub">Controle de Células e Novos Convertidos</div>
+          <div class="notes-area" contenteditable="true" id="note-2">Anotações...</div>
+        </div>
+      </div>
+    </div>
 
-<!-- CONVENÇÕES -->
-<div class="section pdf-block" id="block-convencoes">
-<div class="section-title">⭐ CONVENÇÕES</div>
+    <!-- CONVENÇÕES -->
+    <div class="section pdf-block" id="block-convencoes">
+      <div class="section-label">
+        <div class="section-bar"></div>
+        <span class="section-title">Convenções</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="grid-2">
+        <div class="card-gold">
+          <span class="badge badge-gold">Nacional</span>
+          <div class="card-title" style="font-size: 10.5pt; color: var(--accent); margin-top: 2px;">🎯 75ª CONVENÇÃO NACIONAL</div>
+          <div class="card-sub" style="margin-top: 4px;">📅 21, 22 e 23 de Julho de 2026</div>
+          <div class="card-sub">📍 Itajaí · Santa Catarina</div>
+          <div class="notes-area" contenteditable="true" id="note-5">Anotações...</div>
+        </div>
+        <div class="card card-accent" style="align-self: start;">
+          <div class="card-title">🎯 49ª CONVENÇÃO ESTADUAL</div>
+          <div class="card-sub" style="margin-top: 4px;">📅 25 e 26 de Setembro de 2026</div>
+          <div class="card-sub">📍 Hotel Raffain · Foz do Iguaçu/PR</div>
+        </div>
+      </div>
+    </div>
 
-<div class="highlight-box">
-<strong style="font-size: 13pt; color: #d32f2f;">🎯 75ª CONVENÇÃO NACIONAL</strong>
-<p>📅 21, 22 e 23 de Julho de 2026 | Itajaí/SC</p>
-<div class="notes-area" contenteditable="true" id="note-5">Anotações...</div>
-</div>
+    <!-- CONGRESSOS -->
+    <div class="section pdf-block" id="block-congressos">
+      <div class="section-label">
+        <div class="section-bar"></div>
+        <span class="section-title">Congressos Estaduais 2026</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="grid-2x2">
+        <div class="cong-item">
+          <span class="cong-date">25/07</span>
+          <span class="cong-name">Congresso de Homens</span>
+          <span class="cong-place">📍 Castro/PR</span>
+        </div>
+        <div class="cong-item">
+          <span class="cong-date">01/08</span>
+          <span class="cong-name">Congresso de Jovens</span>
+          <span class="cong-place">📍 Guarapuava/PR</span>
+        </div>
+        <div class="cong-item">
+          <span class="cong-date">15/08</span>
+          <span class="cong-name">Congresso do Diaconato</span>
+          <span class="cong-place">📍 Interior/PR</span>
+        </div>
+        <div class="cong-item">
+          <span class="cong-date">12/09</span>
+          <span class="cong-name">Congresso de Mulheres</span>
+          <span class="cong-place">📍 Guarapuava/PR</span>
+        </div>
+      </div>
+    </div>
 
-<div class="item">
-<strong>🎯 49ª CONVENÇÃO ESTADUAL</strong>
-<p>📅 25 e 26/09/2026 | 📍 Hotel Raffain - Foz do Iguaçu/PR</p>
-</div>
-</div>
+    <!-- DIVISOR DE PÁGINA VISUAL -->
+    <hr class="page-break-hint no-print">
 
-<!-- CONGRESSOS ESTADUAIS -->
-<div class="section pdf-block" id="block-congressos">
-<div class="section-title">🏆 CONGRESSOS ESTADUAIS 2026</div>
-<div class="item" style="padding: 10px; line-height: 1.6;">
-<p style="font-size: 10pt;">📅 <b>25/07</b> - Congresso Estadual de Homens (Castro/PR)</p>
-<p style="font-size: 10pt;">📅 <b>01/08</b> - Congresso Estadual de Jovens (Guarapuava/PR)</p>
-<p style="font-size: 10pt;">📅 <b>15/08</b> - Congresso Estadual do Diaconato (Interior)</p>
-<p style="font-size: 10pt;">📅 <b>12/09</b> - Congresso Estadual de Mulheres (Guarapuava/PR)</p>
-</div>
-</div>
+    <!-- EVENTOS PRIORITÁRIOS -->
+    <div class="section pdf-block" id="block-regionais">
+      <div class="section-label">
+        <div class="section-bar"></div>
+        <span class="section-title">Eventos Prioritários</span>
+        <div class="section-line"></div>
+      </div>
 
-<!-- EVENTOS REGIONAIS -->
-<div class="section pdf-block" id="block-regionais">
-<div class="section-title">🎯 EVENTOS PRIORITÁRIOS</div>
+      <div class="card-gold" style="margin-bottom: 8px;">
+        <span class="badge badge-gold">Próximo — 11/05</span>
+        <div class="card-title" style="font-size: 10pt; color: var(--accent); margin-top: 2px;">🔥 ENCONTRO REGIONAL DE JOVENS (CED)</div>
+        <div class="card-sub" style="margin-top: 4px;">📅 11 de Maio de 2026 &nbsp;·&nbsp; 📍 IEQ Central · Londrina/PR</div>
+        <div class="notes-area" contenteditable="true" id="note-jovens">Anotações...</div>
+      </div>
 
-<div class="item item-featured">
-<strong>🔥 ENCONTRO REGIONAL DE JOVENS (CED)</strong>
-<p>📅 11 de Maio | 📍 IEQ Central</p>
-<div class="notes-area" contenteditable="true" id="note-jovens">Anotações...</div>
-</div>
+      <div class="marcha-box">
+        <div class="marcha-eyebrow">mobilização regional</div>
+        <div class="marcha-title">🚶 Marcha pra Jesus 🚶</div>
+        <div class="marcha-date">23 de Maio de 2026</div>
+        <div class="marcha-local">📍 Londrina · Paraná</div>
+        <span class="marcha-call">Toda a Igreja — Presença Regional</span>
+      </div>
+      <div class="notes-area" contenteditable="true" id="note-marcha" style="margin-top: 6px;">Anotações sobre a Marcha...</div>
+    </div>
 
-<div class="avante-box">
-<h2>🚶 MARCHA PRA JESUS 🚶</h2>
-<p style="font-size: 14pt; font-weight: bold; margin: 10px 0;">23 DE MAIO | LONDRINA</p>
-<p style="background: #000; color: #fff; padding: 5px; display: inline-block; margin-top: 10px;">MOBILIZAÇÃO DE TODA A IGREJA (REGIONAL)</p>
-<div class="notes-area" contenteditable="true" id="note-marcha">Anotações...</div>
-</div>
-</div>
+    <!-- CALENDÁRIO -->
+    <div class="section pdf-block" id="block-calendario">
+      <div class="section-label">
+        <div class="section-bar"></div>
+        <span class="section-title">Calendário — Próximos 30 Dias</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <span class="cal-month">Maio</span>
+          <div class="cal-item">
+            <span class="cal-date">09/05</span>
+            <span class="cal-today-mark">Reunião Ministerial (HOJE)</span>
+          </div>
+          <div class="cal-item">
+            <span class="cal-date">11/05</span>
+            <span>Enc. Regional de Jovens (CED) · IEQ Central</span>
+          </div>
+          <div class="cal-item">
+            <span class="cal-date">15/05</span>
+            <span>Projeto Crescer (REGIONAL) · IEQ Central</span>
+          </div>
+          <div class="cal-item">
+            <span class="cal-date">23/05</span>
+            <span>Marcha pra Jesus (REGIONAL) · Londrina</span>
+          </div>
+        </div>
+        <div>
+          <span class="cal-month">Junho</span>
+          <div class="cal-item">
+            <span class="cal-date">01/06</span>
+            <span>Mega Culto com Pr. Mário (CND) · Online</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<!-- CALENDÁRIO ATUALIZADO -->
-<div class="section pdf-block" id="block-calendario">
-<div class="section-title">📅 CALENDÁRIO PRÓXIMOS 30 DIAS</div>
+  </div><!-- /content -->
 
-<div class="item">
-<strong>MAIO</strong>
-<p>📅 09/05 - Reunião Ministerial (HOJE)</p>
-<p>📅 11/05 - Encontro Regional de Jovens (CED) | IEQ Central</p>
-<p>📅 15/05 - Projeto Crescer (REGIONAL) | IEQ Central</p>
-<p>📅 23/05 - Marcha pra Jesus (REGIONAL) | Londrina</p>
-</div>
+  <!-- FOOTER -->
+  <footer class="footer pdf-block" id="block-footer">
+    <div class="footer-info">
+      <strong>Escritório Regional · Região 655 · Londrina/PR</strong><br>
+      Superintendente: <strong>Rev. Valdir Ávila Ramos</strong> · Secretário: <strong>Pr. Eduardo Silva</strong>
+    </div>
+    <div class="footer-doc">
+      Pauta Oficial<br>09 / 05 / 2026
+    </div>
+  </footer>
 
-<div class="item">
-<strong>JUNHO</strong>
-<p>📅 01/06 - Mega Culto com Pr. Mário (CND) | Online</p>
-</div>
-</div>
-
-<footer class="footer-regional pdf-block" id="block-footer">
-<p><b>Escritório Regional | Região 655 - Londrina/PR</b></p>
-<p>Superintendente: <b>Rev. Valdir Ávila Ramos</b> | Secretário: <b>Pr. Eduardo Silva</b></p>
-</footer>
-</div>
+</div><!-- /container -->
 
 <script>
-// --- Salvar/Carregar ---
 function saveNotes() {
-const notes = {};
-document.querySelectorAll('[contenteditable="true"]').forEach(el => {
-notes[el.id] = el.innerHTML;
-});
-localStorage.setItem('pauta_655_notes_0905', JSON.stringify(notes));
-showStatus("Anotações salvas!", "#28a745");
+  const notes = {};
+  document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+    notes[el.id] = el.innerHTML;
+  });
+  localStorage.setItem('pauta_655_notes_0905', JSON.stringify(notes));
+  showStatus("Anotações salvas!", "#16a34a");
 }
 
 function loadNotes() {
-const saved = localStorage.getItem('pauta_655_notes_0905');
-if (saved) {
-const data = JSON.parse(saved);
-Object.keys(data).forEach(id => {
-const el = document.getElementById(id);
-if (el) el.innerHTML = data[id];
-});
-}
+  const saved = localStorage.getItem('pauta_655_notes_0905');
+  if (saved) {
+    const data = JSON.parse(saved);
+    Object.keys(data).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = data[id];
+    });
+  }
 }
 
 function showStatus(msg, color) {
-const s = document.getElementById("status-msg");
-s.innerText = msg; s.style.background = color; s.style.display = "block";
-setTimeout(() => s.style.display = "none", 3000);
+  const s = document.getElementById("status-msg");
+  s.innerText = msg; s.style.background = color; s.style.display = "block";
+  setTimeout(() => s.style.display = "none", 3000);
 }
 
-// --- GERADOR DE PDF ---
 async function createSmartPDF() {
-const { jsPDF } = window.jspdf;
-const pdf = new jsPDF('p', 'mm', 'a4');
-const pageWidth = pdf.internal.pageSize.getWidth();
-const pageHeight = pdf.internal.pageSize.getHeight();
-const margin = 10;
-let currentY = margin;
-const container = document.getElementById('agenda-content');
-const blocks = document.querySelectorAll('.pdf-block');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 10;
+  let currentY = margin;
+  const container = document.getElementById('agenda-content');
+  const blocks = document.querySelectorAll('.pdf-block');
 
-const originalWidth = container.style.width;
-const originalMinWidth = container.style.minWidth;
-container.style.width = "210mm";
-container.style.minWidth = "210mm";
+  const originalWidth = container.style.width;
+  container.style.width = "210mm";
 
-for (let i = 0; i < blocks.length; i++) {
-const block = blocks[i];
-const canvas = await html2canvas(block, {
-scale: 2,
-useCORS: true,
-logging: false,
-backgroundColor: '#ffffff',
-width: block.offsetWidth,
-windowWidth: 794
-});
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    const canvas = await html2canvas(block, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      width: block.offsetWidth,
+      windowWidth: 794
+    });
 
-const imgData = canvas.toDataURL('image/jpeg', 0.8);
-const imgWidth = pageWidth - (margin * 2);
-const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const imgData = canvas.toDataURL('image/jpeg', 0.85);
+    const imgWidth = pageWidth - (margin * 2);
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-if (currentY + imgHeight > pageHeight - margin) {
-pdf.addPage();
-currentY = margin;
-}
+    if (currentY + imgHeight > pageHeight - margin) {
+      pdf.addPage();
+      currentY = margin;
+    }
 
-pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, imgHeight);
-currentY += imgHeight + 3;
-}
+    pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, imgHeight);
+    currentY += imgHeight + 3;
+  }
 
-container.style.width = originalWidth;
-container.style.minWidth = originalMinWidth;
-return pdf;
+  container.style.width = originalWidth;
+  return pdf;
 }
 
 async function shareToWhatsApp() {
-if (!navigator.share) {
-showStatus("Use um celular para enviar direto.", "#dc3545");
-return;
-}
-const loading = document.getElementById('loading');
-loading.style.display = 'flex';
-try {
-saveNotes();
-const pdf = await createSmartPDF();
-const blob = pdf.output('blob');
-const file = new File([blob], "Pauta_655_0905.pdf", { type: "application/pdf" });
-
-const fullHeaderP = document.getElementById('meeting-date-info').innerText;
-const meetingDate = fullHeaderP.split(' - ')[0] || "09/05/2026";
-
-await navigator.share({
-files: [file],
-title: 'Pauta Ministerial 09/05',
-text: `Pauta da Reunião Ministerial de ${meetingDate}.`
-});
-} catch (e) {
-if(e.name !== "AbortError") showStatus("Erro ao enviar PDF.", "#dc3545");
-} finally {
-loading.style.display = 'none';
-}
+  if (!navigator.share) {
+    showStatus("Use um celular para enviar direto.", "#dc3545");
+    return;
+  }
+  const loading = document.getElementById('loading');
+  loading.style.display = 'flex';
+  try {
+    saveNotes();
+    const pdf = await createSmartPDF();
+    const blob = pdf.output('blob');
+    const file = new File([blob], "Pauta_655_0905.pdf", { type: "application/pdf" });
+    await navigator.share({
+      files: [file],
+      title: 'Pauta Ministerial 09/05',
+      text: 'Pauta da Reunião Ministerial de 09 de Maio de 2026.'
+    });
+  } catch (e) {
+    if (e.name !== "AbortError") showStatus("Erro ao enviar PDF.", "#dc3545");
+  } finally {
+    loading.style.display = 'none';
+  }
 }
 
 window.onload = loadNotes;
