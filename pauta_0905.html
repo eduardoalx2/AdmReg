@@ -38,7 +38,7 @@ body {
 
 .container {
   width: 210mm;
-  min-height: 594mm;
+  min-height: 297mm;
   margin: 0 auto;
   background: white;
   box-shadow: 0 4px 30px rgba(0,0,0,0.3);
@@ -380,27 +380,6 @@ body {
   font-weight: 700;
 }
 
-/* ---- PAGE DIVIDER (visual hint) ---- */
-.page-break-hint {
-  border: none;
-  height: 1px;
-  background: #e4e4e7;
-  margin: 4px 0;
-  position: relative;
-}
-
-.page-break-hint::after {
-  content: "— página 2 —";
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  padding: 0 10px;
-  font-size: 7pt;
-  color: #ccc;
-  font-style: italic;
-}
 
 /* ---- FOOTER ---- */
 .footer {
@@ -575,9 +554,6 @@ body {
         </div>
       </div>
     </div>
-
-    <!-- DIVISOR DE PÁGINA VISUAL -->
-    <hr class="page-break-hint no-print">
 
     <!-- EVENTOS PRIORITÁRIOS -->
     <div class="section pdf-block" id="block-regionais">
