@@ -474,7 +474,7 @@
                     }
                 }
 
-                console.log("Iniciando salvamento de Pastor no Firebase...");
+
                 const payload = {
                     nome: document.getElementById('pastor-nome').value.trim().toUpperCase(),
                     telefone: document.getElementById('pastor-telefone').value.trim(),
@@ -512,7 +512,7 @@
                 }
                 window.fecharModal();
                 carregarPastores();
-                console.log("Pastor salvo com sucesso!");
+
             } catch (error) {
                 console.error("Erro ao salvar:", error);
                 alert("Erro ao salvar o pastor.");

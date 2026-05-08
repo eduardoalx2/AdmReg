@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pauta Reunião Ministerial - 09/05/2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root {
+--primary-color: #000;
+--accent-color: #d32f2f;
+--bg-light: #f9f9f9;
+--border-color: #333;
+--whatsapp-color: #25D366;
+--highlight-bg: #fff9e6;
+}
+
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+@media print {
+body { background: white !important; padding: 0 !important; }
+.container { box-shadow: none !important; max-width: 100% !important; padding: 10mm !important; margin: 0 !important; }
+.no-print { display: none !important; }
+}
+
+@page {
+size: A4;
+margin: 10mm;
+}
+
+body {
+font-family: 'Segoe UI', Arial, sans-serif;
+background: #e0e0e0;
+color: #1a1a1a;
+line-height: 1.4;
+font-size: 10pt;
+padding: 20px 0;
+}
+
+.container {
+width: 210mm;
+min-height: 297mm;
+margin: 0 auto;
+background: white;
+padding: 15mm;
+box-shadow: 0 0 20px rgba(0,0,0,0.2);
+position: relative;
+overflow: hidden;
+}
+
+.pdf-block {
+background: white;
+width: 100%;
+margin-bottom: 10px;
+display: block;
+clear: both;
+}
+
+.header {
+text-align: center;
+border-bottom: 3px solid var(--primary-color);
+padding-bottom: 15px;
+margin-bottom: 20px;
+}
+
+.header-logo {
+width: 70px;
+height: auto;
+margin: 0 auto 10px;
+display: block;
+}
+
+.header h1 {
+font-size: 18pt;
+text-transform: uppercase;
+letter-spacing: 1px;
+}
+
+.header p {
+font-size: 10pt;
+font-weight: bold;
+color: #444;
+}
+
+.section {
+margin-bottom: 20px;
+}
+
+.section-title {
+font-size: 12pt;
+font-weight: bold;
+background: #eee;
+padding: 5px 10px;
+border-left: 5px solid var(--primary-color);
+margin-bottom: 10px;
+text-transform: uppercase;
+}
+
+.item {
+border: 1px solid #ddd;
+padding: 10px;
+margin-bottom: 10px;
+background: #fff;
+}
+
+.item-featured {
+border: 2px solid #ffc107;
+background: var(--highlight-bg);
+padding: 12px;
+margin-bottom: 15px;
+position: relative;
+}
+
+.item-featured::after {
+content: "DESTAQUE";
+position: absolute;
+top: -10px;
+right: 10px;
+background: #ffc107;
+color: #000;
+font-size: 7pt;
+padding: 2px 6px;
+font-weight: bold;
+border-radius: 3px;
+}
+
+.item strong {
+display: block;
+font-size: 11pt;
+margin-bottom: 5px;
+color: #000;
+}
+
+.highlight-box {
+border: 2px solid var(--primary-color);
+background: #fffdf0;
+padding: 15px;
+margin: 15px 0;
+position: relative;
+}
+
+.avante-box {
+border: 3px double #000;
+background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+padding: 20px;
+text-align: center;
+margin: 20px 0;
+}
+
+.avante-box h2 {
+font-size: 16pt;
+color: #d32f2f;
+margin-bottom: 5px;
+text-decoration: underline;
+}
+
+.portal-box {
+background: #004085;
+color: white;
+padding: 15px;
+text-align: center;
+border-radius: 8px;
+margin: 20px 0;
+}
+
+.portal-box a {
+color: #ffc107;
+font-weight: bold;
+text-decoration: none;
+font-size: 10pt;
+display: block;
+margin-top: 5px;
+}
+
+.notes-area {
+border: 1px dashed #999;
+padding: 8px;
+margin-top: 8px;
+min-height: 50px;
+background: #fdfdfd;
+font-style: italic;
+font-size: 9pt;
+word-wrap: break-word;
+}
+
+[contenteditable="true"]:focus {
+outline: 2px solid #007bff;
+background: #fff;
+}
+
+.grid-dates {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 5px;
+margin-top: 8px;
+}
+
+.date-box {
+border: 1px solid #ccc;
+padding: 4px;
+text-align: center;
+font-size: 8pt;
+background: white;
+}
+
+.date-box.past {
+background: #eee;
+color: #999;
+text-decoration: line-through;
+}
+
+.footer-regional {
+margin-top: 30px;
+padding-top: 10px;
+border-top: 2px solid #000;
+text-align: center;
+font-size: 9pt;
+}
+
+.action-buttons {
+position: fixed;
+bottom: 20px;
+right: 20px;
+display: flex;
+flex-direction: column;
+gap: 10px;
+z-index: 1000;
+}
+
+.btn {
+padding: 12px 20px;
+border-radius: 25px;
+border: none;
+background: #333;
+color: white;
+font-weight: bold;
+cursor: pointer;
+box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+min-width: 180px;
+transition: transform 0.2s;
+-webkit-tap-highlight-color: transparent;
+}
+
+.btn:active { transform: scale(0.95); }
+.btn-save { background: #28a745; }
+.btn-whatsapp { background: var(--whatsapp-color); }
+
+#status-msg {
+position: fixed;
+top: 20px;
+left: 50%;
+transform: translateX(-50%);
+padding: 10px 20px;
+border-radius: 5px;
+display: none;
+z-index: 2000;
+color: white;
+font-weight: bold;
+text-align: center;
+}
+
+.loading-overlay {
+position: fixed;
+top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(0,0,0,0.85);
+color: white;
+display: none;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+z-index: 9999;
+text-align: center;
+padding: 20px;
+}
+
+@media screen and (max-width: 210mm) {
+body { padding: 0; overflow-x: hidden; }
+.container {
+width: 100vw;
+min-width: 100vw;
+padding: 15px;
+box-shadow: none;
+}
+.grid-dates { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<div id="status-msg"></div>
+<div class="loading-overlay" id="loading">
+<h3 style="margin-bottom: 10px;">Gerando PDF para WhatsApp...</h3>
+<p>Ajustando layout e otimizando tamanho.</p>
+</div>
+
+<div class="action-buttons no-print">
+<button class="btn btn-save" onclick="saveNotes()">💾 SALVAR ANOTAÇÕES</button>
+<button class="btn btn-whatsapp" onclick="shareToWhatsApp()">📲 ENVIAR WHATSAPP</button>
+</div>
+
+<div class="container" id="agenda-content">
+<!-- HEADER -->
+<div class="header pdf-block" id="block-header">
+<img src="https://portalreg655.pages.dev/logo.png" alt="Logo Região 655" class="header-logo">
+<h1>REUNIÃO MINISTERIAL REGIÃO 655</h1>
+<p id="meeting-date-info">09 de Maio de 2026 - 14:00h | IEQ Central - Londrina/PR</p>
+</div>
+
+<!-- PORTAL DESTAQUE -->
+<div class="portal-box no-print pdf-block" id="block-portal">
+<span>🚀 PORTAL DA REGIÃO 655:</span>
+<a href="https://portalreg655.pages.dev/" target="_blank">🔗 Portal Principal</a>
+<a href="https://portalreg655.pages.dev/b_agendacompactareg655" target="_blank" style="background: rgba(255,255,255,0.1); padding: 5px; border-radius: 4px;">📅 Agenda Rápida da Região</a>
+</div>
+
+<!-- ASSUNTOS ADMINISTRATIVOS -->
+<div class="section pdf-block" id="block-admin">
+<div class="section-title">📊 ASSUNTOS ADMINISTRATIVOS</div>
+
+<div class="item">
+<strong>1. Relatórios Financeiros</strong>
+<p>• Prazos de envio e organização do mês.</p>
+<div class="notes-area" contenteditable="true" id="note-1">Anotações...</div>
+</div>
+
+<div class="item">
+<strong>2. Informações Estatísticas</strong>
+<p>• Controle de Células e Novos Convertidos.</p>
+<div class="notes-area" contenteditable="true" id="note-2">Anotações...</div>
+</div>
+</div>
+
+<!-- CONVENÇÕES -->
+<div class="section pdf-block" id="block-convencoes">
+<div class="section-title">⭐ CONVENÇÕES</div>
+
+<div class="highlight-box">
+<strong style="font-size: 13pt; color: #d32f2f;">🎯 75ª CONVENÇÃO NACIONAL</strong>
+<p>📅 21, 22 e 23 de Julho de 2026 | Itajaí/SC</p>
+<div class="notes-area" contenteditable="true" id="note-5">Anotações...</div>
+</div>
+
+<div class="item">
+<strong>🎯 49ª CONVENÇÃO ESTADUAL</strong>
+<p>📅 25 e 26/09/2026 | 📍 Hotel Raffain - Foz do Iguaçu/PR</p>
+</div>
+</div>
+
+<!-- EVENTOS REGIONAIS -->
+<div class="section pdf-block" id="block-regionais">
+<div class="section-title">🎯 EVENTOS PRIORITÁRIOS</div>
+
+<div class="item item-featured">
+<strong>🔥 ENCONTRO REGIONAL DE JOVENS (CED)</strong>
+<p>📅 11 de Maio | 📍 IEQ Central</p>
+<div class="notes-area" contenteditable="true" id="note-jovens">Anotações...</div>
+</div>
+
+<div class="avante-box">
+<h2>🚶 MARCHA PRA JESUS 🚶</h2>
+<p style="font-size: 14pt; font-weight: bold; margin: 10px 0;">23 DE MAIO | LONDRINA</p>
+<p style="background: #000; color: #fff; padding: 5px; display: inline-block; margin-top: 10px;">MOBILIZAÇÃO DE TODA A IGREJA (REGIONAL)</p>
+<div class="notes-area" contenteditable="true" id="note-marcha">Anotações...</div>
+</div>
+</div>
+
+<!-- CALENDÁRIO ATUALIZADO -->
+<div class="section pdf-block" id="block-calendario">
+<div class="section-title">📅 CALENDÁRIO PRÓXIMOS 30 DIAS</div>
+
+<div class="item">
+<strong>MAIO</strong>
+<p>📅 09/05 - Reunião Ministerial (HOJE)</p>
+<p>📅 11/05 - Encontro Regional de Jovens (CED) | IEQ Central</p>
+<p>📅 15/05 - Projeto Crescer (REGIONAL) e Pastoreio de Superintendentes (CED) | IEQ Central</p>
+<p>📅 23/05 - Marcha pra Jesus (REGIONAL) | Londrina</p>
+</div>
+
+<div class="item">
+<strong>JUNHO</strong>
+<p>📅 01/06 - Mega Culto com Pr. Mário (CND) | Online</p>
+</div>
+</div>
+
+<footer class="footer-regional pdf-block" id="block-footer">
+<p><b>Escritório Regional | Região 655 - Londrina/PR</b></p>
+<p>Superintendente: <b>Rev. Valdir Ávila Ramos</b> | Secretário: <b>Pr. Eduardo Silva</b></p>
+</footer>
+</div>
+
+<script>
+// --- Salvar/Carregar ---
+function saveNotes() {
+const notes = {};
+document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+notes[el.id] = el.innerHTML;
+});
+localStorage.setItem('pauta_655_notes_0905', JSON.stringify(notes));
+showStatus("Anotações salvas!", "#28a745");
+}
+
+function loadNotes() {
+const saved = localStorage.getItem('pauta_655_notes_0905');
+if (saved) {
+const data = JSON.parse(saved);
+Object.keys(data).forEach(id => {
+const el = document.getElementById(id);
+if (el) el.innerHTML = data[id];
+});
+}
+}
+
+function showStatus(msg, color) {
+const s = document.getElementById("status-msg");
+s.innerText = msg; s.style.background = color; s.style.display = "block";
+setTimeout(() => s.style.display = "none", 3000);
+}
+
+// --- GERADOR DE PDF ---
+async function createSmartPDF() {
+const { jsPDF } = window.jspdf;
+const pdf = new jsPDF('p', 'mm', 'a4');
+const pageWidth = pdf.internal.pageSize.getWidth();
+const pageHeight = pdf.internal.pageSize.getHeight();
+const margin = 10;
+let currentY = margin;
+const container = document.getElementById('agenda-content');
+const blocks = document.querySelectorAll('.pdf-block');
+
+const originalWidth = container.style.width;
+const originalMinWidth = container.style.minWidth;
+container.style.width = "210mm";
+container.style.minWidth = "210mm";
+
+for (let i = 0; i < blocks.length; i++) {
+const block = blocks[i];
+const canvas = await html2canvas(block, {
+scale: 2,
+useCORS: true,
+logging: false,
+backgroundColor: '#ffffff',
+width: block.offsetWidth,
+windowWidth: 794
+});
+
+const imgData = canvas.toDataURL('image/jpeg', 0.8);
+const imgWidth = pageWidth - (margin * 2);
+const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+if (currentY + imgHeight > pageHeight - margin) {
+pdf.addPage();
+currentY = margin;
+}
+
+pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, imgHeight);
+currentY += imgHeight + 3;
+}
+
+container.style.width = originalWidth;
+container.style.minWidth = originalMinWidth;
+return pdf;
+}
+
+async function shareToWhatsApp() {
+if (!navigator.share) {
+showStatus("Use um celular para enviar direto.", "#dc3545");
+return;
+}
+const loading = document.getElementById('loading');
+loading.style.display = 'flex';
+try {
+saveNotes();
+const pdf = await createSmartPDF();
+const blob = pdf.output('blob');
+const file = new File([blob], "Pauta_655_0905.pdf", { type: "application/pdf" });
+
+const fullHeaderP = document.getElementById('meeting-date-info').innerText;
+const meetingDate = fullHeaderP.split(' - ')[0] || "09/05/2026";
+
+await navigator.share({
+files: [file],
+title: 'Pauta Ministerial 09/05',
+text: `Pauta da Reunião Ministerial de ${meetingDate}.`
+});
+} catch (e) {
+if(e.name !== "AbortError") showStatus("Erro ao enviar PDF.", "#dc3545");
+} finally {
+loading.style.display = 'none';
+}
+}
+
+window.onload = loadNotes;
+</script>
+</body>
+</html>

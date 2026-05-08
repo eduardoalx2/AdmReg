@@ -418,7 +418,7 @@
             btn.disabled = true;
 
             try {
-                console.log("Iniciando salvamento de Igreja no Firebase...");
+
                 const id = document.getElementById('igreja-id').value;
                 const nomeIgreja = document.getElementById('igreja-nome').value.trim().toUpperCase();
                 const pastorIds = Array.from(document.querySelectorAll('input[name="igreja-pastores-cb"]:checked')).map(cb => cb.value);
@@ -485,7 +485,7 @@
 
                 window.fecharModal();
                 carregarIgrejas();
-                console.log("Igreja salva com sucesso!");
+
             } catch (error) {
                 console.error("Erro ao salvar:", error);
                 alert("Erro ao salvar a igreja.");
