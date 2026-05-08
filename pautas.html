@@ -221,7 +221,12 @@
                 }
             }
 
-            if (aba === 'lista') { pautaEditandoId = null; secoes = []; carregarPautas(); }
+            if (aba === 'lista') {
+                pautaEditandoId = null;
+                secoes = [];
+                document.getElementById('tab-btn-criar').textContent = 'Nova Pauta';
+                carregarPautas();
+            }
             if (aba === 'criar' && secoes.length === 0 && !pautaEditandoId) { secoes = []; window.adicionarSecao(); }
             if (window.lucide) lucide.createIcons();
         };
@@ -508,19 +513,23 @@
         }
 
         window.editarPauta = (id) => {
-            const p = allPautas.find(pa => pa.id === id);
-            if (!p) return;
-            pautaEditandoId = id;
-            document.getElementById('inputTitulo').value = p.titulo || '';
-            document.getElementById('inputData').value = p.data || '';
-            document.getElementById('inputLocal').value = p.local || '';
-            document.getElementById('inputVisivel').checked = p.visivel === true;
-            secoes = p.secoes && p.secoes.length ? JSON.parse(JSON.stringify(p.secoes)) : [];
-            if (secoes.length === 0) secoes.push({ titulo: '', itens: [] });
-            // Garante que itens antigos tenham imagemTamanho
-            secoes.forEach(s => s.itens.forEach(item => { if (!item.imagemTamanho) item.imagemTamanho = 'medio'; }));
-            renderizarSecoes();
-            window.mudarAba('criar');
+            try {
+                const p = allPautas.find(pa => pa.id === id);
+                if (!p) { alert('Pauta não encontrada.'); return; }
+                pautaEditandoId = id;
+                document.getElementById('inputTitulo').value = p.titulo || '';
+                document.getElementById('inputData').value = p.data || '';
+                document.getElementById('inputLocal').value = p.local || '';
+                document.getElementById('inputVisivel').checked = p.visivel === true;
+                secoes = p.secoes && p.secoes.length ? JSON.parse(JSON.stringify(p.secoes)) : [];
+                if (secoes.length === 0) secoes.push({ titulo: '', itens: [] });
+                secoes.forEach(s => s.itens.forEach(item => { if (!item.imagemTamanho) item.imagemTamanho = 'medio'; }));
+                renderizarSecoes();
+                window.mudarAba('criar');
+            } catch (e) {
+                console.error('Erro ao editar pauta:', e);
+                alert('Erro ao carregar pauta para edição: ' + e.message);
+            }
         };
 
         window.visualizarPauta = (id) => {
