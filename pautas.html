@@ -212,7 +212,7 @@
         let allPautas = [];
         let pautaSelecionada = null;
         let pautaEditandoId = null;
-        let secoes = [];
+        window.secoes = [];
 
         window.mudarAba = (aba) => {
             document.getElementById('tab-lista').classList.toggle('hidden', aba !== 'lista');
@@ -234,12 +234,12 @@
             if (aba === 'lista') {
                 // Verifica se há dados não salvos no formulário
                 syncSecoes();
-                const temDados = secoes.some(s => s.titulo || s.itens.some(i => i.titulo || i.subtitulo || i.data || i.imagem));
+                const temDados = window.secoes.some(s => s.titulo || s.itens.some(i => i.titulo || i.subtitulo || i.data || i.imagem));
                 if (temDados && !confirm('Você tem alterações não salvas. Deseja sair sem salvar?')) {
                     return; // Cancela a troca de aba
                 }
                 pautaEditandoId = null;
-                secoes = [];
+                window.secoes = [];
                 document.getElementById('inputTitulo').value = '';
                 document.getElementById('inputData').value = '';
                 document.getElementById('inputLocal').value = '';
@@ -248,7 +248,7 @@
                 document.getElementById('tab-btn-criar').textContent = 'Nova Pauta';
                 carregarPautas();
             }
-            if (aba === 'criar' && secoes.length === 0 && !pautaEditandoId) { secoes = []; window.adicionarSecao(); }
+            if (aba === 'criar' && window.secoes.length === 0 && !pautaEditandoId) { secoes = []; window.adicionarSecao(); }
             if (window.lucide) lucide.createIcons();
         };
 
@@ -261,36 +261,36 @@
 
         window.adicionarSecao = () => {
             syncSecoes();
-            secoes.push({ titulo: '', itens: [] });
+            window.secoes.push({ titulo: '', itens: [] });
             renderizarSecoes();
         };
 
         window.removerSecao = (idx) => {
             syncSecoes();
-            secoes.splice(idx, 1);
+            window.secoes.splice(idx, 1);
             renderizarSecoes();
         };
 
         window.adicionarItem = (secaoIdx) => {
             syncSecoes();
-            secoes[secaoIdx].itens.push({ titulo: '', subtitulo: '', data: '', imagem: '', imagemTamanho: 'medio' });
+            window.secoes[secaoIdx].itens.push({ titulo: '', subtitulo: '', data: '', imagem: '', imagemTamanho: 'medio' });
             renderizarSecoes();
         };
 
         window.removerItem = (secaoIdx, itemIdx) => {
             syncSecoes();
-            secoes[secaoIdx].itens.splice(itemIdx, 1);
+            window.secoes[secaoIdx].itens.splice(itemIdx, 1);
             renderizarSecoes();
         };
 
         function renderizarSecoes() {
             const container = document.getElementById('secoes-container');
-            container.innerHTML = secoes.map((s, si) => `
+            container.innerHTML = window.secoes.map((s, si) => `
                 <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex-1 mr-3">
                             <input type="text" placeholder="Título da seção (ex: 📊 ASSUNTOS ADMINISTRATIVOS)" value="${s.titulo.replace(/"/g,'&quot;')}"
-                                oninput="secoes[${si}].titulo = this.value"
+                                oninput="window.secoes[${si}].titulo = this.value"
                                 class="w-full p-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-xs font-bold text-slate-700">
                         </div>
                         <button onclick="window.removerSecao(${si})" class="text-slate-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0" title="Remover seção">
@@ -308,29 +308,29 @@
                                     <div>
                                         <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Título do Item</label>
                                         <input type="text" placeholder="Ex: Relatórios Financeiros" value="${(item.titulo||'').replace(/"/g,'&quot;')}"
-                                            oninput="secoes[${si}].itens[${ii}].titulo = this.value"
+                                            oninput="window.secoes[${si}].itens[${ii}].titulo = this.value"
                                             class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700">
                                     </div>
                                     <div>
                                         <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Subtítulo / Detalhes</label>
                                         <textarea rows="3" placeholder="Ex: • Saldo de virada&#10;• Prazo de lançamento" 
-                                            oninput="secoes[${si}].itens[${ii}].subtitulo = this.value"
+                                            oninput="window.secoes[${si}].itens[${ii}].subtitulo = this.value"
                                             class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-slate-700 custom-scrollbar resize-y">${(item.subtitulo||'')}</textarea>
                                         <p class="text-[8px] text-slate-400 mt-0.5 ml-1">Use <b>**texto**</b> para negrito e <i>*texto*</i> para itálico</p>
                                     </div>
                                     <div>
                                         <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Data / Info (opcional)</label>
                                         <input type="text" placeholder="Ex: 📅 03/04/2026 às 9:30h | 📍 IEQ Central" value="${(item.data||'').replace(/"/g,'&quot;')}"
-                                            oninput="secoes[${si}].itens[${ii}].data = this.value"
+                                            oninput="window.secoes[${si}].itens[${ii}].data = this.value"
                                             class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700">
                                     </div>
                                     <div>
                                         <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">URL do Banner / Imagem (opcional)</label>
                                         <div class="flex gap-2">
                                             <input type="text" placeholder="Ex: https://...banner.jpg" value="${(item.imagem||'').replace(/"/g,'&quot;')}"
-                                                oninput="secoes[${si}].itens[${ii}].imagem = this.value"
+                                                oninput="window.secoes[${si}].itens[${ii}].imagem = this.value"
                                                 class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs text-slate-700">
-                                            <select oninput="secoes[${si}].itens[${ii}].imagemTamanho = this.value"
+                                            <select oninput="window.secoes[${si}].itens[${ii}].imagemTamanho = this.value"
                                                 class="w-24 p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700">
                                                 <option value="pequeno" ${item.imagemTamanho === 'pequeno' ? 'selected' : ''}>Pequeno</option>
                                                 <option value="medio" ${(!item.imagemTamanho || item.imagemTamanho === 'medio') ? 'selected' : ''}>Médio</option>
@@ -348,7 +348,7 @@
                 </div>
             `).join('');
 
-            if (secoes.length === 0) {
+            if (window.secoes.length === 0) {
                 container.innerHTML = '<p class="text-center py-8 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhuma seção. Clique em "Adicionar Seção" para começar.</p>';
             }
 
@@ -376,7 +376,7 @@
 </div>
 `;
 
-            secoes.forEach(s => {
+            window.secoes.forEach(s => {
                 if (!s.titulo && s.itens.length === 0) return;
                 html += `<div style="margin-bottom:15px;">
     <div style="font-size:11pt;font-weight:bold;border-bottom:1.5px solid #000;padding-bottom:3px;margin-bottom:8px;text-transform:uppercase;">${s.titulo || ''}</div>
@@ -452,7 +452,7 @@
             const html = gerarHtmlPauta(titulo, data, local);
             const payload = {
                 titulo, data, local, visivel, html,
-                secoes: JSON.parse(JSON.stringify(secoes)),
+                secoes: JSON.parse(JSON.stringify(window.secoes)),
                 atualizadoEm: new Date()
             };
 
@@ -473,7 +473,7 @@
                 document.getElementById('inputData').value = '';
                 document.getElementById('inputLocal').value = '';
                 document.getElementById('inputVisivel').checked = false;
-                secoes = [];
+                window.secoes = [];
                 pautaEditandoId = null;
                 document.getElementById('secoes-container').innerHTML = '';
                 msg.textContent = isEdit ? 'Pauta atualizada!' : 'Pauta salva com sucesso!';
@@ -542,9 +542,9 @@
                 document.getElementById('inputData').value = p.data || '';
                 document.getElementById('inputLocal').value = p.local || '';
                 document.getElementById('inputVisivel').checked = p.visivel === true;
-                secoes = p.secoes && p.secoes.length ? JSON.parse(JSON.stringify(p.secoes)) : [];
-                if (secoes.length === 0) secoes.push({ titulo: '', itens: [] });
-                secoes.forEach(s => s.itens.forEach(item => { if (!item.imagemTamanho) item.imagemTamanho = 'medio'; }));
+                window.secoes = p.secoes && p.secoes.length ? JSON.parse(JSON.stringify(p.secoes)) : [];
+                if (window.secoes.length === 0) window.secoes.push({ titulo: '', itens: [] });
+                window.secoes.forEach(s => s.itens.forEach(item => { if (!item.imagemTamanho) item.imagemTamanho = 'medio'; }));
                 renderizarSecoes();
                 window.mudarAba('criar');
             } catch (e) {
