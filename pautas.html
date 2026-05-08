@@ -232,8 +232,19 @@
             }
 
             if (aba === 'lista') {
+                // Verifica se há dados não salvos no formulário
+                syncSecoes();
+                const temDados = secoes.some(s => s.titulo || s.itens.some(i => i.titulo || i.subtitulo || i.data || i.imagem));
+                if (temDados && !confirm('Você tem alterações não salvas. Deseja sair sem salvar?')) {
+                    return; // Cancela a troca de aba
+                }
                 pautaEditandoId = null;
                 secoes = [];
+                document.getElementById('inputTitulo').value = '';
+                document.getElementById('inputData').value = '';
+                document.getElementById('inputLocal').value = '';
+                document.getElementById('inputVisivel').checked = false;
+                document.getElementById('secoes-container').innerHTML = '';
                 document.getElementById('tab-btn-criar').textContent = 'Nova Pauta';
                 carregarPautas();
             }
