@@ -207,7 +207,7 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         let allPautas = [];
         let pautaSelecionada = null;
@@ -248,7 +248,17 @@
                 document.getElementById('tab-btn-criar').textContent = 'Nova Pauta';
                 carregarPautas();
             }
-            if (aba === 'criar' && window.secoes.length === 0 && !pautaEditandoId) { secoes = []; window.adicionarSecao(); }
+            if (aba === 'criar' && window.secoes.length === 0 && !pautaEditandoId) {
+                window.secoes = [];
+                window.adicionarSecao();
+                // Pergunta se quer importar eventos da agenda
+                if (confirm('Deseja importar eventos da agenda para esta pauta?')) {
+                    const dias = prompt('Buscar eventos dos próximos quantos dias?', '30');
+                    if (dias && parseInt(dias) > 0) {
+                        window.importarAgenda(parseInt(dias));
+                    }
+                }
+            }
             if (window.lucide) lucide.createIcons();
         };
 
@@ -258,6 +268,57 @@
                 el.dispatchEvent(new Event('input', {bubbles:true}));
             });
         }
+
+        window.importarAgenda = async (dias) => {
+            try {
+                const hoje = new Date();
+                const limite = new Date(hoje);
+                limite.setDate(limite.getDate() + dias);
+                const hojeStr = hoje.toISOString().split('T')[0];
+                const limiteStr = limite.toISOString().split('T')[0];
+
+                const snap = await getDocs(query(
+                    collection(db, "agenda"),
+                    where("data", ">=", hojeStr),
+                    where("data", "<=", limiteStr),
+                    orderBy("data", "asc")
+                ));
+
+                const eventos = [];
+                snap.forEach(d => eventos.push({ id: d.id, ...d.data() }));
+
+                if (eventos.length === 0) {
+                    alert('Nenhum evento encontrado nos próximos ' + dias + ' dias.');
+                    return;
+                }
+
+                // Cria seção de eventos
+                const secaoEventos = {
+                    titulo: '📅 EVENTOS DA AGENDA',
+                    itens: eventos.map(ev => {
+                        const dataFmt = (ev.data || '').split('-').reverse().join('/');
+                        const tipo = (ev.tipo || '').toUpperCase();
+                        const tipoEmoji = tipo === 'REGIONAL' ? '🔵' : tipo === 'CED' ? '🟡' : tipo === 'CND' ? '🟢' : '📌';
+                        return {
+                            titulo: `${tipoEmoji} ${ev.evento || ev.nome || 'Evento'}`,
+                            subtitulo: `${tipo}${ev.ministerio ? ' | ' + ev.ministerio : ''}`,
+                            data: `📅 ${dataFmt} | 🕒 ${ev.horario || 'A definir'} | 📍 ${ev.local || 'A definir'}`,
+                            imagem: ev.imagem || '',
+                            imagemTamanho: 'medio',
+                            destaque: 'medio',
+                            eventoId: ev.id
+                        };
+                    })
+                };
+
+                window.secoes.push(secaoEventos);
+                renderizarSecoes();
+                alert(eventos.length + ' evento(s) importado(s) da agenda!');
+            } catch (e) {
+                console.error('Erro ao importar agenda:', e);
+                alert('Erro ao importar eventos: ' + e.message);
+            }
+        };
 
         window.adicionarSecao = () => {
             syncSecoes();
@@ -273,7 +334,7 @@
 
         window.adicionarItem = (secaoIdx) => {
             syncSecoes();
-            window.secoes[secaoIdx].itens.push({ titulo: '', subtitulo: '', data: '', imagem: '', imagemTamanho: 'medio' });
+            window.secoes[secaoIdx].itens.push({ titulo: '', subtitulo: '', data: '', imagem: '', imagemTamanho: 'medio', destaque: 'medio' });
             renderizarSecoes();
         };
 
@@ -338,6 +399,16 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-slate-400 uppercase mb-0.5">Destaque do Evento</label>
+                                        <select oninput="window.secoes[${si}].itens[${ii}].destaque = this.value"
+                                            class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700">
+                                            <option value="pequeno" ${item.destaque === 'pequeno' ? 'selected' : ''}>Pequeno</option>
+                                            <option value="medio" ${(!item.destaque || item.destaque === 'medio') ? 'selected' : ''}>Médio</option>
+                                            <option value="grande" ${item.destaque === 'grande' ? 'selected' : ''}>Grande</option>
+                                            <option value="super" ${item.destaque === 'super' ? 'selected' : ''}>Super</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         `).join('')}
@@ -382,7 +453,14 @@
     <div style="font-size:11pt;font-weight:bold;border-bottom:1.5px solid #000;padding-bottom:3px;margin-bottom:8px;text-transform:uppercase;">${s.titulo || ''}</div>
 `;
                 s.itens.forEach(item => {
-                    html += `    <div style="border:1px solid #333;padding:8px;margin-bottom:8px;background:#fff;">
+                    const d = item.destaque || 'medio';
+                    const destaqueStyles = {
+                        pequeno: 'border:1px solid #999;padding:5px;margin-bottom:5px;background:#fff;font-size:8pt;',
+                        medio: 'border:1px solid #333;padding:8px;margin-bottom:8px;background:#fff;',
+                        grande: 'border:2px solid #000;padding:10px;margin-bottom:10px;background:#f9f9f9;',
+                        super: 'border:2px solid #000;padding:12px;margin-bottom:10px;background:#fffde7;'
+                    };
+                    html += `    <div style="${destaqueStyles[d] || destaqueStyles.medio}">
         <strong style="font-size:10pt;display:block;margin-bottom:5px;">${item.titulo || ''}</strong>`;
                     if (item.subtitulo) html += `
         <div style="margin-left:12px;margin-top:2px;font-size:9pt;">${fmtTexto(item.subtitulo)}</div>`;
@@ -544,7 +622,10 @@
                 document.getElementById('inputVisivel').checked = p.visivel === true;
                 window.secoes = p.secoes && p.secoes.length ? JSON.parse(JSON.stringify(p.secoes)) : [];
                 if (window.secoes.length === 0) window.secoes.push({ titulo: '', itens: [] });
-                window.secoes.forEach(s => s.itens.forEach(item => { if (!item.imagemTamanho) item.imagemTamanho = 'medio'; }));
+                window.secoes.forEach(s => s.itens.forEach(item => {
+                    if (!item.imagemTamanho) item.imagemTamanho = 'medio';
+                    if (!item.destaque) item.destaque = 'medio';
+                }));
                 renderizarSecoes();
                 window.mudarAba('criar');
             } catch (e) {
