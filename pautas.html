@@ -332,6 +332,14 @@
             renderizarSecoes();
         };
 
+        window.moverSecao = (idx, dir) => {
+            syncSecoes();
+            const nova = idx + dir;
+            if (nova < 0 || nova >= window.secoes.length) return;
+            [window.secoes[idx], window.secoes[nova]] = [window.secoes[nova], window.secoes[idx]];
+            renderizarSecoes();
+        };
+
         window.adicionarItem = (secaoIdx) => {
             syncSecoes();
             window.secoes[secaoIdx].itens.push({ titulo: '', subtitulo: '', data: '', imagem: '', imagemTamanho: 'medio', destaque: 'medio' });
@@ -354,9 +362,13 @@
                                 oninput="window.secoes[${si}].titulo = this.value"
                                 class="w-full p-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-xs font-bold text-slate-700">
                         </div>
-                        <button onclick="window.removerSecao(${si})" class="text-slate-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0" title="Remover seção">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
+                        <div class="flex items-center gap-1 flex-shrink-0">
+                            <button onclick="window.moverSecao(${si}, -1)" class="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors ${si === 0 ? 'invisible' : ''}" title="Mover para cima">▲</button>
+                            <button onclick="window.moverSecao(${si}, 1)" class="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors ${si === window.secoes.length - 1 ? 'invisible' : ''}" title="Mover para baixo">▼</button>
+                            <button onclick="window.removerSecao(${si})" class="text-slate-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="Remover seção">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="space-y-3 ml-2">
                         ${s.itens.map((item, ii) => `
