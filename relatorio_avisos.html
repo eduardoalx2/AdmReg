@@ -10,8 +10,11 @@
     <script type="module">
         import { requireAuth, hasAnyPermission } from './js/auth.js';
         try {
-            await requireAuth();
-            if (!hasAnyPermission(['admin','secretario','superintendente'])) window.location.replace('index.html');
+            const u = await requireAuth();
+            if (!hasAnyPermission(['admin','secretario','superintendente','pastor_titular'])) window.location.replace('index.html');
+            // Pastor titular só vê sua própria igreja — salva o contexto para o script principal
+            const isPastorView = hasAnyPermission(['pastor_titular']) && !hasAnyPermission(['admin','secretario','superintendente']);
+            if (isPastorView) window.__pastorIgreja__ = u.igrejaNome;
         } catch (e) {}
     </script>
     <style>
@@ -164,6 +167,9 @@
 
         lucide.createIcons();
 
+        // ── modo pastor titular ────────────────────────────────────────────
+        const PASTOR_IGREJA = window.__pastorIgreja__ || null; // não-nulo = visão restrita
+
         // ── estado ─────────────────────────────────────────────────────────
         let allAvisos    = [];
         let allIgrejas   = [];
@@ -214,6 +220,7 @@
 
                 construirLinhas();
                 popularFiltros();
+                if (PASTOR_IGREJA) travarFiltroIgreja();
                 aplicarFiltros();
             } catch(e) {
                 console.error(e);
@@ -253,6 +260,13 @@
         }
 
         // ── filtros ────────────────────────────────────────────────────────
+        function travarFiltroIgreja() {
+            const sel = document.getElementById('filtro-igreja');
+            sel.value = PASTOR_IGREJA;
+            sel.disabled = true;
+            sel.title = 'Você só pode visualizar sua própria igreja';
+        }
+
         function popularFiltros() {
             const selAviso = document.getElementById('filtro-aviso');
             selAviso.innerHTML = '<option value="">Todos os avisos</option>';
@@ -276,7 +290,7 @@
 
         window.aplicarFiltros = () => {
             const avisoId = document.getElementById('filtro-aviso').value;
-            const igreja  = document.getElementById('filtro-igreja').value;
+            const igreja  = PASTOR_IGREJA || document.getElementById('filtro-igreja').value;
             const status  = document.getElementById('filtro-status').value;
 
             filteredRows = rowsGlobal.filter(r => {
@@ -300,12 +314,17 @@
         };
 
         function atualizarCards() {
-            const total = rowsGlobal.length;
-            const confirmadas = rowsGlobal.filter(r => r.confirmado).length;
+            const base = PASTOR_IGREJA ? rowsGlobal.filter(r => r.igreja === PASTOR_IGREJA) : rowsGlobal;
+            const total = base.length;
+            const confirmadas = base.filter(r => r.confirmado).length;
             const pendentes = total - confirmadas;
             const taxa = total > 0 ? Math.round(confirmadas / total * 100) : 0;
 
-            document.getElementById('card-total-avisos').textContent = allAvisos.length;
+            const avisosDaIgreja = PASTOR_IGREJA
+                ? new Set(base.map(r => r.avisoId)).size
+                : allAvisos.length;
+
+            document.getElementById('card-total-avisos').textContent = avisosDaIgreja;
             document.getElementById('card-total-confirmacoes').textContent = confirmadas;
             document.getElementById('card-total-pendentes').textContent = pendentes;
             document.getElementById('card-taxa').textContent = taxa + '%';

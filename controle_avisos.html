@@ -505,6 +505,8 @@
         });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
 
+        const podeVerRelatorio = podeEditar || userPerms.includes('pastor_titular');
+
         window.onload = () => {
             // Controle de visibilidade baseado em permissão
             if (!podeEditar) {
@@ -512,6 +514,8 @@
                 if (btnNovo) btnNovo.style.display = 'none';
                 const lnkEditPainel = document.querySelector('a[href="editpagpastores.html"]');
                 if (lnkEditPainel) lnkEditPainel.style.display = 'none';
+            }
+            if (!podeVerRelatorio) {
                 const lnkRel = document.getElementById('lnk-relatorio');
                 if (lnkRel) lnkRel.style.display = 'none';
             }

@@ -281,7 +281,7 @@
                 pastores:80, igrejas:80, saldo_virada:70, gerenciar_saldos:100, recibos:80, gerenciar_recibos:100,
                 dash_recibos:80, dash_saldos:80, agenda:80, gestao_eventos:80, presenca:80, controle_presencas:80,
                 debitos_manuais:90, relatorio_pendencias:90, pendencias:90, sorteio:80, coordenadorias:100,
-                controle_avisos:70, relatorio_avisos:80
+                controle_avisos:70, relatorio_avisos:70
             };
             const has = (p) => { if(!p) return true; if(nivel===100) return true; if(perms.includes(p)) return true; return nivel >= (permMinLevel[p] || 100); };
 
