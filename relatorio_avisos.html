@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Avisos — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!hasAnyPermission(['admin','secretario','superintendente'])) window.location.replace('index.html');
+        } catch (e) {}
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="w-full shadow-sm bg-white border-b sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <div class="flex items-center gap-3">
+                    <a href="controle_avisos.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="bell-ring" class="w-3 h-3"></i> Controle de Avisos
+                    </a>
+                    <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> Relatório de Avisos
+                </h1>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportarTabela()" class="bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] uppercase tracking-wider px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors border border-white/20">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar CSV
+                    </button>
+                    <button onclick="carregarTudo()" class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Atualizar">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6 space-y-6">
+
+        <div id="loading" class="flex items-center justify-center py-20">
+            <div class="flex flex-col items-center gap-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <p class="text-slate-500 text-sm font-semibold">Carregando dados...</p>
+            </div>
+        </div>
+
+        <div id="content" class="hidden space-y-6">
+
+            <!-- Cards de resumo -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total de Avisos</p>
+                    <p id="card-total-avisos" class="text-2xl font-black text-slate-800 mt-1">0</p>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Confirmações</p>
+                    <p id="card-total-confirmacoes" class="text-2xl font-black text-emerald-600 mt-1">0</p>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pendentes</p>
+                    <p id="card-total-pendentes" class="text-2xl font-black text-red-500 mt-1">0</p>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Taxa Confirmação</p>
+                    <p id="card-taxa" class="text-2xl font-black text-blue-600 mt-1">0%</p>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <i data-lucide="filter" class="w-4 h-4"></i> Filtros
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Aviso</label>
+                        <select id="filtro-aviso" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500">
+                            <option value="">Todos os avisos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Igreja</label>
+                        <select id="filtro-igreja" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500">
+                            <option value="">Todas as igrejas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
+                        <select id="filtro-status" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500">
+                            <option value="">Todos</option>
+                            <option value="confirmado">✅ Confirmados</option>
+                            <option value="pendente">⏳ Pendentes</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="aplicarFiltros()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-md">
+                            <i data-lucide="search" class="w-3.5 h-3.5 inline mr-1"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                <th class="p-3 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Código</th>
+                                <th class="p-3 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Igreja</th>
+                                <th class="p-3 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Pastor Titular</th>
+                                <th class="p-3 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Aviso</th>
+                                <th class="p-3 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Data Confirmação</th>
+                                <th class="p-3 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-body" class="divide-y divide-slate-100">
+                            <tr><td colspan="6" class="text-center py-10 text-slate-400 text-sm">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="paginacao" class="flex items-center justify-between px-5 py-3 border-t border-slate-100">
+                    <p id="info-registros" class="text-[10px] text-slate-400 font-semibold"></p>
+                    <div class="flex gap-1">
+                        <button id="btn-prev" onclick="paginaAnterior()" disabled class="text-[10px] font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-lg disabled:opacity-40 transition-colors">← Anterior</button>
+                        <button id="btn-next" onclick="proximaPagina()" disabled class="text-[10px] font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-lg disabled:opacity-40 transition-colors">Próximo →</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import {
+            collection, getDocs, query, orderBy
+        } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        lucide.createIcons();
+
+        // ── estado ─────────────────────────────────────────────────────────
+        let allAvisos    = [];
+        let allIgrejas   = [];
+        let allPastores  = [];
+        let allCiencias  = [];
+        let igrejasPastorais = [];
+        let rowsGlobal   = [];
+        let filteredRows = [];
+        let paginaAtual  = 1;
+        const PAGE_SIZE  = 50;
+
+        // ── helpers ────────────────────────────────────────────────────────
+        function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        function fmtDate(ts) {
+            if (!ts) return '—';
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        }
+
+        function getTitular(igrejaNome) {
+            return allPastores.find(p =>
+                p.funcao === 'Pastor Titular' &&
+                (Array.isArray(p.igreja) ? p.igreja.includes(igrejaNome) : p.igreja === igrejaNome)
+            );
+        }
+
+        // ── carregar dados ─────────────────────────────────────────────────
+        window.carregarTudo = async () => {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('content').classList.add('hidden');
+            try {
+                const [avisosSnap, igSnap, pastSnap, cienSnap] = await Promise.all([
+                    getDocs(query(collection(db, 'avisos'), orderBy('criadoEm', 'desc'))),
+                    getDocs(collection(db, 'igrejas')),
+                    getDocs(collection(db, 'pastores')),
+                    getDocs(collection(db, 'avisos_ciencia'))
+                ]);
+
+                allAvisos   = []; avisosSnap.forEach(d => allAvisos.push({ docId: d.id, ...d.data() }));
+                allIgrejas  = []; igSnap.forEach(d => allIgrejas.push(d.data()));
+                allPastores = []; pastSnap.forEach(d => allPastores.push(d.data()));
+                allCiencias = []; cienSnap.forEach(d => allCiencias.push({ docId: d.id, ...d.data() }));
+
+                igrejasPastorais = allIgrejas
+                    .filter(ig => ig.tipo !== 'Região Eclesiástica' && ig.tipo !== 'Sede Regional')
+                    .sort((a, b) => String(a.codigo||'').localeCompare(String(b.codigo||'')));
+
+                construirLinhas();
+                popularFiltros();
+                aplicarFiltros();
+            } catch(e) {
+                console.error(e);
+                document.getElementById('loading').innerHTML = `<p class="text-red-500 font-bold text-center">Erro ao carregar: ${e.message}</p>`;
+            }
+        };
+
+        function construirLinhas() {
+            rowsGlobal = [];
+
+            allAvisos.forEach(aviso => {
+                const esperadas = aviso.destinatario === 'TODOS'
+                    ? igrejasPastorais
+                    : allIgrejas.filter(ig => ig.nome === aviso.destinatario);
+
+                const cienciasDoAviso = allCiencias.filter(c => c.avisoId === aviso.avisoId);
+                const confSet = new Set(cienciasDoAviso.map(c => (c.igrejaNome||'').toLowerCase()));
+
+                esperadas.forEach(ig => {
+                    const titular = getTitular(ig.nome);
+                    const ciencia = cienciasDoAviso.find(c => (c.igrejaNome||'').toLowerCase() === (ig.nome||'').toLowerCase());
+                    rowsGlobal.push({
+                        codigo: String(ig.codigo||'').padStart(4,'0'),
+                        igreja: ig.nome || '',
+                        pastor: titular?.nome || '(sem titular)',
+                        avisoId: aviso.avisoId,
+                        avisoDocId: aviso.docId,
+                        avisoTexto: aviso.texto || '',
+                        avisoTipo: aviso.tipo || 'info',
+                        avisoDest: aviso.destinatario || 'TODOS',
+                        avisoStatus: aviso.status || 'ativo',
+                        confirmado: !!confSet.has((ig.nome||'').toLowerCase()),
+                        dataConfirmacao: ciencia?.dataHora || null
+                    });
+                });
+            });
+        }
+
+        // ── filtros ────────────────────────────────────────────────────────
+        function popularFiltros() {
+            const selAviso = document.getElementById('filtro-aviso');
+            selAviso.innerHTML = '<option value="">Todos os avisos</option>';
+            allAvisos.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.avisoId;
+                const preview = (a.texto||'').substring(0, 60);
+                opt.textContent = preview + (a.texto?.length > 60 ? '...' : '');
+                selAviso.appendChild(opt);
+            });
+
+            const selIgreja = document.getElementById('filtro-igreja');
+            selIgreja.innerHTML = '<option value="">Todas as igrejas</option>';
+            igrejasPastorais.forEach(ig => {
+                const opt = document.createElement('option');
+                opt.value = ig.nome;
+                opt.textContent = `${String(ig.codigo||'').padStart(4,'0')} — ${ig.nome}`;
+                selIgreja.appendChild(opt);
+            });
+        }
+
+        window.aplicarFiltros = () => {
+            const avisoId = document.getElementById('filtro-aviso').value;
+            const igreja  = document.getElementById('filtro-igreja').value;
+            const status  = document.getElementById('filtro-status').value;
+
+            filteredRows = rowsGlobal.filter(r => {
+                if (avisoId && r.avisoId !== avisoId) return false;
+                if (igreja && r.igreja !== igreja) return false;
+                if (status === 'confirmado' && !r.confirmado) return false;
+                if (status === 'pendente' && r.confirmado) return false;
+                return true;
+            });
+
+            // Ordenar: avisos mais recentes primeiro, depois por igreja
+            filteredRows.sort((a, b) => {
+                const cmpAviso = b.avisoId.localeCompare(a.avisoId);
+                if (cmpAviso !== 0) return cmpAviso;
+                return a.igreja.localeCompare(b.igreja);
+            });
+
+            paginaAtual = 1;
+            atualizarCards();
+            renderizarTabela();
+        };
+
+        function atualizarCards() {
+            const total = rowsGlobal.length;
+            const confirmadas = rowsGlobal.filter(r => r.confirmado).length;
+            const pendentes = total - confirmadas;
+            const taxa = total > 0 ? Math.round(confirmadas / total * 100) : 0;
+
+            document.getElementById('card-total-avisos').textContent = allAvisos.length;
+            document.getElementById('card-total-confirmacoes').textContent = confirmadas;
+            document.getElementById('card-total-pendentes').textContent = pendentes;
+            document.getElementById('card-taxa').textContent = taxa + '%';
+        }
+
+        // ── tabela ─────────────────────────────────────────────────────────
+        function renderizarTabela() {
+            const tbody = document.getElementById('tabela-body');
+            const start = (paginaAtual - 1) * PAGE_SIZE;
+            const page  = filteredRows.slice(start, start + PAGE_SIZE);
+            const totalPaginas = Math.ceil(filteredRows.length / PAGE_SIZE);
+
+            if (!page.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-400 text-sm">Nenhum resultado encontrado para os filtros selecionados.</td></tr>';
+            } else {
+                tbody.innerHTML = page.map(r => {
+                    const statusBadge = r.confirmado
+                        ? '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase">✓ Confirmado</span>'
+                        : '<span class="px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-[10px] font-bold uppercase">⏳ Pendente</span>';
+                    return `<tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-3 text-[11px] font-mono font-bold text-slate-500 whitespace-nowrap">${esc(r.codigo)}</td>
+                        <td class="p-3 text-[12px] font-bold text-slate-800 whitespace-nowrap">${esc(r.igreja)}</td>
+                        <td class="p-3 text-[11px] text-slate-600 whitespace-nowrap">${esc(r.pastor)}</td>
+                        <td class="p-3 text-[11px] text-slate-700 max-w-[300px] truncate" title="${esc(r.avisoTexto)}">${esc(r.avisoTexto)}</td>
+                        <td class="p-3 text-[11px] text-slate-500 whitespace-nowrap">${fmtDate(r.dataConfirmacao)}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${statusBadge}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            document.getElementById('info-registros').textContent =
+                `Exibindo ${Math.min(start + 1, filteredRows.length)}–${Math.min(start + PAGE_SIZE, filteredRows.length)} de ${filteredRows.length} registros`;
+
+            document.getElementById('btn-prev').disabled = paginaAtual <= 1;
+            document.getElementById('btn-next').disabled = paginaAtual >= totalPaginas;
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        window.paginaAnterior = () => { if (paginaAtual > 1) { paginaAtual--; renderizarTabela(); } };
+        window.proximaPagina  = () => { const total = Math.ceil(filteredRows.length / PAGE_SIZE); if (paginaAtual < total) { paginaAtual++; renderizarTabela(); } };
+
+        // ── exportar CSV ───────────────────────────────────────────────────
+        window.exportarTabela = () => {
+            if (!filteredRows.length) return;
+            const BOM = '\uFEFF';
+            let csv = BOM + 'Código,Igreja,Pastor Titular,Aviso,Status,Data Confirmação\n';
+            filteredRows.forEach(r => {
+                const linha = [
+                    r.codigo,
+                    r.igreja,
+                    r.pastor,
+                    r.avisoTexto.replace(/"/g, '""'),
+                    r.confirmado ? 'Confirmado' : 'Pendente',
+                    r.dataConfirmacao ? fmtDate(r.dataConfirmacao) : ''
+                ].map(v => `"${v}"`).join(',');
+                csv += linha + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `relatorio_avisos_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        window.onload = window.carregarTudo;
+    </script>
+</body>
+</html>

@@ -210,6 +210,10 @@
                 { id:'i-gestaoev', tipo:'sistema', titulo:'Gestão de Eventos',    obs:'Criar e gerenciar eventos ativos',       url:'eventosreg655.html',       icone:'⚙️', perm:'gestao_eventos',   visivel:true, ordem:0 },
                 { id:'i-presenca', tipo:'sistema', titulo:'Lançar Presença',      obs:'Registro individual nas convocações',    url:'presencareg655.html',      icone:'✅', perm:'presenca',         visivel:true, ordem:1 },
                 { id:'i-controle', tipo:'sistema', titulo:'Controle de Presenças',obs:'Painel de acompanhamento e faltas',      url:'controleeventosreg655.html',icone:'📋',perm:'controle_presencas',visivel:true, ordem:2 }
+            ]},
+            { id:'g-avisos', nome:'Avisos', ordem:6, itens:[
+                { id:'i-controleavisos',  tipo:'sistema', titulo:'Controle de Avisos',  obs:'Gerencie avisos e acompanhe confirmações', url:'controle_avisos.html',  icone:'🔔', perm:'controle_avisos',  visivel:true, ordem:0 },
+                { id:'i-relatorioavisos', tipo:'sistema', titulo:'Relatório de Avisos', obs:'Histórico com filtros por igreja e aviso', url:'relatorio_avisos.html', icone:'📊', perm:'relatorio_avisos', visivel:true, ordem:1 }
             ]}
         ];
 
@@ -276,7 +280,8 @@
                 admin:100, secretario:90, superintendente:80, pastor_titular:70, coordenador:60, obreiro:50, membro:10,
                 pastores:80, igrejas:80, saldo_virada:70, gerenciar_saldos:100, recibos:80, gerenciar_recibos:100,
                 dash_recibos:80, dash_saldos:80, agenda:80, gestao_eventos:80, presenca:80, controle_presencas:80,
-                debitos_manuais:90, relatorio_pendencias:90, pendencias:90, sorteio:80, coordenadorias:100
+                debitos_manuais:90, relatorio_pendencias:90, pendencias:90, sorteio:80, coordenadorias:100,
+                controle_avisos:70, relatorio_avisos:80
             };
             const has = (p) => { if(!p) return true; if(nivel===100) return true; if(perms.includes(p)) return true; return nivel >= (permMinLevel[p] || 100); };
 
