@@ -7,16 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.300.0"></script>
-    <script type="module">
-        import { requireAuth, hasAnyPermission } from './js/auth.js';
-        try {
-            const u = await requireAuth();
-            if (!hasAnyPermission(['admin','secretario','superintendente','pastor_titular'])) window.location.replace('index.html');
-            // Pastor titular só vê sua própria igreja — salva o contexto para o script principal
-            const isPastorView = hasAnyPermission(['pastor_titular']) && !hasAnyPermission(['admin','secretario','superintendente']);
-            if (isPastorView) window.__pastorIgreja__ = u.igrejaNome;
-        } catch (e) {}
-    </script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
         .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
@@ -161,14 +151,15 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
         import {
             collection, getDocs, query, orderBy
         } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         lucide.createIcons();
 
-        // ── modo pastor titular ────────────────────────────────────────────
-        const PASTOR_IGREJA = window.__pastorIgreja__ || null; // não-nulo = visão restrita
+        // ── modo pastor titular (definido após requireAuth) ────────────────
+        let PASTOR_IGREJA = null;
 
         // ── estado ─────────────────────────────────────────────────────────
         let allAvisos    = [];
@@ -394,7 +385,18 @@
             URL.revokeObjectURL(url);
         };
 
-        window.onload = window.carregarTudo;
+        window.onload = async () => {
+            try {
+                const u = await requireAuth();
+                if (!hasAnyPermission(['admin','secretario','superintendente','pastor_titular'])) {
+                    window.location.replace('index.html');
+                    return;
+                }
+                const isPastorView = hasAnyPermission(['pastor_titular']) && !hasAnyPermission(['admin','secretario','superintendente']);
+                if (isPastorView) PASTOR_IGREJA = u.igrejaNome || null;
+            } catch (e) { return; }
+            await window.carregarTudo();
+        };
     </script>
 </body>
 </html>
