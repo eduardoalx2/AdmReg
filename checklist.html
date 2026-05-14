@@ -338,11 +338,7 @@
             const lista = document.getElementById('caixaLista');
             const label = chaveParaLabel(mes);
 
-            // Inclui a Região 655 como primeiro item
-            const itens = [
-                { codigo: '0655', nome: 'REGIÃO 655', display: '0655 - Região 655' },
-                ...masterIgrejas
-            ];
+            const itens = [...masterIgrejas];
 
             let html = '';
             let total = itens.length;
