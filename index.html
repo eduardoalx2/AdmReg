@@ -858,11 +858,18 @@
                     </div>`;
                 }
                 const s = ASTYLE[aviso.tipo] || ASTYLE.info;
+                const isTodos = (aviso.destinatario || 'TODOS') === 'TODOS';
+                const destBadge = isTodos
+                    ? `<span style="font-size:9px;font-weight:700;color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:20px;padding:2px 8px;letter-spacing:0.05em;">📢 Circular — todos os pastores</span>`
+                    : `<span style="font-size:9px;font-weight:700;color:#4f46e5;background:#eef2ff;border:1px solid #c7d2fe;border-radius:20px;padding:2px 8px;letter-spacing:0.05em;">🎯 Direcionado a você</span>`;
                 return `<div id="mural-aviso-${aviso.avisoId}" style="background:${s.bg};border:1px solid ${s.border};border-radius:16px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">
                     <span style="font-size:24px;flex-shrink:0;">${s.icon}</span>
                     <div style="flex:1;min-width:0;">
-                        <p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:${s.color};margin-bottom:6px;">Quadro de Avisos</p>
-                        <p style="font-size:14px;font-weight:700;color:var(--text-primary);">${esc(aviso.texto)}</p>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                            <p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:${s.color};margin:0;">Quadro de Avisos</p>
+                            ${destBadge}
+                        </div>
+                        <p style="font-size:14px;font-weight:700;color:var(--text-primary);white-space:pre-wrap;">${esc(aviso.texto)}</p>
                         <button
                             data-aviso-id="${aviso.avisoId}"
                             data-aviso-texto="${esc(aviso.texto)}"
