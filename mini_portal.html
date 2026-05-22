@@ -10,7 +10,6 @@
         .wrap {
             max-width: 700px;
             margin: 0 auto;
-            padding: 0 16px 64px;
         }
 
         .section-label {
@@ -41,17 +40,14 @@
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 10px;
         }
-
-        @media (max-width: 540px) {
-            .cards-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 540px) { .cards-grid { grid-template-columns: 1fr; } }
 
         .page-card {
             display: flex;
             align-items: center;
             gap: 16px;
             padding: 16px 18px;
-            background: rgba(255, 255, 255, 0.025);
+            background: rgba(255,255,255,0.025);
             border: 1px solid var(--border);
             border-radius: 16px;
             text-decoration: none;
@@ -59,20 +55,18 @@
             position: relative;
             overflow: hidden;
         }
-
         .page-card::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, transparent 60%, rgba(99, 179, 237, 0.03));
+            background: linear-gradient(135deg, transparent 60%, rgba(99,179,237,0.03));
             pointer-events: none;
         }
-
         .page-card:hover {
             border-color: var(--border-hover);
-            background: rgba(99, 179, 237, 0.05);
+            background: rgba(99,179,237,0.05);
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
 
         .card-icon-wrap {
@@ -86,9 +80,7 @@
             font-size: 20px;
             border: 1px solid;
         }
-
         .card-text { flex: 1; min-width: 0; }
-
         .card-title {
             font-family: 'Sora', sans-serif;
             font-size: 13px;
@@ -101,32 +93,40 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
-        .card-desc {
-            font-size: 11px;
-            color: var(--text-muted);
-            line-height: 1.4;
-        }
-
+        .card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
         .card-arrow {
             flex-shrink: 0;
             font-size: 14px;
             color: var(--text-muted);
             transition: transform 0.2s, color 0.2s;
         }
+        .page-card:hover .card-arrow { transform: translate(2px,-2px); color: var(--accent); }
 
-        .page-card:hover .card-arrow {
-            transform: translate(2px, -2px);
-            color: var(--accent);
+        /* Avisos */
+        .aviso-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid;
+            margin-bottom: 8px;
+        }
+        .aviso-box p {
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.5;
         }
 
-        /* Cores por categoria */
-        .ic-blue  { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.25); }
-        .ic-emerald { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.25); }
-        .ic-amber { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.25); }
-        .ic-purple { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.25); }
-        .ic-rose  { background: rgba(244,63,94,0.12); border-color: rgba(244,63,94,0.25); }
-        .ic-slate { background: rgba(100,116,139,0.12); border-color: rgba(100,116,139,0.25); }
+        /* Loading */
+        .spin-ring {
+            width: 32px; height: 32px;
+            border: 2px solid rgba(99,179,237,0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            margin: 0 auto 14px;
+        }
 
         .header-entrar {
             background: linear-gradient(135deg, rgba(99,179,237,0.25), rgba(99,179,237,0.1));
@@ -187,73 +187,17 @@
     <main>
         <div class="wrap">
 
-            <div class="section-label"><span>Acesso Rápido</span></div>
+            <!-- Loading -->
+            <div id="loading-state" style="text-align:center;padding:60px 16px;">
+                <div class="spin-ring"></div>
+                <p style="font-family:'Sora',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-muted);">Carregando...</p>
+            </div>
 
-            <div class="cards-grid">
-
-                <a href="presencareg655.html" class="page-card fade-in" style="animation-delay:.1s">
-                    <div class="card-icon-wrap ic-emerald">✅</div>
-                    <div class="card-text">
-                        <div class="card-title">Registro de Presença</div>
-                        <div class="card-desc">Confirme sua presença em eventos e reuniões</div>
-                    </div>
-                    <span class="card-arrow">↗</span>
-                </a>
-
-                <a href="agendareg655.html" class="page-card fade-in" style="animation-delay:.15s">
-                    <div class="card-icon-wrap ic-blue">📅</div>
-                    <div class="card-text">
-                        <div class="card-title">Agenda Região 655</div>
-                        <div class="card-desc">CED, CND e eventos regionais</div>
-                    </div>
-                    <span class="card-arrow">↗</span>
-                </a>
-
-                <a href="agenda_completa.html" class="page-card fade-in" style="animation-delay:.2s">
-                    <div class="card-icon-wrap ic-slate">🗓️</div>
-                    <div class="card-text">
-                        <div class="card-title">Agenda Completa</div>
-                        <div class="card-desc">Visualização completa de todos os eventos</div>
-                    </div>
-                    <span class="card-arrow">↗</span>
-                </a>
-
-                <a href="gestao_agenda.html" class="page-card fade-in" style="animation-delay:.25s">
-                    <div class="card-icon-wrap ic-amber">✏️</div>
-                    <div class="card-text">
-                        <div class="card-title">Gestão da Agenda</div>
-                        <div class="card-desc">Adicionar e editar eventos da agenda regional</div>
-                    </div>
-                    <span class="card-arrow">↗</span>
-                </a>
-
-                <a href="s_contasreg655.html" class="page-card fade-in" style="animation-delay:.3s">
-                    <div class="card-icon-wrap ic-purple">💰</div>
-                    <div class="card-text">
-                        <div class="card-title">Contas Correntes</div>
-                        <div class="card-desc">Contas correntes das igrejas da região</div>
-                    </div>
-                    <span class="card-arrow">↗</span>
-                </a>
-
-                <a href="sorteio.html" class="page-card fade-in" style="animation-delay:.35s">
-                    <div class="card-icon-wrap ic-rose">🎲</div>
-                    <div class="card-text">
-                        <div class="card-title">Sorteio de Igrejas</div>
-                        <div class="card-desc">Sorteio entre as igrejas da região</div>
-                    </div>
-                    <span class="card-arrow">↗</span>
-                </a>
-
-                <a href="pauta_0905.html" class="page-card fade-in" style="animation-delay:.4s">
-                    <div class="card-icon-wrap ic-slate">📋</div>
-                    <div class="card-text">
-                        <div class="card-title">Pauta 09/05</div>
-                        <div class="card-desc">Pauta da reunião ministerial de 09/05/2026</div>
-                    </div>
-                    <span class="card-arrow">↗</span>
-                </a>
-
+            <!-- Conteúdo dinâmico -->
+            <div id="portal-content" style="display:none;">
+                <div id="avisos-section" style="margin-bottom:24px;display:none;"></div>
+                <div class="section-label"><span>Acesso Rápido</span></div>
+                <div id="cards-grid" class="cards-grid"></div>
             </div>
 
         </div>
@@ -269,6 +213,95 @@
             <p class="footer-copy">© 2026 · Todos os direitos reservados</p>
         </div>
     </footer>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+
+        const COR_STYLES = {
+            blue:    ['rgba(59,130,246,0.12)',  'rgba(59,130,246,0.25)'],
+            emerald: ['rgba(16,185,129,0.12)',  'rgba(16,185,129,0.25)'],
+            amber:   ['rgba(245,158,11,0.12)',  'rgba(245,158,11,0.25)'],
+            purple:  ['rgba(139,92,246,0.12)',  'rgba(139,92,246,0.25)'],
+            rose:    ['rgba(244,63,94,0.12)',   'rgba(244,63,94,0.25)'],
+            slate:   ['rgba(100,116,139,0.12)', 'rgba(100,116,139,0.25)'],
+        };
+
+        const DEFAULT_CARDS = [
+            { id:'c1', ativo:true, titulo:'Registro de Presença', descricao:'Confirme sua presença em eventos e reuniões', icone:'✅', cor:'emerald', url:'presencareg655.html', externo:false },
+            { id:'c2', ativo:true, titulo:'Agenda Completa',      descricao:'Visualização completa de todos os eventos',  icone:'🗓️', cor:'slate',   url:'agenda_completa.html', externo:false },
+            { id:'c3', ativo:true, titulo:'Gestão da Agenda',     descricao:'Adicionar e editar eventos da agenda regional', icone:'✏️', cor:'amber', url:'gestao_agenda.html', externo:false },
+            { id:'c4', ativo:true, titulo:'Contas Correntes',     descricao:'Contas correntes das igrejas da região',    icone:'💰', cor:'purple', url:'s_contasreg655.html', externo:false },
+            { id:'c5', ativo:true, titulo:'Sorteio de Igrejas',   descricao:'Sorteio entre as igrejas da região',        icone:'🎲', cor:'rose',   url:'sorteio.html', externo:false },
+            { id:'c6', ativo:true, titulo:'Pauta 09/05',          descricao:'Pauta da reunião ministerial de 09/05/2026', icone:'📋', cor:'slate',  url:'pauta_0905.html', externo:false },
+        ];
+
+        function renderAvisos(avisos) {
+            const section = document.getElementById('avisos-section');
+            const ativos = (avisos || []).filter(a => a.ativo);
+            if (!ativos.length) { section.style.display = 'none'; return; }
+
+            const estilos = {
+                info:    { bg:'rgba(59,130,246,0.08)',  border:'rgba(59,130,246,0.3)',  color:'#60a5fa',  icon:'ℹ️' },
+                alerta:  { bg:'rgba(245,158,11,0.08)',  border:'rgba(245,158,11,0.3)',  color:'#fbbf24',  icon:'⚠️' },
+                urgente: { bg:'rgba(244,63,94,0.08)',   border:'rgba(244,63,94,0.3)',   color:'#fb7185',  icon:'🚨' },
+            };
+
+            section.innerHTML = ativos.map(a => {
+                const s = estilos[a.tipo] || estilos.info;
+                return `<div class="aviso-box" style="background:${s.bg};border-color:${s.border};color:${s.color};">
+                    <span style="font-size:16px;flex-shrink:0;">${s.icon}</span>
+                    <p>${a.texto}</p>
+                </div>`;
+            }).join('');
+            section.style.display = 'block';
+        }
+
+        function renderCards(cards) {
+            const grid = document.getElementById('cards-grid');
+            const ativos = (cards || []).filter(c => c.ativo);
+            if (!ativos.length) {
+                grid.innerHTML = `<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:40px 0;">Nenhum link cadastrado.</p>`;
+                return;
+            }
+            grid.innerHTML = ativos.map((card, i) => {
+                const [bg, border] = COR_STYLES[card.cor] || COR_STYLES.slate;
+                const target = card.externo ? ' target="_blank" rel="noopener noreferrer"' : '';
+                return `<a href="${card.url}"${target} class="page-card fade-in" style="animation-delay:${i * 0.05}s">
+                    <div class="card-icon-wrap" style="background:${bg};border-color:${border};">${card.icone || '🔗'}</div>
+                    <div class="card-text">
+                        <div class="card-title">${card.titulo}</div>
+                        <div class="card-desc">${card.descricao || ''}</div>
+                    </div>
+                    <span class="card-arrow">↗</span>
+                </a>`;
+            }).join('');
+        }
+
+        async function init() {
+            let cards = DEFAULT_CARDS;
+            let avisos = [];
+
+            try {
+                const snap = await getDoc(doc(db, 'configuracoes', 'mini_portal'));
+                if (snap.exists()) {
+                    const d = snap.data();
+                    if (d.cards && d.cards.length) cards = d.cards;
+                    if (d.avisos) avisos = d.avisos;
+                }
+            } catch (e) {
+                console.error('Erro ao carregar configuração:', e);
+            }
+
+            renderAvisos(avisos);
+            renderCards(cards);
+
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('portal-content').style.display = 'block';
+        }
+
+        init();
+    </script>
 
 </body>
 </html>

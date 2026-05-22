@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Mini Portal — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module">
+        import { requireAuth, isAdmin } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!isAdmin()) window.location.replace('index.html');
+        } catch (e) { window.location.replace('login.html'); }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0c0f1a; }
+        .btn-mv { padding: 1px 5px; border-radius: 4px; font-size: 11px; line-height: 1.6; color: #94a3b8; transition: background 0.15s; }
+        .btn-mv:hover:not(:disabled) { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+        .btn-mv:disabled { opacity: 0.2; cursor: not-allowed; }
+        .field-label { display: block; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+        .field-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s; }
+        .field-input:focus { border-color: rgba(99,179,237,0.5); background: rgba(255,255,255,0.06); }
+        .field-select { width: 100%; background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #e2e8f0; font-family: 'Inter', sans-serif; outline: none; }
+        .field-select:focus { border-color: rgba(99,179,237,0.5); }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200">
+
+    <!-- TOP BAR -->
+    <div class="sticky top-0 z-40 bg-[#0c0f1a]/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center gap-3">
+        <a href="mini_portal.html" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-medium flex-shrink-0">
+            ← Mini Portal
+        </a>
+        <div class="flex-1 min-w-0">
+            <h1 class="text-sm font-bold text-white leading-none">Editar Mini Portal</h1>
+            <p class="text-[10px] text-slate-500 mt-0.5">Links, ordem e avisos visíveis na página pública</p>
+        </div>
+        <button id="btn-salvar" onclick="salvar()"
+            class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0">
+            💾 Salvar
+        </button>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading" class="flex items-center justify-center h-64">
+        <div class="flex flex-col items-center gap-3">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p class="text-slate-500 text-sm">Carregando...</p>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content" class="hidden max-w-3xl mx-auto px-4 py-6 space-y-10">
+
+        <!-- AVISOS -->
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h2 class="text-sm font-bold text-white">Avisos</h2>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Exibidos no topo da página. Use para comunicados urgentes.</p>
+                </div>
+                <button onclick="novoAviso()"
+                    class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0">
+                    + Novo Aviso
+                </button>
+            </div>
+            <div id="avisos-container"></div>
+        </section>
+
+        <!-- CARDS / LINKS -->
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h2 class="text-sm font-bold text-white">Links</h2>
+                    <p class="text-[10px] text-slate-500 mt-0.5">Cartões de acesso rápido. Arraste com ▲▼ para reordenar.</p>
+                </div>
+                <button onclick="novoCard()"
+                    class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0">
+                    + Novo Link
+                </button>
+            </div>
+            <div id="cards-container"></div>
+        </section>
+
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+        <div id="toast-msg" class="text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2"></div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+
+        // ─── ESTADO ────────────────────────────────────────────────────────────────
+        let avisos = [];
+        let cards  = [];
+        let editandoId = null;
+
+        const DEFAULT_CARDS = [
+            { id:'c1', ativo:true, titulo:'Registro de Presença', descricao:'Confirme sua presença em eventos e reuniões', icone:'✅', cor:'emerald', url:'presencareg655.html', externo:false },
+            { id:'c2', ativo:true, titulo:'Agenda Completa',      descricao:'Visualização completa de todos os eventos',  icone:'🗓️', cor:'slate',   url:'agenda_completa.html', externo:false },
+            { id:'c3', ativo:true, titulo:'Gestão da Agenda',     descricao:'Adicionar e editar eventos da agenda regional', icone:'✏️', cor:'amber', url:'gestao_agenda.html', externo:false },
+            { id:'c4', ativo:true, titulo:'Contas Correntes',     descricao:'Contas correntes das igrejas da região',    icone:'💰', cor:'purple', url:'s_contasreg655.html', externo:false },
+            { id:'c5', ativo:true, titulo:'Sorteio de Igrejas',   descricao:'Sorteio entre as igrejas da região',        icone:'🎲', cor:'rose',   url:'sorteio.html', externo:false },
+            { id:'c6', ativo:true, titulo:'Pauta 09/05',          descricao:'Pauta da reunião ministerial de 09/05/2026', icone:'📋', cor:'slate',  url:'pauta_0905.html', externo:false },
+        ];
+
+        const CORES = [
+            { id:'blue',    label:'Azul',     ring:'ring-blue-500',    dot:'bg-blue-500' },
+            { id:'emerald', label:'Verde',    ring:'ring-emerald-500', dot:'bg-emerald-500' },
+            { id:'amber',   label:'Amarelo',  ring:'ring-amber-500',   dot:'bg-amber-500' },
+            { id:'purple',  label:'Roxo',     ring:'ring-purple-500',  dot:'bg-purple-500' },
+            { id:'rose',    label:'Rosa',     ring:'ring-rose-500',    dot:'bg-rose-500' },
+            { id:'slate',   label:'Cinza',    ring:'ring-slate-500',   dot:'bg-slate-500' },
+        ];
+
+        const EMOJIS_SUGERIDOS = ['📅','✅','📋','🎲','💰','✏️','🗓️','📌','📊','👥','🏛️','📢','🔗','🌐','📱','⚙️','📝','🔔','📣','🏠'];
+
+        const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+        // ─── CARREGAR ──────────────────────────────────────────────────────────────
+        async function loadConfig() {
+            try {
+                const snap = await getDoc(doc(db, 'configuracoes', 'mini_portal'));
+                if (snap.exists()) {
+                    const d = snap.data();
+                    avisos = d.avisos || [];
+                    cards  = d.cards  || DEFAULT_CARDS;
+                } else {
+                    cards = DEFAULT_CARDS.map(c => ({ ...c }));
+                }
+            } catch (e) {
+                console.error(e);
+                cards = DEFAULT_CARDS.map(c => ({ ...c }));
+            }
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+            renderAvisos();
+            renderCards();
+        }
+
+        // ─── SALVAR ────────────────────────────────────────────────────────────────
+        window.salvar = async () => {
+            const btn = document.getElementById('btn-salvar');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+            try {
+                await setDoc(doc(db, 'configuracoes', 'mini_portal'), { avisos, cards });
+                showToast('✓ Salvo com sucesso!', 'green');
+            } catch (e) {
+                console.error(e);
+                showToast('Erro ao salvar. Tente novamente.', 'red');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '💾 Salvar';
+            }
+        };
+
+        function showToast(msg, cor) {
+            const t = document.getElementById('toast');
+            const m = document.getElementById('toast-msg');
+            m.className = `text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 ${cor === 'green' ? 'bg-green-600' : 'bg-red-600'}`;
+            m.textContent = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3000);
+        }
+
+        // ─── AVISOS ────────────────────────────────────────────────────────────────
+        function renderAvisos() {
+            const c = document.getElementById('avisos-container');
+            if (!avisos.length) {
+                c.innerHTML = `<p class="text-slate-600 text-sm py-4 text-center border border-dashed border-slate-800 rounded-xl">Nenhum aviso. Clique em "+ Novo Aviso" para adicionar.</p>`;
+                return;
+            }
+            c.innerHTML = avisos.map((a, i) => renderAvisoItem(a, i)).join('');
+        }
+
+        const TIPO_COLORS = {
+            info:    'bg-blue-900/60 text-blue-300 border-blue-700',
+            alerta:  'bg-amber-900/60 text-amber-300 border-amber-700',
+            urgente: 'bg-red-900/60 text-red-300 border-red-700',
+        };
+
+        function renderAvisoItem(a, i) {
+            const isEdit = editandoId === a.id;
+            const tipoClass = TIPO_COLORS[a.tipo] || TIPO_COLORS.info;
+            return `
+            <div class="border border-slate-800 rounded-xl mb-2 overflow-hidden ${a.ativo ? '' : 'opacity-50'}">
+                <div class="flex items-center gap-2 px-3 py-2.5 bg-slate-900/60">
+                    <div class="flex flex-col">
+                        <button class="btn-mv" onclick="moverAviso(${i}, -1)" ${i===0?'disabled':''}>▲</button>
+                        <button class="btn-mv" onclick="moverAviso(${i}, 1)" ${i===avisos.length-1?'disabled':''}>▼</button>
+                    </div>
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${tipoClass} flex-shrink-0">${a.tipo}</span>
+                    <p class="flex-1 text-sm text-slate-300 truncate">${a.texto || '—'}</p>
+                    <button onclick="toggleAtivoAviso('${a.id}')" title="${a.ativo ? 'Desativar' : 'Ativar'}"
+                        class="text-xs px-2 py-1 rounded-lg border transition-colors flex-shrink-0 ${a.ativo ? 'bg-emerald-900/40 border-emerald-700 text-emerald-400 hover:bg-emerald-900/70' : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500'}">
+                        ${a.ativo ? 'Ativo' : 'Inativo'}
+                    </button>
+                    <button onclick="toggleEditAviso('${a.id}')"
+                        class="text-xs px-2 py-1 rounded-lg border transition-colors flex-shrink-0 ${isEdit ? 'bg-blue-900/50 border-blue-600 text-blue-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}">
+                        ✏️ Editar
+                    </button>
+                    <button onclick="deletarAviso('${a.id}')"
+                        class="text-xs px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:border-red-700 hover:text-red-400 transition-colors flex-shrink-0">
+                        🗑️
+                    </button>
+                </div>
+
+                ${isEdit ? `
+                <div class="p-4 border-t border-slate-800 bg-slate-950/50 space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="field-label">Tipo</label>
+                            <select id="av-tipo-${a.id}" class="field-select">
+                                <option value="info"    ${a.tipo==='info'   ?'selected':''}>ℹ️ Info</option>
+                                <option value="alerta"  ${a.tipo==='alerta' ?'selected':''}>⚠️ Alerta</option>
+                                <option value="urgente" ${a.tipo==='urgente'?'selected':''}>🚨 Urgente</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="av-ativo-${a.id}" ${a.ativo?'checked':''} class="w-4 h-4 accent-blue-500">
+                                <span class="text-sm text-slate-300">Ativo</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label">Texto do aviso</label>
+                        <input type="text" id="av-texto-${a.id}" value="${esc(a.texto)}" class="field-input" placeholder="Digite o texto do aviso...">
+                    </div>
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="salvarEdicaoAviso('${a.id}')"
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">
+                            ✓ OK
+                        </button>
+                        <button onclick="cancelarEdicao()"
+                            class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
+            </div>`;
+        }
+
+        window.novoAviso = () => {
+            const id = genId();
+            avisos.push({ id, ativo: true, tipo: 'info', texto: '' });
+            editandoId = id;
+            renderAvisos();
+            document.getElementById(`av-texto-${id}`)?.focus();
+        };
+
+        window.moverAviso = (i, dir) => {
+            if (i + dir < 0 || i + dir >= avisos.length) return;
+            [avisos[i], avisos[i+dir]] = [avisos[i+dir], avisos[i]];
+            renderAvisos();
+        };
+
+        window.toggleAtivoAviso = (id) => {
+            avisos = avisos.map(a => a.id === id ? { ...a, ativo: !a.ativo } : a);
+            renderAvisos();
+        };
+
+        window.toggleEditAviso = (id) => {
+            editandoId = editandoId === id ? null : id;
+            renderAvisos();
+        };
+
+        window.deletarAviso = (id) => {
+            if (!confirm('Remover este aviso?')) return;
+            avisos = avisos.filter(a => a.id !== id);
+            if (editandoId === id) editandoId = null;
+            renderAvisos();
+        };
+
+        window.salvarEdicaoAviso = (id) => {
+            const tipo  = document.getElementById(`av-tipo-${id}`)?.value  || 'info';
+            const texto = document.getElementById(`av-texto-${id}`)?.value.trim() || '';
+            const ativo = document.getElementById(`av-ativo-${id}`)?.checked ?? true;
+            avisos = avisos.map(a => a.id === id ? { ...a, tipo, texto, ativo } : a);
+            editandoId = null;
+            renderAvisos();
+        };
+
+        // ─── CARDS ─────────────────────────────────────────────────────────────────
+        function renderCards() {
+            const c = document.getElementById('cards-container');
+            if (!cards.length) {
+                c.innerHTML = `<p class="text-slate-600 text-sm py-4 text-center border border-dashed border-slate-800 rounded-xl">Nenhum link. Clique em "+ Novo Link" para adicionar.</p>`;
+                return;
+            }
+            c.innerHTML = cards.map((card, i) => renderCardItem(card, i)).join('');
+        }
+
+        function corDotClass(cor) {
+            return { blue:'bg-blue-500', emerald:'bg-emerald-500', amber:'bg-amber-500', purple:'bg-purple-500', rose:'bg-rose-500', slate:'bg-slate-500' }[cor] || 'bg-slate-500';
+        }
+
+        function renderCardItem(card, i) {
+            const isEdit = editandoId === card.id;
+            return `
+            <div class="border border-slate-800 rounded-xl mb-2 overflow-hidden ${card.ativo ? '' : 'opacity-50'}">
+                <div class="flex items-center gap-2 px-3 py-2.5 bg-slate-900/60">
+                    <div class="flex flex-col">
+                        <button class="btn-mv" onclick="moverCard(${i}, -1)" ${i===0?'disabled':''}>▲</button>
+                        <button class="btn-mv" onclick="moverCard(${i}, 1)" ${i===cards.length-1?'disabled':''}>▼</button>
+                    </div>
+                    <span class="text-lg flex-shrink-0 w-7 text-center">${card.icone || '🔗'}</span>
+                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${corDotClass(card.cor)}"></span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-slate-200 truncate">${card.titulo || '—'}</p>
+                        <p class="text-[10px] text-slate-500 truncate">${card.url || ''}</p>
+                    </div>
+                    <button onclick="toggleAtivoCard('${card.id}')" title="${card.ativo ? 'Desativar' : 'Ativar'}"
+                        class="text-xs px-2 py-1 rounded-lg border transition-colors flex-shrink-0 ${card.ativo ? 'bg-emerald-900/40 border-emerald-700 text-emerald-400 hover:bg-emerald-900/70' : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500'}">
+                        ${card.ativo ? 'Ativo' : 'Inativo'}
+                    </button>
+                    <button onclick="toggleEditCard('${card.id}')"
+                        class="text-xs px-2 py-1 rounded-lg border transition-colors flex-shrink-0 ${isEdit ? 'bg-blue-900/50 border-blue-600 text-blue-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}">
+                        ✏️ Editar
+                    </button>
+                    <button onclick="deletarCard('${card.id}')"
+                        class="text-xs px-2 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:border-red-700 hover:text-red-400 transition-colors flex-shrink-0">
+                        🗑️
+                    </button>
+                </div>
+
+                ${isEdit ? `
+                <div class="p-4 border-t border-slate-800 bg-slate-950/50 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="field-label">Título</label>
+                            <input type="text" id="cd-titulo-${card.id}" value="${esc(card.titulo)}" class="field-input" placeholder="Nome do link">
+                        </div>
+                        <div>
+                            <label class="field-label">Ícone</label>
+                            <input type="text" id="cd-icone-${card.id}" value="${esc(card.icone || '')}" class="field-input" placeholder="Emoji" maxlength="4">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label">Descrição</label>
+                        <input type="text" id="cd-desc-${card.id}" value="${esc(card.descricao || '')}" class="field-input" placeholder="Texto curto de descrição">
+                    </div>
+                    <div>
+                        <label class="field-label">URL / Endereço</label>
+                        <input type="text" id="cd-url-${card.id}" value="${esc(card.url || '')}" class="field-input" placeholder="ex: presencareg655.html ou https://...">
+                    </div>
+
+                    <div>
+                        <label class="field-label">Cor do ícone</label>
+                        <input type="hidden" id="cd-cor-${card.id}" value="${card.cor || 'slate'}">
+                        <div class="flex gap-2 flex-wrap mt-1">
+                            ${CORES.map(c => `
+                            <button type="button" data-cor-btn="${card.id}" data-cor="${c.id}"
+                                onclick="selecionarCor('${card.id}','${c.id}')"
+                                title="${c.label}"
+                                class="w-7 h-7 rounded-full ${c.dot} transition-all ${card.cor===c.id ? 'ring-2 ring-offset-2 ring-offset-slate-950 ' + c.ring : 'opacity-60 hover:opacity-100'}">
+                            </button>`).join('')}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="field-label">Ícones sugeridos</label>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${EMOJIS_SUGERIDOS.map(e => `<button type="button" onclick="usarEmoji('${card.id}','${e}')" class="text-lg w-8 h-8 rounded-lg hover:bg-slate-700 transition-colors">${e}</button>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="cd-externo-${card.id}" ${card.externo?'checked':''} class="w-4 h-4 accent-blue-500">
+                            <span class="text-sm text-slate-300">Abrir em nova aba</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="cd-ativo-${card.id}" ${card.ativo?'checked':''} class="w-4 h-4 accent-blue-500">
+                            <span class="text-sm text-slate-300">Ativo</span>
+                        </label>
+                    </div>
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="salvarEdicaoCard('${card.id}')"
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">
+                            ✓ OK
+                        </button>
+                        <button onclick="cancelarEdicao()"
+                            class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
+            </div>`;
+        }
+
+        window.novoCard = () => {
+            const id = genId();
+            cards.push({ id, ativo: true, titulo: '', descricao: '', icone: '🔗', cor: 'slate', url: '', externo: false });
+            editandoId = id;
+            renderCards();
+            document.getElementById(`cd-titulo-${id}`)?.focus();
+        };
+
+        window.moverCard = (i, dir) => {
+            if (i + dir < 0 || i + dir >= cards.length) return;
+            [cards[i], cards[i+dir]] = [cards[i+dir], cards[i]];
+            renderCards();
+        };
+
+        window.toggleAtivoCard = (id) => {
+            cards = cards.map(c => c.id === id ? { ...c, ativo: !c.ativo } : c);
+            renderCards();
+        };
+
+        window.toggleEditCard = (id) => {
+            editandoId = editandoId === id ? null : id;
+            renderCards();
+        };
+
+        window.deletarCard = (id) => {
+            if (!confirm('Remover este link?')) return;
+            cards = cards.filter(c => c.id !== id);
+            if (editandoId === id) editandoId = null;
+            renderCards();
+        };
+
+        window.salvarEdicaoCard = (id) => {
+            const titulo   = document.getElementById(`cd-titulo-${id}`)?.value.trim()   || '';
+            const descricao= document.getElementById(`cd-desc-${id}`)?.value.trim()     || '';
+            const icone    = document.getElementById(`cd-icone-${id}`)?.value.trim()    || '🔗';
+            const url      = document.getElementById(`cd-url-${id}`)?.value.trim()      || '';
+            const cor      = document.getElementById(`cd-cor-${id}`)?.value             || 'slate';
+            const externo  = document.getElementById(`cd-externo-${id}`)?.checked       ?? false;
+            const ativo    = document.getElementById(`cd-ativo-${id}`)?.checked         ?? true;
+            cards = cards.map(c => c.id === id ? { ...c, titulo, descricao, icone, url, cor, externo, ativo } : c);
+            editandoId = null;
+            renderCards();
+        };
+
+        window.selecionarCor = (cardId, cor) => {
+            document.getElementById(`cd-cor-${cardId}`).value = cor;
+            document.querySelectorAll(`[data-cor-btn="${cardId}"]`).forEach(btn => {
+                const isSelected = btn.dataset.cor === cor;
+                const cInfo = CORES.find(c => c.id === btn.dataset.cor);
+                btn.className = `w-7 h-7 rounded-full ${cInfo?.dot || 'bg-slate-500'} transition-all ${isSelected ? 'ring-2 ring-offset-2 ring-offset-slate-950 ' + (cInfo?.ring || '') : 'opacity-60 hover:opacity-100'}`;
+            });
+        };
+
+        window.usarEmoji = (cardId, emoji) => {
+            const input = document.getElementById(`cd-icone-${cardId}`);
+            if (input) { input.value = emoji; input.focus(); }
+        };
+
+        window.cancelarEdicao = () => {
+            // Se o item sendo editado está vazio (recém criado sem dados), remove-o
+            const card = cards.find(c => c.id === editandoId);
+            if (card && !card.titulo) cards = cards.filter(c => c.id !== editandoId);
+            const aviso = avisos.find(a => a.id === editandoId);
+            if (aviso && !aviso.texto) avisos = avisos.filter(a => a.id !== editandoId);
+            editandoId = null;
+            renderAvisos();
+            renderCards();
+        };
+
+        // ─── UTILS ─────────────────────────────────────────────────────────────────
+        function esc(str) {
+            return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // Expõe para os onclick do HTML
+        window.cancelarEdicao   = window.cancelarEdicao;
+        window.novoAviso        = window.novoAviso;
+        window.moverAviso       = window.moverAviso;
+        window.toggleAtivoAviso = window.toggleAtivoAviso;
+        window.toggleEditAviso  = window.toggleEditAviso;
+        window.deletarAviso     = window.deletarAviso;
+        window.salvarEdicaoAviso= window.salvarEdicaoAviso;
+        window.novoCard         = window.novoCard;
+        window.moverCard        = window.moverCard;
+        window.toggleAtivoCard  = window.toggleAtivoCard;
+        window.toggleEditCard   = window.toggleEditCard;
+        window.deletarCard      = window.deletarCard;
+        window.salvarEdicaoCard = window.salvarEdicaoCard;
+        window.selecionarCor    = window.selecionarCor;
+        window.usarEmoji        = window.usarEmoji;
+
+        // ─── INIT ──────────────────────────────────────────────────────────────────
+        loadConfig();
+    </script>
+
+</body>
+</html>

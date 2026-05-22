@@ -32,9 +32,9 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
-    // Configurações: apenas o documento layout_login é público (exibido na tela de login)
+    // Configurações: layout_login e mini_portal são públicos
     match /configuracoes/{docId} {
-      allow read: if docId == 'layout_login' || isAuthenticated();
+      allow read: if docId == 'layout_login' || docId == 'mini_portal' || isAuthenticated();
       allow write: if isAuthenticated();
     }
 
