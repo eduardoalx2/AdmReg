@@ -18,6 +18,20 @@
         .btn-mover { line-height: 1; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
         .btn-mover:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
         .btn-mover:disabled { opacity: 0.2; cursor: not-allowed; }
+        .tab-btn { color: #64748b; }
+        .tab-btn:hover { color: #e2e8f0; }
+        .tab-ativo { background: #1e293b; color: #e2e8f0; }
+        .perm-badge { display:inline-block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:1px 6px; border-radius:100px; border:1px solid; white-space:nowrap; }
+        .pb-admin    { background:rgba(239,68,68,.12);   border-color:rgba(239,68,68,.3);   color:#f87171; }
+        .pb-sec      { background:rgba(99,179,237,.12);  border-color:rgba(99,179,237,.3);  color:#63b3ed; }
+        .pb-sup      { background:rgba(139,92,246,.12);  border-color:rgba(139,92,246,.3);  color:#a78bfa; }
+        .pb-pastor   { background:rgba(245,158,11,.12);  border-color:rgba(245,158,11,.3);  color:#fbbf24; }
+        .pb-coord    { background:rgba(16,185,129,.12);  border-color:rgba(16,185,129,.3);  color:#34d399; }
+        .pb-obreiro  { background:rgba(100,116,139,.12); border-color:rgba(100,116,139,.3); color:#94a3b8; }
+        .pb-any      { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.15);color:#94a3b8; }
+        .pb-pub      { background:rgba(16,185,129,.08);  border-color:rgba(16,185,129,.2);  color:#34d399; }
+        .pb-weak     { background:rgba(245,158,11,.1);   border-color:rgba(245,158,11,.3);  color:#fbbf24; }
+        .pb-spec     { background:rgba(99,102,241,.1);   border-color:rgba(99,102,241,.25); color:#a5b4fc; }
     </style>
 </head>
 <body class="min-h-screen text-slate-200">
@@ -29,14 +43,48 @@
         </a>
         <div class="flex-1">
             <h1 class="text-sm font-bold text-white">Gerenciar Layout</h1>
-            <p class="text-[10px] text-slate-500">Organize grupos, ordem e níveis de acesso do Painel Admin (layout do painel do pastor em Editar Painel)</p>
+            <p class="text-[10px] text-slate-500">Organize grupos, ordem e níveis de acesso do Painel Admin</p>
         </div>
-        <button onclick="restaurarPadrao()" class="text-xs text-slate-500 hover:text-amber-400 border border-slate-700 hover:border-amber-500/40 px-3 py-1.5 rounded-lg transition-colors">
-            ↺ Restaurar Padrão
-        </button>
-        <button id="btn-salvar" onclick="salvarLayout()" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
-            💾 Salvar Layout
-        </button>
+        <div class="flex gap-1 bg-slate-800/80 rounded-lg p-1 flex-shrink-0">
+            <button id="tab-layout" onclick="trocarTab('layout')" class="tab-btn tab-ativo text-xs font-semibold px-3 py-1.5 rounded-md transition-colors">📋 Layout</button>
+            <button id="tab-mapa"   onclick="trocarTab('mapa')"   class="tab-btn           text-xs font-semibold px-3 py-1.5 rounded-md transition-colors">🗺️ Permissões</button>
+        </div>
+        <div id="layout-actions" class="flex gap-2">
+            <button onclick="restaurarPadrao()" class="text-xs text-slate-500 hover:text-amber-400 border border-slate-700 hover:border-amber-500/40 px-3 py-1.5 rounded-lg transition-colors">
+                ↺ Restaurar Padrão
+            </button>
+            <button id="btn-salvar" onclick="salvarLayout()" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
+                💾 Salvar Layout
+            </button>
+        </div>
+    </div>
+
+    <!-- MAPA DE PERMISSÕES -->
+    <div id="mapa-content" class="hidden max-w-5xl mx-auto px-4 py-6">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+            <span class="text-xs text-slate-500">Filtrar:</span>
+            <button onclick="filtrarMapa('todas')"    id="f-todas"    class="filtro-btn filtro-ativo text-xs px-3 py-1 rounded-full border border-slate-600 transition-colors">Todas</button>
+            <button onclick="filtrarMapa('problema')" id="f-problema" class="filtro-btn            text-xs px-3 py-1 rounded-full border border-slate-700 text-slate-500 transition-colors">⚠️ Verificar</button>
+            <button onclick="filtrarMapa('privada')"  id="f-privada"  class="filtro-btn            text-xs px-3 py-1 rounded-full border border-slate-700 text-slate-500 transition-colors">🔒 Privadas</button>
+            <button onclick="filtrarMapa('publica')"  id="f-publica"  class="filtro-btn            text-xs px-3 py-1 rounded-full border border-slate-700 text-slate-500 transition-colors">🌐 Públicas</button>
+            <span class="ml-auto text-[10px] text-slate-600">Dados do código extraídos manualmente — atualize se mudar as permissões de uma página</span>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="bg-slate-800/80 text-left">
+                        <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-8">Status</th>
+                        <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Página</th>
+                        <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Camada Código <span class="text-slate-600 normal-case font-normal">(requireAuth + hasAnyPermission)</span></th>
+                        <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Camada Menu <span class="text-slate-600 normal-case font-normal">(gerenciar_layout)</span></th>
+                    </tr>
+                </thead>
+                <tbody id="mapa-tbody"></tbody>
+            </table>
+        </div>
+        <p class="text-[10px] text-slate-700 mt-3">
+            ✅ Alinhado · ⚠️ Verificar (divergência ou proteção fraca) · ℹ️ Fora do menu (não aparece no painel admin — pode ser intencional)
+        </p>
     </div>
 
     <!-- LOADING -->
@@ -424,6 +472,186 @@
             const t = document.getElementById('toast');
             t.classList.remove('hidden');
             setTimeout(() => t.classList.add('hidden'), 3000);
+        }
+
+        // ─── TABS ──────────────────────────────────────────────────────────────────
+        let tabAtual = 'layout';
+        window.trocarTab = function(tab) {
+            tabAtual = tab;
+            document.getElementById('tab-layout').classList.toggle('tab-ativo', tab === 'layout');
+            document.getElementById('tab-mapa').classList.toggle('tab-ativo', tab === 'mapa');
+            document.getElementById('layout-actions').classList.toggle('hidden', tab === 'mapa');
+            document.getElementById('content').classList.toggle('hidden', tab === 'mapa');
+            document.getElementById('mapa-content').classList.toggle('hidden', tab !== 'mapa');
+            if (tab === 'mapa') renderMapa();
+        };
+
+        // ─── MAPA DE PERMISSÕES ────────────────────────────────────────────────────
+        const CODE_PERMS = {
+            'login.html':                  { titulo:'Login',                   tipo:'publica',       perms:[] },
+            'mini_portal.html':            { titulo:'Mini Portal',             tipo:'publica',       perms:[] },
+            'portal.html':                 { titulo:'Portal Público',          tipo:'publica',       perms:[] },
+            'agendaregiao655.html':        { titulo:'Agenda Região 655',       tipo:'publica',       perms:[] },
+            'agendareg655.html':           { titulo:'Agenda CED/CND',          tipo:'publica',       perms:[] },
+            'agendarapidareg655.html':     { titulo:'Agenda Rápida',           tipo:'publica',       perms:[] },
+            'agendaieqcentral.html':       { titulo:'Agenda IEQ Central',      tipo:'publica',       perms:[] },
+            'agendarapidaieqcentral.html': { titulo:'Agenda Rápida Central',   tipo:'publica',       perms:[] },
+            'agenda_publicaieq.html':      { titulo:'Agenda Pública IEQ',      tipo:'publica',       perms:[] },
+            'agenda_completa.html':        { titulo:'Agenda Completa',         tipo:'publica',       perms:[] },
+            'presencareg655.html':         { titulo:'Presença de Pastores',    tipo:'publica',       perms:[] },
+            's_contasreg655.html':         { titulo:'Contas Correntes',        tipo:'publica',       perms:[] },
+            'sorteio.html':               { titulo:'Sorteio de Igrejas',      tipo:'publica',       perms:[] },
+            'pauta_0905.html':             { titulo:'Pauta 09/05',             tipo:'publica',       perms:[] },
+            'gestao_agenda.html':          { titulo:'Gestão da Agenda',        tipo:'publica_fraca', perms:[] },
+            'index.html':                  { titulo:'Painel Admin',            tipo:'privada',       perms:['*'] },
+            'recibosreg655.html':          { titulo:'Recibos',                 tipo:'privada',       perms:['*'] },
+            'saldodeviradareg655.html':    { titulo:'Saldo de Virada',         tipo:'privada',       perms:['*'] },
+            'dashreg655.html':             { titulo:'Dashboard Recibos',       tipo:'privada',       perms:['*'] },
+            'dashsaldo.html':              { titulo:'Dashboard Saldos',        tipo:'privada',       perms:['*'] },
+            'checklist.html':              { titulo:'Checklist',               tipo:'privada',       perms:['admin','secretario','superintendente'] },
+            'controle_avisos.html':        { titulo:'Controle de Avisos',      tipo:'privada',       perms:['admin','secretario','superintendente','pastor_titular','coordenador','obreiro'] },
+            'controleeventosreg655.html':  { titulo:'Controle de Presenças',   tipo:'privada',       perms:['admin','secretario','superintendente'] },
+            'coordenadorias.html':         { titulo:'Coordenadorias',          tipo:'privada',       perms:['admin'] },
+            'debitos_manuais.html':        { titulo:'Débitos Manuais',         tipo:'privada',       perms:['admin','secretario','superintendente'] },
+            'editar_mini_portal.html':     { titulo:'Editar Mini Portal',      tipo:'privada',       perms:['admin'] },
+            'editarrecibos.html':          { titulo:'Editar Recibos',          tipo:'privada',       perms:['admin'] },
+            'editpagmembros.html':         { titulo:'Config. Membros',         tipo:'privada',       perms:['admin'] },
+            'editpagpastores.html':        { titulo:'Config. Pastores',        tipo:'privada',       perms:['admin'] },
+            'eventosreg655.html':          { titulo:'Gestão de Eventos',       tipo:'privada',       perms:['admin','gestao_eventos','secretario','superintendente'] },
+            'gerenciar_layout.html':       { titulo:'Gerenciar Layout',        tipo:'privada',       perms:['admin'] },
+            'gerenciar_saldos.html':       { titulo:'Gerenciar Saldos',        tipo:'privada',       perms:['admin'] },
+            'gestao_usuarios.html':        { titulo:'Gestão de Usuários',      tipo:'privada',       perms:['admin'] },
+            'layout_login.html':           { titulo:'Configurar Login',        tipo:'privada',       perms:['admin'] },
+            'pendenciasreg655.html':       { titulo:'Pendências',              tipo:'privada',       perms:['admin','secretario','superintendente'] },
+            'relatorio_avisos.html':       { titulo:'Relatório de Avisos',     tipo:'privada',       perms:['admin','secretario','superintendente','pastor_titular'] },
+            'relatorio_pendencias.html':   { titulo:'Rel. Pendências',         tipo:'privada',       perms:['admin','secretario','superintendente'] },
+            's_igrejas.html':              { titulo:'Igrejas',                 tipo:'privada',       perms:['admin','secretario','superintendente'] },
+            's_pastores.html':             { titulo:'Pastores',                tipo:'privada',       perms:['admin','pastores','secretario','superintendente'] },
+            'visualizar_como.html':        { titulo:'Visualizar Como',         tipo:'privada',       perms:['admin'] },
+        };
+
+        const PERM_LEVEL = { admin:100, secretario:90, superintendente:80, pastor_titular:70, coordenador:60, obreiro:50, membro:10 };
+
+        let filtroAtual = 'todas';
+        window.filtrarMapa = function(f) {
+            filtroAtual = f;
+            document.querySelectorAll('.filtro-btn').forEach(b => {
+                b.classList.toggle('filtro-ativo', b.id === 'f-' + f);
+                b.classList.toggle('bg-slate-700', b.id === 'f-' + f);
+                b.classList.toggle('text-slate-200', b.id === 'f-' + f);
+                b.classList.toggle('border-slate-500', b.id === 'f-' + f);
+                b.classList.toggle('text-slate-500', b.id !== 'f-' + f);
+                b.classList.toggle('border-slate-700', b.id !== 'f-' + f);
+            });
+            renderMapa();
+        };
+
+        function buildLayoutMap() {
+            const map = {};
+            (grupos || []).forEach(g => {
+                (g.itens || []).forEach(item => {
+                    if (!item.url || item.url === '#') return;
+                    const file = item.url.split('/').pop().split('?')[0];
+                    map[file] = { perm: item.perm || null, grupo: g.nome, titulo: item.titulo, visivel: item.visivel !== false };
+                });
+            });
+            return map;
+        }
+
+        function permBadge(p) {
+            if (!p) return '<span class="perm-badge pb-any">qualquer login</span>';
+            const cls = { admin:'pb-admin', secretario:'pb-sec', superintendente:'pb-sup', pastor_titular:'pb-pastor', coordenador:'pb-coord', obreiro:'pb-obreiro' };
+            return `<span class="perm-badge ${cls[p] || 'pb-spec'}">${p}</span>`;
+        }
+
+        function calcStatus(file, codInfo, layoutEntry) {
+            if (codInfo.tipo === 'publica_fraca') return 'warn';
+            if (codInfo.tipo === 'publica') {
+                if (layoutEntry && layoutEntry.perm) return 'warn'; // menu restringe página pública
+                return 'ok';
+            }
+            if (!layoutEntry) return 'fora'; // private, not in menu
+            const codPerms = codInfo.perms;
+            const menuPerm = layoutEntry.perm;
+            if (codPerms[0] === '*' && !menuPerm) return 'ok';
+            if (codPerms[0] === '*' && menuPerm) return 'warn';
+            if (!menuPerm) return 'warn'; // private page visible to all in menu
+            if (codPerms.includes(menuPerm)) return 'ok';
+            // check if menu perm level covers the code perms
+            const menuLevel = PERM_LEVEL[menuPerm] || 0;
+            const codMinLevel = Math.min(...codPerms.map(p => PERM_LEVEL[p] || 50));
+            if (menuLevel <= codMinLevel) return 'ok'; // menu is equal or more permissive
+            return 'warn';
+        }
+
+        function renderMapa() {
+            const layoutMap = buildLayoutMap();
+            const tbody = document.getElementById('mapa-tbody');
+            if (!tbody) return;
+
+            const rows = Object.entries(CODE_PERMS).map(([file, info]) => {
+                const layoutEntry = layoutMap[file];
+                const status = calcStatus(file, info, layoutEntry);
+                return { file, info, layoutEntry, status };
+            });
+
+            const filtered = rows.filter(r => {
+                if (filtroAtual === 'todas') return true;
+                if (filtroAtual === 'problema') return r.status === 'warn';
+                if (filtroAtual === 'privada') return r.info.tipo === 'privada';
+                if (filtroAtual === 'publica') return r.info.tipo === 'publica' || r.info.tipo === 'publica_fraca';
+                return true;
+            });
+
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-600">Nenhuma página neste filtro.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(({ file, info, layoutEntry, status }, i) => {
+                const rowBg = i % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/20';
+
+                // Status cell
+                const statusHtml = {
+                    ok:   '<span title="Alinhado">✅</span>',
+                    warn: '<span title="Verificar">⚠️</span>',
+                    fora: '<span title="Fora do menu (pode ser intencional)">ℹ️</span>',
+                }[status] || '—';
+
+                // Code perms cell
+                let codeHtml;
+                if (info.tipo === 'publica') {
+                    codeHtml = '<span class="perm-badge pb-pub">🌐 público</span>';
+                } else if (info.tipo === 'publica_fraca') {
+                    codeHtml = '<span class="perm-badge pb-weak">⚠️ localStorage apenas</span>';
+                } else if (info.perms[0] === '*') {
+                    codeHtml = '<span class="perm-badge pb-any">🔓 qualquer login</span>';
+                } else {
+                    codeHtml = info.perms.map(p => permBadge(p)).join(' ');
+                }
+
+                // Layout cell
+                let layoutHtml;
+                if (!layoutEntry) {
+                    layoutHtml = '<span class="text-slate-700">— fora do menu</span>';
+                } else {
+                    const visHtml = layoutEntry.visivel ? '' : ' <span class="perm-badge pb-any" style="opacity:.5">oculto</span>';
+                    const permHtml = layoutEntry.perm ? permBadge(layoutEntry.perm) : '<span class="perm-badge pb-any">sem restrição</span>';
+                    layoutHtml = `${permHtml}${visHtml} <span class="text-slate-600 text-[9px]">${esc(layoutEntry.grupo)}</span>`;
+                }
+
+                const warnRow = status === 'warn' ? ' bg-amber-500/5' : '';
+
+                return `<tr class="${rowBg}${warnRow} border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors">
+                    <td class="px-4 py-2.5 text-center">${statusHtml}</td>
+                    <td class="px-4 py-2.5">
+                        <a href="${file}" target="_blank" class="text-slate-300 hover:text-blue-400 font-medium transition-colors">${esc(info.titulo)}</a>
+                        <div class="text-[10px] text-slate-600 mt-0.5">${file}</div>
+                    </td>
+                    <td class="px-4 py-2.5">${codeHtml}</td>
+                    <td class="px-4 py-2.5">${layoutHtml}</td>
+                </tr>`;
+            }).join('');
         }
 
         window.onLayoutLoaded = function(data) {
