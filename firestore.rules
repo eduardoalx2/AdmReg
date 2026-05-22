@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // --- COLEÇÕES PÚBLICAS (leitura sem login) ---
+
+    // Agenda: exibida em páginas públicas (agendaregiao655.html, etc.)
+    match /agenda/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Eventos: exibidos em páginas públicas
+    match /eventos/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Igrejas: lidas na página pública de presença
+    match /igrejas/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Pastores: lidos na página pública de presença
+    match /pastores/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Configurações: apenas o documento layout_login é público (exibido na tela de login)
+    match /configuracoes/{docId} {
+      allow read: if docId == 'layout_login' || isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // --- PRESENÇAS: escrita pública com validação de campos ---
+    // A página presencareg655.html é acessível sem login
+    match /presencas/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if request.resource.data.keys().hasAll(['nome', 'igreja', 'eventoId', 'status', 'declaracao'])
+                    && request.resource.data.declaracao == 'Sim'
+                    && request.resource.data.status in ['Presente', 'Justificado', 'Ausente'];
+      allow update: if request.resource.data.keys().hasAll(['nome', 'igreja', 'eventoId', 'status', 'declaracao'])
+                    && request.resource.data.declaracao == 'Sim'
+                    && request.resource.data.status in ['Presente', 'Justificado', 'Ausente'];
+      allow delete: if isAuthenticated();
+    }
+
+    // --- COLEÇÕES PRIVADAS (requerem autenticação) ---
+
+    match /usuarios/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /recibos/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /saldos_virada/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /pendencias_manuais/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /coordenadorias/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /avisos/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /avisos_ciencia/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /checklist_caixa/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /checklist_sgaf/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Qualquer outra coleção não listada: requer autenticação
+    match /{collection}/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}
