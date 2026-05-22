@@ -142,6 +142,10 @@
                         <input id="f-icone" type="text" maxlength="4" placeholder="🔗" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
                     </div>
                 </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Sugestões de ícone</label>
+                    <div id="emoji-categorias" class="space-y-2 max-h-44 overflow-y-auto pr-1"></div>
+                </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Título *</label>
@@ -391,6 +395,36 @@
             renderGrupos();
         }
 
+        const EMOJI_CATS = [
+            { cat: 'Administrativo',  emojis: ['📋','📊','📈','📉','📁','📂','🗂️','📌','📍','🗓️','📅','📆','✅','☑️','✏️','📝','🖊️','📎','🔗','📐','📏','🖨️'] },
+            { cat: 'Financeiro',      emojis: ['💰','💵','💴','💳','🧾','💹','🏦','💲','🪙','💸','📤','📥'] },
+            { cat: 'Pessoas',         emojis: ['👥','👤','👨‍💼','🧑‍🤝‍🧑','🙋','🙋‍♂️','🫂','👶','👨‍👩‍👧','🧑‍💻','🧑‍🏫'] },
+            { cat: 'Igreja',          emojis: ['⛪','🏛️','🙏','✝️','🕊️','👑','📖','🕯️','⭐','🌟','🫶','☮️'] },
+            { cat: 'Comunicação',     emojis: ['📢','📣','🔔','🔕','📨','📩','📧','💬','🗣️','📞','☎️','📱','💡','📡'] },
+            { cat: 'Eventos',         emojis: ['🎯','🎉','🎊','🏆','🥇','🎗️','🎪','🎲','🗳️','🎤','🎵','🎶'] },
+            { cat: 'Controle',        emojis: ['⚙️','🔧','🛠️','🔨','🔐','🔒','🔑','🛡️','⚠️','🚨','🚦','✔️','❌','🔴','🟡','🟢'] },
+            { cat: 'Localização',     emojis: ['🌐','🗺️','🏠','🏡','🏢','🏗️','🚗','🚌','✈️','📍','🧭'] },
+            { cat: 'Tempo',           emojis: ['⏰','⏱️','⌚','🕐','🕛','🗓️','📅','⏳','⌛'] },
+            { cat: 'Outros',          emojis: ['🚀','💡','🌈','🔥','❤️','💙','🎁','📦','🧩','🪄','🔮','📿','🌿','🌱','🌻'] },
+        ];
+
+        function renderEmojiCats() {
+            const cont = document.getElementById('emoji-categorias');
+            if (!cont) return;
+            cont.innerHTML = EMOJI_CATS.map(({ cat, emojis }) => `
+                <div>
+                    <p class="text-[9px] text-slate-600 uppercase tracking-wider mb-1">${cat}</p>
+                    <div class="flex flex-wrap gap-0.5">
+                        ${emojis.map(e => `<button type="button" onclick="usarEmojiLayout('${e}')" class="text-base w-8 h-8 rounded-lg hover:bg-slate-700 active:bg-slate-600 transition-colors flex items-center justify-center">${e}</button>`).join('')}
+                    </div>
+                </div>`).join('');
+        }
+
+        window.usarEmojiLayout = function(emoji) {
+            const input = document.getElementById('f-icone');
+            if (input) { input.value = emoji; input.focus(); }
+        };
+
         function abrirModalItem(grupoId, itemId) {
             const grupo = grupos.find(g => g.id === grupoId);
             if (!grupo) return;
@@ -417,6 +451,7 @@
             document.getElementById('f-perm').value = item?.perm || '';
             document.getElementById('f-visivel').checked = item?.visivel !== false;
             document.getElementById('modal-item').classList.remove('hidden');
+            renderEmojiCats();
             setTimeout(() => document.getElementById('f-titulo').focus(), 50);
         }
 
