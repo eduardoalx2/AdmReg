@@ -56,7 +56,7 @@
             </div>
         </div>
 
-        <!-- PASSO 2: Registro de Presença (aparece após selecionar evento) -->
+        <!-- PASSO 2: Registro de Presença -->
         <div id="formRegistro" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-4">
             <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest">Registrar Presença da Igreja</h2>
 
@@ -86,36 +86,88 @@
                 </label>
             </div>
 
-            <button type="button" id="btnRegistrar" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-4 rounded-2xl shadow-lg transform active:scale-95 transition-all text-sm tracking-widest uppercase">
+            <button type="button" id="btnRegistrar" class="w-full bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white font-black py-4 rounded-2xl shadow-lg transform active:scale-95 transition-all text-sm tracking-widest uppercase">
                 Registrar Presença e Notificar Coordenador
             </button>
+
+            <div id="feedback" class="hidden p-4 rounded-xl text-center text-[10px] font-black uppercase tracking-widest"></div>
         </div>
 
-        <!-- HISTÓRICO DE REGISTROS DO EVENTO -->
-        <div id="historicoSection" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-            <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-4">Registros Realizados</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                            <th class="pb-2 px-2">Igreja</th>
-                            <th class="pb-2 px-2 text-center">Pessoas</th>
-                            <th class="pb-2 px-2">Registrado por</th>
-                            <th class="pb-2 px-2">Data/Hora</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabelaHistorico" class="text-sm">
-                        <tr><td colspan="4" class="text-center py-6 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhum registro ainda</td></tr>
-                    </tbody>
-                </table>
+        <!-- PAINEL DO COORDENADOR -->
+        <div id="painelSection" class="hidden bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+
+            <!-- Tela de senha -->
+            <div id="lockScreen" class="p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-xl">🔒</div>
+                    <div>
+                        <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest">Painel do Coordenador</h2>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Área restrita · insira a senha para acessar</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <input type="password" id="senhaCoord" placeholder="Senha" maxlength="20"
+                        class="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-400 outline-none text-sm font-bold tracking-widest"
+                        onkeydown="if(event.key==='Enter') acessarPainel()">
+                    <button onclick="acessarPainel()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-5 py-3 rounded-xl text-sm transition-colors">
+                        Entrar
+                    </button>
+                </div>
+                <p id="erroSenha" class="hidden text-xs text-red-500 mt-2 font-bold ml-1">Senha incorreta. Tente novamente.</p>
             </div>
-            <div class="mt-3 flex gap-4 text-[10px] font-bold text-slate-500">
-                <span id="totalIgrejas">Total de igrejas: 0</span>
-                <span id="totalPessoas">Total de pessoas: 0</span>
+
+            <!-- Painel desbloqueado -->
+            <div id="painelDesbloqueado" class="hidden">
+                <div class="px-6 py-4 bg-slate-800 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-black text-white uppercase tracking-widest">Resumo de Presenças</h2>
+                        <p id="painelEventoNome" class="text-[10px] text-slate-400 mt-0.5"></p>
+                    </div>
+                    <button onclick="fecharPainel()" class="text-slate-400 hover:text-white text-xs font-bold transition-colors">Sair 🔒</button>
+                </div>
+
+                <div id="painelLoading" class="p-8 text-center">
+                    <div class="inline-block w-6 h-6 border-2 border-slate-200 border-t-rose-500 rounded-full animate-spin mb-3"></div>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Carregando...</p>
+                </div>
+
+                <div id="painelConteudo" class="hidden p-6 space-y-4">
+                    <!-- Totalizadores -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4 text-center">
+                            <p class="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Total de Igrejas</p>
+                            <p id="totalIgrejas" class="text-3xl font-black text-rose-600">0</p>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-center">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total de Pessoas</p>
+                            <p id="totalPessoas" class="text-3xl font-black text-slate-700">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Tabela por Igreja -->
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Por Igreja</p>
+                        <div class="overflow-x-auto rounded-2xl border border-slate-100">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                        <th class="pb-2 pt-3 px-3">Igreja</th>
+                                        <th class="pb-2 pt-3 px-3 text-center">Pessoas</th>
+                                        <th class="pb-2 pt-3 px-3 hidden sm:table-cell">Registrado por</th>
+                                        <th class="pb-2 pt-3 px-3 hidden sm:table-cell">Data/Hora</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaPainel" class="text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="painelVazio" class="hidden p-8 text-center">
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhum registro ainda para este evento.</p>
+                </div>
             </div>
         </div>
-
-        <div id="feedback" class="hidden p-4 rounded-xl text-center text-[10px] font-black uppercase tracking-widest"></div>
 
     </div>
 
@@ -125,19 +177,16 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         let igrejasList = [];
         let eventosCache = new Map();
         let eventoAtual = null;
-        let registrosEvento = [];
 
         const eventoSelect = document.getElementById('eventoSelect');
-        const eventoInfo = document.getElementById('eventoInfo');
+        const eventoInfo  = document.getElementById('eventoInfo');
         const formRegistro = document.getElementById('formRegistro');
-        const historicoSection = document.getElementById('historicoSection');
-        const igrejaSelect = document.getElementById('igrejaSelect');
-        const feedback = document.getElementById('feedback');
+        const feedback    = document.getElementById('feedback');
 
         document.getElementById('nomeRegistrador').addEventListener('input', function() {
             this.value = this.value.toUpperCase();
@@ -149,13 +198,14 @@
                 igrejasList = [];
                 snap.forEach(d => igrejasList.push(d.data()));
                 igrejasList.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
-                igrejaSelect.innerHTML = '<option value="" disabled selected>SELECIONE A IGREJA</option>';
+                const sel = document.getElementById('igrejaSelect');
+                sel.innerHTML = '<option value="" disabled selected>SELECIONE A IGREJA</option>';
                 igrejasList.forEach(ig => {
                     const opt = document.createElement('option');
                     const cod = String(ig.codigo).padStart(4, '0');
                     opt.value = JSON.stringify({ nome: ig.nome, codigo: ig.codigo });
                     opt.textContent = `${cod} - ${ig.nome}`;
-                    igrejaSelect.appendChild(opt);
+                    sel.appendChild(opt);
                 });
             } catch (e) {
                 console.error("Erro ao carregar igrejas:", e);
@@ -171,13 +221,13 @@
                 eventosCache.clear();
                 snap.forEach(d => eventosCache.set(d.id, { id: d.id, ...d.data() }));
 
-                const eventos = Array.from(eventosCache.values());
-                eventos.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+                const eventos = Array.from(eventosCache.values())
+                    .sort((a, b) => (a.data || '').localeCompare(b.data || ''));
 
-                eventoSelect.innerHTML = '<option value="" disabled selected>SELECIONE O EVENTO</option>';
                 if (eventos.length === 0) {
                     eventoSelect.innerHTML = '<option value="" disabled selected>NENHUM EVENTO ABERTO ATIVO</option>';
                 } else {
+                    eventoSelect.innerHTML = '<option value="" disabled selected>SELECIONE O EVENTO</option>';
                     eventos.forEach(ev => {
                         const opt = document.createElement('option');
                         opt.value = ev.id;
@@ -188,118 +238,39 @@
                 }
             } catch (e) {
                 console.error("Erro ao carregar eventos:", e);
+                eventoSelect.innerHTML = '<option value="" disabled selected>ERRO AO CARREGAR EVENTOS</option>';
             }
         }
 
-        eventoSelect.addEventListener('change', async () => {
-            const eventoId = eventoSelect.value;
-            if (!eventoId) return;
+        eventoSelect.addEventListener('change', () => {
+            const ev = eventosCache.get(eventoSelect.value);
+            if (!ev) return;
+            eventoAtual = ev;
 
-            const evData = eventosCache.get(eventoId);
-            if (!evData) {
-                esconderFormularios();
-                return;
-            }
-
-            eventoAtual = evData;
-
-            // Carregar registros existentes
-            try {
-                const registrosSnap = await getDocs(query(collection(db, "presencas_evento_aberto"),
-                    where("eventoId", "==", eventoId),
-                    orderBy("createdAt", "desc")
-                ));
-                registrosEvento = [];
-                registrosSnap.forEach(d => registrosEvento.push({ id: d.id, ...d.data() }));
-            } catch (e) {
-                console.error("Erro ao carregar registros:", e);
-                registrosEvento = [];
-            }
-
-            const dataFmt = evData.data ? evData.data.split('-').reverse().join('/') : '';
+            const dataFmt = ev.data ? ev.data.split('-').reverse().join('/') : '';
             document.getElementById('infoData').textContent = '📅 ' + dataFmt;
-            document.getElementById('infoLocal').textContent = evData.local ? '📍 ' + evData.local : '';
-            const coordNome = evData.coordenadorInfo ? evData.coordenadorInfo.nome : 'Não definido';
-            document.getElementById('infoCoord').textContent = '👤 Coordenador: ' + coordNome;
+            document.getElementById('infoLocal').textContent = ev.local ? '📍 ' + ev.local : '';
+            document.getElementById('infoCoord').textContent = '👤 Coordenador: ' + (ev.coordenadorInfo?.nome || 'Não definido');
             eventoInfo.classList.remove('hidden');
             formRegistro.classList.remove('hidden');
-            historicoSection.classList.remove('hidden');
-
-            renderizarHistorico();
+            document.getElementById('painelSection').classList.remove('hidden');
+            feedback.classList.add('hidden');
+            fecharPainel();
         });
 
-        function esconderFormularios() {
-            eventoInfo.classList.add('hidden');
-            formRegistro.classList.add('hidden');
-            historicoSection.classList.add('hidden');
-            eventoAtual = null;
-            registrosEvento = [];
-        }
-
-        function renderizarHistorico() {
-            const tbody = document.getElementById('tabelaHistorico');
-            tbody.innerHTML = '';
-
-            if (registrosEvento.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhum registro ainda</td></tr>';
-                document.getElementById('totalIgrejas').textContent = 'Total de igrejas: 0';
-                document.getElementById('totalPessoas').textContent = 'Total de pessoas: 0';
-                return;
-            }
-
-            let totalPessoas = 0;
-            const igrejasUnicas = new Set();
-
-            registrosEvento.forEach(r => {
-                igrejasUnicas.add(r.igrejaNome);
-                totalPessoas += (parseInt(r.qtdPessoas) || 0);
-
-                const tr = document.createElement('tr');
-                tr.className = 'border-b border-slate-50 hover:bg-slate-50 transition-colors';
-                tr.innerHTML = `
-                    <td class="py-2 px-2">
-                        <span class="font-bold text-slate-700 text-xs">${r.igrejaNome}</span>
-                        <span class="text-[9px] text-slate-400 ml-1">(${String(r.igrejaCodigo).padStart(4, '0')})</span>
-                    </td>
-                    <td class="py-2 px-2 text-center font-bold text-rose-600 text-sm">${r.qtdPessoas}</td>
-                    <td class="py-2 px-2 text-xs text-slate-600">${r.nomeRegistrador || '-'}</td>
-                    <td class="py-2 px-2 text-[10px] text-slate-400">${r.dataPostagem || '-'}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('totalIgrejas').textContent = `Total de igrejas: ${igrejasUnicas.size}`;
-            document.getElementById('totalPessoas').textContent = `Total de pessoas: ${totalPessoas}`;
-        }
-
         document.getElementById('btnRegistrar').addEventListener('click', async () => {
-            if (!eventoAtual) {
-                showFeedback("SELECIONE UM EVENTO PRIMEIRO!", "error");
-                return;
-            }
+            if (!eventoAtual) { showFeedback("SELECIONE UM EVENTO PRIMEIRO!", "error"); return; }
 
-            const igrejaRaw = igrejaSelect.value;
-            if (!igrejaRaw) {
-                showFeedback("SELECIONE A IGREJA!", "error");
-                return;
-            }
+            const igrejaRaw = document.getElementById('igrejaSelect').value;
+            if (!igrejaRaw) { showFeedback("SELECIONE A IGREJA!", "error"); return; }
 
             const qtdPessoas = parseInt(document.getElementById('qtdPessoas').value);
-            if (!qtdPessoas || qtdPessoas < 1) {
-                showFeedback("INFORME A QUANTIDADE DE PESSOAS!", "error");
-                return;
-            }
+            if (!qtdPessoas || qtdPessoas < 1) { showFeedback("INFORME A QUANTIDADE DE PESSOAS!", "error"); return; }
 
             const nomeRegistrador = document.getElementById('nomeRegistrador').value.trim();
-            if (!nomeRegistrador) {
-                showFeedback("INFORME SEU NOME!", "error");
-                return;
-            }
+            if (!nomeRegistrador) { showFeedback("INFORME SEU NOME!", "error"); return; }
 
-            if (!document.getElementById('declaracao').checked) {
-                showFeedback("MARQUE A DECLARAÇÃO PARA CONTINUAR!", "error");
-                return;
-            }
+            if (!document.getElementById('declaracao').checked) { showFeedback("MARQUE A DECLARAÇÃO PARA CONTINUAR!", "error"); return; }
 
             const igrejaData = JSON.parse(igrejaRaw);
             const dataPostagem = new Date().toLocaleString('pt-BR');
@@ -307,7 +278,7 @@
             const payload = {
                 eventoId: eventoAtual.id,
                 eventoNome: eventoAtual.nome,
-                eventoData: eventoAtual.data,
+                eventoData: eventoAtual.data || '',
                 igrejaNome: igrejaData.nome,
                 igrejaCodigo: igrejaData.codigo,
                 qtdPessoas,
@@ -320,24 +291,22 @@
                 createdAt: serverTimestamp()
             };
 
-            document.getElementById('btnRegistrar').textContent = 'REGISTRANDO...';
-            document.getElementById('btnRegistrar').disabled = true;
+            const btn = document.getElementById('btnRegistrar');
+            btn.disabled = true;
+            btn.textContent = 'REGISTRANDO...';
 
             try {
-                const docRef = await addDoc(collection(db, "presencas_evento_aberto"), payload);
+                await addDoc(collection(db, "presencas_evento_aberto"), payload);
 
-                // Recarrega histórico
-                const snap = await getDocs(query(collection(db, "presencas_evento_aberto"),
-                    where("eventoId", "==", eventoAtual.id),
-                    orderBy("createdAt", "desc")
-                ));
-                registrosEvento = [];
-                snap.forEach(d => registrosEvento.push({ id: d.id, ...d.data() }));
-                renderizarHistorico();
+                showFeedback("✅ PRESENÇA REGISTRADA COM SUCESSO!", "success");
 
-                showFeedback("PRESENÇA REGISTRADA COM SUCESSO!", "success");
+                // Reset formulário
+                document.getElementById('igrejaSelect').value = '';
+                document.getElementById('qtdPessoas').value = '';
+                document.getElementById('nomeRegistrador').value = '';
+                document.getElementById('declaracao').checked = false;
 
-                // Abrir WhatsApp para notificar o coordenador
+                // Notificar coordenador via WhatsApp
                 const whatsappNum = eventoAtual.coordenadorInfo?.whatsapp || '';
                 if (whatsappNum) {
                     const numLimpo = whatsappNum.replace(/\D/g, '');
@@ -349,33 +318,97 @@
                         `👥 Pessoas presentes: *${qtdPessoas}*\n` +
                         `✍️ Registrado por: ${nomeRegistrador}\n` +
                         `🕐 Data/Hora: ${dataPostagem}`;
-
-                    setTimeout(() => {
-                        window.open(`https://wa.me/55${numLimpo}?text=${encodeURIComponent(msg)}`, '_blank');
-                    }, 500);
+                    setTimeout(() => window.open(`https://wa.me/55${numLimpo}?text=${encodeURIComponent(msg)}`, '_blank'), 500);
                 }
-
-                // Reset do formulário
-                igrejaSelect.value = '';
-                document.getElementById('qtdPessoas').value = '';
-                document.getElementById('nomeRegistrador').value = '';
-                document.getElementById('declaracao').checked = false;
 
             } catch (error) {
                 console.error("Erro ao registrar:", error);
-                showFeedback("ERRO AO REGISTRAR. TENTE NOVAMENTE.", "error");
+                showFeedback("ERRO AO REGISTRAR: " + (error.code || error.message), "error");
             } finally {
-                document.getElementById('btnRegistrar').textContent = 'Registrar Presença e Notificar Coordenador';
-                document.getElementById('btnRegistrar').disabled = false;
+                btn.disabled = false;
+                btn.textContent = 'Registrar Presença e Notificar Coordenador';
             }
         });
 
         function showFeedback(message, type) {
             feedback.textContent = message;
-            feedback.classList.remove('hidden', 'bg-green-50', 'text-green-600', 'bg-red-50', 'text-red-600');
-            feedback.classList.add(type === 'success' ? 'bg-green-50' : 'bg-red-50');
-            feedback.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
+            feedback.className = 'p-4 rounded-xl text-center text-[10px] font-black uppercase tracking-widest ' +
+                (type === 'success' ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200');
+            feedback.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+
+        // ─── PAINEL DO COORDENADOR ─────────────────────────────────────────────────
+
+        window.acessarPainel = async function() {
+            const senha = document.getElementById('senhaCoord').value;
+            const erroEl = document.getElementById('erroSenha');
+            if (senha !== 'admin') {
+                erroEl.classList.remove('hidden');
+                document.getElementById('senhaCoord').value = '';
+                return;
+            }
+            erroEl.classList.add('hidden');
+            document.getElementById('lockScreen').classList.add('hidden');
+            const painel = document.getElementById('painelDesbloqueado');
+            painel.classList.remove('hidden');
+            document.getElementById('painelEventoNome').textContent = eventoAtual?.nome || '';
+
+            const loading = document.getElementById('painelLoading');
+            const conteudo = document.getElementById('painelConteudo');
+            const vazio = document.getElementById('painelVazio');
+            loading.classList.remove('hidden');
+            conteudo.classList.add('hidden');
+            vazio.classList.add('hidden');
+
+            try {
+                const snap = await getDocs(query(collection(db, "presencas_evento_aberto"),
+                    where("eventoId", "==", eventoAtual.id)
+                ));
+                const registros = [];
+                snap.forEach(d => registros.push(d.data()));
+
+                loading.classList.add('hidden');
+
+                if (registros.length === 0) {
+                    vazio.classList.remove('hidden');
+                    return;
+                }
+
+                // Totais
+                const igrejasUnicas = new Set(registros.map(r => r.igrejaNome));
+                const totalPessoas  = registros.reduce((s, r) => s + (parseInt(r.qtdPessoas) || 0), 0);
+                document.getElementById('totalIgrejas').textContent = igrejasUnicas.size;
+                document.getElementById('totalPessoas').textContent = totalPessoas;
+
+                // Tabela
+                const tbody = document.getElementById('tabelaPainel');
+                registros.sort((a, b) => (a.igrejaNome || '').localeCompare(b.igrejaNome || ''));
+                tbody.innerHTML = registros.map(r => `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td class="py-2.5 px-3">
+                            <span class="font-bold text-slate-700 text-xs">${r.igrejaNome}</span>
+                            <span class="text-[9px] text-slate-400 ml-1">(${String(r.igrejaCodigo || 0).padStart(4,'0')})</span>
+                        </td>
+                        <td class="py-2.5 px-3 text-center font-black text-rose-600 text-sm">${r.qtdPessoas}</td>
+                        <td class="py-2.5 px-3 text-xs text-slate-600 hidden sm:table-cell">${r.nomeRegistrador || '-'}</td>
+                        <td class="py-2.5 px-3 text-[10px] text-slate-400 hidden sm:table-cell">${r.dataPostagem || '-'}</td>
+                    </tr>`).join('');
+
+                conteudo.classList.remove('hidden');
+            } catch (e) {
+                console.error("Erro ao carregar painel:", e);
+                loading.classList.add('hidden');
+                vazio.textContent = 'Erro ao carregar dados.';
+                vazio.classList.remove('hidden');
+            }
+        };
+
+        window.fecharPainel = function() {
+            document.getElementById('lockScreen').classList.remove('hidden');
+            document.getElementById('painelDesbloqueado').classList.add('hidden');
+            document.getElementById('senhaCoord').value = '';
+            document.getElementById('erroSenha').classList.add('hidden');
+        };
 
         carregarIgrejas();
         carregarEventosAbertos();
