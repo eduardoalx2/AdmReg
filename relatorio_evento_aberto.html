@@ -130,6 +130,7 @@
                             <th class="p-3">Registrado por</th>
                             <th class="p-3">Coordenador</th>
                             <th class="p-3">Data/Hora</th>
+                            <th class="p-3 print:hidden"></th>
                         </tr>
                     </thead>
                     <tbody id="tabela-registros" class="text-sm">
@@ -140,11 +141,52 @@
         </div>
     </main>
 
+    <!-- MODAL EDITAR -->
+    <div id="modal-editar" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="font-black text-slate-800 text-sm uppercase tracking-widest">Editar Registro</h2>
+                <button onclick="fecharEditar()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">×</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Igreja <span class="text-red-500">*</span></label>
+                    <select id="edit-igreja" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Quantidade de Pessoas <span class="text-red-500">*</span></label>
+                    <input type="number" id="edit-qtd" min="1" placeholder="Ex: 25"
+                        class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Registrado por <span class="text-red-500">*</span></label>
+                    <input type="text" id="edit-nome" placeholder="Nome de quem registrou"
+                        class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end">
+                <button onclick="fecharEditar()" class="text-slate-500 hover:text-slate-800 text-sm px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-400 transition-colors font-semibold">Cancelar</button>
+                <button id="btn-salvar-edicao" onclick="salvarEdicao()" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-bold px-6 py-2 rounded-xl transition-colors">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         let allRegistros = [];
+        let igrejasList = [];
+        let editandoId = null;
+
+        async function loadIgrejas() {
+            try {
+                const snap = await getDocs(collection(db, "igrejas"));
+                igrejasList = [];
+                snap.forEach(d => igrejasList.push(d.data()));
+                igrejasList.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+            } catch (e) { console.error(e); }
+        }
 
         async function loadData() {
             try {
@@ -209,13 +251,13 @@
             tbody.innerHTML = '';
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-400 text-xs font-bold uppercase">Nenhum registro encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-slate-400 text-xs font-bold uppercase">Nenhum registro encontrado.</td></tr>';
                 return;
             }
 
             filtered.forEach(r => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.className = 'border-b border-slate-50 hover:bg-slate-50 transition-colors';
                 tr.innerHTML = `
                     <td class="p-3">
                         <div class="font-bold text-slate-700 text-xs">${r.eventoNome || '-'}</div>
@@ -223,6 +265,7 @@
                     </td>
                     <td class="p-3">
                         <span class="font-semibold text-slate-700 text-xs">${r.igrejaNome || '-'}</span>
+                        ${r.igrejaCodigo ? `<span class="text-[9px] text-slate-400 ml-1">(${String(r.igrejaCodigo).padStart(4,'0')})</span>` : ''}
                     </td>
                     <td class="p-3 text-center font-bold text-rose-600 text-sm">${r.qtdPessoas || 0}</td>
                     <td class="p-3 text-xs text-slate-600">${r.nomeRegistrador || '-'}</td>
@@ -231,6 +274,14 @@
                         ${r.coordNome ? `<div class="text-[9px] text-slate-400">${r.coordNome}</div>` : ''}
                     </td>
                     <td class="p-3 text-[10px] text-slate-400">${r.dataPostagem || '-'}</td>
+                    <td class="p-3 print:hidden">
+                        <div class="flex gap-1 justify-end">
+                            <button onclick="window.abrirEditar('${r.id}')" title="Editar"
+                                class="text-[10px] font-bold text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">✏️</button>
+                            <button onclick="window.excluirRegistro('${r.id}', '${(r.igrejaNome||'').replace(/'/g,"\\'")} - ${r.qtdPessoas} pessoas')" title="Excluir"
+                                class="text-[10px] font-bold text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors">🗑️</button>
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -243,6 +294,106 @@
             window.renderTable();
         };
 
+        // ─── EDITAR ────────────────────────────────────────────────────────────────
+
+        window.abrirEditar = function(id) {
+            const r = allRegistros.find(x => x.id === id);
+            if (!r) return;
+            editandoId = id;
+
+            // Preencher select de igrejas
+            const sel = document.getElementById('edit-igreja');
+            sel.innerHTML = '<option value="" disabled>SELECIONE A IGREJA</option>';
+            igrejasList.forEach(ig => {
+                const cod = String(ig.codigo).padStart(4, '0');
+                const opt = document.createElement('option');
+                opt.value = JSON.stringify({ nome: ig.nome, codigo: ig.codigo });
+                opt.textContent = `${cod} - ${ig.nome}`;
+                if (ig.nome === r.igrejaNome) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            // Se a igreja não estiver na lista, adiciona manualmente
+            if (!igrejasList.find(ig => ig.nome === r.igrejaNome)) {
+                const opt = document.createElement('option');
+                opt.value = JSON.stringify({ nome: r.igrejaNome, codigo: r.igrejaCodigo || '' });
+                opt.textContent = r.igrejaNome;
+                opt.selected = true;
+                sel.insertBefore(opt, sel.children[1]);
+            }
+
+            document.getElementById('edit-qtd').value = r.qtdPessoas || '';
+            document.getElementById('edit-nome').value = r.nomeRegistrador || '';
+            document.getElementById('modal-editar').classList.remove('hidden');
+            document.getElementById('edit-qtd').focus();
+        };
+
+        window.fecharEditar = function() {
+            document.getElementById('modal-editar').classList.add('hidden');
+            editandoId = null;
+        };
+
+        window.salvarEdicao = async function() {
+            if (!editandoId) return;
+            const igrejaRaw = document.getElementById('edit-igreja').value;
+            if (!igrejaRaw) { alert('Selecione a igreja.'); return; }
+            const qtd = parseInt(document.getElementById('edit-qtd').value);
+            if (!qtd || qtd < 1) { alert('Informe a quantidade de pessoas.'); return; }
+            const nome = document.getElementById('edit-nome').value.trim();
+            if (!nome) { alert('Informe o nome do registrador.'); return; }
+
+            const igrejaData = JSON.parse(igrejaRaw);
+            const btn = document.getElementById('btn-salvar-edicao');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                await updateDoc(doc(db, 'presencas_evento_aberto', editandoId), {
+                    igrejaNome: igrejaData.nome,
+                    igrejaCodigo: igrejaData.codigo,
+                    qtdPessoas: qtd,
+                    nomeRegistrador: nome,
+                });
+                // Atualiza local
+                const idx = allRegistros.findIndex(x => x.id === editandoId);
+                if (idx > -1) Object.assign(allRegistros[idx], { igrejaNome: igrejaData.nome, igrejaCodigo: igrejaData.codigo, qtdPessoas: qtd, nomeRegistrador: nome });
+                window.fecharEditar();
+                buildFilters();
+                window.renderTable();
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao salvar: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar';
+            }
+        };
+
+        // ─── EXCLUIR ───────────────────────────────────────────────────────────────
+
+        window.excluirRegistro = async function(id, label) {
+            if (!confirm(`Excluir o registro:\n"${label}"?\n\nEssa ação não pode ser desfeita.`)) return;
+            try {
+                await deleteDoc(doc(db, 'presencas_evento_aberto', id));
+                allRegistros = allRegistros.filter(x => x.id !== id);
+                buildFilters();
+                window.renderTable();
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao excluir: ' + e.message);
+            }
+        };
+
+        document.getElementById('modal-editar').addEventListener('click', function(e) {
+            if (e.target === this) window.fecharEditar();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') window.fecharEditar();
+            if (e.key === 'Enter' && !document.getElementById('modal-editar').classList.contains('hidden')) {
+                e.preventDefault(); window.salvarEdicao();
+            }
+        });
+
+        loadIgrejas();
         loadData();
         if (window.lucide) lucide.createIcons();
     </script>
