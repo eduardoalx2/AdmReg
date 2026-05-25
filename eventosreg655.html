@@ -90,6 +90,14 @@
                             <option value="Coordenadores">SOMENTE COORDENADORES</option>
                             <option value="TitularesECoordenadores">TITULARES E COORDENADORES</option>
                             <option value="PublicoGeral">ABERTO AO PÚBLICO (pastores registrados + convidados)</option>
+                            <option value="EventoAberto">EVENTO ABERTO (registro por igreja com contagem de pessoas)</option>
+                        </select>
+                    </div>
+
+                    <div id="coordenadorSection" class="hidden">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Coordenador do Evento *</label>
+                        <select id="coordenadorSelect" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                            <option value="" disabled selected>SELECIONE O COORDENADOR</option>
                         </select>
                     </div>
 
@@ -143,8 +151,41 @@
         import { db } from './firebase-config.js';
         import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        const publicoCores  = { Todos: 'bg-slate-100 text-slate-600', Titulares: 'bg-blue-100 text-blue-700', Coordenadores: 'bg-purple-100 text-purple-700', TitularesECoordenadores: 'bg-indigo-100 text-indigo-700', PublicoGeral: 'bg-emerald-100 text-emerald-700' };
-        const publicoLabels = { Todos: 'Todos', Titulares: 'Somente Titulares', Coordenadores: 'Somente Coordenadores', TitularesECoordenadores: 'Titulares e Coordenadores', PublicoGeral: 'Aberto ao Público' };
+        const publicoCores  = { Todos: 'bg-slate-100 text-slate-600', Titulares: 'bg-blue-100 text-blue-700', Coordenadores: 'bg-purple-100 text-purple-700', TitularesECoordenadores: 'bg-indigo-100 text-indigo-700', PublicoGeral: 'bg-emerald-100 text-emerald-700', EventoAberto: 'bg-rose-100 text-rose-700' };
+        const publicoLabels = { Todos: 'Todos', Titulares: 'Somente Titulares', Coordenadores: 'Somente Coordenadores', TitularesECoordenadores: 'Titulares e Coordenadores', PublicoGeral: 'Aberto ao Público', EventoAberto: 'Evento Aberto' };
+
+        // Coordenadorias
+        let coordenadoriasList = [];
+        const coordenadorSection = document.getElementById('coordenadorSection');
+        const coordenadorSelect = document.getElementById('coordenadorSelect');
+
+        async function carregarCoordenadorias() {
+            try {
+                const snap = await getDocs(collection(db, "coordenadorias"));
+                coordenadoriasList = [];
+                snap.forEach(d => coordenadoriasList.push({ id: d.id, ...d.data() }));
+                coordenadoriasList.sort((a, b) => a.nome.localeCompare(b.nome));
+                coordenadorSelect.innerHTML = '<option value="" disabled selected>SELECIONE O COORDENADOR</option>';
+                coordenadoriasList.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify({ id: c.coordenadorId || '', nome: c.coordenadorNome || '', whatsapp: c.whatsapp || '', coordNome: c.nome || '' });
+                    opt.textContent = `${c.coordenadorNome || 'Sem nome'} — ${c.nome}`;
+                    coordenadorSelect.appendChild(opt);
+                });
+            } catch (e) {
+                console.error("Erro ao carregar coordenadorias:", e);
+            }
+        }
+
+        document.getElementById('publico').addEventListener('change', function() {
+            if (this.value === 'EventoAberto') {
+                coordenadorSection.classList.remove('hidden');
+                coordenadorSelect.required = true;
+            } else {
+                coordenadorSection.classList.add('hidden');
+                coordenadorSelect.required = false;
+            }
+        });
 
         // Cache dos eventos carregados para preencher o formulário de edição
         let eventosCache = new Map();
@@ -221,6 +262,9 @@
                     const pubCor   = publicoCores[ev.publico]  || publicoCores.Todos;
                     const pubLabel = publicoLabels[ev.publico] || 'Todos';
 
+                    const coordHtml = ev.publico === 'EventoAberto' && ev.coordenadorInfo
+                        ? `<p class="text-[9px] text-rose-500 font-semibold mt-0.5">👤 Coord: ${ev.coordenadorInfo.nome || '-'}</p>`
+                        : '';
                     const descHtml = ev.descricao
                         ? `<p class="text-[9px] text-slate-400 font-medium mt-0.5 truncate max-w-[180px]" title="${ev.descricao}">${ev.descricao}</p>`
                         : '';
@@ -231,7 +275,7 @@
                     tr.innerHTML = `
                         <td class="py-3 px-2">
                             <p class="font-bold text-slate-700 text-xs uppercase leading-tight">${ev.nome}</p>
-                            ${descHtml}${localHtml}
+                            ${coordHtml}${descHtml}${localHtml}
                         </td>
                         <td class="py-3 px-2 font-semibold text-slate-500 text-xs whitespace-nowrap">${dataFormatada}</td>
                         <td class="py-3 px-2"><span class="px-2 py-1 rounded text-[9px] font-black uppercase ${pubCor}">${pubLabel}</span></td>
@@ -269,6 +313,23 @@
             document.getElementById('publico').value = ev.publico || 'Todos';
             document.getElementById('status').value = ev.status || 'Ativo';
 
+            if (ev.publico === 'EventoAberto') {
+                coordenadorSection.classList.remove('hidden');
+                coordenadorSelect.required = true;
+                if (ev.coordenadorInfo) {
+                    const coordInfo = JSON.stringify(ev.coordenadorInfo);
+                    for (let i = 0; i < coordenadorSelect.options.length; i++) {
+                        if (coordenadorSelect.options[i].value === coordInfo) {
+                            coordenadorSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                coordenadorSection.classList.add('hidden');
+                coordenadorSelect.required = false;
+            }
+
             formTitulo.textContent = 'Editar Evento';
             badgeEditando.classList.remove('hidden');
             btnSubmit.textContent = 'ATUALIZAR EVENTO';
@@ -276,7 +337,6 @@
             btnSubmit.classList.replace('hover:bg-blue-700', 'hover:bg-amber-600');
             btnCancelar.classList.remove('hidden');
 
-            // Rola até o formulário
             document.getElementById('eventoForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
@@ -284,6 +344,8 @@
             form.reset();
             document.getElementById('editingId').value = '';
             document.getElementById('data').value = hoje;
+            coordenadorSection.classList.add('hidden');
+            coordenadorSelect.required = false;
             formTitulo.textContent = 'Novo Evento';
             badgeEditando.classList.add('hidden');
             btnSubmit.textContent = 'SALVAR EVENTO';
@@ -295,6 +357,7 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const editingId = document.getElementById('editingId').value;
+            const publicoSelecionado = document.getElementById('publico').value;
             btnSubmit.textContent = editingId ? 'ATUALIZANDO...' : 'SALVANDO...';
             btnSubmit.disabled = true;
 
@@ -303,25 +366,40 @@
                 descricao: document.getElementById('descricao').value.trim(),
                 data: document.getElementById('data').value,
                 local: document.getElementById('local').value.trim(),
-                publico: document.getElementById('publico').value,
+                publico: publicoSelecionado,
                 status: document.getElementById('status').value,
             };
 
+            if (publicoSelecionado === 'EventoAberto') {
+                const coordRaw = document.getElementById('coordenadorSelect').value;
+                if (!coordRaw) {
+                    showFeedback("Selecione um coordenador para o evento aberto.", "error");
+                    btnSubmit.textContent = editingId ? 'ATUALIZAR EVENTO' : 'SALVAR EVENTO';
+                    btnSubmit.disabled = false;
+                    return;
+                }
+                payload.coordenadorInfo = JSON.parse(coordRaw);
+            }
+
             try {
                 if (editingId) {
-                    // EDIÇÃO — não repopula ausências
                     await updateDoc(doc(db, "eventos", editingId), { ...payload, updatedAt: serverTimestamp() });
                     showFeedback("Evento atualizado com sucesso!", "success");
                     window.cancelarEdicao();
                 } else {
-                    // NOVO — cria evento e pré-popula ausências
                     payload.createdAt = serverTimestamp();
                     const docRef = await addDoc(collection(db, "eventos"), payload);
-                    showFeedback("Evento cadastrado! Registrando ausências...", "success");
-                    await prePopularAusencias(docRef.id, payload.nome, payload.data, payload.publico);
-                    showFeedback("Evento cadastrado com sucesso! Ausências pré-registradas.", "success");
+                    if (publicoSelecionado === 'EventoAberto') {
+                        showFeedback("Evento Aberto cadastrado com sucesso!", "success");
+                    } else {
+                        showFeedback("Evento cadastrado! Registrando ausências...", "success");
+                        await prePopularAusencias(docRef.id, payload.nome, payload.data, publicoSelecionado);
+                        showFeedback("Evento cadastrado com sucesso! Ausências pré-registradas.", "success");
+                    }
                     form.reset();
                     document.getElementById('data').value = hoje;
+                    coordenadorSection.classList.add('hidden');
+                    coordenadorSelect.required = false;
                 }
                 carregarEventos();
             } catch (error) {
@@ -347,15 +425,22 @@
         window.excluirEvento = async function(id) {
             if (confirm("Tem certeza que deseja EXCLUIR este evento? ATENÇÃO: Todas as listas de presenças e faltas registradas para este evento também serão APAGADAS permanentemente!")) {
                 try {
-                    // 1. Localiza e apaga todas as presenças vinculadas a este evento em cascata
+                    // 1. Apaga presenças normais
                     const presencasSnap = await getDocs(query(collection(db, "presencas"), where("eventoId", "==", id)));
                     const deletePromises = [];
                     presencasSnap.forEach(docSnap => {
                         deletePromises.push(deleteDoc(doc(db, "presencas", docSnap.id)));
                     });
-                    await Promise.all(deletePromises); // Executa todas as exclusões em paralelo
 
-                    // 2. Apaga o evento em si
+                    // 2. Apaga também registros de evento aberto
+                    const presAbertoSnap = await getDocs(query(collection(db, "presencas_evento_aberto"), where("eventoId", "==", id)));
+                    presAbertoSnap.forEach(docSnap => {
+                        deletePromises.push(deleteDoc(doc(db, "presencas_evento_aberto", docSnap.id)));
+                    });
+
+                    await Promise.all(deletePromises);
+
+                    // 3. Apaga o evento em si
                     await deleteDoc(doc(db, "eventos", id));
                     
                     if (document.getElementById('editingId').value === id) window.cancelarEdicao();
@@ -375,6 +460,7 @@
             setTimeout(() => feedback.classList.add('hidden'), 4000);
         }
 
+        carregarCoordenadorias();
         carregarEventos();
     </script>
 

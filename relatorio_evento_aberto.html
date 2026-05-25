@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Eventos Abertos - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!hasAnyPermission(['admin', 'secretario', 'superintendente', 'gestao_eventos'])) {
+                window.location.replace('index.html');
+            }
+        } catch (e) {}
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @media print {
+            body { background-color: white !important; }
+            @page { size: portrait; margin: 10mm; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-10 print:bg-white print:pb-0">
+
+    <header class="w-full shadow-sm bg-white border-b print:hidden">
+        <div class="max-w-6xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                    <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
+                </a>
+            </div>
+        </div>
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
+                    <i data-lucide="users" class="w-5 h-5"></i> Relatório de Eventos Abertos
+                </h1>
+                <button onclick="window.print()" class="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors uppercase shadow-md">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="hidden print:block w-full bg-white text-black px-2 py-4">
+        <div class="flex justify-between items-center mb-4 border-b-2 border-slate-800 pb-2">
+            <div class="flex items-center gap-4">
+                <img src="logo.png" alt="Logo IEQ" class="h-10 object-contain">
+                <div>
+                    <h1 class="text-lg font-black uppercase tracking-widest text-slate-900 leading-tight">Relatório de Eventos Abertos</h1>
+                    <p class="text-xs font-bold text-slate-600 mt-0.5" id="print-subtitle">Região 655 • Londrina/PR</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-6 space-y-4">
+
+        <!-- FILTROS -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:hidden">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Evento</label>
+                    <select id="filterEvento" onchange="window.renderTable()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-xs font-semibold">
+                        <option value="Todos">Todos os Eventos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Igreja</label>
+                    <select id="filterIgreja" onchange="window.renderTable()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-xs font-semibold">
+                        <option value="Todas">Todas as Igrejas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Coordenador</label>
+                    <select id="filterCoordenador" onchange="window.renderTable()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-xs font-semibold">
+                        <option value="Todos">Todos</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="window.limparFiltros()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs uppercase transition-colors shadow-sm">Limpar Filtros</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total de Registros</p>
+                <p id="kpi-total" class="text-xl font-black text-rose-600 mt-1">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Igrejas Participantes</p>
+                <p id="kpi-igrejas" class="text-xl font-black text-blue-600 mt-1">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total de Pessoas</p>
+                <p id="kpi-pessoas" class="text-xl font-black text-emerald-600 mt-1">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Eventos</p>
+                <p id="kpi-eventos" class="text-xl font-black text-purple-600 mt-1">0</p>
+            </div>
+        </div>
+
+        <!-- TABELA -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[700px]">
+                    <thead class="print:text-sm">
+                        <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50">
+                            <th class="p-3">Evento</th>
+                            <th class="p-3">Igreja</th>
+                            <th class="p-3 text-center">Pessoas</th>
+                            <th class="p-3">Registrado por</th>
+                            <th class="p-3">Coordenador</th>
+                            <th class="p-3">Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-registros" class="text-sm">
+                        <tr><td colspan="6" class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">Carregando dados...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        let allRegistros = [];
+
+        async function loadData() {
+            try {
+                const snap = await getDocs(collection(db, "presencas_evento_aberto"));
+                allRegistros = [];
+                snap.forEach(d => allRegistros.push({ id: d.id, ...d.data() }));
+                allRegistros.sort((a, b) => {
+                    const da = a.dataPostagem || '';
+                    const db2 = b.dataPostagem || '';
+                    return db2.localeCompare(da);
+                });
+                buildFilters();
+                window.renderTable();
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                document.getElementById('tabela-registros').innerHTML = '<tr><td colspan="6" class="text-center py-10 text-red-500 text-xs font-bold uppercase">Erro ao carregar dados.</td></tr>';
+            }
+        }
+
+        function buildFilters() {
+            const eventos = [...new Set(allRegistros.map(r => r.eventoNome).filter(Boolean))].sort();
+            const igrejas = [...new Set(allRegistros.map(r => r.igrejaNome).filter(Boolean))].sort();
+            const coordenadores = [...new Set(allRegistros.map(r => r.coordenadorNome).filter(Boolean))].sort();
+
+            const selEvento = document.getElementById('filterEvento');
+            selEvento.innerHTML = '<option value="Todos">Todos os Eventos</option>';
+            eventos.forEach(e => selEvento.innerHTML += `<option value="${e}">${e}</option>`);
+
+            const selIgreja = document.getElementById('filterIgreja');
+            selIgreja.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
+            igrejas.forEach(i => selIgreja.innerHTML += `<option value="${i}">${i}</option>`);
+
+            const selCoord = document.getElementById('filterCoordenador');
+            selCoord.innerHTML = '<option value="Todos">Todos</option>';
+            coordenadores.forEach(c => selCoord.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+
+        window.renderTable = () => {
+            const filterEvento = document.getElementById('filterEvento').value;
+            const filterIgreja = document.getElementById('filterIgreja').value;
+            const filterCoord = document.getElementById('filterCoordenador').value;
+
+            const filtered = allRegistros.filter(r => {
+                if (filterEvento && filterEvento !== 'Todos' && r.eventoNome !== filterEvento) return false;
+                if (filterIgreja && filterIgreja !== 'Todas' && r.igrejaNome !== filterIgreja) return false;
+                if (filterCoord && filterCoord !== 'Todos' && r.coordenadorNome !== filterCoord) return false;
+                return true;
+            });
+
+            const totalRegistros = filtered.length;
+            const igrejasUnicas = new Set(filtered.map(r => r.igrejaNome)).size;
+            const totalPessoas = filtered.reduce((sum, r) => sum + (parseInt(r.qtdPessoas) || 0), 0);
+            const eventosUnicos = new Set(filtered.map(r => r.eventoNome)).size;
+
+            document.getElementById('kpi-total').textContent = totalRegistros;
+            document.getElementById('kpi-igrejas').textContent = igrejasUnicas;
+            document.getElementById('kpi-pessoas').textContent = totalPessoas;
+            document.getElementById('kpi-eventos').textContent = eventosUnicos;
+            document.getElementById('print-subtitle').textContent = `Região 655 • ${totalRegistros} registros encontrados`;
+
+            const tbody = document.getElementById('tabela-registros');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-400 text-xs font-bold uppercase">Nenhum registro encontrado.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="font-bold text-slate-700 text-xs">${r.eventoNome || '-'}</div>
+                        <div class="text-[9px] text-slate-400 mt-0.5">${r.eventoData ? r.eventoData.split('-').reverse().join('/') : '-'}</div>
+                    </td>
+                    <td class="p-3">
+                        <span class="font-semibold text-slate-700 text-xs">${r.igrejaNome || '-'}</span>
+                    </td>
+                    <td class="p-3 text-center font-bold text-rose-600 text-sm">${r.qtdPessoas || 0}</td>
+                    <td class="p-3 text-xs text-slate-600">${r.nomeRegistrador || '-'}</td>
+                    <td class="p-3">
+                        <div class="text-xs font-semibold text-slate-700">${r.coordenadorNome || '-'}</div>
+                        ${r.coordNome ? `<div class="text-[9px] text-slate-400">${r.coordNome}</div>` : ''}
+                    </td>
+                    <td class="p-3 text-[10px] text-slate-400">${r.dataPostagem || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.limparFiltros = () => {
+            document.getElementById('filterEvento').value = 'Todos';
+            document.getElementById('filterIgreja').value = 'Todas';
+            document.getElementById('filterCoordenador').value = 'Todos';
+            window.renderTable();
+        };
+
+        loadData();
+        if (window.lucide) lucide.createIcons();
+    </script>
+</body>
+</html>

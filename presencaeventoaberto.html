@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Presença - Evento Aberto - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-5xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Painel Admin
+                </a>
+            </div>
+        </div>
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-5xl mx-auto">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase">Registro de Presença — Evento Aberto</h1>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-2xl mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- PASSO 1: Selecionar Evento -->
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Selecione o Evento Aberto</label>
+            <select id="eventoSelect" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-semibold">
+                <option value="" disabled selected>CARREGANDO EVENTOS...</option>
+            </select>
+            <div id="eventoInfo" class="hidden mt-4 p-4 bg-rose-50 rounded-2xl border border-rose-100 space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest bg-rose-100 px-2 py-0.5 rounded">Evento Aberto</span>
+                </div>
+                <p id="infoData" class="text-sm font-bold text-slate-700"></p>
+                <p id="infoLocal" class="text-xs text-slate-500"></p>
+                <p id="infoCoord" class="text-xs text-slate-500"></p>
+            </div>
+        </div>
+
+        <!-- PASSO 2: Registro de Presença (aparece após selecionar evento) -->
+        <div id="formRegistro" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-4">
+            <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest">Registrar Presença da Igreja</h2>
+
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Igreja <span class="text-red-500">*</span></label>
+                <select id="igrejaSelect" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
+                    <option value="" disabled selected>SELECIONE A IGREJA</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Quantidade de Pessoas Presentes <span class="text-red-500">*</span></label>
+                <input type="number" id="qtdPessoas" min="1" placeholder="Ex: 25" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold">
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1">Seu Nome (quem está registrando) <span class="text-red-500">*</span></label>
+                <input type="text" id="nomeRegistrador" placeholder="DIGITE SEU NOME COMPLETO" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold uppercase">
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" id="declaracao" class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <span class="text-[11px] font-bold text-slate-600 leading-tight uppercase">
+                        Declaro que as informações acima são verdadeiras
+                    </span>
+                </label>
+            </div>
+
+            <button type="button" id="btnRegistrar" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-black py-4 rounded-2xl shadow-lg transform active:scale-95 transition-all text-sm tracking-widest uppercase">
+                Registrar Presença e Notificar Coordenador
+            </button>
+        </div>
+
+        <!-- HISTÓRICO DE REGISTROS DO EVENTO -->
+        <div id="historicoSection" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-4">Registros Realizados</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                            <th class="pb-2 px-2">Igreja</th>
+                            <th class="pb-2 px-2 text-center">Pessoas</th>
+                            <th class="pb-2 px-2">Registrado por</th>
+                            <th class="pb-2 px-2">Data/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaHistorico" class="text-sm">
+                        <tr><td colspan="4" class="text-center py-6 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhum registro ainda</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3 flex gap-4 text-[10px] font-bold text-slate-500">
+                <span id="totalIgrejas">Total de igrejas: 0</span>
+                <span id="totalPessoas">Total de pessoas: 0</span>
+            </div>
+        </div>
+
+        <div id="feedback" class="hidden p-4 rounded-xl text-center text-[10px] font-black uppercase tracking-widest"></div>
+
+    </div>
+
+    <footer class="py-4 text-center text-slate-400 text-[10px]">
+        &copy; 2026 Região 655 - IEQ Londrina/PR
+    </footer>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        let igrejasList = [];
+        let eventosCache = new Map();
+        let eventoAtual = null;
+        let registrosEvento = [];
+
+        const eventoSelect = document.getElementById('eventoSelect');
+        const eventoInfo = document.getElementById('eventoInfo');
+        const formRegistro = document.getElementById('formRegistro');
+        const historicoSection = document.getElementById('historicoSection');
+        const igrejaSelect = document.getElementById('igrejaSelect');
+        const feedback = document.getElementById('feedback');
+
+        document.getElementById('nomeRegistrador').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        async function carregarIgrejas() {
+            try {
+                const snap = await getDocs(collection(db, "igrejas"));
+                igrejasList = [];
+                snap.forEach(d => igrejasList.push(d.data()));
+                igrejasList.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+                igrejaSelect.innerHTML = '<option value="" disabled selected>SELECIONE A IGREJA</option>';
+                igrejasList.forEach(ig => {
+                    const opt = document.createElement('option');
+                    const cod = String(ig.codigo).padStart(4, '0');
+                    opt.value = JSON.stringify({ nome: ig.nome, codigo: ig.codigo });
+                    opt.textContent = `${cod} - ${ig.nome}`;
+                    igrejaSelect.appendChild(opt);
+                });
+            } catch (e) {
+                console.error("Erro ao carregar igrejas:", e);
+            }
+        }
+
+        async function carregarEventosAbertos() {
+            try {
+                const snap = await getDocs(query(collection(db, "eventos"),
+                    where("publico", "==", "EventoAberto"),
+                    where("status", "==", "Ativo")
+                ));
+                eventosCache.clear();
+                snap.forEach(d => eventosCache.set(d.id, { id: d.id, ...d.data() }));
+
+                const eventos = Array.from(eventosCache.values());
+                eventos.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+
+                eventoSelect.innerHTML = '<option value="" disabled selected>SELECIONE O EVENTO</option>';
+                if (eventos.length === 0) {
+                    eventoSelect.innerHTML = '<option value="" disabled selected>NENHUM EVENTO ABERTO ATIVO</option>';
+                } else {
+                    eventos.forEach(ev => {
+                        const opt = document.createElement('option');
+                        opt.value = ev.id;
+                        const dataFmt = ev.data ? ev.data.split('-').reverse().join('/') : '';
+                        opt.textContent = `${ev.nome} — ${dataFmt}`;
+                        eventoSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error("Erro ao carregar eventos:", e);
+            }
+        }
+
+        eventoSelect.addEventListener('change', async () => {
+            const eventoId = eventoSelect.value;
+            if (!eventoId) return;
+
+            const evData = eventosCache.get(eventoId);
+            if (!evData) {
+                esconderFormularios();
+                return;
+            }
+
+            eventoAtual = evData;
+
+            // Carregar registros existentes
+            try {
+                const registrosSnap = await getDocs(query(collection(db, "presencas_evento_aberto"),
+                    where("eventoId", "==", eventoId),
+                    orderBy("createdAt", "desc")
+                ));
+                registrosEvento = [];
+                registrosSnap.forEach(d => registrosEvento.push({ id: d.id, ...d.data() }));
+            } catch (e) {
+                console.error("Erro ao carregar registros:", e);
+                registrosEvento = [];
+            }
+
+            const dataFmt = evData.data ? evData.data.split('-').reverse().join('/') : '';
+            document.getElementById('infoData').textContent = '📅 ' + dataFmt;
+            document.getElementById('infoLocal').textContent = evData.local ? '📍 ' + evData.local : '';
+            const coordNome = evData.coordenadorInfo ? evData.coordenadorInfo.nome : 'Não definido';
+            document.getElementById('infoCoord').textContent = '👤 Coordenador: ' + coordNome;
+            eventoInfo.classList.remove('hidden');
+            formRegistro.classList.remove('hidden');
+            historicoSection.classList.remove('hidden');
+
+            renderizarHistorico();
+        });
+
+        function esconderFormularios() {
+            eventoInfo.classList.add('hidden');
+            formRegistro.classList.add('hidden');
+            historicoSection.classList.add('hidden');
+            eventoAtual = null;
+            registrosEvento = [];
+        }
+
+        function renderizarHistorico() {
+            const tbody = document.getElementById('tabelaHistorico');
+            tbody.innerHTML = '';
+
+            if (registrosEvento.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-slate-400 text-xs font-bold uppercase tracking-wider">Nenhum registro ainda</td></tr>';
+                document.getElementById('totalIgrejas').textContent = 'Total de igrejas: 0';
+                document.getElementById('totalPessoas').textContent = 'Total de pessoas: 0';
+                return;
+            }
+
+            let totalPessoas = 0;
+            const igrejasUnicas = new Set();
+
+            registrosEvento.forEach(r => {
+                igrejasUnicas.add(r.igrejaNome);
+                totalPessoas += (parseInt(r.qtdPessoas) || 0);
+
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-slate-50 hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-2 px-2">
+                        <span class="font-bold text-slate-700 text-xs">${r.igrejaNome}</span>
+                        <span class="text-[9px] text-slate-400 ml-1">(${String(r.igrejaCodigo).padStart(4, '0')})</span>
+                    </td>
+                    <td class="py-2 px-2 text-center font-bold text-rose-600 text-sm">${r.qtdPessoas}</td>
+                    <td class="py-2 px-2 text-xs text-slate-600">${r.nomeRegistrador || '-'}</td>
+                    <td class="py-2 px-2 text-[10px] text-slate-400">${r.dataPostagem || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalIgrejas').textContent = `Total de igrejas: ${igrejasUnicas.size}`;
+            document.getElementById('totalPessoas').textContent = `Total de pessoas: ${totalPessoas}`;
+        }
+
+        document.getElementById('btnRegistrar').addEventListener('click', async () => {
+            if (!eventoAtual) {
+                showFeedback("SELECIONE UM EVENTO PRIMEIRO!", "error");
+                return;
+            }
+
+            const igrejaRaw = igrejaSelect.value;
+            if (!igrejaRaw) {
+                showFeedback("SELECIONE A IGREJA!", "error");
+                return;
+            }
+
+            const qtdPessoas = parseInt(document.getElementById('qtdPessoas').value);
+            if (!qtdPessoas || qtdPessoas < 1) {
+                showFeedback("INFORME A QUANTIDADE DE PESSOAS!", "error");
+                return;
+            }
+
+            const nomeRegistrador = document.getElementById('nomeRegistrador').value.trim();
+            if (!nomeRegistrador) {
+                showFeedback("INFORME SEU NOME!", "error");
+                return;
+            }
+
+            if (!document.getElementById('declaracao').checked) {
+                showFeedback("MARQUE A DECLARAÇÃO PARA CONTINUAR!", "error");
+                return;
+            }
+
+            const igrejaData = JSON.parse(igrejaRaw);
+            const dataPostagem = new Date().toLocaleString('pt-BR');
+
+            const payload = {
+                eventoId: eventoAtual.id,
+                eventoNome: eventoAtual.nome,
+                eventoData: eventoAtual.data,
+                igrejaNome: igrejaData.nome,
+                igrejaCodigo: igrejaData.codigo,
+                qtdPessoas,
+                nomeRegistrador,
+                coordenadorNome: eventoAtual.coordenadorInfo?.nome || '',
+                coordenadorWhatsapp: eventoAtual.coordenadorInfo?.whatsapp || '',
+                coordenadorId: eventoAtual.coordenadorInfo?.id || '',
+                coordNome: eventoAtual.coordenadorInfo?.coordNome || '',
+                dataPostagem,
+                createdAt: serverTimestamp()
+            };
+
+            document.getElementById('btnRegistrar').textContent = 'REGISTRANDO...';
+            document.getElementById('btnRegistrar').disabled = true;
+
+            try {
+                const docRef = await addDoc(collection(db, "presencas_evento_aberto"), payload);
+
+                // Recarrega histórico
+                const snap = await getDocs(query(collection(db, "presencas_evento_aberto"),
+                    where("eventoId", "==", eventoAtual.id),
+                    orderBy("createdAt", "desc")
+                ));
+                registrosEvento = [];
+                snap.forEach(d => registrosEvento.push({ id: d.id, ...d.data() }));
+                renderizarHistorico();
+
+                showFeedback("PRESENÇA REGISTRADA COM SUCESSO!", "success");
+
+                // Abrir WhatsApp para notificar o coordenador
+                const whatsappNum = eventoAtual.coordenadorInfo?.whatsapp || '';
+                if (whatsappNum) {
+                    const numLimpo = whatsappNum.replace(/\D/g, '');
+                    const dataFmt = eventoAtual.data ? eventoAtual.data.split('-').reverse().join('/') : '';
+                    const msg = `📢 *NOVO REGISTRO DE PRESENÇA*\n\n` +
+                        `📅 Evento: *${eventoAtual.nome}*\n` +
+                        `📆 Data: ${dataFmt}\n` +
+                        `⛪ Igreja: *${igrejaData.nome}*\n` +
+                        `👥 Pessoas presentes: *${qtdPessoas}*\n` +
+                        `✍️ Registrado por: ${nomeRegistrador}\n` +
+                        `🕐 Data/Hora: ${dataPostagem}`;
+
+                    setTimeout(() => {
+                        window.open(`https://wa.me/55${numLimpo}?text=${encodeURIComponent(msg)}`, '_blank');
+                    }, 500);
+                }
+
+                // Reset do formulário
+                igrejaSelect.value = '';
+                document.getElementById('qtdPessoas').value = '';
+                document.getElementById('nomeRegistrador').value = '';
+                document.getElementById('declaracao').checked = false;
+
+            } catch (error) {
+                console.error("Erro ao registrar:", error);
+                showFeedback("ERRO AO REGISTRAR. TENTE NOVAMENTE.", "error");
+            } finally {
+                document.getElementById('btnRegistrar').textContent = 'Registrar Presença e Notificar Coordenador';
+                document.getElementById('btnRegistrar').disabled = false;
+            }
+        });
+
+        function showFeedback(message, type) {
+            feedback.textContent = message;
+            feedback.classList.remove('hidden', 'bg-green-50', 'text-green-600', 'bg-red-50', 'text-red-600');
+            feedback.classList.add(type === 'success' ? 'bg-green-50' : 'bg-red-50');
+            feedback.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
+        }
+
+        carregarIgrejas();
+        carregarEventosAbertos();
+    </script>
+</body>
+</html>

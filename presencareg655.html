@@ -333,6 +333,7 @@
                 } else {
                     eventosSnapshot.forEach(d => {
                         const ev = d.data();
+                        if (ev.publico === 'EventoAberto') return;
                         const opt = document.createElement('option');
                         opt.value = d.id;
                         const dataFormatada = ev.data.split('-').reverse().join('/');
