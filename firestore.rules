@@ -89,6 +89,16 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
 
+    // Presenças de Evento Aberto: escrita pública com validação
+    match /presencas_evento_aberto/{docId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['eventoId', 'igrejaNome', 'qtdPessoas', 'nomeRegistrador'])
+                    && request.resource.data.qtdPessoas is number
+                    && request.resource.data.qtdPessoas >= 1;
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
     // Qualquer outra coleção não listada: requer autenticação
     match /{collection}/{docId} {
       allow read, write: if isAuthenticated();
