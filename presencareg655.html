@@ -62,6 +62,19 @@
         </div>
     </header>
 
+    <!-- Banner Evento Aberto (exibido dinamicamente) -->
+    <div id="banner-evento-aberto" class="hidden max-w-lg mx-auto mt-4 px-4">
+        <a href="presencaeventoaberto.html"
+            class="flex items-center gap-3 bg-rose-600 hover:bg-rose-700 text-white px-4 py-3 rounded-2xl shadow-md transition-colors">
+            <span class="text-xl flex-shrink-0">📣</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-[10px] font-black uppercase tracking-widest opacity-80">Evento Aberto Ativo</p>
+                <p id="banner-evento-nome" class="text-sm font-bold truncate"></p>
+            </div>
+            <span class="text-white opacity-70 flex-shrink-0 text-lg">→</span>
+        </a>
+    </div>
+
     <div class="flex flex-col items-center justify-center p-4 py-8">
     <div class="bg-white p-6 md:p-10 rounded-[2rem] shadow-2xl w-full max-w-lg border border-slate-100">
 
@@ -333,7 +346,14 @@
                 } else {
                     eventosSnapshot.forEach(d => {
                         const ev = d.data();
-                        if (ev.publico === 'EventoAberto') return;
+                        if (ev.publico === 'EventoAberto') {
+                            // Mostra banner de acesso rápido
+                            const banner = document.getElementById('banner-evento-aberto');
+                            const dataFmt = ev.data ? ev.data.split('-').reverse().join('/') : '';
+                            document.getElementById('banner-evento-nome').textContent = `${ev.nome} — ${dataFmt}`;
+                            banner.classList.remove('hidden');
+                            return;
+                        }
                         const opt = document.createElement('option');
                         opt.value = d.id;
                         const dataFormatada = ev.data.split('-').reverse().join('/');
