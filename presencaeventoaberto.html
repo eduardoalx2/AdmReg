@@ -284,8 +284,6 @@
                 qtdPessoas,
                 nomeRegistrador,
                 coordenadorNome: eventoAtual.coordenadorInfo?.nome || '',
-                coordenadorWhatsapp: eventoAtual.coordenadorInfo?.whatsapp || '',
-                coordenadorId: eventoAtual.coordenadorInfo?.id || '',
                 coordNome: eventoAtual.coordenadorInfo?.coordNome || '',
                 dataPostagem,
                 createdAt: serverTimestamp()
@@ -298,28 +296,13 @@
             try {
                 await addDoc(collection(db, "presencas_evento_aberto"), payload);
 
-                showFeedback("✅ PRESENÇA REGISTRADA COM SUCESSO!", "success");
-
                 // Reset formulário
                 document.getElementById('igrejaSelect').value = '';
                 document.getElementById('qtdPessoas').value = '';
                 document.getElementById('nomeRegistrador').value = '';
                 document.getElementById('declaracao').checked = false;
 
-                // Notificar coordenador via WhatsApp
-                const whatsappNum = eventoAtual.coordenadorInfo?.whatsapp || '';
-                if (whatsappNum) {
-                    const numLimpo = whatsappNum.replace(/\D/g, '');
-                    const dataFmt = eventoAtual.data ? eventoAtual.data.split('-').reverse().join('/') : '';
-                    const msg = `📢 *NOVO REGISTRO DE PRESENÇA*\n\n` +
-                        `📅 Evento: *${eventoAtual.nome}*\n` +
-                        `📆 Data: ${dataFmt}\n` +
-                        `⛪ Igreja: *${igrejaData.nome}*\n` +
-                        `👥 Pessoas presentes: *${qtdPessoas}*\n` +
-                        `✍️ Registrado por: ${nomeRegistrador}\n` +
-                        `🕐 Data/Hora: ${dataPostagem}`;
-                    setTimeout(() => window.open(`https://wa.me/55${numLimpo}?text=${encodeURIComponent(msg)}`, '_blank'), 500);
-                }
+                showFeedback("✅ PRESENÇA REGISTRADA COM SUCESSO!", "success");
 
             } catch (error) {
                 console.error("Erro ao registrar:", error);
