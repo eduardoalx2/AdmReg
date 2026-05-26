@@ -146,7 +146,7 @@
 
                     <!-- Tabela por Igreja -->
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Por Igreja</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Igrejas Presentes</p>
                         <div class="overflow-x-auto rounded-2xl border border-slate-100">
                             <table class="w-full text-left border-collapse">
                                 <thead>
@@ -160,6 +160,15 @@
                                 <tbody id="tabelaPainel" class="text-sm"></tbody>
                             </table>
                         </div>
+                    </div>
+
+                    <!-- Igrejas Ausentes -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Igrejas Ausentes</p>
+                            <span id="badgeAusentes" class="text-[10px] font-black text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full"></span>
+                        </div>
+                        <div id="ausentesConteudo" class="rounded-2xl border border-slate-100 overflow-hidden"></div>
                     </div>
                 </div>
 
@@ -376,6 +385,40 @@
                         <td class="py-2.5 px-3 text-xs text-slate-600 hidden sm:table-cell">${r.nomeRegistrador || '-'}</td>
                         <td class="py-2.5 px-3 text-[10px] text-slate-400 hidden sm:table-cell">${r.dataPostagem || '-'}</td>
                     </tr>`).join('');
+
+                // Igrejas ausentes
+                const presentes = new Set(registros.map(r => (r.igrejaNome || '').trim().toLowerCase()));
+                const ausentes = igrejasList.filter(ig => {
+                    const nome = (ig.nome || '').trim();
+                    if (nome.toLowerCase().includes('655')) return false;
+                    return !presentes.has(nome.toLowerCase());
+                });
+                ausentes.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+
+                document.getElementById('badgeAusentes').textContent =
+                    `${ausentes.length} ausente${ausentes.length !== 1 ? 's' : ''}`;
+
+                const ausentesEl = document.getElementById('ausentesConteudo');
+                if (ausentes.length === 0) {
+                    ausentesEl.innerHTML = '<p class="text-xs text-emerald-600 font-bold uppercase tracking-wider text-center py-4">✅ Todas as igrejas registraram presença!</p>';
+                } else {
+                    ausentesEl.innerHTML = `
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                    <th class="pb-2 pt-3 px-3 w-14">Cód.</th>
+                                    <th class="pb-2 pt-3 px-3">Igreja</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${ausentes.map((ig, i) => `
+                                    <tr class="${i % 2 === 0 ? '' : 'bg-slate-50'} border-b border-slate-50">
+                                        <td class="py-2.5 px-3 text-[10px] text-slate-400 font-bold">${String(ig.codigo || '').padStart(4,'0')}</td>
+                                        <td class="py-2.5 px-3 text-xs font-semibold text-slate-700">${ig.nome}</td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>`;
+                }
 
                 conteudo.classList.remove('hidden');
             } catch (e) {
