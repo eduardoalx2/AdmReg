@@ -308,9 +308,11 @@
             const permLabel = !item.perm ? '—' : item.perm === 'admin' ? '🔐 admin' : item.perm;
             const isExterno = item.tipo === 'externo';
             const oculto = item.visivel === false;
-            const corHex = (COR_OPTIONS.find(c => c.id === (item.cor || 'default')) || COR_OPTIONS[0]).hex;
+            const corOpt = COR_OPTIONS.find(c => c.id === (item.cor || 'default')) || COR_OPTIONS[0];
+            const corHex = corOpt.hex;
+            const corLabel = corOpt.label;
             return `
-                <div class="flex items-center gap-2 ${oculto?'opacity-40':''} bg-[#0c0f1a]/60 border border-slate-700/30 rounded-lg px-3 py-2" style="border-left:3px solid ${corHex}33;">
+                <div class="flex items-center gap-2 ${oculto?'opacity-40':''} bg-[#0c0f1a]/60 border border-slate-700/30 rounded-lg px-3 py-2" style="border-left:3px solid ${corHex};">
                     <div class="flex flex-col">
                         <button onclick="moverItem('${grupoId}','${item.id}',-1)" ${iIdx===0?'disabled':''} class="btn-mover text-slate-600 hover:text-slate-300">▲</button>
                         <button onclick="moverItem('${grupoId}','${item.id}',1)" ${iIdx===total-1?'disabled':''} class="btn-mover text-slate-600 hover:text-slate-300">▼</button>
@@ -321,6 +323,7 @@
                         <p class="text-slate-600 text-[10px] truncate">${esc(item.obs||'')}</p>
                     </div>
                     ${isExterno?'<span class="text-[9px] text-amber-400 font-bold flex-shrink-0">EXT</span>':''}
+                    <span title="${corLabel}" class="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-white/10" style="background:${corHex};"></span>
                     <span class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded flex-shrink-0 max-w-[100px] truncate">${esc(permLabel)}</span>
                     <button onclick="toggleVisivel('${grupoId}','${item.id}')" title="${oculto?'Oculto — clique para mostrar':'Visível — clique para ocultar'}" class="flex-shrink-0 text-base ${oculto?'grayscale opacity-50':''}">👁️</button>
                     <button onclick="abrirModalItem('${grupoId}','${item.id}')" class="flex-shrink-0 text-slate-600 hover:text-blue-400 text-xs transition-colors">✏️</button>
