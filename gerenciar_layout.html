@@ -148,6 +148,12 @@
                 </div>
 
                 <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Cor do Card</label>
+                    <div id="cor-swatches" class="flex flex-wrap gap-2"></div>
+                    <input type="hidden" id="f-cor" value="default">
+                </div>
+
+                <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Título *</label>
                     <input id="f-titulo" type="text" placeholder="Ex: Gestão de Usuários" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
                 </div>
@@ -302,8 +308,9 @@
             const permLabel = !item.perm ? '—' : item.perm === 'admin' ? '🔐 admin' : item.perm;
             const isExterno = item.tipo === 'externo';
             const oculto = item.visivel === false;
+            const corHex = (COR_OPTIONS.find(c => c.id === (item.cor || 'default')) || COR_OPTIONS[0]).hex;
             return `
-                <div class="flex items-center gap-2 ${oculto?'opacity-40':''} bg-[#0c0f1a]/60 border border-slate-700/30 rounded-lg px-3 py-2">
+                <div class="flex items-center gap-2 ${oculto?'opacity-40':''} bg-[#0c0f1a]/60 border border-slate-700/30 rounded-lg px-3 py-2" style="border-left:3px solid ${corHex}33;">
                     <div class="flex flex-col">
                         <button onclick="moverItem('${grupoId}','${item.id}',-1)" ${iIdx===0?'disabled':''} class="btn-mover text-slate-600 hover:text-slate-300">▲</button>
                         <button onclick="moverItem('${grupoId}','${item.id}',1)" ${iIdx===total-1?'disabled':''} class="btn-mover text-slate-600 hover:text-slate-300">▼</button>
@@ -408,6 +415,34 @@
             { cat: 'Outros',          emojis: ['🚀','💡','🌈','🔥','❤️','💙','🎁','📦','🧩','🪄','🔮','📿','🌿','🌱','🌻'] },
         ];
 
+        const COR_OPTIONS = [
+            { id: 'default', label: 'Padrão',   hex: '#94a3b8' },
+            { id: 'red',     label: 'Vermelho',  hex: '#f87171' },
+            { id: 'green',   label: 'Verde',     hex: '#34d399' },
+            { id: 'blue',    label: 'Azul',      hex: '#60a5fa' },
+            { id: 'purple',  label: 'Roxo',      hex: '#a78bfa' },
+            { id: 'amber',   label: 'Âmbar',     hex: '#fbbf24' },
+            { id: 'rose',    label: 'Rosa',      hex: '#fb7185' },
+            { id: 'indigo',  label: 'Índigo',    hex: '#818cf8' },
+        ];
+
+        function renderCorSwatches(selected) {
+            const cont = document.getElementById('cor-swatches');
+            if (!cont) return;
+            cont.innerHTML = COR_OPTIONS.map(c => {
+                const ativo = selected === c.id;
+                return `<button type="button" onclick="selecionarCor('${c.id}')" title="${c.label}"
+                    class="w-7 h-7 rounded-full transition-all flex-shrink-0 ${ativo ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 scale-110' : 'opacity-50 hover:opacity-90 hover:scale-105'}"
+                    style="background:${c.hex};">
+                </button>`;
+            }).join('');
+        }
+
+        window.selecionarCor = function(id) {
+            document.getElementById('f-cor').value = id;
+            renderCorSwatches(id);
+        };
+
         function renderEmojiCats() {
             const cont = document.getElementById('emoji-categorias');
             if (!cont) return;
@@ -445,8 +480,10 @@
             document.getElementById('f-icone').value = item?.icone || '🔗';
             document.getElementById('f-perm').value = item?.perm || '';
             document.getElementById('f-visivel').checked = item?.visivel !== false;
+            document.getElementById('f-cor').value = item?.cor || 'default';
             document.getElementById('modal-item').classList.remove('hidden');
             renderEmojiCats();
+            renderCorSwatches(item?.cor || 'default');
             setTimeout(() => document.getElementById('f-titulo').focus(), 50);
         }
 
@@ -472,6 +509,7 @@
                 obs: document.getElementById('f-obs').value.trim(),
                 url: document.getElementById('f-url').value.trim(),
                 icone: document.getElementById('f-icone').value.trim() || '🔗',
+                cor: document.getElementById('f-cor').value || 'default',
                 perm: document.getElementById('f-perm').value || null,
                 visivel: document.getElementById('f-visivel').checked,
             };
