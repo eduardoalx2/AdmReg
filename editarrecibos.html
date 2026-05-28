@@ -300,16 +300,17 @@
         </div>
 
         <!-- Overlay de visualização do recibo -->
-        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:white;display:none;overflow-y:auto;">
-            <div style="background:#1e293b;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1;">
-                <span style="color:#94a3b8;font-family:'Inter',sans-serif;font-size:13px;">Confira o recibo e clique em Baixar PDF</span>
+        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:rgba(15, 23, 42, 0.85);display:none;overflow-y:auto;backdrop-filter:blur(4px);">
+            <div style="background:#1e293b;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
+                <span style="color:#94a3b8;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;">Confira o recibo e clique em Baixar PDF</span>
                 <div style="display:flex;gap:8px;">
                     <button onclick="fecharModalRecibo()" style="padding:6px 16px;background:#334155;color:white;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;">Fechar</button>
                     <button id="btn-baixar-pdf" onclick="baixarPdfRecibo()" style="padding:6px 16px;background:#2563eb;color:white;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;">⬇ Baixar PDF</button>
                 </div>
             </div>
-            <div id="receipt-content"
-                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0;">
+            <div style="display:flex;justify-content:center;padding:24px 16px;min-height:calc(100vh - 60px);">
+                <div id="receipt-content"
+                    style="font-family:'Inter',sans-serif;padding:32px;background:white;width:100%;max-width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0 auto;box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.25);border-radius:8px;">
                 <div
                     style="border:2px solid #1f2937;padding:24px;display:flex;flex-direction:column;position:relative;">
                     <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
@@ -399,6 +400,7 @@
                         Documento gerado eletronicamente - IEQ REG655</div>
                 </div>
             </div>
+        </div>
         </div>
         <div id="pdf-loading" style="position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,0.75);display:none;align-items:center;justify-content:center;">
             <div style="background:white;padding:20px 32px;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#1e293b;">⏳ Gerando PDF, aguarde...</div>
@@ -670,37 +672,37 @@
 
         window.baixarPdfRecibo = () => {
             const element = document.getElementById('receipt-content');
-            const overlay = document.getElementById('pdf-overlay');
             if (!window.html2pdf) { alert("Carregando biblioteca PDF..."); return; }
             const fileName = window._pdfFileName || 'recibo.pdf';
 
-            const prevOverflow = overlay.style.overflowY;
-            overlay.style.overflowY = 'visible';
-            overlay.scrollTop = 0;
+            // Rola temporariamente para o topo para evitar bugs do html2canvas com scroll do viewport
+            const scrollY = window.scrollY;
+            const scrollX = window.scrollX;
+            window.scrollTo(0, 0);
 
             const opt = {
-                margin: [5, 5, 5, 5],
+                margin: [10, 10, 10, 10],
                 filename: fileName,
-                image: { type: 'jpeg', quality: 1 },
+                image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: {
                     scale: 2,
                     useCORS: true,
                     allowTaint: true,
                     scrollY: 0,
                     scrollX: 0,
-                    windowWidth: element.scrollWidth,
-                    windowHeight: element.scrollHeight
+                    windowWidth: 794
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
 
             window.html2pdf().set(opt).from(element).save().then(() => {
-                overlay.style.overflowY = prevOverflow;
-                overlay.style.display = 'none';
+                window.scrollTo(scrollX, scrollY);
+                document.getElementById('pdf-overlay').style.display = 'none';
                 document.body.style.overflow = '';
-            }).catch(() => {
-                overlay.style.overflowY = prevOverflow;
+            }).catch((err) => {
+                console.error("Erro na geração do PDF:", err);
+                window.scrollTo(scrollX, scrollY);
             });
         };
 
