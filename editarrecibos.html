@@ -300,9 +300,9 @@
         </div>
 
         <!-- Overlay para Geração de PDF (visível temporariamente durante captura) -->
-        <div id="pdf-overlay" style="position:absolute;top:0;left:0;z-index:99999;background:white;display:none;width:880px;">
+        <div id="pdf-overlay" style="position:fixed;top:0;left:0;z-index:99999;background:white;display:none;width:794px;">
             <div id="receipt-content"
-                style="font-family:'Inter',sans-serif;padding:24px 67px;background:white;width:880px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0;">
+                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0;">
                 <div
                     style="border:2px solid #1f2937;padding:24px;display:flex;flex-direction:column;position:relative;">
                     <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
@@ -636,10 +636,10 @@
 
         function getPdfOptFinal(filename) {
             return {
-                margin: 0,
+                margin: [0, 12, 0, 12],
                 filename,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false, scrollY: 0, scrollX: 0, windowWidth: 880 },
+                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false, scrollY: 0, scrollX: 0, windowWidth: 794 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
