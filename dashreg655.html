@@ -548,36 +548,47 @@
                 document.getElementById('pdf-assinatura').src = "assinatura.png";
             }
 
-            const overlay = document.getElementById('pdf-overlay');
             const receiptEl = document.getElementById('receipt-content');
-            overlay.style.display = 'block';
+            const clone = receiptEl.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.style.cssText = [
+                'position:absolute', 'top:0', 'left:0', 'z-index:2147483647',
+                'width:794px', 'min-height:1122px', 'background:white',
+                'font-family:Inter,sans-serif', 'padding:24px',
+                'display:flex', 'flex-direction:column',
+                'color:#1f2937', 'box-sizing:border-box', 'margin:0'
+            ].join(';');
+            document.body.insertBefore(clone, document.body.firstChild);
+
+            const savedScroll = window.scrollY;
             window.scrollTo(0, 0);
             await new Promise(resolve => setTimeout(resolve, 400));
 
             const safeDate = (r.referenceDate || '').replace('/', '-');
             const safeChurch = (r.igrejaCodigo || 'UNID');
-            const opt = { 
-                margin: 0, 
-                filename: `${safeChurch} - REC REG REF(${safeDate}).pdf`, 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { 
-                    scale: 2, 
-                    useCORS: true, 
+            const opt = {
+                margin: 0,
+                filename: `${safeChurch} - REC REG REF(${safeDate}).pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#ffffff',
                     logging: false,
                     scrollY: 0,
                     scrollX: 0,
                     windowWidth: 794
-                }, 
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
-            
+
             try {
-                await html2pdf().set(opt).from(receiptEl).save();
+                await html2pdf().set(opt).from(clone).save();
             } finally {
-                overlay.style.display = 'none';
+                clone.remove();
+                window.scrollTo(0, savedScroll);
             }
         };
 
