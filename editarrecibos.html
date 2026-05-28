@@ -300,7 +300,7 @@
         </div>
 
         <!-- Overlay para Geração de PDF (visível temporariamente durante captura) -->
-        <div id="pdf-overlay" style="position:absolute;top:0;left:0;z-index:99999;background:white;display:none;width:794px;">
+        <div id="pdf-overlay" style="position:absolute;top:0;left:0;z-index:99999;background:white;display:none;width:880px;">
             <div id="receipt-content"
                 style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0 auto;">
                 <div
@@ -639,7 +639,7 @@
                 margin: 0,
                 filename,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false, scrollY: 0, scrollX: 0, windowWidth: 794 },
+                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false, scrollY: 0, scrollX: 0, windowWidth: 880 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
@@ -657,7 +657,7 @@
             window.scrollTo(0, 0);
             await new Promise(resolve => setTimeout(resolve, 400));
             try {
-                await html2pdf().set(getPdfOptFinal(getNomeArquivoPdf(r))).from(receiptEl).save();
+                await html2pdf().set(getPdfOptFinal(getNomeArquivoPdf(r))).from(overlay).save();
             } finally {
                 overlay.style.display = 'none';
                 window.scrollTo(0, savedScroll);
@@ -828,7 +828,7 @@
             const nomeArquivo = getNomeArquivoPdf(r);
 
             try {
-                const pdfBlob = await html2pdf().set(getPdfOptFinal(nomeArquivo)).from(receiptEl).output('blob');
+                const pdfBlob = await html2pdf().set(getPdfOptFinal(nomeArquivo)).from(overlay).output('blob');
                 overlay.style.display = 'none';
                 window.scrollTo(0, savedScroll);
                 const pdfFile = new File([pdfBlob], nomeArquivo, { type: 'application/pdf' });

@@ -199,7 +199,7 @@
         </div>
 
         <!-- Overlay para Geração de PDF (visível temporariamente durante captura) -->
-        <div id="pdf-overlay" style="position:absolute;top:0;left:0;z-index:99999;background:white;display:none;width:794px;">
+        <div id="pdf-overlay" style="position:absolute;top:0;left:0;z-index:99999;background:white;display:none;width:880px;">
             <div id="receipt-content"
                 style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0 auto;">
                 <div
@@ -569,14 +569,14 @@
                     logging: false,
                     scrollY: 0,
                     scrollX: 0,
-                    windowWidth: 794
+                    windowWidth: 880
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
 
             try {
-                await html2pdf().set(opt).from(receiptEl).save();
+                await html2pdf().set(opt).from(overlay).save();
             } finally {
                 overlay.style.display = 'none';
                 window.scrollTo(0, savedScroll);
