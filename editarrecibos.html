@@ -671,14 +671,24 @@
         };
 
         window.baixarPdfRecibo = () => {
-            const element = document.getElementById('receipt-content');
+            const original = document.getElementById('receipt-content');
             if (!window.html2pdf) { alert("Carregando biblioteca PDF..."); return; }
             const fileName = window._pdfFileName || 'recibo.pdf';
 
-            // Rola temporariamente para o topo para evitar bugs do html2canvas com scroll do viewport
-            const scrollY = window.scrollY;
-            const scrollX = window.scrollX;
-            window.scrollTo(0, 0);
+            // Clone o recibo e posicione em (0,0) fixo no body.
+            // Isso elimina TODOS os bugs do html2canvas com offset/scroll/container.
+            const clone = original.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.style.cssText = [
+                'position:fixed', 'top:0', 'left:0', 'z-index:-9999',
+                'width:794px', 'background:white',
+                'font-family:Inter,sans-serif', 'padding:32px',
+                'display:flex', 'flex-direction:column',
+                'color:#1f2937', 'box-sizing:border-box',
+                'margin:0', 'border-radius:0', 'box-shadow:none',
+                'max-width:none'
+            ].join(';');
+            document.body.appendChild(clone);
 
             const opt = {
                 margin: [10, 10, 10, 10],
@@ -696,13 +706,13 @@
                 pagebreak: { mode: 'avoid-all' }
             };
 
-            window.html2pdf().set(opt).from(element).save().then(() => {
-                window.scrollTo(scrollX, scrollY);
+            window.html2pdf().set(opt).from(clone).save().then(() => {
+                clone.remove();
                 document.getElementById('pdf-overlay').style.display = 'none';
                 document.body.style.overflow = '';
             }).catch((err) => {
-                console.error("Erro na geração do PDF:", err);
-                window.scrollTo(scrollX, scrollY);
+                console.error('Erro na geração do PDF:', err);
+                clone.remove();
             });
         };
 
