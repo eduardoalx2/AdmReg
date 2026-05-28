@@ -299,8 +299,15 @@
             </div>
         </div>
 
-        <!-- Template do recibo (oculto, usado apenas para popular dados e capturar outerHTML) -->
-        <div id="pdf-overlay" style="display:none;">
+        <!-- Overlay de visualização do recibo -->
+        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:white;display:none;overflow-y:auto;">
+            <div style="background:#1e293b;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1;">
+                <span style="color:#94a3b8;font-family:'Inter',sans-serif;font-size:13px;">Confira o recibo e clique em Baixar PDF</span>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="fecharModalRecibo()" style="padding:6px 16px;background:#334155;color:white;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;">Fechar</button>
+                    <button id="btn-baixar-pdf" onclick="baixarPdfRecibo()" style="padding:6px 16px;background:#2563eb;color:white;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;">⬇ Baixar PDF</button>
+                </div>
+            </div>
             <div id="receipt-content"
                 style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0;">
                 <div
@@ -651,18 +658,31 @@
             const r = recibosList.find(i => i.id === id);
             if (!r) return;
             preencherDadosPdf(r);
+            window._pdfFileName = getNomeArquivoPdf(r);
+            document.getElementById('pdf-overlay').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.fecharModalRecibo = () => {
+            document.getElementById('pdf-overlay').style.display = 'none';
+            document.body.style.overflow = '';
+        };
+
+        window.baixarPdfRecibo = () => {
+            const btn = document.getElementById('btn-baixar-pdf');
+            if (btn) { btn.disabled = true; btn.textContent = 'Gerando...'; }
             const receiptEl = document.getElementById('receipt-content');
             const opt = {
                 margin: [10, 10, 10, 10],
-                filename: getNomeArquivoPdf(r),
+                filename: window._pdfFileName || 'recibo.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, windowWidth: 794 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-            const loading = document.getElementById('pdf-loading');
-            loading.style.display = 'flex';
-            html2pdf().set(opt).from(receiptEl.outerHTML).save().then(() => {
-                loading.style.display = 'none';
+            html2pdf().set(opt).from(receiptEl).save().then(() => {
+                if (btn) { btn.disabled = false; btn.textContent = '⬇ Baixar PDF'; }
+                document.getElementById('pdf-overlay').style.display = 'none';
+                document.body.style.overflow = '';
             });
         };
 
