@@ -669,40 +669,38 @@
         };
 
         window.baixarPdfRecibo = () => {
-            const original = document.getElementById('receipt-content');
+            const element = document.getElementById('receipt-content');
+            const overlay = document.getElementById('pdf-overlay');
             if (!window.html2pdf) { alert("Carregando biblioteca PDF..."); return; }
             const fileName = window._pdfFileName || 'recibo.pdf';
 
-            const clone = original.cloneNode(true);
-            const wrapper = document.createElement('div');
-            wrapper.id = '__pdf_temp_wrapper__';
-            wrapper.style.cssText = 'position:fixed;top:0;left:0;width:794px;z-index:999999;background:white;';
-            wrapper.appendChild(clone);
-            document.body.appendChild(wrapper);
+            const prevOverflow = overlay.style.overflowY;
+            overlay.style.overflowY = 'visible';
+            overlay.scrollTop = 0;
 
             const opt = {
-                margin: [10, 10, 10, 10],
+                margin: [5, 5, 5, 5],
                 filename: fileName,
-                image: { type: 'jpeg', quality: 0.98 },
+                image: { type: 'jpeg', quality: 1 },
                 html2canvas: {
                     scale: 2,
                     useCORS: true,
                     allowTaint: true,
-                    scrollX: 0,
                     scrollY: 0,
-                    windowWidth: 794,
-                    x: 0,
-                    y: 0
+                    scrollX: 0,
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
-            window.html2pdf().set(opt).from(wrapper).save().then(() => {
-                wrapper.remove();
-                document.getElementById('pdf-overlay').style.display = 'none';
+
+            window.html2pdf().set(opt).from(element).save().then(() => {
+                overlay.style.overflowY = prevOverflow;
+                overlay.style.display = 'none';
                 document.body.style.overflow = '';
             }).catch(() => {
-                wrapper.remove();
+                overlay.style.overflowY = prevOverflow;
             });
         };
 
