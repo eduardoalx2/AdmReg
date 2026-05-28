@@ -299,13 +299,8 @@
             </div>
         </div>
 
-        <!-- Modal de Visualização do Recibo -->
-        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.75);display:none;overflow-y:auto;padding:16px 8px;">
-            <div style="width:794px;">
-            <div id="pdf-toolbar" style="background:#1e293b;padding:10px 20px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
-                <span style="color:#94a3b8;font-size:13px;font-family:'Inter',sans-serif;">⏳ Gerando PDF, aguarde...</span>
-                <button onclick="fecharModalRecibo()" style="padding:4px 12px;background:#334155;color:#cbd5e1;border:none;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;">Cancelar</button>
-            </div>
+        <!-- Template do recibo (oculto, usado apenas para popular dados e capturar outerHTML) -->
+        <div id="pdf-overlay" style="display:none;">
             <div id="receipt-content"
                 style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0;">
                 <div
@@ -397,7 +392,9 @@
                         Documento gerado eletronicamente - IEQ REG655</div>
                 </div>
             </div>
-            </div>
+        </div>
+        <div id="pdf-loading" style="position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,0.75);display:none;align-items:center;justify-content:center;">
+            <div style="background:white;padding:20px 32px;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#1e293b;">⏳ Gerando PDF, aguarde...</div>
         </div>
     </main>
 
@@ -654,35 +651,19 @@
             const r = recibosList.find(i => i.id === id);
             if (!r) return;
             preencherDadosPdf(r);
-            window._pdfFileName = getNomeArquivoPdf(r);
-            window._pdfCancelled = false;
-            window._pdfSavedScroll = window.scrollY;
-            window.scrollTo(0, 0);
-            document.getElementById('pdf-overlay').style.display = 'block';
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => {
-                if (window._pdfCancelled) return;
-                const receiptEl = document.getElementById('receipt-content');
-                const opt = {
-                    margin: [10, 10, 10, 10],
-                    filename: window._pdfFileName,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, windowWidth: 794, scrollX: 0, scrollY: 0 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-                html2pdf().set(opt).from(receiptEl).save().then(() => {
-                    document.getElementById('pdf-overlay').style.display = 'none';
-                    document.body.style.overflow = '';
-                    window.scrollTo(0, window._pdfSavedScroll || 0);
-                });
-            }, 600);
-        };
-
-        window.fecharModalRecibo = () => {
-            window._pdfCancelled = true;
-            document.getElementById('pdf-overlay').style.display = 'none';
-            document.body.style.overflow = '';
-            window.scrollTo(0, window._pdfSavedScroll || 0);
+            const receiptEl = document.getElementById('receipt-content');
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: getNomeArquivoPdf(r),
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, windowWidth: 794 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            const loading = document.getElementById('pdf-loading');
+            loading.style.display = 'flex';
+            html2pdf().set(opt).from(receiptEl.outerHTML).save().then(() => {
+                loading.style.display = 'none';
+            });
         };
 
         window.limparFiltros = () => {
@@ -840,18 +821,11 @@
             if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
 
             preencherDadosPdf(r);
-            const overlay = document.getElementById('pdf-overlay');
             const receiptEl = document.getElementById('receipt-content');
-            overlay.style.display = 'block';
-            const savedScroll = window.scrollY;
-            window.scrollTo(0, 0);
-            await new Promise(resolve => setTimeout(resolve, 400));
             const nomeArquivo = getNomeArquivoPdf(r);
 
             try {
-                const pdfBlob = await html2pdf().set(getPdfOptFinal(nomeArquivo)).from(receiptEl).output('blob');
-                overlay.style.display = 'none';
-                window.scrollTo(0, savedScroll);
+                const pdfBlob = await html2pdf().set(getPdfOptFinal(nomeArquivo)).from(receiptEl.outerHTML).output('blob');
                 const pdfFile = new File([pdfBlob], nomeArquivo, { type: 'application/pdf' });
 
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
@@ -863,8 +837,6 @@
                     return;
                 }
             } catch (err) {
-                overlay.style.display = 'none';
-                window.scrollTo(0, savedScroll);
                 if (err.name === 'AbortError') return;
             } finally {
                 if (btn) { btn.disabled = false; btn.style.opacity = ''; }
