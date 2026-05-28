@@ -669,15 +669,28 @@
         };
 
         window.baixarPdfRecibo = () => {
-            const receiptEl = document.getElementById('receipt-content');
-            const base = window.location.href.replace(/[^/]*$/, '');
-            const fileName = window._pdfFileName || 'recibo';
-            const w = window.open('', '_blank');
-            if (!w) { alert('Permita pop-ups neste site para gerar o PDF.'); return; }
-            w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${fileName}</title><base href="${base}"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"><style>@page{size:A4 portrait;margin:10mm 12mm}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box}body{font-family:'Inter',Arial,sans-serif;margin:0;padding:0;background:white}#receipt-content{width:100%!important;display:flex!important;flex-direction:column!important;margin:0!important;page-break-inside:avoid;break-inside:avoid}#receipt-content>div{page-break-inside:avoid;break-inside:avoid}</style></head><body>${receiptEl.outerHTML}<script>window.addEventListener('afterprint',function(){setTimeout(function(){window.close();},200);});setTimeout(function(){window.print();},800);<\/script></body></html>`);
-            w.document.close();
-            document.getElementById('pdf-overlay').style.display = 'none';
-            document.body.style.overflow = '';
+            const element = document.getElementById('receipt-content');
+            if (!window.html2pdf) { alert("Carregando biblioteca PDF..."); return; }
+            const fileName = window._pdfFileName || 'recibo.pdf';
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: fileName,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    scrollY: 0,
+                    scrollX: 0,
+                    windowWidth: 794
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: 'avoid-all' }
+            };
+            window.html2pdf().set(opt).from(element).save().then(() => {
+                document.getElementById('pdf-overlay').style.display = 'none';
+                document.body.style.overflow = '';
+            });
         };
 
         window.limparFiltros = () => {
