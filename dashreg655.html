@@ -199,7 +199,7 @@
         </div>
 
         <!-- Overlay para Geração de PDF (visível temporariamente durante captura) -->
-        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:white;display:none;overflow:visible;padding:0;margin:0;">
+        <div id="pdf-overlay" style="position:absolute;top:0;left:0;z-index:99999;background:white;display:none;width:794px;">
             <div id="receipt-content"
                 style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0 auto;">
                 <div
@@ -548,18 +548,9 @@
                 document.getElementById('pdf-assinatura').src = "assinatura.png";
             }
 
+            const overlay = document.getElementById('pdf-overlay');
             const receiptEl = document.getElementById('receipt-content');
-            const clone = receiptEl.cloneNode(true);
-            clone.removeAttribute('id');
-            clone.style.cssText = [
-                'position:absolute', 'top:0', 'left:0', 'z-index:2147483647',
-                'width:794px', 'min-height:1122px', 'background:white',
-                'font-family:Inter,sans-serif', 'padding:24px',
-                'display:flex', 'flex-direction:column',
-                'color:#1f2937', 'box-sizing:border-box', 'margin:0'
-            ].join(';');
-            document.body.insertBefore(clone, document.body.firstChild);
-
+            overlay.style.display = 'block';
             const savedScroll = window.scrollY;
             window.scrollTo(0, 0);
             await new Promise(resolve => setTimeout(resolve, 400));
@@ -585,9 +576,9 @@
             };
 
             try {
-                await html2pdf().set(opt).from(clone).save();
+                await html2pdf().set(opt).from(receiptEl).save();
             } finally {
-                clone.remove();
+                overlay.style.display = 'none';
                 window.scrollTo(0, savedScroll);
             }
         };
