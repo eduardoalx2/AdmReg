@@ -555,15 +555,19 @@
 <base href="${base}">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
-@page{size:A4 portrait;margin:12mm 15mm}
+@page{size:A4 portrait;margin:8mm 12mm}
 *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box}
 body{font-family:'Inter',Arial,sans-serif;margin:0;padding:0;background:white}
-#receipt-content{width:100%!important;display:flex!important;flex-direction:column!important;margin:0!important;padding:0!important}
+#receipt-content{width:100%!important;display:flex!important;flex-direction:column!important;margin:0!important;padding:0!important;page-break-inside:avoid;break-inside:avoid}
+#receipt-content>div{width:100%!important;page-break-inside:avoid;break-inside:avoid}
 </style>
 </head>
 <body>
 ${receiptEl.outerHTML}
-<script>setTimeout(function(){window.print();},600);<\/script>
+<script>
+window.addEventListener('afterprint',function(){setTimeout(function(){window.close();},200);});
+setTimeout(function(){window.print();},800);
+<\/script>
 </body>
 </html>`);
             w.document.close();
