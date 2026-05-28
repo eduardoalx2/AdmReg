@@ -646,22 +646,37 @@
         }
 
         // Função que aciona a geração do PDF baseada num Recibo Específico
-        window.gerarPdfRecibo = async (id) => {
+        window.gerarPdfRecibo = (id) => {
             const r = recibosList.find(i => i.id === id);
             if (!r) return;
             preencherDadosPdf(r);
-            const overlay = document.getElementById('pdf-overlay');
             const receiptEl = document.getElementById('receipt-content');
-            overlay.style.display = 'block';
-            const savedScroll = window.scrollY;
-            window.scrollTo(0, 0);
-            await new Promise(resolve => setTimeout(resolve, 400));
-            try {
-                await html2pdf().set(getPdfOptFinal(getNomeArquivoPdf(r))).from(receiptEl).save();
-            } finally {
-                overlay.style.display = 'none';
-                window.scrollTo(0, savedScroll);
-            }
+            const base = window.location.href.replace(/[^/]*$/, '');
+            const safeDate = (r.referenceDate || '').replace('/', '-');
+            const safeChurch = r.igrejaCodigo || 'UNID';
+            const fileName = `${safeChurch} - REC REG REF(${safeDate})`;
+            const w = window.open('', '_blank');
+            if (!w) { alert('Permita pop-ups neste site para gerar o PDF.'); return; }
+            w.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>${fileName}</title>
+<base href="${base}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+@page{size:A4 portrait;margin:12mm 15mm}
+*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box}
+body{font-family:'Inter',Arial,sans-serif;margin:0;padding:0;background:white}
+#receipt-content{width:100%!important;display:flex!important;flex-direction:column!important;margin:0!important;padding:0!important}
+</style>
+</head>
+<body>
+${receiptEl.outerHTML}
+<script>setTimeout(function(){window.print();},600);<\/script>
+</body>
+</html>`);
+            w.document.close();
         };
 
         window.limparFiltros = () => {

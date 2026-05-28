@@ -492,7 +492,7 @@
             return extenso.charAt(0).toUpperCase() + extenso.slice(1);
         };
 
-        window.gerarPdfRecibo = async (id) => {
+        window.gerarPdfRecibo = (id) => {
             const item = window.activeData.find(i => i.id === id);
             if(!item) return;
             const r = item.raw;
@@ -511,11 +511,9 @@
             document.getElementById('pdf-referencia').textContent = formatReferenceExtenso(r.referenceDate);
             document.getElementById('pdf-igreja').textContent = r.igrejaFormatada || 'Não informada';
             document.getElementById('pdf-pastor').textContent = r.pastor || 'Não informado';
-            
             document.getElementById('pdf-entradas').textContent = window.formatMoeda(r.incomeValue);
             document.getElementById('pdf-regional').textContent = window.formatMoeda(r.regionalTax);
             document.getElementById('pdf-coord').textContent = window.formatMoeda(r.coordinatorFeeParsed);
-            
             document.getElementById('pdf-label-seguros').textContent = `Seguro de Vida (${r.insuranceCount || 0})`;
             document.getElementById('pdf-seguros').textContent = window.formatMoeda(r.insuranceTotal);
 
@@ -533,54 +531,42 @@
 
             const customLogo = localStorage.getItem('customLogo');
             const customSignature = localStorage.getItem('customSignature');
-            
-            if(customLogo) {
-                document.getElementById('pdf-logo').src = customLogo;
-            } else {
-                document.getElementById('pdf-logo').src = "logo.png";
-            }
-
-            if(customSignature) {
+            document.getElementById('pdf-logo').src = customLogo || 'logo.png';
+            if (customSignature) {
                 document.getElementById('pdf-assinatura').src = customSignature;
                 document.getElementById('pdf-assinatura').style.display = 'block';
                 document.getElementById('pdf-assinatura-texto').style.display = 'none';
             } else {
-                document.getElementById('pdf-assinatura').src = "assinatura.png";
+                document.getElementById('pdf-assinatura').src = 'assinatura.png';
             }
 
-            const overlay = document.getElementById('pdf-overlay');
             const receiptEl = document.getElementById('receipt-content');
-            overlay.style.display = 'block';
-            const savedScroll = window.scrollY;
-            window.scrollTo(0, 0);
-            await new Promise(resolve => setTimeout(resolve, 400));
-
+            const base = window.location.href.replace(/[^/]*$/, '');
             const safeDate = (r.referenceDate || '').replace('/', '-');
             const safeChurch = (r.igrejaCodigo || 'UNID');
-            const opt = {
-                margin: [0, 12, 0, 12],
-                filename: `${safeChurch} - REC REG REF(${safeDate}).pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                    scrollY: 0,
-                    scrollX: 0,
-                    windowWidth: 794
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: 'avoid-all' }
-            };
-
-            try {
-                await html2pdf().set(opt).from(receiptEl).save();
-            } finally {
-                overlay.style.display = 'none';
-                window.scrollTo(0, savedScroll);
-            }
+            const fileName = `${safeChurch} - REC REG REF(${safeDate})`;
+            const w = window.open('', '_blank');
+            if (!w) { alert('Permita pop-ups neste site para gerar o PDF.'); return; }
+            w.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>${fileName}</title>
+<base href="${base}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+@page{size:A4 portrait;margin:12mm 15mm}
+*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box}
+body{font-family:'Inter',Arial,sans-serif;margin:0;padding:0;background:white}
+#receipt-content{width:100%!important;display:flex!important;flex-direction:column!important;margin:0!important;padding:0!important}
+</style>
+</head>
+<body>
+${receiptEl.outerHTML}
+<script>setTimeout(function(){window.print();},600);<\/script>
+</body>
+</html>`);
+            w.document.close();
         };
 
         window.renderTable = () => {
