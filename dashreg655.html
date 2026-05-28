@@ -550,6 +550,8 @@
             const safeChurch = (r.igrejaCodigo || 'UNID');
             window._pdfFileName = `${safeChurch} - REC REG REF(${safeDate}).pdf`;
             window._pdfCancelled = false;
+            window._pdfSavedScroll = window.scrollY;
+            window.scrollTo(0, 0);
             document.getElementById('pdf-overlay').style.display = 'block';
             document.body.style.overflow = 'hidden';
             setTimeout(() => {
@@ -559,12 +561,13 @@
                     margin: [10, 10, 10, 10],
                     filename: window._pdfFileName,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, windowWidth: 794 },
+                    html2canvas: { scale: 2, useCORS: true, windowWidth: 794, scrollX: 0, scrollY: 0 },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 html2pdf().set(opt).from(receiptEl).save().then(() => {
                     document.getElementById('pdf-overlay').style.display = 'none';
                     document.body.style.overflow = '';
+                    window.scrollTo(0, window._pdfSavedScroll || 0);
                 });
             }, 600);
         };
@@ -573,6 +576,7 @@
             window._pdfCancelled = true;
             document.getElementById('pdf-overlay').style.display = 'none';
             document.body.style.overflow = '';
+            window.scrollTo(0, window._pdfSavedScroll || 0);
         };
 
         window.renderTable = () => {
