@@ -562,9 +562,17 @@
         };
 
         window.baixarPdfRecibo = () => {
-            const element = document.getElementById('receipt-content');
+            const original = document.getElementById('receipt-content');
             if (!window.html2pdf) { alert("Carregando biblioteca PDF..."); return; }
             const fileName = window._pdfFileName || 'recibo.pdf';
+
+            const clone = original.cloneNode(true);
+            const wrapper = document.createElement('div');
+            wrapper.id = '__pdf_temp_wrapper__';
+            wrapper.style.cssText = 'position:fixed;top:0;left:0;width:794px;z-index:999999;background:white;';
+            wrapper.appendChild(clone);
+            document.body.appendChild(wrapper);
+
             const opt = {
                 margin: [10, 10, 10, 10],
                 filename: fileName,
@@ -573,16 +581,21 @@
                     scale: 2,
                     useCORS: true,
                     allowTaint: true,
-                    scrollY: 0,
                     scrollX: 0,
-                    windowWidth: 794
+                    scrollY: 0,
+                    windowWidth: 794,
+                    x: 0,
+                    y: 0
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
-            window.html2pdf().set(opt).from(element).save().then(() => {
+            window.html2pdf().set(opt).from(wrapper).save().then(() => {
+                wrapper.remove();
                 document.getElementById('pdf-overlay').style.display = 'none';
                 document.body.style.overflow = '';
+            }).catch(() => {
+                wrapper.remove();
             });
         };
 
