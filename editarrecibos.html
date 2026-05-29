@@ -675,18 +675,27 @@
             if (!window.html2pdf) { alert("Carregando biblioteca PDF..."); return; }
             const fileName = window._pdfFileName || 'recibo.pdf';
 
-            // Clone o recibo e posicione em (0,0) fixo no body.
+            // Esconde o overlay e salva scroll
+            const overlay = document.getElementById('pdf-overlay');
+            overlay.style.display = 'none';
+            const scrollY = window.scrollY;
+            const scrollX = window.scrollX;
+            window.scrollTo(0, 0);
+
+            // Clone o recibo e posicione em (0,0) absoluto no body.
             // Isso elimina TODOS os bugs do html2canvas com offset/scroll/container.
             const clone = original.cloneNode(true);
             clone.removeAttribute('id');
+            // Remove IDs dos filhos para evitar duplicatas
+            clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
             clone.style.cssText = [
-                'position:fixed', 'top:0', 'left:0', 'z-index:-9999',
+                'position:absolute', 'top:0', 'left:0',
                 'width:794px', 'background:white',
                 'font-family:Inter,sans-serif', 'padding:32px',
                 'display:flex', 'flex-direction:column',
                 'color:#1f2937', 'box-sizing:border-box',
                 'margin:0', 'border-radius:0', 'box-shadow:none',
-                'max-width:none'
+                'max-width:none', 'z-index:999999'
             ].join(';');
             document.body.appendChild(clone);
 
@@ -708,11 +717,12 @@
 
             window.html2pdf().set(opt).from(clone).save().then(() => {
                 clone.remove();
-                document.getElementById('pdf-overlay').style.display = 'none';
+                window.scrollTo(scrollX, scrollY);
                 document.body.style.overflow = '';
             }).catch((err) => {
                 console.error('Erro na geração do PDF:', err);
                 clone.remove();
+                window.scrollTo(scrollX, scrollY);
             });
         };
 
