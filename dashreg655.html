@@ -568,28 +568,26 @@
             if (!window.html2pdf) { alert("Carregando biblioteca PDF..."); return; }
             const fileName = window._pdfFileName || 'recibo.pdf';
 
-            // Esconde o overlay e salva scroll
             const overlay = document.getElementById('pdf-overlay');
-            overlay.style.display = 'none';
+            const parent = original.parentElement;
+            
+            // Salva os estilos originais
+            const originalOverlayDisplay = overlay.style.display;
+            const originalOverlayPosition = overlay.style.position;
+            const originalParentDisplay = parent.style.display;
+            const originalParentJustify = parent.style.justifyContent;
+            const originalMargin = original.style.margin;
             const scrollY = window.scrollY;
             const scrollX = window.scrollX;
+
+            // Remove o scroll
             window.scrollTo(0, 0);
 
-            // Clone o recibo e posicione em (0,0) absoluto no body.
-            // Isso elimina TODOS os bugs do html2canvas com offset/scroll/container.
-            const clone = original.cloneNode(true);
-            clone.removeAttribute('id');
-            clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-            clone.style.cssText = [
-                'position:absolute', 'top:0', 'left:0',
-                'width:794px', 'background:white',
-                'font-family:Inter,sans-serif', 'padding:32px',
-                'display:flex', 'flex-direction:column',
-                'color:#1f2937', 'box-sizing:border-box',
-                'margin:0', 'border-radius:0', 'box-shadow:none',
-                'max-width:none', 'z-index:999999'
-            ].join(';');
-            document.body.appendChild(clone);
+            // Modifica temporariamente para colar no canto (0,0) e evitar os bugs do html2canvas
+            overlay.style.position = 'absolute';
+            parent.style.display = 'block';
+            parent.style.justifyContent = 'flex-start';
+            original.style.margin = '0';
 
             const opt = {
                 margin: [10, 10, 10, 10],
@@ -607,13 +605,21 @@
                 pagebreak: { mode: 'avoid-all' }
             };
 
-            window.html2pdf().set(opt).from(clone).save().then(() => {
-                clone.remove();
-                window.scrollTo(scrollX, scrollY);
+            window.html2pdf().set(opt).from(original).save().then(() => {
+                // Restaura tudo
+                overlay.style.position = originalOverlayPosition;
+                parent.style.display = originalParentDisplay;
+                parent.style.justifyContent = originalParentJustify;
+                original.style.margin = originalMargin;
+                overlay.style.display = 'none';
                 document.body.style.overflow = '';
+                window.scrollTo(scrollX, scrollY);
             }).catch((err) => {
                 console.error('Erro na geração do PDF:', err);
-                clone.remove();
+                overlay.style.position = originalOverlayPosition;
+                parent.style.display = originalParentDisplay;
+                parent.style.justifyContent = originalParentJustify;
+                original.style.margin = originalMargin;
                 window.scrollTo(scrollX, scrollY);
             });
         };
