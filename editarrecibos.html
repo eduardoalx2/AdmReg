@@ -47,6 +47,22 @@
             font-weight: 700;
             color: #1e293b;
         }
+
+        @media print {
+            * { visibility: hidden; }
+            #receipt-content, #receipt-content * { visibility: visible; }
+            #receipt-content {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 24px !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+        }
     </style>
 </head>
 
@@ -671,43 +687,7 @@
         };
 
         window.baixarPdfRecibo = () => {
-            const original = document.getElementById('receipt-content');
-            if (!window.html2pdf) { alert("Carregando biblioteca PDF..."); return; }
-            const fileName = window._pdfFileName || 'recibo.pdf';
-
-            const opt = {
-                margin: [10, 10, 10, 10],
-                filename: fileName,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    scrollY: 0,
-                    scrollX: 0,
-                    windowWidth: 794,
-                    // onclone modifica a cópia interna do html2canvas antes da captura,
-                    // sem tocar no DOM real — elimina o offset do flexbox independente
-                    // do tamanho da janela.
-                    onclone: (clonedDoc) => {
-                        const clonedEl = clonedDoc.getElementById('receipt-content');
-                        if (!clonedEl) return;
-                        const clonedOverlay = clonedDoc.getElementById('pdf-overlay');
-                        if (clonedOverlay) clonedOverlay.style.position = 'absolute';
-                        const clonedParent = clonedEl.parentElement;
-                        if (clonedParent) {
-                            clonedParent.style.display = 'block';
-                            clonedParent.style.padding = '0';
-                        }
-                        clonedEl.style.margin = '0';
-                        clonedEl.style.maxWidth = 'none';
-                    }
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: 'avoid-all' }
-            };
-
-            window.html2pdf().set(opt).from(original).save();
+            window.print();
         };
 
         window.limparFiltros = () => {
