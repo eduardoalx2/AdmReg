@@ -48,21 +48,6 @@
             color: #1e293b;
         }
 
-        @media print {
-            * { visibility: hidden; }
-            #receipt-content, #receipt-content * { visibility: visible; }
-            #receipt-content {
-                position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 24px !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
-            }
-        }
     </style>
 </head>
 
@@ -315,18 +300,10 @@
             </div>
         </div>
 
-        <!-- Overlay de visualização do recibo -->
-        <div id="pdf-overlay" style="position:fixed;inset:0;z-index:99999;background:rgba(15, 23, 42, 0.85);display:none;overflow-y:auto;backdrop-filter:blur(4px);">
-            <div style="background:#1e293b;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
-                <span style="color:#94a3b8;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;">Confira o recibo e clique em Baixar PDF</span>
-                <div style="display:flex;gap:8px;">
-                    <button onclick="fecharModalRecibo()" style="padding:6px 16px;background:#334155;color:white;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;">Fechar</button>
-                    <button id="btn-baixar-pdf" onclick="baixarPdfRecibo()" style="padding:6px 16px;background:#2563eb;color:white;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;">⬇ Baixar PDF</button>
-                </div>
-            </div>
-            <div style="display:flex;justify-content:center;padding:24px 16px;min-height:calc(100vh - 60px);">
-                <div id="receipt-content"
-                    style="font-family:'Inter',sans-serif;padding:32px;background:white;width:100%;max-width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;margin:0 auto;box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.25);border-radius:8px;">
+        <!-- Elemento PDF oculto fora da tela para geração de recibos (mesmo padrão do index.html) -->
+        <div style="position:absolute;left:-9999px;top:0;overflow:visible;z-index:-1;">
+            <div id="receipt-content"
+                style="font-family:'Inter',sans-serif;padding:24px;background:white;width:794px;display:flex;flex-direction:column;color:#1f2937;box-sizing:border-box;">
                 <div
                     style="border:2px solid #1f2937;padding:24px;display:flex;flex-direction:column;position:relative;">
                     <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
@@ -416,7 +393,6 @@
                         Documento gerado eletronicamente - IEQ REG655</div>
                 </div>
             </div>
-        </div>
         </div>
         <div id="pdf-loading" style="position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,0.75);display:none;align-items:center;justify-content:center;">
             <div style="background:white;padding:20px 32px;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#1e293b;">⏳ Gerando PDF, aguarde...</div>
@@ -629,68 +605,22 @@
             }
         }
 
-        function getPdfOpt(filename) {
-            return {
-                margin: 0,
-                filename,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, allowTaint: true, scrollY: 0, scrollX: 0, windowWidth: 794 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: 'avoid-all' }
-            };
-        }
-
         function getNomeArquivoPdf(r) {
             const safeDate = (r.referenceDate || '').replace('/', '-');
             const safeChurch = (r.igrejaCodigo || 'UNID');
             return `${safeChurch} - REC REG REF(${safeDate}).pdf`;
         }
 
-        function clonarReceiptNoTopo() {
-            const receiptEl = document.getElementById('receipt-content');
-            const clone = receiptEl.cloneNode(true);
-            clone.removeAttribute('id');
-            clone.style.cssText = [
-                'position:absolute', 'top:0', 'left:0', 'z-index:2147483647',
-                'width:794px', 'min-height:1122px', 'background:white',
-                'font-family:Inter,sans-serif', 'padding:24px',
-                'display:flex', 'flex-direction:column',
-                'color:#1f2937', 'box-sizing:border-box', 'margin:0'
-            ].join(';');
-            document.body.insertBefore(clone, document.body.firstChild);
-            return clone;
-        }
-
-        function getPdfOptFinal(filename) {
-            return {
-                margin: [0, 12, 0, 12],
-                filename,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false, scrollY: 0, scrollX: 0, windowWidth: 794 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: 'avoid-all' }
-            };
-        }
-
         window.gerarPdfRecibo = (id) => {
             const r = recibosList.find(i => i.id === id);
             if (!r) return;
             preencherDadosPdf(r);
-            window._pdfFileName = getNomeArquivoPdf(r);
-            document.getElementById('pdf-overlay').style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        };
-
-        window.fecharModalRecibo = () => {
-            document.getElementById('pdf-overlay').style.display = 'none';
-            document.body.style.overflow = '';
-        };
-
-        window.baixarPdfRecibo = () => {
-            const originalTitle = document.title;
-            document.title = window._pdfFileName || 'recibo';
-            window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
-            window.print();
+            const el = document.getElementById('receipt-content');
+            const fn = getNomeArquivoPdf(r);
+            const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+            const canvasOpts = { scale:2, useCORS:true, scrollY:0, scrollX:0 };
+            if (isMobile) canvasOpts.windowWidth = 794;
+            html2pdf().set({ margin:0, filename:fn, image:{type:'jpeg',quality:0.98}, html2canvas:canvasOpts, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} }).from(el).save();
         };
 
         window.limparFiltros = () => {
@@ -852,7 +782,10 @@
             const nomeArquivo = getNomeArquivoPdf(r);
 
             try {
-                const pdfBlob = await html2pdf().set(getPdfOptFinal(nomeArquivo)).from(receiptEl.outerHTML).output('blob');
+                const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+                const canvasOpts = { scale:2, useCORS:true, scrollY:0, scrollX:0 };
+                if (isMobile) canvasOpts.windowWidth = 794;
+                const pdfBlob = await html2pdf().set({ margin:0, filename:nomeArquivo, image:{type:'jpeg',quality:0.98}, html2canvas:canvasOpts, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} }).from(receiptEl).output('blob');
                 const pdfFile = new File([pdfBlob], nomeArquivo, { type: 'application/pdf' });
 
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
