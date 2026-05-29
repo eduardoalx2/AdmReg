@@ -675,32 +675,6 @@
             if (!window.html2pdf) { alert("Carregando biblioteca PDF..."); return; }
             const fileName = window._pdfFileName || 'recibo.pdf';
 
-            const overlay = document.getElementById('pdf-overlay');
-            const parent = original.parentElement;
-
-            const originalOverlayPosition = overlay.style.position;
-            const originalParentDisplay = parent.style.display;
-            const originalParentJustify = parent.style.justifyContent;
-            const originalMargin = original.style.margin;
-            const scrollY = window.scrollY;
-            const scrollX = window.scrollX;
-
-            const restore = () => {
-                overlay.style.position = originalOverlayPosition;
-                parent.style.display = originalParentDisplay;
-                parent.style.justifyContent = originalParentJustify;
-                original.style.margin = originalMargin;
-                overlay.style.display = 'none';
-                document.body.style.overflow = '';
-                window.scrollTo(scrollX, scrollY);
-            };
-
-            window.scrollTo(0, 0);
-            overlay.style.position = 'absolute';
-            parent.style.display = 'block';
-            parent.style.justifyContent = 'flex-start';
-            original.style.margin = '0';
-
             const opt = {
                 margin: [10, 10, 10, 10],
                 filename: fileName,
@@ -711,21 +685,29 @@
                     allowTaint: true,
                     scrollY: 0,
                     scrollX: 0,
-                    windowWidth: 794
+                    windowWidth: 794,
+                    // onclone modifica a cópia interna do html2canvas antes da captura,
+                    // sem tocar no DOM real — elimina o offset do flexbox independente
+                    // do tamanho da janela.
+                    onclone: (clonedDoc) => {
+                        const clonedEl = clonedDoc.getElementById('receipt-content');
+                        if (!clonedEl) return;
+                        const clonedOverlay = clonedDoc.getElementById('pdf-overlay');
+                        if (clonedOverlay) clonedOverlay.style.position = 'absolute';
+                        const clonedParent = clonedEl.parentElement;
+                        if (clonedParent) {
+                            clonedParent.style.display = 'block';
+                            clonedParent.style.padding = '0';
+                        }
+                        clonedEl.style.margin = '0';
+                        clonedEl.style.maxWidth = 'none';
+                    }
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: 'avoid-all' }
             };
 
-            // Dois requestAnimationFrame garantem que o browser re-pintou o layout
-            // com os novos estilos antes do html2canvas fazer a captura.
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    window.html2pdf().set(opt).from(original).save()
-                        .then(restore)
-                        .catch((err) => { console.error('Erro na geração do PDF:', err); restore(); });
-                });
-            });
+            window.html2pdf().set(opt).from(original).save();
         };
 
         window.limparFiltros = () => {
