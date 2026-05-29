@@ -31,7 +31,7 @@
             * { visibility: hidden; }
             #receipt-content, #receipt-content * { visibility: visible; }
             #receipt-content {
-                position: fixed !important;
+                position: absolute !important;
                 top: 0 !important;
                 left: 0 !important;
                 width: 100% !important;
@@ -580,6 +580,9 @@
         };
 
         window.baixarPdfRecibo = () => {
+            const originalTitle = document.title;
+            document.title = window._pdfFileName || 'recibo';
+            window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
             window.print();
         };
 
