@@ -570,9 +570,7 @@
 
             const overlay = document.getElementById('pdf-overlay');
             const parent = original.parentElement;
-            
-            // Salva os estilos originais
-            const originalOverlayDisplay = overlay.style.display;
+
             const originalOverlayPosition = overlay.style.position;
             const originalParentDisplay = parent.style.display;
             const originalParentJustify = parent.style.justifyContent;
@@ -580,10 +578,17 @@
             const scrollY = window.scrollY;
             const scrollX = window.scrollX;
 
-            // Remove o scroll
-            window.scrollTo(0, 0);
+            const restore = () => {
+                overlay.style.position = originalOverlayPosition;
+                parent.style.display = originalParentDisplay;
+                parent.style.justifyContent = originalParentJustify;
+                original.style.margin = originalMargin;
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+                window.scrollTo(scrollX, scrollY);
+            };
 
-            // Modifica temporariamente para colar no canto (0,0) e evitar os bugs do html2canvas
+            window.scrollTo(0, 0);
             overlay.style.position = 'absolute';
             parent.style.display = 'block';
             parent.style.justifyContent = 'flex-start';
@@ -605,22 +610,14 @@
                 pagebreak: { mode: 'avoid-all' }
             };
 
-            window.html2pdf().set(opt).from(original).save().then(() => {
-                // Restaura tudo
-                overlay.style.position = originalOverlayPosition;
-                parent.style.display = originalParentDisplay;
-                parent.style.justifyContent = originalParentJustify;
-                original.style.margin = originalMargin;
-                overlay.style.display = 'none';
-                document.body.style.overflow = '';
-                window.scrollTo(scrollX, scrollY);
-            }).catch((err) => {
-                console.error('Erro na geração do PDF:', err);
-                overlay.style.position = originalOverlayPosition;
-                parent.style.display = originalParentDisplay;
-                parent.style.justifyContent = originalParentJustify;
-                original.style.margin = originalMargin;
-                window.scrollTo(scrollX, scrollY);
+            // Dois requestAnimationFrame garantem que o browser re-pintou o layout
+            // com os novos estilos antes do html2canvas fazer a captura.
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    window.html2pdf().set(opt).from(original).save()
+                        .then(restore)
+                        .catch((err) => { console.error('Erro na geração do PDF:', err); restore(); });
+                });
             });
         };
 
