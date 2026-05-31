@@ -169,13 +169,14 @@
 
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         let rawData = [];
         let masterChurches = new Map(); 
         let competencies = new Set();
         let showOnlyPending = false;
         let showFullReport = false;
+        let saldoInformadoMap = new Map(); // key: "codigo_competencia" -> boolean
 
         function labelToChave(label) {
             const meses = {
@@ -251,6 +252,15 @@
             return null;
         }
 
+        function extrairCodigo(nome) {
+            const m = (nome || '').match(/^(\d+)/);
+            return m ? String(parseInt(m[1])).padStart(4, '0') : '0000';
+        }
+
+        function getSaldoKey(nomeIgreja, comp) {
+            return `${extrairCodigo(nomeIgreja)}_${comp}`;
+        }
+
         // Retorna periodoChave (AAAA-MM) do documento; normaliza MM/AAAA antigo
         function getComp(s) {
             const raw = s.periodoChave || labelToChave(s.periodo) || 'S/D';
@@ -304,6 +314,11 @@
                 });
                 rawData = data;
 
+                const saldoInfoSnapshot = await getDocs(collection(db, "saldo_informado"));
+                saldoInfoSnapshot.forEach(d => {
+                    if (d.data().informado) saldoInformadoMap.set(d.id, true);
+                });
+
                 setupFilters();
                 
                 const selectIgreja = document.getElementById('churchSelect');
@@ -343,6 +358,36 @@
                 });
 
                 document.getElementById('btnWhatsapp').addEventListener('click', sendWhatsappReminder);
+
+                document.getElementById('churchGrid').addEventListener('click', async function(e) {
+                    const btn = e.target.closest('.btn-saldo-info');
+                    if (!btn) return;
+                    e.preventDefault();
+                    const church = btn.dataset.church;
+                    const comp = btn.dataset.comp;
+                    const currentlyInformed = btn.dataset.saldo === 'true';
+                    const key = getSaldoKey(church, comp);
+                    const newState = !currentlyInformed;
+                    try {
+                        await setDoc(doc(db, "saldo_informado", key), {
+                            igreja: church,
+                            competencia: comp,
+                            informado: newState,
+                            atualizadoEm: new Date().toISOString()
+                        }, { merge: true });
+                        saldoInformadoMap.set(key, newState);
+                        btn.dataset.saldo = String(newState);
+                        if (newState) {
+                            btn.classList.remove('border-slate-200/40', 'text-slate-300/50');
+                            btn.classList.add('border-emerald-300', 'text-emerald-600', 'bg-emerald-50');
+                        } else {
+                            btn.classList.remove('border-emerald-300', 'text-emerald-600', 'bg-emerald-50');
+                            btn.classList.add('border-slate-200/40', 'text-slate-300/50');
+                        }
+                    } catch(err) {
+                        console.error("Erro saldo informado:", err);
+                    }
+                });
 
             } catch (error) {
                 console.error("Erro:", error);
@@ -426,13 +471,25 @@
             window.open(`https://wa.me/?text=${fullMessage}`, '_blank');
         }
 
-        function generateCardHtml(churchName, comp, status, dataEnvio, cc, din, total, extraData) {
+        function generateCardHtml(churchName, comp, status, dataEnvio, cc, din, total, extraData, saldoInformado = false) {
             const isDelivered = status === 'Entregue';
             const isWaiting = status === 'Aguardando';
             const barColor = isDelivered ? 'bg-emerald-500' : (isWaiting ? 'bg-blue-500' : 'bg-rose-500');
             const badgeClass = isDelivered ? 'status-badge-delivered' : (isWaiting ? 'status-badge-waiting' : 'status-badge-pending');
             const badgeLabel = isDelivered ? 'OK' : (isWaiting ? 'Aguardando' : 'Pendente');
             const compDisplay = (comp && /^\d{4}-\d{2}$/.test(comp)) ? chaveParaLabel(comp) : comp;
+
+            let saldoBtnHtml = '';
+            if (isDelivered && comp && /^\d{4}-\d{2}$/.test(comp)) {
+                const btnClass = saldoInformado
+                    ? 'border-emerald-300 text-emerald-600 bg-emerald-50'
+                    : 'border-slate-200/40 text-slate-300/50';
+                saldoBtnHtml = `
+                    <button class="btn-saldo-info text-[7px] font-medium px-1.5 py-0.5 rounded border transition-all hover:opacity-80 ${btnClass}"
+                            data-church="${churchName}" data-comp="${comp}" data-saldo="${saldoInformado}">
+                        saldo informado
+                    </button>`;
+            }
             
             let fullReportHtml = '';
             if (showFullReport && isDelivered) {
@@ -510,9 +567,12 @@
                         ${fullReportHtml}
                     </div>
 
-                    <div class="mt-3 flex items-center gap-1 text-slate-400">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-                        <span class="text-[9px] font-medium truncate">${isDelivered ? dataEnvio : 'Pendente'}</span>
+                    <div class="mt-3 flex items-center justify-between gap-1">
+                        <div class="flex items-center gap-1 text-slate-400 min-w-0">
+                            <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            <span class="text-[9px] font-medium truncate">${isDelivered ? dataEnvio : 'Pendente'}</span>
+                        </div>
+                        ${saldoBtnHtml}
                     </div>
                 </div>
             `;
@@ -538,8 +598,9 @@
                     countEntregue++;
                     totalGeralSoma += getNumericValue(d.total);
                     if (!showOnlyPending) {
+                        const infoKey = getSaldoKey(d.nomeOriginal, d.competencia);
                         listItems.push({
-                            html: generateCardHtml(d.nomeOriginal, d.periodoDisplay || d.competencia, 'Entregue', d.dataEnvio, d.cc, d.din, d.total, d),
+                            html: generateCardHtml(d.nomeOriginal, d.periodoDisplay || d.competencia, 'Entregue', d.dataEnvio, d.cc, d.din, d.total, d, saldoInformadoMap.get(infoKey) || false),
                             status: 'Entregue',
                             nome: d.nomeOriginal
                         });
@@ -578,8 +639,9 @@
                         countEntregue++;
                         totalGeralSoma += getNumericValue(sub.total);
                         if (!showOnlyPending) {
+                            const infoKey = getSaldoKey(originalName, selectedComp);
                             listItems.push({
-                                html: generateCardHtml(originalName, selectedComp, 'Entregue', sub.dataEnvio, sub.cc, sub.din, sub.total, sub),
+                                html: generateCardHtml(originalName, selectedComp, 'Entregue', sub.dataEnvio, sub.cc, sub.din, sub.total, sub, saldoInformadoMap.get(infoKey) || false),
                                 status: 'Entregue',
                                 nome: originalName
                             });
