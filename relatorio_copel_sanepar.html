@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório COPEL e SANEPAR - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!hasAnyPermission(['admin', 'secretario', 'superintendente'])) {
+                window.location.replace('index.html');
+            }
+        } catch (e) {}
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @media print {
+            body { background: white !important; }
+            .print-hidden { display: none !important; }
+            @page { size: landscape; margin: 10mm; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-10 print:bg-white">
+
+    <!-- Loading -->
+    <div id="loadingScreen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center gap-3">
+            <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Carregando dados...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="w-full shadow-sm bg-white border-b print-hidden">
+        <div class="max-w-6xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <div class="flex items-center gap-2">
+                    <a href="levantamento_copel_sanepar.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="edit-3" class="w-3 h-3"></i> Formulário
+                    </a>
+                    <span class="text-slate-300">|</span>
+                    <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-yellow-400"></i>
+                    Relatório — Levantamento COPEL e SANEPAR
+                </h1>
+                <button onclick="window.print()" class="print-hidden bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors uppercase shadow-md">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Print Header -->
+    <div class="hidden print:block w-full bg-white text-black px-4 py-4">
+        <div class="flex justify-between items-center mb-3 border-b-2 border-slate-800 pb-3">
+            <div class="flex items-center gap-4">
+                <img src="logo.png" alt="Logo IEQ" class="h-10 object-contain">
+                <div>
+                    <h1 class="text-base font-black uppercase tracking-widest text-slate-900 leading-tight">Levantamento COPEL e SANEPAR</h1>
+                    <p class="text-xs font-bold text-slate-600 mt-0.5">Região 655 • Londrina/PR</p>
+                </div>
+            </div>
+            <div class="text-right text-xs text-slate-500">
+                <div id="printDate"></div>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-6 space-y-5">
+
+        <!-- Cards de resumo -->
+        <div id="resumoCards" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <!-- Preenchidos pelo JS -->
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print-hidden">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-0.5">COPEL</label>
+                    <select id="filterCopel" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-xs font-semibold text-slate-700">
+                        <option value="todos">Todos</option>
+                        <option value="ced">Via CED</option>
+                        <option value="boleto_ieq">Boleto em nome da IEQ</option>
+                        <option value="terceiros">Em nome de Terceiros</option>
+                        <option value="nao_aplica">Não se aplica</option>
+                        <option value="pendente">Não preenchido</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-0.5">SANEPAR</label>
+                    <select id="filterSanepar" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none text-xs font-semibold text-slate-700">
+                        <option value="todos">Todos</option>
+                        <option value="ieq">Em nome da IEQ</option>
+                        <option value="terceiros">Em nome de Terceiros</option>
+                        <option value="nao_aplica">Não se aplica</option>
+                        <option value="pendente">Não preenchido</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-0.5">Status</label>
+                    <select id="filterStatus" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-400 outline-none text-xs font-semibold text-slate-700">
+                        <option value="todos">Todos</option>
+                        <option value="preenchido">Preenchidos</option>
+                        <option value="pendente">Pendentes</option>
+                    </select>
+                </div>
+                <div>
+                    <button onclick="window.limparFiltros()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs uppercase transition-colors">
+                        Limpar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contagem de resultados -->
+        <div class="flex justify-between items-center print-hidden">
+            <span class="text-xs font-bold text-slate-500" id="countLabel">—</span>
+            <button onclick="window.exportarCSV()" class="text-[10px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 uppercase tracking-wider">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar CSV
+            </button>
+        </div>
+
+        <!-- Tabela COPEL -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-5 py-3 flex items-center gap-2 border-b border-slate-100" style="background: linear-gradient(to right, #fef9c3, #fef3c7);">
+                <i data-lucide="zap" class="w-4 h-4 text-yellow-600"></i>
+                <h2 class="text-xs font-black text-yellow-900 uppercase tracking-widest">COPEL — Energia Elétrica</h2>
+                <span id="copelCount" class="ml-auto text-[10px] font-bold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full"></span>
+            </div>
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50">
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest w-8">#</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Igreja</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Situação COPEL</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest print-hidden">Observações</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest print-hidden">Preenchido por</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest print-hidden">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaCopel">
+                        <tr><td colspan="6" class="p-6 text-center text-slate-400 text-xs">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabela SANEPAR -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-5 py-3 flex items-center gap-2 border-b border-slate-100" style="background: linear-gradient(to right, #dbeafe, #eff6ff);">
+                <i data-lucide="droplets" class="w-4 h-4 text-blue-600"></i>
+                <h2 class="text-xs font-black text-blue-900 uppercase tracking-widest">SANEPAR — Água e Esgoto</h2>
+                <span id="saneparCount" class="ml-auto text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full"></span>
+            </div>
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50">
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest w-8">#</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Igreja</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Situação SANEPAR</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest print-hidden">Observações</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest print-hidden">Preenchido por</th>
+                            <th class="text-left p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest print-hidden">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaSanepar">
+                        <tr><td colspan="6" class="p-6 text-center text-slate-400 text-xs">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        import { db } from './firebase-config.js';
+        import {
+            collection, getDocs, orderBy, query
+        } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // ── Labels e badges ──────────────────────────────────────────────────
+
+        const COPEL_LABELS = {
+            ced:       { label: 'Via CED (Conselho Estadual)',       cls: 'bg-purple-100 text-purple-800' },
+            boleto_ieq:{ label: 'Boleto em nome da IEQ',             cls: 'bg-emerald-100 text-emerald-800' },
+            terceiros: { label: 'Em nome de Terceiros',              cls: 'bg-orange-100 text-orange-800' },
+            nao_aplica:{ label: 'Não se aplica',                     cls: 'bg-slate-100 text-slate-600' },
+        };
+
+        const SANEPAR_LABELS = {
+            ieq:       { label: 'Em nome da IEQ',                    cls: 'bg-emerald-100 text-emerald-800' },
+            terceiros: { label: 'Em nome de Terceiros',              cls: 'bg-orange-100 text-orange-800' },
+            nao_aplica:{ label: 'Não se aplica',                     cls: 'bg-slate-100 text-slate-600' },
+        };
+
+        const PENDENTE_BADGE = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> Não preenchido
+        </span>`;
+
+        function badge(map, key) {
+            const item = map[key];
+            if (!item) return PENDENTE_BADGE;
+            return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${item.cls}">${item.label}</span>`;
+        }
+
+        function fmtDate(ts) {
+            if (!ts) return '—';
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function setLoading(v) {
+            document.getElementById('loadingScreen').style.display = v ? 'flex' : 'none';
+        }
+
+        // ── Estado global ─────────────────────────────────────────────────────
+
+        let todosRegistros = []; // { igrejaNome, copel, sanepar, obsCopel, obsSanepar, preenchidoPor, atualizadoEm }
+
+        // ── Filtros ───────────────────────────────────────────────────────────
+
+        function getFiltros() {
+            return {
+                copel:   document.getElementById('filterCopel').value,
+                sanepar: document.getElementById('filterSanepar').value,
+                status:  document.getElementById('filterStatus').value,
+            };
+        }
+
+        function matchCopelFiltro(reg, filtro) {
+            if (filtro === 'todos') return true;
+            if (filtro === 'pendente') return !reg.copel;
+            return reg.copel === filtro;
+        }
+
+        function matchSaneparFiltro(reg, filtro) {
+            if (filtro === 'todos') return true;
+            if (filtro === 'pendente') return !reg.sanepar;
+            return reg.sanepar === filtro;
+        }
+
+        function matchStatusFiltro(reg, filtro) {
+            if (filtro === 'todos') return true;
+            const preenchido = !!(reg.copel && reg.sanepar);
+            return filtro === 'preenchido' ? preenchido : !preenchido;
+        }
+
+        function filtrar() {
+            const { copel, sanepar, status } = getFiltros();
+            return todosRegistros.filter(r =>
+                matchCopelFiltro(r, copel) &&
+                matchSaneparFiltro(r, sanepar) &&
+                matchStatusFiltro(r, status)
+            );
+        }
+
+        // ── Render ────────────────────────────────────────────────────────────
+
+        function renderTabelaCopel(lista) {
+            const tbody = document.getElementById('tabelaCopel');
+            if (!lista.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 text-xs font-semibold">Nenhum resultado encontrado</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = lista.map((r, i) => `
+                <tr class="border-b border-slate-50 hover:bg-yellow-50 transition-colors">
+                    <td class="p-3 text-slate-400 font-bold">${i + 1}</td>
+                    <td class="p-3 font-semibold text-slate-800">${r.igrejaNome}</td>
+                    <td class="p-3">${badge(COPEL_LABELS, r.copel)}</td>
+                    <td class="p-3 text-slate-500 print-hidden max-w-xs truncate" title="${r.obsCopel || ''}">${r.obsCopel || '<span class="text-slate-300">—</span>'}</td>
+                    <td class="p-3 text-slate-500 print-hidden">${r.preenchidoPor || '<span class="text-slate-300">—</span>'}</td>
+                    <td class="p-3 text-slate-400 print-hidden whitespace-nowrap">${fmtDate(r.atualizadoEm)}</td>
+                </tr>
+            `).join('');
+            document.getElementById('copelCount').textContent = `${lista.length} igrejas`;
+        }
+
+        function renderTabelaSanepar(lista) {
+            const tbody = document.getElementById('tabelaSanepar');
+            if (!lista.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 text-xs font-semibold">Nenhum resultado encontrado</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = lista.map((r, i) => `
+                <tr class="border-b border-slate-50 hover:bg-blue-50 transition-colors">
+                    <td class="p-3 text-slate-400 font-bold">${i + 1}</td>
+                    <td class="p-3 font-semibold text-slate-800">${r.igrejaNome}</td>
+                    <td class="p-3">${badge(SANEPAR_LABELS, r.sanepar)}</td>
+                    <td class="p-3 text-slate-500 print-hidden max-w-xs truncate" title="${r.obsSanepar || ''}">${r.obsSanepar || '<span class="text-slate-300">—</span>'}</td>
+                    <td class="p-3 text-slate-500 print-hidden">${r.preenchidoPor || '<span class="text-slate-300">—</span>'}</td>
+                    <td class="p-3 text-slate-400 print-hidden whitespace-nowrap">${fmtDate(r.atualizadoEm)}</td>
+                </tr>
+            `).join('');
+            document.getElementById('saneparCount').textContent = `${lista.length} igrejas`;
+        }
+
+        function renderResumo(todos) {
+            const total = todos.length;
+            const preenchidos = todos.filter(r => r.copel && r.sanepar).length;
+            const pendentes = total - preenchidos;
+
+            // Contagens COPEL
+            const copelCED   = todos.filter(r => r.copel === 'ced').length;
+            const copelIEQ   = todos.filter(r => r.copel === 'boleto_ieq').length;
+            const copelTerc  = todos.filter(r => r.copel === 'terceiros').length;
+
+            // Contagens SANEPAR
+            const sanIEQ     = todos.filter(r => r.sanepar === 'ieq').length;
+            const sanTerc    = todos.filter(r => r.sanepar === 'terceiros').length;
+
+            const cards = [
+                { label: 'Total de Igrejas',   valor: total,       cor: 'bg-slate-800 text-white',           icon: 'building-2' },
+                { label: 'Preenchidos',         valor: preenchidos, cor: 'bg-emerald-600 text-white',         icon: 'check-circle' },
+                { label: 'Pendentes',           valor: pendentes,   cor: 'bg-red-500 text-white',             icon: 'clock' },
+                { label: 'COPEL via CED',       valor: copelCED,    cor: 'bg-purple-600 text-white',          icon: 'zap' },
+                { label: 'COPEL Boleto IEQ',    valor: copelIEQ,    cor: 'bg-emerald-700 text-white',         icon: 'file-text' },
+                { label: 'COPEL Terceiros',     valor: copelTerc,   cor: 'bg-orange-500 text-white',          icon: 'user' },
+                { label: 'SANEPAR em nome IEQ', valor: sanIEQ,      cor: 'bg-blue-600 text-white',            icon: 'droplets' },
+                { label: 'SANEPAR Terceiros',   valor: sanTerc,     cor: 'bg-sky-500 text-white',             icon: 'user' },
+            ];
+
+            document.getElementById('resumoCards').innerHTML = cards.map(c => `
+                <div class="rounded-2xl shadow-sm p-4 flex items-center gap-3 ${c.cor}">
+                    <i data-lucide="${c.icon}" class="w-7 h-7 opacity-80 flex-shrink-0"></i>
+                    <div>
+                        <div class="text-xl font-black leading-none">${c.valor}</div>
+                        <div class="text-[9px] font-bold uppercase tracking-widest opacity-80 mt-0.5">${c.label}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function render() {
+            const lista = filtrar();
+            renderTabelaCopel(lista);
+            renderTabelaSanepar(lista);
+            document.getElementById('countLabel').textContent = `${lista.length} igrejas exibidas`;
+            lucide.createIcons();
+        }
+
+        // ── Filtros e CSV ─────────────────────────────────────────────────────
+
+        window.limparFiltros = function () {
+            document.getElementById('filterCopel').value = 'todos';
+            document.getElementById('filterSanepar').value = 'todos';
+            document.getElementById('filterStatus').value = 'todos';
+            render();
+        };
+
+        document.getElementById('filterCopel').addEventListener('change', render);
+        document.getElementById('filterSanepar').addEventListener('change', render);
+        document.getElementById('filterStatus').addEventListener('change', render);
+
+        window.exportarCSV = function () {
+            const lista = filtrar();
+            const copelLabel  = v => COPEL_LABELS[v]?.label || 'Não preenchido';
+            const sanLabel    = v => SANEPAR_LABELS[v]?.label || 'Não preenchido';
+            const header = ['Igreja', 'COPEL', 'Obs. COPEL', 'SANEPAR', 'Obs. SANEPAR', 'Preenchido por', 'Data'];
+            const rows = lista.map(r => [
+                r.igrejaNome,
+                copelLabel(r.copel),
+                r.obsCopel || '',
+                sanLabel(r.sanepar),
+                r.obsSanepar || '',
+                r.preenchidoPor || '',
+                fmtDate(r.atualizadoEm)
+            ]);
+            const csv = [header, ...rows].map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `levantamento_copel_sanepar_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        // ── Init ──────────────────────────────────────────────────────────────
+
+        async function init() {
+            try {
+                await requireAuth();
+                if (!hasAnyPermission(['admin', 'secretario', 'superintendente'])) {
+                    window.location.replace('index.html');
+                    return;
+                }
+
+                document.getElementById('printDate').textContent =
+                    `Gerado em ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+
+                // Carregar igrejas e levantamento em paralelo
+                const [igrejasSnap, levSnap] = await Promise.all([
+                    getDocs(query(collection(db, 'igrejas'), orderBy('nome'))),
+                    getDocs(collection(db, 'levantamento_copel_sanepar'))
+                ]);
+
+                const levMap = {};
+                levSnap.docs.forEach(d => { levMap[d.id] = d.data(); });
+
+                todosRegistros = igrejasSnap.docs
+                    .map(d => d.data())
+                    .filter(ig => ig.nome)
+                    .map(ig => {
+                        const lev = levMap[ig.nome] || {};
+                        return {
+                            igrejaNome:   ig.nome,
+                            copel:        lev.copel || '',
+                            sanepar:      lev.sanepar || '',
+                            obsCopel:     lev.obsCopel || '',
+                            obsSanepar:   lev.obsSanepar || '',
+                            preenchidoPor: lev.preenchidoPor || '',
+                            atualizadoEm: lev.atualizadoEm || null,
+                        };
+                    });
+
+                renderResumo(todosRegistros);
+                render();
+
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+                lucide.createIcons();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
