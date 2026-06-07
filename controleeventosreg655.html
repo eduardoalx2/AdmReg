@@ -396,6 +396,7 @@
                     presencasDoEvento.forEach(presenca => {
                         if (!displayList.some(d => d.id === presenca.id)) {
                             if (presenca.status === 'Ausente' && !eventoInativo) return;
+                            if (presenca.status === 'Ausente' && !expectedPastores.some(p => p.nome === presenca.nome)) return;
                             displayList.push({ ...presenca, dataEvento: evento.data });
                         }
                     });
@@ -445,6 +446,7 @@
                     presencasDoEvento.forEach(presenca => {
                         if (!displayList.some(d => d.id === presenca.id)) {
                             if (presenca.status === 'Ausente' && !eventoInativo) return;
+                            if (presenca.status === 'Ausente' && !expectedPastores.some(p => p.nome === presenca.nome)) return;
                             displayList.push({ ...presenca, dataEvento: evento.data });
                         }
                     });
