@@ -99,6 +99,14 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
     }
 
+    match /diaconato_inscritos/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /diaconato_pagamentos/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
     // Qualquer outra coleção não listada: requer autenticação
     match /{collection}/{docId} {
       allow read, write: if isAuthenticated();

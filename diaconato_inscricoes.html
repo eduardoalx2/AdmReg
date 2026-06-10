@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscrições — Congresso do Diaconato</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!hasAnyPermission(['admin', 'secretario', 'coordenador'])) {
+                window.location.replace('index.html');
+            }
+        } catch (e) {}
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .table-custom { font-size: 0.8rem; }
+        .table-custom th { padding: 8px 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em; }
+        .table-custom td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-5xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                    <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Admin
+                </a>
+            </div>
+        </div>
+        <div class="header-gradient py-3 px-4">
+            <div class="max-w-5xl mx-auto flex justify-between items-center">
+                <div>
+                    <h1 class="text-sm md:text-base font-bold text-white tracking-wide uppercase">Inscrições — Congresso do Diaconato</h1>
+                    <p class="text-[10px] text-white/50 mt-0.5 uppercase tracking-wider">IEQ Região 655</p>
+                </div>
+                <button onclick="window.abrirModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] md:text-xs font-bold px-3 py-1.5 rounded flex items-center gap-1 transition-colors uppercase shadow-md">
+                    <i data-lucide="user-plus" class="w-3 h-3"></i> Nova Inscrição
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto py-6 px-4 space-y-4">
+
+        <div id="loading" class="flex items-center justify-center py-20">
+            <div class="flex flex-col items-center gap-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <p class="text-slate-500 text-sm font-semibold">Carregando inscrições...</p>
+            </div>
+        </div>
+
+        <div id="content" class="hidden space-y-4">
+
+            <!-- Resumo -->
+            <div id="resumo" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+
+            <!-- Filtro -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 px-4 py-3 flex items-center gap-3">
+                <i data-lucide="filter" class="w-4 h-4 text-slate-400 flex-shrink-0"></i>
+                <select id="filtro-igreja" class="flex-1 text-sm font-semibold text-slate-700 bg-transparent outline-none border-none cursor-pointer">
+                    <option value="">Todas as Igrejas</option>
+                </select>
+                <span id="contador-filtro" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap"></span>
+            </div>
+
+            <!-- Tabela -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse table-custom whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                <th>Nome Completo</th>
+                                <th>Igreja</th>
+                                <th>WhatsApp</th>
+                                <th>CPF</th>
+                                <th>Cadastrado em</th>
+                                <th class="w-16 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-inscritos" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Inscrição -->
+    <div id="modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-slate-800 px-5 py-4 flex justify-between items-center">
+                <h2 id="modal-titulo" class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> Nova Inscrição
+                </h2>
+                <button onclick="window.fecharModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="form-inscricao" class="p-6 space-y-4">
+                <input type="hidden" id="inscricao-id">
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nome Completo *</label>
+                    <input type="text" id="campo-nome" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-bold text-slate-800" placeholder="Nome completo do diácono">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">CPF</label>
+                        <input type="text" id="campo-cpf" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm" placeholder="000.000.000-00">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">RG</label>
+                        <input type="text" id="campo-rg" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm" placeholder="0.000.000-0">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data de Nascimento</label>
+                        <input type="text" id="campo-nascimento" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm" placeholder="DD/MM/AAAA">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">WhatsApp *</label>
+                        <input type="text" id="campo-whatsapp" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm" placeholder="(43) 99999-9999">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Igreja *</label>
+                    <select id="campo-igreja" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        <option value="">— Selecione uma Igreja —</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="window.fecharModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 rounded uppercase text-[11px] hover:bg-slate-200 transition-colors">Cancelar</button>
+                    <button type="submit" id="btn-salvar" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded uppercase text-[11px] hover:bg-blue-700 transition-colors shadow-md">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        window.fecharModal = () => document.getElementById('modal').classList.add('hidden');
+    </script>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getCurrentEmail, getCurrentIgreja } from './js/auth.js';
+
+        const COLL = 'diaconato_inscritos';
+        let inscritos = [];
+        let igrejas = [];
+
+        if (window.lucide) lucide.createIcons();
+
+        function esc(s) {
+            return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function fmtData(ts) {
+            if (!ts) return '—';
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            return d.toLocaleDateString('pt-BR');
+        }
+
+        async function carregar() {
+            try {
+                const [inscSnap, igSnap] = await Promise.all([
+                    getDocs(collection(db, COLL)),
+                    getDocs(collection(db, 'igrejas'))
+                ]);
+
+                inscritos = [];
+                inscSnap.forEach(d => inscritos.push({ id: d.id, ...d.data() }));
+                inscritos.sort((a, b) => (a.nomeCompleto || '').localeCompare(b.nomeCompleto || '', 'pt-BR'));
+
+                igrejas = [];
+                igSnap.forEach(d => igrejas.push({ docId: d.id, ...d.data() }));
+                igrejas.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+
+                renderFiltro();
+                renderResumo();
+                renderTabela();
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+                lucide.createIcons();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold text-center">Erro ao carregar dados. Recarregue a página.</p>';
+            }
+        }
+
+        function renderFiltro() {
+            const sel = document.getElementById('filtro-igreja');
+            const usadas = [...new Set(inscritos.map(i => i.igrejaNome).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            sel.innerHTML = '<option value="">Todas as Igrejas</option>';
+            usadas.forEach(nome => {
+                const cnt = inscritos.filter(i => i.igrejaNome === nome).length;
+                const opt = document.createElement('option');
+                opt.value = nome;
+                opt.textContent = `${nome} (${cnt})`;
+                sel.appendChild(opt);
+            });
+            sel.addEventListener('change', renderTabela);
+        }
+
+        function renderResumo() {
+            const porIgreja = {};
+            inscritos.forEach(i => {
+                const k = i.igrejaNome || '(sem igreja)';
+                porIgreja[k] = (porIgreja[k] || 0) + 1;
+            });
+            const qtdIgrejas = Object.keys(porIgreja).length;
+            const badgesHtml = Object.entries(porIgreja)
+                .sort((a, b) => b[1] - a[1])
+                .map(([k, v]) => `<span class="px-2 py-0.5 bg-blue-50 border border-blue-100 text-blue-700 rounded text-[10px] font-bold">${esc(k)}: ${v}</span>`)
+                .join('');
+
+            document.getElementById('resumo').innerHTML = `
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 text-center">
+                    <div class="text-3xl font-black text-blue-600">${inscritos.length}</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase mt-1 tracking-wider">Total de Inscritos</div>
+                </div>
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 text-center">
+                    <div class="text-3xl font-black text-emerald-600">${qtdIgrejas}</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase mt-1 tracking-wider">Igrejas Participantes</div>
+                </div>
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-4 col-span-2 ${qtdIgrejas === 0 ? 'hidden' : ''}">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-wider">Inscritos por Igreja</div>
+                    <div class="flex flex-wrap gap-2">${badgesHtml}</div>
+                </div>
+            `;
+        }
+
+        function renderTabela() {
+            const filtro = document.getElementById('filtro-igreja').value;
+            const lista = filtro ? inscritos.filter(i => i.igrejaNome === filtro) : inscritos;
+
+            document.getElementById('contador-filtro').textContent = `${lista.length} inscrito${lista.length !== 1 ? 's' : ''}`;
+
+            const tbody = document.getElementById('tabela-inscritos');
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-400 text-sm">Nenhum inscrito encontrado.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = lista.map(i => `
+                <tr class="hover:bg-blue-50/50 transition-colors group">
+                    <td>
+                        <div class="font-bold text-slate-800 leading-tight">${esc(i.nomeCompleto || '—')}</div>
+                        ${i.dataNascimento ? `<div class="text-[10px] text-slate-400 mt-0.5">Nasc: ${esc(i.dataNascimento)}</div>` : ''}
+                    </td>
+                    <td><span class="text-[11px] text-slate-600">${esc(i.igrejaNome || '—')}</span></td>
+                    <td><span class="text-[11px] text-slate-600">${esc(i.whatsapp || '—')}</span></td>
+                    <td><span class="text-[11px] text-slate-500">${esc(i.cpf || '—')}</span></td>
+                    <td><span class="text-[11px] text-slate-400">${fmtData(i.dataCadastro)}</span></td>
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="window.editarInscricao('${i.id}')" class="text-blue-500 hover:text-blue-700 transition-colors" title="Editar">
+                                <i data-lucide="edit" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.excluirInscricao('${i.id}')" class="text-red-400 hover:text-red-600 transition-colors" title="Excluir">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function preencherSelectIgrejas(valorSelecionado) {
+            const sel = document.getElementById('campo-igreja');
+            sel.innerHTML = '<option value="">— Selecione uma Igreja —</option>';
+            igrejas.forEach(ig => {
+                const opt = document.createElement('option');
+                opt.value = ig.nome;
+                opt.dataset.docId = ig.docId;
+                opt.textContent = `${ig.codigo} - ${ig.nome}`;
+                if (ig.nome === valorSelecionado) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            // Pré-seleciona a igreja do coordenador quando não há valor inicial
+            if (!valorSelecionado) {
+                const igrejaUsuario = getCurrentIgreja();
+                if (igrejaUsuario) sel.value = igrejaUsuario;
+            }
+        }
+
+        window.abrirModal = () => {
+            document.getElementById('form-inscricao').reset();
+            document.getElementById('inscricao-id').value = '';
+            document.getElementById('modal-titulo').innerHTML = '<i data-lucide="user-plus" class="w-4 h-4"></i> Nova Inscrição';
+            preencherSelectIgrejas('');
+            document.getElementById('modal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.editarInscricao = (id) => {
+            const i = inscritos.find(x => x.id === id);
+            if (!i) return;
+            document.getElementById('inscricao-id').value = i.id;
+            document.getElementById('campo-nome').value = i.nomeCompleto || '';
+            document.getElementById('campo-cpf').value = i.cpf || '';
+            document.getElementById('campo-rg').value = i.rg || '';
+            document.getElementById('campo-nascimento').value = i.dataNascimento || '';
+            document.getElementById('campo-whatsapp').value = i.whatsapp || '';
+            preencherSelectIgrejas(i.igrejaNome || '');
+            document.getElementById('modal-titulo').innerHTML = '<i data-lucide="edit" class="w-4 h-4"></i> Editar Inscrição';
+            document.getElementById('modal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.excluirInscricao = async (id) => {
+            const i = inscritos.find(x => x.id === id);
+            if (!i) return;
+            if (!confirm(`Excluir a inscrição de "${i.nomeCompleto}"?`)) return;
+            try {
+                await deleteDoc(doc(db, COLL, id));
+                await carregar();
+            } catch (e) {
+                alert('Erro ao excluir. Tente novamente.');
+                console.error(e);
+            }
+        };
+
+        document.getElementById('form-inscricao').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-salvar');
+            btn.textContent = 'Salvando...';
+            btn.disabled = true;
+
+            const sel = document.getElementById('campo-igreja');
+            const selectedOpt = sel.options[sel.selectedIndex];
+
+            const payload = {
+                nomeCompleto: document.getElementById('campo-nome').value.trim(),
+                cpf: document.getElementById('campo-cpf').value.trim(),
+                rg: document.getElementById('campo-rg').value.trim(),
+                dataNascimento: document.getElementById('campo-nascimento').value.trim(),
+                whatsapp: document.getElementById('campo-whatsapp').value.trim(),
+                igrejaNome: sel.value,
+                igrejaId: selectedOpt?.dataset.docId || sel.value,
+                cadastradoPor: getCurrentEmail(),
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                const id = document.getElementById('inscricao-id').value;
+                if (id) {
+                    await updateDoc(doc(db, COLL, id), payload);
+                } else {
+                    payload.dataCadastro = serverTimestamp();
+                    await addDoc(collection(db, COLL), payload);
+                }
+                window.fecharModal();
+                await carregar();
+            } catch (err) {
+                alert('Erro ao salvar. Tente novamente.');
+                console.error(err);
+            } finally {
+                btn.textContent = 'Salvar';
+                btn.disabled = false;
+            }
+        });
+
+        await carregar();
+    </script>
+</body>
+</html>
