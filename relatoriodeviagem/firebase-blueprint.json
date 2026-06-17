@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "Report": {
+      "title": "Report",
+      "description": "A travel report containing aggregated expenses.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID of the owner" },
+        "name": { "type": "string", "description": "Name of the report (e.g., Relatório 03/2026 - Região 655 - 01)" },
+        "localSaida": { "type": "string", "description": "Departure location" },
+        "localDestino": { "type": "string", "description": "Destination location" },
+        "motivoViagem": { "type": "string", "description": "Reason for travel" },
+        "role": { "type": "string", "description": "Role of the traveler" },
+        "noRecibo": { "type": "string", "description": "Receipt number" },
+        "nomePorExtenso": { "type": "string", "description": "Full name of the traveler" },
+        "nomeIgreja": { "type": "string", "description": "Name of the church" },
+        "cnpjCod": { "type": "string", "description": "CNPJ or code" },
+        "cidadeUf": { "type": "string", "description": "City and state" },
+        "data": { "type": "string", "description": "Date of the report" },
+        "assinatura": { "type": "string", "enum": ["valdir", "edu", "none"], "description": "Signature image to use" },
+        "consolidated": { "type": "boolean", "description": "Whether the report is consolidated and locked for editing" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "localSaida", "localDestino", "motivoViagem"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "An individual expense entry.",
+      "type": "object",
+      "properties": {
+        "reportId": { "type": "string", "description": "ID of the associated report" },
+        "categoryId": { "type": "string", "enum": ["hospedagem", "alimentacao", "transporte", "pedagio", "combustivel", "estacionamento"], "description": "Category of the expense" },
+        "receiptNumber": { "type": "string", "description": "Receipt or invoice number" },
+        "value": { "type": "number", "description": "Value of the expense" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["reportId", "categoryId", "value"]
+    }
+  },
+  "firestore": {
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Collection of travel reports"
+    },
+    "/reports/{reportId}/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "Subcollection of expenses for a specific report"
+    }
+  }
+}

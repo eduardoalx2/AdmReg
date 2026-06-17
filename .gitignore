@@ -6,3 +6,9 @@
 
 # Chaves e Informações Secretas Locais
 tatudoai
+
+# Subprojeto relatório de viagem (Vite) — código-fonte versionado, mas não artefatos/segredos
+relatoriodeviagem/node_modules/
+relatoriodeviagem/.env
+relatoriodeviagem/.env.*
+!relatoriodeviagem/.env.example
