@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Relatório de Viagem - IEQ</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.7/babel.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background:#fafaf9; }
+    @media print {
+      @page { size: A4; margin: 0; }
+      html, body { background:#fff !important; margin:0 !important; padding:0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .print-hidden { display: none !important; }
+      .print-reset { box-shadow:none !important; width:100% !important; min-height:0 !important; padding:0 !important; margin:0 !important; }
+      .folha { page-break-after: always; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-weight:700">Carregando…</div>
+  </div>
+
+  <!-- Firebase (projeto próprio do app, database nomeada) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, collection, collectionGroup, doc, addDoc, setDoc, updateDoc, deleteDoc,
+             getDocs, onSnapshot, query, where, orderBy, Timestamp, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJJ2Zc6x78VOpRPeEYmb-CDKdRRv6Rg9I",
+      authDomain: "gen-lang-client-0821007726.firebaseapp.com",
+      projectId: "gen-lang-client-0821007726",
+      storageBucket: "gen-lang-client-0821007726.firebasestorage.app",
+      messagingSenderId: "663060102260",
+      appId: "1:663060102260:web:58a8906c58cb95b83b6521"
+    };
+    const DATABASE_ID = "ai-studio-6e8ee6cf-2e0e-4813-8221-70d1cc511c09";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app, DATABASE_ID);
+    const auth = getAuth(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    window.firebaseGlobal = {
+      db, auth, googleProvider,
+      collection, collectionGroup, doc, addDoc, setDoc, updateDoc, deleteDoc,
+      getDocs, onSnapshot, query, where, orderBy, Timestamp, serverTimestamp,
+      signInWithPopup, signOut, onAuthStateChanged
+    };
+    window.__FB_READY = true;
+    window.dispatchEvent(new Event('firebase-ready'));
+  </script>
+
+  <!-- App -->
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    /* ---------- Ícones (SVG inline, estilo lucide) ---------- */
+    const ICONS = {
+      printer: 'M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z',
+      plus: 'M5 12h14M12 5v14',
+      trash: 'M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6',
+      back: 'M15 18l-6-6 6-6',
+      file: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6',
+      login: 'M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3',
+      logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+      pluscircle: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8v8M8 12h8',
+      calendar: 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
+      pin: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+      brief: 'M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16M4 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z',
+      check: 'M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3',
+      xcircle: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM15 9l-6 6M9 9l6 6',
+      alert: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8v4M12 16h.01',
+      clock: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 6v6l4 2',
+      chart: 'M3 3v18h18M18 17V9M13 17V5M8 17v-3'
+    };
+    function Icon({ name, size = 18, className = '', style = {} }) {
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+             className={className} style={style}>
+          {ICONS[name].split('M').filter(Boolean).map((d, i) => <path key={i} d={'M' + d} />)}
+        </svg>
+      );
+    }
+
+    /* ---------- Helpers ---------- */
+    const CATEGORIES = [
+      { id: 'hospedagem',    label: 'Hospedagem' },
+      { id: 'alimentacao',   label: 'Alimentação' },
+      { id: 'transporte',    label: 'Transporte' },
+      { id: 'pedagio',       label: 'Pedágio' },
+      { id: 'combustivel',   label: 'Combustível' },
+      { id: 'estacionamento',label: 'Estacionamento' },
+    ];
+    const ROLES = ['Supervisor', 'Superintendente/Diretor de Campo', 'Coordenador', 'Pastor', 'Funcionário'];
+    const COLORS = ['#2563eb', '#7c3aed', '#db2777', '#ea580c', '#16a34a', '#ca8a04'];
+    const CNPJ_IEQ = '62.955.505/0252-32';
+
+    const num = (v) => { const n = typeof v === 'number' ? v : parseFloat(String(v ?? '').replace(',', '.')); return isFinite(n) ? n : 0; };
+    const brl = (n) => num(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const parseISO = (s) => new Date((s || '1970-01-01') + 'T12:00:00');
+    const mesAno = (s) => { const d = parseISO(s); return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }); };
+    const dataExtensa = (s) => { const d = parseISO(s); return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).replace(/ de /, ' de '); };
+    const mesCurto = (s) => { const d = parseISO(s); return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '') + '/' + String(d.getFullYear()).slice(2); };
+    const tsToStr = (ts) => {
+      if (!ts) return '';
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+    };
+    const tsMs = (ts) => { if (!ts) return 0; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.getTime() || 0; };
+    const lastBusinessDayPrevMonth = () => {
+      const now = new Date();
+      let d = new Date(now.getFullYear(), now.getMonth(), 0); // último dia do mês anterior
+      while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+      return d.toISOString().slice(0, 10);
+    };
+
+    /* ---------- Valor por extenso (pt-BR, moeda) ---------- */
+    function extensoReais(valor) {
+      valor = Math.round(num(valor) * 100) / 100;
+      const reais = Math.floor(valor);
+      const centavos = Math.round((valor - reais) * 100);
+      const u = ['', 'um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+      const dez = ['', '', 'vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+      const cem = ['', 'cento','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+      function ate999(n) {
+        if (n === 0) return '';
+        if (n === 100) return 'cem';
+        let s = '';
+        const c = Math.floor(n / 100), resto = n % 100;
+        if (c) s += cem[c];
+        if (resto) {
+          if (s) s += ' e ';
+          if (resto < 20) s += u[resto];
+          else { const d = Math.floor(resto / 10), un = resto % 10; s += dez[d] + (un ? ' e ' + u[un] : ''); }
+        }
+        return s;
+      }
+      function inteiro(n) {
+        if (n === 0) return 'zero';
+        const milhoes = Math.floor(n / 1000000);
+        const milhares = Math.floor((n % 1000000) / 1000);
+        const resto = n % 1000;
+        const partes = [];
+        if (milhoes) partes.push(ate999(milhoes) + (milhoes === 1 ? ' milhão' : ' milhões'));
+        if (milhares) partes.push((milhares === 1 ? 'mil' : ate999(milhares) + ' mil'));
+        if (resto) partes.push(ate999(resto));
+        return partes.join(' e ');
+      }
+      let txt = inteiro(reais) + ' ' + (reais === 1 ? 'real' : 'reais');
+      if (centavos) txt += ' e ' + inteiro(centavos) + ' ' + (centavos === 1 ? 'centavo' : 'centavos');
+      return txt;
+    }
+
+    /* =========================================================
+       APP
+    ========================================================= */
+    function App() {
+      const fb = window.firebaseGlobal;
+      const [user, setUser] = useState(null);
+      const [authReady, setAuthReady] = useState(false);
+      const [reports, setReports] = useState([]);
+      const [selectedId, setSelectedId] = useState(null);
+      const [expenses, setExpenses] = useState([]);
+      const [allExpenses, setAllExpenses] = useState([]);
+      const [view, setView] = useState('list');
+      const [error, setError] = useState(null);
+      const [delConfirm, setDelConfirm] = useState(null);
+      const [pwPrompt, setPwPrompt] = useState(false);
+      const [pwInput, setPwInput] = useState('');
+      const pendingUnlock = useRef(null);
+
+      const fail = (e, ctx) => { console.error('Firestore', ctx, e); setError((e && e.message) || 'Erro desconhecido'); };
+
+      /* Auth */
+      useEffect(() => {
+        return fb.onAuthStateChanged(fb.auth, (u) => { setUser(u); setAuthReady(true); });
+      }, []);
+
+      /* Reports do usuário */
+      useEffect(() => {
+        if (!user) { setReports([]); return; }
+        const q = fb.query(fb.collection(fb.db, 'reports'), fb.where('uid', '==', user.uid), fb.orderBy('createdAt', 'desc'));
+        return fb.onSnapshot(q, (snap) => setReports(snap.docs.map(d => ({ id: d.id, ...d.data() }))), (e) => fail(e, 'reports'));
+      }, [user]);
+
+      /* Despesas do report selecionado */
+      useEffect(() => {
+        if (!user || !selectedId) { setExpenses([]); return; }
+        const q = fb.query(fb.collection(fb.db, `reports/${selectedId}/expenses`), fb.orderBy('createdAt', 'asc'));
+        return fb.onSnapshot(q, (snap) => setExpenses(snap.docs.map(d => ({ id: d.id, ...d.data() }))), (e) => fail(e, 'expenses'));
+      }, [user, selectedId]);
+
+      /* Todas as despesas (dashboard + totais da lista) */
+      useEffect(() => {
+        if (!user) { setAllExpenses([]); return; }
+        const q = fb.query(fb.collectionGroup(fb.db, 'expenses'), fb.where('uid', '==', user.uid));
+        return fb.onSnapshot(q, (snap) => setAllExpenses(snap.docs.map(d => ({ id: d.id, ...d.data() }))), (e) => fail(e, 'collectionGroup'));
+      }, [user]);
+
+      const selected = useMemo(() => reports.find(r => r.id === selectedId) || null, [reports, selectedId]);
+
+      const totalsByCat = useMemo(() => {
+        const acc = {};
+        CATEGORIES.forEach(c => { acc[c.id] = expenses.filter(e => e.categoryId === c.id).reduce((s, e) => s + num(e.value), 0); });
+        return acc;
+      }, [expenses]);
+      const totalGeral = useMemo(() => Object.values(totalsByCat).reduce((s, v) => s + v, 0), [totalsByCat]);
+      const totalExtenso = useMemo(() => totalGeral > 0 ? extensoReais(totalGeral) : '', [totalGeral]);
+
+      const reportTotals = useMemo(() => {
+        const t = {};
+        allExpenses.forEach(e => { t[e.reportId] = (t[e.reportId] || 0) + num(e.value); });
+        return t;
+      }, [allExpenses]);
+
+      /* Mantém report.total sincronizado (corrige dado antigo string) */
+      useEffect(() => {
+        if (!selected) return;
+        if (num(selected.total) !== totalGeral && !selected.locked) {
+          fb.updateDoc(fb.doc(fb.db, 'reports', selected.id), { total: totalGeral }).catch(e => fail(e, 'sync total'));
+        }
+      }, [totalGeral, selectedId]);
+
+      const sorted = useMemo(() => [...reports].sort((a, b) => (tsMs(b.updatedAt) || tsMs(b.createdAt)) - (tsMs(a.updatedAt) || tsMs(a.createdAt))), [reports]);
+
+      const dash = useMemo(() => {
+        const mMap = {}, cMap = {};
+        allExpenses.forEach(e => {
+          const r = reports.find(x => x.id === e.reportId); if (!r) return;
+          mMap[mesCurto(r.data)] = (mMap[mesCurto(r.data)] || 0) + num(e.value);
+          const cat = CATEGORIES.find(c => c.id === e.categoryId);
+          const lab = cat ? cat.label : 'Outros';
+          cMap[lab] = (cMap[lab] || 0) + num(e.value);
+        });
+        return {
+          monthly: Object.entries(mMap).map(([name, total]) => ({ name, total })),
+          categories: Object.entries(cMap).map(([name, value]) => ({ name, value }))
+        };
+      }, [reports, allExpenses]);
+
+      /* Page title */
+      useEffect(() => {
+        document.title = view === 'dashboard' ? 'Dashboard - Relatório de Viagem'
+          : (view === 'edit' && selected) ? `Editando: ${selected.name}`
+          : (view === 'preview' && selected) ? `Impressão: ${selected.name}`
+          : 'Sistema de Relatório de Viagem - IEQ';
+      }, [view, selected]);
+
+      /* Handlers */
+      const login = async () => { try { await fb.signInWithPopup(fb.auth, fb.googleProvider); } catch (e) { fail(e, 'login'); } };
+      const logout = async () => { await fb.signOut(fb.auth); setView('list'); setSelectedId(null); };
+
+      const createReport = async () => {
+        if (!user) return;
+        try {
+          const novo = {
+            uid: user.uid,
+            name: `Relatório ${String(new Date().getMonth() + 1).padStart(2, '0')}/${new Date().getFullYear()} - Região 655 - 01`,
+            localSaida: 'LONDRINA',
+            localDestino: 'LONDRINA, CAMBÉ, IBIPORÃ E REGIÃO METROPOLITANA',
+            motivoViagem: 'REUNIÕES, CONVOCAÇÕES E VISITAS PASTORAIS',
+            role: 'Pastor', noRecibo: '',
+            nomePorExtenso: user.displayName || '',
+            nomeIgreja: 'IEQ CENTRAL', cnpjCod: CNPJ_IEQ, cidadeUf: 'LONDRINA/PR',
+            data: lastBusinessDayPrevMonth(),
+            assinatura: 'none', locked: false, total: 0,
+            createdAt: fb.serverTimestamp(), updatedAt: fb.serverTimestamp()
+          };
+          const ref = await fb.addDoc(fb.collection(fb.db, 'reports'), novo);
+          setSelectedId(ref.id); setView('edit');
+        } catch (e) { fail(e, 'create'); }
+      };
+
+      const updateReport = async (data) => {
+        if (!selected) return;
+        if (selected.locked && !('locked' in data)) { setError('Relatório consolidado. Desbloqueie para editar.'); return; }
+        try { await fb.updateDoc(fb.doc(fb.db, 'reports', selected.id), { ...data, updatedAt: fb.serverTimestamp() }); }
+        catch (e) { fail(e, 'update report'); }
+      };
+
+      const toggleLock = () => {
+        if (!selected) return;
+        if (selected.locked) { pendingUnlock.current = () => updateReport({ locked: false }); setPwPrompt(true); }
+        else updateReport({ locked: true });
+      };
+      const verifyPw = () => {
+        if (pwInput === 'admin') { pendingUnlock.current && pendingUnlock.current(); setPwPrompt(false); setPwInput(''); pendingUnlock.current = null; }
+        else setError('Senha incorreta.');
+      };
+
+      const addExpense = async (categoryId) => {
+        if (!selected || !user) return;
+        if (selected.locked) return;
+        try {
+          await fb.addDoc(fb.collection(fb.db, `reports/${selected.id}/expenses`), {
+            reportId: selected.id, uid: user.uid, categoryId, receiptNumber: '', value: 0, createdAt: fb.serverTimestamp()
+          });
+        } catch (e) { fail(e, 'add expense'); }
+      };
+      const updateExpense = async (id, data) => {
+        if (!selected) return;
+        try { await fb.updateDoc(fb.doc(fb.db, `reports/${selected.id}/expenses`, id), data); }
+        catch (e) { fail(e, 'update expense'); }
+      };
+      const deleteExpense = async (id) => {
+        if (!selected) return;
+        try { await fb.deleteDoc(fb.doc(fb.db, `reports/${selected.id}/expenses`, id)); }
+        catch (e) { fail(e, 'delete expense'); }
+      };
+      const deleteReport = async (id) => {
+        try {
+          const exps = await fb.getDocs(fb.collection(fb.db, `reports/${id}/expenses`));
+          await Promise.all(exps.docs.map(d => fb.deleteDoc(d.ref)));
+          await fb.deleteDoc(fb.doc(fb.db, 'reports', id));
+          if (selectedId === id) { setSelectedId(null); setView('list'); }
+          setDelConfirm(null);
+        } catch (e) { fail(e, 'delete report'); }
+      };
+
+      /* ---------- Render ---------- */
+      if (!authReady) return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        </div>
+      );
+
+      if (!user) return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="bg-white p-10 rounded-3xl shadow-xl border border-stone-200 max-w-md w-full text-center space-y-6">
+            <div className="w-20 h-20 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center text-white font-black text-4xl shadow-lg">Q</div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold tracking-tight">Relatório de Viagem IEQ</h1>
+              <p className="text-stone-500 text-sm">Faça login para gerenciar seus relatórios.</p>
+            </div>
+            <button onClick={login} className="w-full flex items-center justify-center gap-3 bg-white border-2 border-stone-100 hover:border-blue-600 hover:bg-blue-50 text-stone-700 font-bold py-4 rounded-2xl transition-all shadow-sm">
+              <Icon name="login" size={20} className="text-blue-600" /> Entrar com Google
+            </button>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="min-h-screen text-stone-900">
+          {/* Toast erro */}
+          {error && (
+            <div className="fixed bottom-4 right-4 z-[100] bg-red-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm print-hidden">
+              <Icon name="alert" size={24} />
+              <div className="flex-1"><p className="text-sm font-bold">Ocorreu um erro</p><p className="text-xs opacity-90 break-words">{error}</p></div>
+              <button onClick={() => setError(null)} className="p-1 hover:bg-white/10 rounded-lg"><Icon name="xcircle" size={20} /></button>
+            </div>
+          )}
+
+          {/* Modal senha */}
+          {pwPrompt && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 print-hidden">
+              <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full space-y-6">
+                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto"><Icon name="alert" size={32} /></div>
+                <div className="text-center space-y-2"><h3 className="text-xl font-bold">Relatório Consolidado</h3><p className="text-stone-500 text-sm">Digite a senha para desbloquear.</p></div>
+                <input type="password" value={pwInput} autoFocus onChange={e => setPwInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && verifyPw()}
+                  className="w-full border-2 border-stone-100 focus:border-blue-600 p-3 rounded-xl outline-none text-center font-bold" placeholder="Senha" />
+                <div className="flex gap-3">
+                  <button onClick={() => { setPwPrompt(false); setPwInput(''); pendingUnlock.current = null; }} className="flex-1 py-3 rounded-xl font-bold text-stone-500 hover:bg-stone-100">Cancelar</button>
+                  <button onClick={verifyPw} className="flex-1 py-3 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700">Desbloquear</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal excluir */}
+          {delConfirm && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 print-hidden">
+              <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full space-y-6">
+                <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto"><Icon name="trash" size={32} /></div>
+                <div className="text-center space-y-2"><h3 className="text-xl font-bold">Excluir Relatório?</h3><p className="text-stone-500 text-sm">Esta ação não pode ser desfeita; os lançamentos serão perdidos.</p></div>
+                <div className="flex gap-3">
+                  <button onClick={() => setDelConfirm(null)} className="flex-1 py-3 rounded-xl font-bold text-stone-500 hover:bg-stone-100">Cancelar</button>
+                  <button onClick={() => deleteReport(delConfirm)} className="flex-1 py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700">Excluir</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Header */}
+          <header className="bg-white border-b border-stone-200 sticky top-0 z-50 print-hidden">
+            <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button onClick={() => setView('list')} className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-md hover:scale-105 transition-transform">Q</button>
+                <div className="hidden md:block">
+                  <h1 className="text-sm font-bold uppercase tracking-widest text-stone-400">Relatório de Viagem</h1>
+                  <p className="text-xs font-medium text-stone-600">Igreja do Evangelho Quadrangular</p>
+                </div>
+                {view === 'list' && (
+                  <button onClick={() => setView('dashboard')} className="ml-2 flex items-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-700 px-4 py-2 rounded-xl text-xs font-bold">
+                    <Icon name="chart" size={16} /> Dashboard
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-4">
+                {view !== 'list' && (
+                  <button onClick={() => setView('list')} className="flex items-center gap-2 text-stone-500 hover:text-stone-900 text-sm font-bold uppercase tracking-wider">
+                    <Icon name="back" size={18} /> Voltar
+                  </button>
+                )}
+                <div className="h-8 w-px bg-stone-200"></div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right hidden sm:block"><p className="text-xs font-bold">{user.displayName}</p><p className="text-[10px] text-stone-500">{user.email}</p></div>
+                  <button onClick={logout} className="text-stone-400 hover:text-red-500"><Icon name="logout" size={20} /></button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-4 py-8">
+            {/* LISTA */}
+            {view === 'list' && (
+              <div className="space-y-8">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div>
+                    <h2 className="text-3xl font-black tracking-tight">Meus Relatórios</h2>
+                    <p className="text-stone-500">Gerencie e organize seus reembolsos.</p>
+                  </div>
+                  <button onClick={createReport} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5">
+                    <Icon name="pluscircle" size={20} /> Novo Relatório
+                  </button>
+                </div>
+                <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full">
+                  {sorted.length === 0 ? (
+                    <div className="py-20 text-center space-y-4 bg-white rounded-3xl border-2 border-dashed border-stone-200">
+                      <div className="w-16 h-16 bg-stone-100 rounded-full mx-auto flex items-center justify-center text-stone-300"><Icon name="file" size={32} /></div>
+                      <p className="text-stone-400 font-medium">Nenhum relatório. Comece criando um novo!</p>
+                    </div>
+                  ) : sorted.map(r => (
+                    <div key={r.id} onClick={() => { setSelectedId(r.id); setView('edit'); }}
+                      className="group bg-white p-6 rounded-3xl border border-stone-200 shadow-sm hover:shadow-xl hover:border-blue-200 transition-all cursor-pointer relative">
+                      <button onClick={(e) => { e.stopPropagation(); setDelConfirm(r.id); }} className="absolute top-4 right-4 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="trash" size={18} /></button>
+                      <div className="flex items-start md:items-center justify-between gap-4 flex-col md:flex-row">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0"><Icon name="file" size={24} /></div>
+                          <div>
+                            <h3 className="font-bold line-clamp-1 flex items-center gap-2">{r.name} {r.locked && <span className="text-[9px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full uppercase font-black">Consolidado</span>}</h3>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-stone-400">
+                              <span className="uppercase tracking-widest font-bold">{mesAno(r.data)}</span>
+                              <span className="flex items-center gap-1"><Icon name="clock" size={12} /> Alterado: {tsToStr(r.updatedAt || r.createdAt)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-stone-100">
+                          <span className="flex items-center gap-2 text-stone-500"><Icon name="pin" size={14} /><span className="text-[10px] font-bold uppercase">{r.cidadeUf}</span></span>
+                          <span className="text-base font-black text-blue-600">R$ {brl(reportTotals[r.id] || 0)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* DASHBOARD */}
+            {view === 'dashboard' && <Dashboard dash={dash} reportsCount={reports.length} setView={setView} />}
+
+            {/* EDIT */}
+            {view === 'edit' && selected && (
+              <Editor selected={selected} expenses={expenses} totalsByCat={totalsByCat} totalGeral={totalGeral}
+                updateReport={updateReport} toggleLock={toggleLock} addExpense={addExpense} updateExpense={updateExpense} deleteExpense={deleteExpense} setView={setView} />
+            )}
+
+            {/* PREVIEW */}
+            {view === 'preview' && selected && (
+              <Preview selected={selected} expenses={expenses} totalsByCat={totalsByCat} totalGeral={totalGeral} totalExtenso={totalExtenso} setView={setView} />
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    /* ---------- Dashboard ---------- */
+    function Dashboard({ dash, reportsCount, setView }) {
+      const totalGeral = dash.monthly.reduce((s, m) => s + m.total, 0);
+      const maxM = Math.max(1, ...dash.monthly.map(m => m.total));
+      const totCat = Math.max(1, dash.categories.reduce((s, c) => s + c.value, 0));
+      let acc = 0;
+      const R = 70, C = 2 * Math.PI * R;
+      return (
+        <div className="space-y-8">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div><h2 className="text-3xl font-black tracking-tight">Dashboard de Viagens</h2><p className="text-stone-500">Visão geral de gastos.</p></div>
+            <button onClick={() => setView('list')} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200">Ver Relatórios</button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-sm space-y-6">
+              <h3 className="text-lg font-black flex items-center gap-2"><Icon name="calendar" size={20} className="text-blue-600" /> Gastos por Mês</h3>
+              <div className="h-[300px] flex items-end gap-3 border-b border-stone-100 pb-2">
+                {dash.monthly.length === 0 ? <p className="text-stone-400 text-sm m-auto">Sem dados.</p> : dash.monthly.map((m, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center justify-end gap-2 h-full">
+                    <span className="text-[10px] font-bold text-stone-500">{brl(m.total)}</span>
+                    <div className="w-full bg-blue-600 rounded-t-lg transition-all" style={{ height: `${(m.total / maxM) * 100}%`, minHeight: '4px' }}></div>
+                    <span className="text-[10px] font-bold text-stone-400 uppercase">{m.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-sm space-y-6">
+              <h3 className="text-lg font-black flex items-center gap-2"><Icon name="brief" size={20} className="text-purple-600" /> Distribuição por Categoria</h3>
+              <div className="h-[300px] flex items-center justify-center gap-8 flex-wrap">
+                {dash.categories.length === 0 ? <p className="text-stone-400 text-sm">Sem dados.</p> : (
+                  <>
+                    <svg width="180" height="180" viewBox="0 0 180 180">
+                      <g transform="rotate(-90 90 90)">
+                        {dash.categories.map((c, i) => {
+                          const frac = c.value / totCat, len = frac * C, dash2 = `${len} ${C - len}`, off = -acc * C; acc += frac;
+                          return <circle key={i} cx="90" cy="90" r={R} fill="none" stroke={COLORS[i % COLORS.length]} strokeWidth="28" strokeDasharray={dash2} strokeDashoffset={off} />;
+                        })}
+                      </g>
+                    </svg>
+                    <div className="space-y-1">
+                      {dash.categories.map((c, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <span className="w-3 h-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }}></span>
+                          <span className="font-bold text-stone-600">{c.name}</span>
+                          <span className="text-stone-400">R$ {brl(c.value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-blue-600 text-white p-8 rounded-3xl shadow-xl shadow-blue-100 space-y-2"><p className="text-xs font-bold uppercase tracking-widest opacity-70">Total Geral Gasto</p><p className="text-3xl font-black">R$ {brl(totalGeral)}</p></div>
+            <div className="bg-stone-900 text-white p-8 rounded-3xl shadow-xl space-y-2"><p className="text-xs font-bold uppercase tracking-widest opacity-70">Média por Relatório</p><p className="text-3xl font-black">R$ {brl(reportsCount ? totalGeral / reportsCount : 0)}</p></div>
+            <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-sm space-y-2"><p className="text-xs font-bold uppercase tracking-widest text-stone-400">Total de Relatórios</p><p className="text-3xl font-black">{reportsCount}</p></div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ---------- Campo com opções + manual ---------- */
+    function SelectOrText({ label, value, options, onChange, disabled }) {
+      const isPreset = options.includes(value);
+      return (
+        <div className="space-y-1">
+          <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">{label}</label>
+          <select value={isPreset ? value : '__outro'} disabled={disabled}
+            onChange={e => { if (e.target.value !== '__outro') onChange(e.target.value); else onChange(''); }}
+            className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none disabled:opacity-50">
+            {options.map(o => <option key={o} value={o}>{o}</option>)}
+            <option value="__outro">Outro (manual)</option>
+          </select>
+          {!isPreset && (
+            <input type="text" value={value} disabled={disabled} onChange={e => onChange(e.target.value)}
+              className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none mt-2 disabled:opacity-50" placeholder={`${label} (manual)`} />
+          )}
+        </div>
+      );
+    }
+
+    /* ---------- Editor ---------- */
+    function Editor({ selected, expenses, totalsByCat, totalGeral, updateReport, toggleLock, addExpense, updateExpense, deleteExpense, setView }) {
+      const dis = selected.locked;
+      return (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-black">Dados do Relatório</h3>
+                <button onClick={toggleLock} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${selected.locked ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-600 border-green-200'}`}>
+                  <Icon name={selected.locked ? 'xcircle' : 'check'} size={14} /> {selected.locked ? 'Consolidado' : 'Consolidar'}
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Nome do Relatório</label>
+                <input type="text" value={selected.name || ''} disabled={dis} onChange={e => updateReport({ name: e.target.value })}
+                  className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none disabled:opacity-50" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Nome do Beneficiário</label>
+                <input type="text" value={selected.nomePorExtenso || ''} disabled={dis} onChange={e => updateReport({ nomePorExtenso: e.target.value })}
+                  className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none disabled:opacity-50" placeholder="Nome completo de quem recebe" />
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-stone-50">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Igreja</label>
+                  <select value={['IEQ CENTRAL', 'Região 655'].includes(selected.nomeIgreja) ? selected.nomeIgreja : '__outra'} disabled={dis}
+                    onChange={e => { const v = e.target.value; if (v === 'IEQ CENTRAL') updateReport({ nomeIgreja: v, cnpjCod: CNPJ_IEQ }); else if (v === 'Região 655') updateReport({ nomeIgreja: v, cnpjCod: '655' }); else updateReport({ nomeIgreja: '' }); }}
+                    className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none disabled:opacity-50">
+                    <option value="IEQ CENTRAL">IEQ CENTRAL</option><option value="Região 655">Região 655</option><option value="__outra">Outra igreja</option>
+                  </select>
+                  {!['IEQ CENTRAL', 'Região 655'].includes(selected.nomeIgreja) && (
+                    <input type="text" value={selected.nomeIgreja || ''} disabled={dis} placeholder="Nome da Igreja" onChange={e => updateReport({ nomeIgreja: e.target.value })}
+                      className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none mt-2 disabled:opacity-50" />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Cód. ou CNPJ</label>
+                  <input type="text" value={selected.cnpjCod || ''} disabled={dis} onChange={e => updateReport({ cnpjCod: e.target.value })}
+                    className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none disabled:opacity-50" />
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-stone-50">
+                <SelectOrText label="Local de Saída" value={selected.localSaida || ''} disabled={dis} options={['LONDRINA']} onChange={v => updateReport({ localSaida: v })} />
+                <SelectOrText label="Local de Destino" value={selected.localDestino || ''} disabled={dis} options={['LONDRINA, CAMBÉ, IBIPORÃ E REGIÃO METROPOLITANA']} onChange={v => updateReport({ localDestino: v })} />
+                <SelectOrText label="Motivo da Viagem" value={selected.motivoViagem || ''} disabled={dis} options={['REUNIÕES, CONVOCAÇÕES E VISITAS PASTORAIS']} onChange={v => updateReport({ motivoViagem: v })} />
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Função/Cargo</label>
+                  <select value={selected.role} disabled={dis} onChange={e => updateReport({ role: e.target.value })}
+                    className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none disabled:opacity-50">
+                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-stone-50">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">No. Recibo</label>
+                  <input type="text" value={selected.noRecibo || ''} disabled={dis} onChange={e => updateReport({ noRecibo: e.target.value })}
+                    className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none disabled:opacity-50" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Data</label>
+                  <input type="date" value={selected.data || ''} disabled={dis} onChange={e => updateReport({ data: e.target.value })}
+                    className="w-full border-b-2 border-stone-100 focus:border-blue-600 py-2 text-sm font-bold outline-none disabled:opacity-50" />
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-stone-50">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-stone-400">Assinatura</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {['none', 'valdir', 'edu'].map(sig => (
+                    <button key={sig} disabled={dis}
+                      onClick={() => { const u = { assinatura: sig }; if (sig === 'valdir') u.nomePorExtenso = 'Rev. Valdir Ávila Ramos'; if (sig === 'edu') u.nomePorExtenso = 'Pr. Eduardo Silva'; updateReport(u); }}
+                      className={`p-2 rounded-xl border-2 flex flex-col items-center gap-1 disabled:opacity-50 ${selected.assinatura === sig ? 'border-blue-600 bg-blue-50' : 'border-stone-100 hover:border-stone-200'}`}>
+                      <div className="h-8 flex items-center justify-center overflow-hidden">{sig === 'none' ? <div className="w-4 h-4 border border-dashed border-stone-300"></div> : <img src={`rv/${sig}.png`} alt={sig} className="max-h-full object-contain" referrerPolicy="no-referrer" />}</div>
+                      <span className="text-[8px] font-bold uppercase">{sig}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={() => setView('preview')} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 flex items-center justify-center gap-2">
+                <Icon name="printer" size={18} /> Visualizar Impressão
+              </button>
+            </div>
+
+            <div className="bg-stone-900 text-white p-8 rounded-3xl shadow-xl space-y-5">
+              <div><span className="text-[10px] font-bold uppercase tracking-widest opacity-50 block mb-1">Total</span><span className="text-4xl font-black">R$ {brl(totalGeral)}</span></div>
+              <div className="space-y-2 pt-5 border-t border-white/10">
+                {CATEGORIES.map(c => totalsByCat[c.id] > 0 && (
+                  <div key={c.id} className="flex justify-between items-center"><span className="text-[10px] font-bold uppercase opacity-50">{c.label}</span><span className="text-xs font-bold">R$ {brl(totalsByCat[c.id])}</span></div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-8 space-y-6">
+            <h2 className="text-2xl font-black tracking-tight">Lançamentos Individuais</h2>
+            {CATEGORIES.map(category => (
+              <div key={category.id} className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden">
+                <div className="bg-stone-50 px-6 py-4 flex items-center justify-between border-b border-stone-200">
+                  <div className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-blue-600"></span><h3 className="font-bold uppercase tracking-wider text-xs">{category.label}</h3></div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs font-black text-stone-400">R$ {brl(totalsByCat[category.id])}</span>
+                    <button onClick={() => addExpense(category.id)} disabled={dis} className="w-8 h-8 bg-white border border-stone-200 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50"><Icon name="plus" size={18} /></button>
+                  </div>
+                </div>
+                <div className="p-4 space-y-2">
+                  {expenses.filter(e => e.categoryId === category.id).length === 0 ? (
+                    <p className="text-[10px] text-stone-400 italic text-center py-4">Nenhum lançamento.</p>
+                  ) : expenses.filter(e => e.categoryId === category.id).map(exp => (
+                    <div key={exp.id} className="flex items-center gap-4 p-2 hover:bg-stone-50 rounded-xl group">
+                      <input type="text" value={exp.receiptNumber || ''} disabled={dis} onChange={e => updateExpense(exp.id, { receiptNumber: e.target.value })}
+                        className="flex-1 bg-transparent border-b border-stone-100 focus:border-blue-600 py-1 text-sm outline-none disabled:opacity-50" placeholder="No. Nota / Recibo" />
+                      <div className="w-32 relative">
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-bold text-stone-400">R$</span>
+                        <input type="number" step="0.01" value={exp.value || ''} disabled={dis}
+                          onChange={e => updateExpense(exp.id, { value: parseFloat(e.target.value) || 0 })}
+                          className="w-full bg-transparent border-b border-stone-100 focus:border-blue-600 py-1 pl-6 text-sm font-bold text-right outline-none disabled:opacity-50" placeholder="0,00" />
+                      </div>
+                      {!dis && <button onClick={() => deleteExpense(exp.id)} className="text-stone-200 hover:text-red-500 opacity-0 group-hover:opacity-100"><Icon name="trash" size={16} /></button>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    /* ---------- Preview (impressão A4) ---------- */
+    function Preview({ selected, expenses, totalsByCat, totalGeral, totalExtenso, setView }) {
+      return (
+        <div className="flex flex-col items-center gap-8 pb-20 print-reset">
+          <div className="folha bg-white shadow-2xl w-[210mm] min-h-[297mm] p-[15mm] print-reset">
+            <div className="border-[1.5px] border-black min-h-[267mm] flex flex-col">
+              <div className="flex border-b-[1.5px] border-black">
+                <div className="w-32 p-2 border-r-[1.5px] border-black flex items-center justify-center"><img src="rv/logo.png" alt="IEQ" className="max-h-16 object-contain" referrerPolicy="no-referrer" /></div>
+                <div className="flex-1 flex flex-col">
+                  <div className="flex-1 flex items-center justify-center border-b-[1.5px] border-black py-1"><h1 className="text-sm italic font-bold">Igreja do Evangelho Quadrangular</h1></div>
+                  <div className="flex-1 flex items-center justify-center py-1"><h2 className="text-xl font-black tracking-tighter uppercase">Relatório de Viagens</h2></div>
+                </div>
+                <div className="w-24 flex flex-col border-l-[1.5px] border-black">
+                  <div className="text-[10px] p-1 border-b-[1.5px] border-black text-center">No. Recibo</div>
+                  <div className="flex-1 flex items-center justify-center font-bold">{selected.noRecibo}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[150px_1fr] border-b-[1.5px] border-black text-xs">
+                <div className="border-r-[1.5px] border-black p-2 text-right font-bold bg-stone-50 flex items-center justify-end">Local de Saída:</div>
+                <div className="p-2 px-4 uppercase font-bold flex items-center">{selected.localSaida}</div>
+                <div className="border-r-[1.5px] border-black p-2 text-right font-bold bg-stone-50 border-t-[1.5px] border-black flex items-center justify-end">Local de Destino:</div>
+                <div className="p-2 px-4 uppercase font-bold border-t-[1.5px] border-black flex items-center">{selected.localDestino}</div>
+                <div className="border-r-[1.5px] border-black p-2 text-right font-bold bg-stone-50 border-t-[1.5px] border-black flex items-center justify-end">Motivo da Viagem:</div>
+                <div className="p-2 px-4 uppercase font-bold border-t-[1.5px] border-black flex items-center">{selected.motivoViagem}</div>
+              </div>
+
+              <div className="flex flex-1 border-b-[1.5px] border-black">
+                <div className="w-1/3 border-r-[1.5px] border-black p-4 space-y-3">
+                  {ROLES.map(role => (
+                    <div key={role} className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-[1.5px] border-black flex items-center justify-center">{selected.role === role && <span className="text-sm font-black leading-none">X</span>}</div>
+                      <span className="text-[11px] font-bold uppercase">{role}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex-1 flex flex-col">
+                  <div className="grid grid-cols-[1fr_150px_100px] text-[10px] font-bold text-center border-b-[1.5px] border-black bg-stone-50">
+                    <div className="p-1 border-r-[1.5px] border-black">Descrição</div><div className="p-1 border-r-[1.5px] border-black">No. Nota Fiscal / Recibo</div><div className="p-1">Total R$</div>
+                  </div>
+                  <div className="flex-1">
+                    {CATEGORIES.map((cat, idx) => (
+                      <div key={cat.id} className={`grid grid-cols-[1fr_150px_100px] text-[10px] ${idx !== CATEGORIES.length - 1 ? 'border-b border-black' : ''}`}>
+                        <div className="p-1 border-r-[1.5px] border-black font-bold uppercase flex items-center gap-2"><div className="w-3 h-3 border border-black flex items-center justify-center">{totalsByCat[cat.id] > 0 && <span className="text-[9px] font-black leading-none">X</span>}</div>{cat.label}</div>
+                        <div className="p-1 border-r-[1.5px] border-black text-center flex items-center justify-center overflow-hidden"><div className="truncate">{expenses.filter(e => e.categoryId === cat.id).map(e => e.receiptNumber).filter(Boolean).join(', ')}</div></div>
+                        <div className="p-1 text-right font-bold flex items-center justify-end">{totalsByCat[cat.id] > 0 ? brl(totalsByCat[cat.id]) : ''}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-[1fr_100px] border-t-[1.5px] border-black">
+                    <div className="p-2 text-right font-bold text-xs bg-stone-50 border-r-[1.5px] border-black uppercase italic">Total Geral</div>
+                    <div className="p-2 text-right font-black text-sm flex items-center justify-end">{brl(totalGeral)}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-2 border-b-[1.5px] border-black">
+                <div className="text-[9px] font-bold uppercase text-stone-500 mb-1">Valor por Extenso</div>
+                <div className="text-xs font-bold italic min-h-[1.5rem] uppercase underline decoration-dotted underline-offset-4">{totalExtenso ? `(${totalExtenso})` : ''}</div>
+              </div>
+
+              <div className="p-8 text-[13px] leading-relaxed">
+                <p className="text-justify">Eu, <span className="font-bold uppercase border-b border-black px-4 inline-block min-w-[350px] text-center">{selected.nomePorExtenso}</span>, declaro ter recebido da IEQ em <span className="font-bold uppercase border-b border-black px-4 inline-block min-w-[200px] text-center">{selected.nomeIgreja}</span>, CNPJ/COD. <span className="font-bold uppercase border-b border-black px-4 inline-block min-w-[180px] text-center">{selected.cnpjCod}</span>, o valor acima, do qual dou plena quitação.</p>
+              </div>
+
+              <div className="mt-auto p-8 grid grid-cols-3 gap-12 text-[10px] font-bold text-center">
+                <div className="space-y-1"><div className="border-b border-black h-8 flex items-end justify-center uppercase">{selected.cidadeUf}</div><div>Local</div></div>
+                <div className="space-y-1"><div className="border-b border-black h-8 flex items-end justify-center uppercase">{selected.data ? dataExtensa(selected.data) : ''}</div><div>Data</div></div>
+                <div className="space-y-1 relative flex flex-col items-center">
+                  <div className="border-b border-black h-8 w-full flex items-end justify-center relative">{selected.assinatura !== 'none' && <img src={`rv/${selected.assinatura}.png`} alt="Assinatura" className={`absolute object-contain ${selected.assinatura === 'valdir' ? 'max-h-24 -bottom-2' : 'max-h-16 bottom-0'}`} referrerPolicy="no-referrer" />}</div>
+                  <div>Assinatura</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4 print-hidden">
+            <button onClick={() => setView('edit')} className="bg-stone-200 text-stone-700 font-bold py-3 px-8 rounded-2xl hover:bg-stone-300">Voltar para Edição</button>
+            <button onClick={() => window.print()} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 flex items-center gap-2"><Icon name="printer" size={18} /> Imprimir Agora</button>
+          </div>
+        </div>
+      );
+    }
+
+    /* ---------- Mount ---------- */
+    function mount() {
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    }
+    if (window.__FB_READY) mount();
+    else window.addEventListener('firebase-ready', mount, { once: true });
+  </script>
+</body>
+</html>

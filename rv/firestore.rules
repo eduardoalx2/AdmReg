@@ -1,0 +1,47 @@
+rules_version = '2';
+// Regras do banco do app de Relatório de Viagem.
+// Projeto: gen-lang-client-0821007726 | Database (nomeada): ai-studio-6e8ee6cf-2e0e-4813-8221-70d1cc511c09
+// NÃO é o banco do reg655 (regiao655-admin). Deploy feito via Firebase Rules API.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function authed() { return request.auth != null; }
+    function ownsNew() { return authed() && request.resource.data.uid == request.auth.uid; }
+    function ownsOld() { return authed() && resource.data.uid == request.auth.uid; }
+
+    function validReport(d) {
+      return d.name is string && d.name.size() > 0 && d.name.size() < 200
+        && d.uid is string
+        && d.localSaida is string && d.localDestino is string && d.motivoViagem is string
+        && d.total is number
+        && d.locked is bool;
+    }
+    function validExpense(d) {
+      return d.uid is string
+        && d.reportId is string
+        && d.categoryId in ['hospedagem','alimentacao','transporte','pedagio','combustivel','estacionamento']
+        && d.value is number && d.value >= 0;
+    }
+
+    match /reports/{reportId} {
+      allow read, delete: if ownsOld();
+      allow create: if ownsNew() && validReport(request.resource.data);
+      allow update: if ownsOld() && ownsNew() && validReport(request.resource.data);
+
+      match /expenses/{expenseId} {
+        allow read, delete: if ownsOld();
+        allow create: if ownsNew() && validExpense(request.resource.data);
+        allow update: if ownsOld() && ownsNew() && validExpense(request.resource.data);
+      }
+    }
+
+    // Dashboard usa collectionGroup('expenses') filtrando por uid
+    match /{path=**}/expenses/{expenseId} {
+      allow read: if ownsOld();
+    }
+
+    match /users/{userId} {
+      allow read, write: if authed() && request.auth.uid == userId;
+    }
+  }
+}
