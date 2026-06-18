@@ -277,7 +277,7 @@
             nomeIgreja: 'IEQ CENTRAL', cnpjCod: CNPJ_IEQ, cidadeUf: 'LONDRINA/PR',
             data: lastBusinessDayPrevMonth(),
             assinatura: 'none', locked: false, total: 0,
-            createdAt: fb.serverTimestamp(), updatedAt: fb.serverTimestamp()
+            createdAt: fb.Timestamp.now(), updatedAt: fb.Timestamp.now()
           };
           const ref = await fb.addDoc(fb.collection(fb.db, 'reports'), novo);
           setSelectedId(ref.id); setView('edit');
@@ -287,7 +287,7 @@
       const updateReport = async (data) => {
         if (!selected) return;
         if (selected.locked && !('locked' in data)) { setError('Relatório consolidado. Desbloqueie para editar.'); return; }
-        try { await fb.updateDoc(fb.doc(fb.db, 'reports', selected.id), { ...data, updatedAt: fb.serverTimestamp() }); }
+        try { await fb.updateDoc(fb.doc(fb.db, 'reports', selected.id), { ...data, updatedAt: fb.Timestamp.now() }); }
         catch (e) { fail(e, 'update report'); }
       };
 
@@ -306,7 +306,7 @@
         if (selected.locked) return;
         try {
           await fb.addDoc(fb.collection(fb.db, `reports/${selected.id}/expenses`), {
-            reportId: selected.id, uid: user.uid, categoryId, receiptNumber: '', value: 0, createdAt: fb.serverTimestamp()
+            reportId: selected.id, uid: user.uid, categoryId, receiptNumber: '', value: 0, createdAt: fb.Timestamp.now()
           });
         } catch (e) { fail(e, 'add expense'); }
       };
