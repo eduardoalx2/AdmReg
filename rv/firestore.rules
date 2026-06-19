@@ -8,6 +8,9 @@ service cloud.firestore {
     function authed() { return request.auth != null; }
     function ownsNew() { return authed() && request.resource.data.uid == request.auth.uid; }
     function ownsOld() { return authed() && resource.data.uid == request.auth.uid; }
+    function reportOwner(reportId) {
+      return get(/databases/$(database)/documents/reports/$(reportId)).data.uid;
+    }
 
     function validReport(d) {
       return d.name is string && d.name.size() > 0 && d.name.size() < 200
@@ -24,18 +27,21 @@ service cloud.firestore {
     }
 
     match /reports/{reportId} {
+      // A query da lista usa where('uid','==', uid), então a regra por resource.data.uid é válida.
       allow read, delete: if ownsOld();
       allow create: if ownsNew() && validReport(request.resource.data);
       allow update: if ownsOld() && ownsNew() && validReport(request.resource.data);
 
       match /expenses/{expenseId} {
-        allow read, delete: if ownsOld();
-        allow create: if ownsNew() && validExpense(request.resource.data);
-        allow update: if ownsOld() && ownsNew() && validExpense(request.resource.data);
+        // A query por relatório lista sem filtro de uid, então a permissão vem do
+        // dono do relatório-pai (não de resource.data) — assim a query de lista é aceita.
+        allow read, delete: if authed() && reportOwner(reportId) == request.auth.uid;
+        allow create: if authed() && reportOwner(reportId) == request.auth.uid && validExpense(request.resource.data);
+        allow update: if authed() && reportOwner(reportId) == request.auth.uid && validExpense(request.resource.data);
       }
     }
 
-    // Dashboard usa collectionGroup('expenses') filtrando por uid
+    // Dashboard usa collectionGroup('expenses') COM where('uid','==', uid) → regra por resource.data.uid é válida aqui.
     match /{path=**}/expenses/{expenseId} {
       allow read: if ownsOld();
     }
