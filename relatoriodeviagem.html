@@ -571,6 +571,23 @@
     /* ---------- Editor ---------- */
     function Editor({ selected, expenses, totalsByCat, totalGeral, updateReport, toggleLock, addExpense, updateExpense, deleteExpense, setView }) {
       const dis = selected.locked;
+      const recvRefs = useRef({});          // input "No. Nota/Recibo" por despesa
+      const pendingFocus = useRef(null);    // { cat, prev } p/ focar a nova linha quando chegar
+      useEffect(() => {
+        const pf = pendingFocus.current;
+        if (!pf) return;
+        const rows = expenses.filter(e => e.categoryId === pf.cat);
+        if (rows.length > pf.prev) {
+          const el = recvRefs.current[rows[rows.length - 1].id];
+          if (el) el.focus();
+          pendingFocus.current = null;
+        }
+      }, [expenses]);
+      const addAndFocus = (cat) => {
+        if (dis) return;
+        pendingFocus.current = { cat, prev: expenses.filter(e => e.categoryId === cat).length };
+        addExpense(cat);
+      };
       return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-4 space-y-6">
@@ -676,23 +693,27 @@
                   <div className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-blue-600"></span><h3 className="font-bold uppercase tracking-wider text-xs">{category.label}</h3></div>
                   <div className="flex items-center gap-4">
                     <span className="text-xs font-black text-stone-400">R$ {brl(totalsByCat[category.id])}</span>
-                    <button onClick={() => addExpense(category.id)} disabled={dis} className="w-8 h-8 bg-white border border-stone-200 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50"><Icon name="plus" size={18} /></button>
+                    <button onClick={() => addAndFocus(category.id)} disabled={dis} className="w-8 h-8 bg-white border border-stone-200 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50"><Icon name="plus" size={18} /></button>
                   </div>
                 </div>
                 <div className="p-4 space-y-2">
                   {expenses.filter(e => e.categoryId === category.id).length === 0 ? (
                     <p className="text-[10px] text-stone-400 italic text-center py-4">Nenhum lançamento.</p>
-                  ) : expenses.filter(e => e.categoryId === category.id).map(exp => (
+                  ) : expenses.filter(e => e.categoryId === category.id).map((exp, idx, arr) => (
                     <div key={exp.id} className="flex items-center gap-4 p-2 hover:bg-stone-50 rounded-xl group">
-                      <input type="text" value={exp.receiptNumber || ''} disabled={dis} onChange={e => updateExpense(exp.id, { receiptNumber: e.target.value })}
+                      <input type="text" value={exp.receiptNumber || ''} disabled={dis}
+                        ref={el => { recvRefs.current[exp.id] = el; }}
+                        onChange={e => updateExpense(exp.id, { receiptNumber: e.target.value })}
                         className="flex-1 bg-transparent border-b border-stone-100 focus:border-blue-600 py-1 text-sm outline-none disabled:opacity-50" placeholder="No. Nota / Recibo" />
                       <div className="w-32 relative">
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-bold text-stone-400">R$</span>
-                        <input type="number" step="0.01" value={exp.value || ''} disabled={dis}
-                          onChange={e => updateExpense(exp.id, { value: parseFloat(e.target.value) || 0 })}
+                        <input type="text" inputMode="numeric" disabled={dis}
+                          value={exp.value ? brl(exp.value) : ''}
+                          onChange={e => { const d = (e.target.value.match(/\d/g) || []).join(''); updateExpense(exp.id, { value: (parseInt(d || '0', 10) || 0) / 100 }); }}
+                          onKeyDown={e => { if (e.key === 'Tab' && !e.shiftKey && idx === arr.length - 1 && !dis) { e.preventDefault(); addAndFocus(category.id); } }}
                           className="w-full bg-transparent border-b border-stone-100 focus:border-blue-600 py-1 pl-6 text-sm font-bold text-right outline-none disabled:opacity-50" placeholder="0,00" />
                       </div>
-                      {!dis && <button onClick={() => deleteExpense(exp.id)} className="text-stone-200 hover:text-red-500 opacity-0 group-hover:opacity-100"><Icon name="trash" size={16} /></button>}
+                      {!dis && <button tabIndex={-1} onClick={() => deleteExpense(exp.id)} className="text-stone-200 hover:text-red-500 opacity-0 group-hover:opacity-100"><Icon name="trash" size={16} /></button>}
                     </div>
                   ))}
                 </div>
