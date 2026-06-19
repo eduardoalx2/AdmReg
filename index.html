@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="styles/main.css?v=2">
-    <link rel="stylesheet" href="styles/admin.css?v=2">
+    <link rel="stylesheet" href="styles/admin.css?v=4">
     <link rel="stylesheet" href="styles/pastor.css?v=2">
     <link rel="stylesheet" href="styles/components.css?v=2">
     <script>
@@ -277,7 +277,66 @@
             renderAdmin(grupos, userPerms);
         }
 
+        // ===== Estado do painel: favoritos + seções recolhidas (localStorage) =====
+        const FAV_KEY = 'admin_favoritos';
+        const COL_KEY = 'admin_secoes_recolhidas';
+        const _lsGet = (k) => { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch { return []; } };
+        const _lsSet = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+        const getFavs = () => _lsGet(FAV_KEY);
+        const getCollapsed = () => _lsGet(COL_KEY);
+        const favKey = (item) => item.id || item.url || item.titulo || '';
+        const isFav = (k) => getFavs().includes(k);
+
+        let _adminGrupos = null, _adminPerms = null, _adminBusca = '';
+        const _itemMap = new Map();   // favKey -> { item, adminGrp }
+
+        // Estrelinha de favoritar (span p/ não aninhar <button> dentro de <a>)
+        function favStar(item) {
+            const k = favKey(item);
+            const on = isFav(k);
+            return `<span class="card-fav ${on?'is-fav':''}" role="button" tabindex="0"
+                onclick="toggleFav(event,'${escA(k)}')"
+                title="${on?'Remover dos favoritos':'Adicionar aos favoritos'}" aria-label="Favoritar">${on?'★':'☆'}</span>`;
+        }
+
+        window.toggleFav = function(ev, key) {
+            ev.preventDefault(); ev.stopPropagation();
+            const favs = getFavs();
+            const i = favs.indexOf(key);
+            if (i >= 0) favs.splice(i,1); else favs.push(key);
+            _lsSet(FAV_KEY, favs);
+            renderAdmin(_adminGrupos, _adminPerms);   // re-render preserva busca/colapso
+        };
+
+        window.toggleSecao = function(labelEl) {
+            const sec = labelEl.closest('[data-secao]');
+            if (!sec) return;
+            sec.classList.toggle('is-collapsed');
+            const key = sec.getAttribute('data-secao');
+            const set = new Set(getCollapsed());
+            sec.classList.contains('is-collapsed') ? set.add(key) : set.delete(key);
+            _lsSet(COL_KEY, [...set]);
+        };
+
+        function aplicarBusca(term) {
+            _adminBusca = term;
+            const wrap = document.querySelector('#main-content .admin-main');
+            if (!wrap) return;
+            const t = term.trim().toLowerCase();
+            wrap.classList.toggle('searching', !!t);
+            wrap.querySelectorAll('.admin-section').forEach(sec => {
+                let any = false;
+                sec.querySelectorAll('.link-card').forEach(c => {
+                    const hit = !t || (c.dataset.search || '').includes(t);
+                    c.classList.toggle('search-hidden', !hit);
+                    if (hit) any = true;
+                });
+                sec.classList.toggle('no-match', !!t && !any);
+            });
+        }
+
         function renderAdmin(grupos, perms) {
+            _adminGrupos = grupos; _adminPerms = perms;
             const hierarquia = { admin:100, secretario:90, superintendente:80, pastor_titular:70, coordenador:60, obreiro:50, membro:10 };
             let nivelStr = perms[0];
             if (nivelStr && !hierarquia[nivelStr]) nivelStr = 'secretario';
@@ -294,25 +353,69 @@
             const has = (p) => { if(!p) return true; if(nivel===100) return true; if(perms.includes(p)) return true; return nivel >= (permMinLevel[p] || 100); };
 
             const main = document.getElementById('main-content');
-            main.innerHTML = '<div class="admin-main">';
             const wrap = document.createElement('div');
             wrap.className = 'admin-main';
             main.innerHTML = '';
             main.appendChild(wrap);
 
             const sorted = [...grupos].sort((a,b)=>(a.ordem||0)-(b.ordem||0));
-            let delay = 0.25;
 
+            // Monta lista de grupos visíveis + mapa de itens (para favoritos)
+            _itemMap.clear();
+            const gruposVis = [];
             sorted.forEach(grupo => {
                 const items = [...(grupo.itens||[])].filter(it=>it.visivel!==false && has(it.perm)).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
                 if (!items.length) return;
                 const isAdminGrp = grupo.itens.every(it=>it.perm==='admin');
+                items.forEach(it => _itemMap.set(favKey(it), { item: it, adminGrp: isAdminGrp }));
+                gruposVis.push({ grupo, items, isAdminGrp });
+            });
+
+            // 1) Barra de busca
+            const toolbar = document.createElement('div');
+            toolbar.className = 'admin-toolbar fade-in';
+            toolbar.style.animationDelay = '0.20s';
+            toolbar.innerHTML = `
+                <i class="ph ph-magnifying-glass admin-search-icon"></i>
+                <input id="admin-search" type="search" placeholder="Buscar no painel..." autocomplete="off" spellcheck="false" value="${escA(_adminBusca)}">`;
+            wrap.appendChild(toolbar);
+
+            const collapsed = new Set(getCollapsed());
+
+            // 2) Seção de favoritos (Acesso Rápido)
+            const favs = getFavs().filter(k => _itemMap.has(k));
+            if (favs.length) {
+                const favSec = document.createElement('div');
+                favSec.className = 'fav-section fade-in';
+                favSec.style.animationDelay = '0.24s';
+                favSec.setAttribute('data-secao', '__favoritos__');
+                if (collapsed.has('__favoritos__')) favSec.classList.add('is-collapsed');
+                favSec.innerHTML = `
+                    <div class="section-label" onclick="toggleSecao(this)">
+                        <div class="section-label-line"></div>
+                        <span>⭐ Acesso Rápido</span>
+                        <div class="section-label-line"></div>
+                        <i class="ph ph-caret-down section-caret"></i>
+                    </div>
+                    <div class="cards-grid">
+                        ${favs.map(k => { const e=_itemMap.get(k); return renderAdminCard(e.item, e.adminGrp); }).join('')}
+                    </div>`;
+                wrap.appendChild(favSec);
+            }
+
+            // 3) Seções normais (recolhíveis)
+            let delay = 0.28;
+            gruposVis.forEach(({ grupo, items, isAdminGrp }) => {
                 const sec = document.createElement('div');
+                sec.className = 'admin-section';
+                sec.setAttribute('data-secao', grupo.nome);
+                if (collapsed.has(grupo.nome)) sec.classList.add('is-collapsed');
                 sec.innerHTML = `
-                    <div class="section-label fade-in" style="animation-delay:${delay.toFixed(2)}s">
+                    <div class="section-label fade-in" style="animation-delay:${delay.toFixed(2)}s" onclick="toggleSecao(this)">
                         <div class="section-label-line"></div>
                         <span>${esc(grupo.nome)}</span>
                         <div class="section-label-line"></div>
+                        <i class="ph ph-caret-down section-caret"></i>
                     </div>
                     <div class="cards-grid fade-in" style="animation-delay:${(delay+0.04).toFixed(2)}s">
                         ${items.map(it=>renderAdminCard(it,isAdminGrp)).join('')}
@@ -320,6 +423,13 @@
                 wrap.appendChild(sec);
                 delay += 0.08;
             });
+
+            // Liga a busca e reaplica o termo atual (caso seja re-render)
+            const inp = document.getElementById('admin-search');
+            if (inp) {
+                inp.addEventListener('input', e => aplicarBusca(e.target.value));
+                if (_adminBusca) aplicarBusca(_adminBusca);
+            }
         }
 
         const COR_STYLES = {
@@ -340,26 +450,30 @@
             const iconStyle   = cor.icon;
             const titleStyle  = cor.title;
 
+            const busca = escA(`${item.titulo||''} ${item.obs||''}`.toLowerCase());
+
             // Card especial "Ver Painel do Pastor"
             if (item.id === 'i-viewpastor') {
-                return `<a href="#" onclick="iniciarViewPastor(event)" class="link-card" style="${borderStyle}">
+                return `<a href="#" onclick="iniciarViewPastor(event)" class="link-card" style="${borderStyle}" data-search="${busca}">
                     <div class="card-icon" style="${iconStyle}">${esc(item.icone||'🔗')}</div>
                     <div class="card-texts">
                         <div class="card-title" style="${titleStyle}">${esc(item.titulo)}</div>
                         <div class="card-obs">${esc(item.obs||'')}</div>
                     </div>
+                    ${favStar(item)}
                     <i class="ph ph-arrow-up-right card-arrow"></i>
                 </a>`;
             }
 
             const isExt = item.tipo === 'externo';
             const target = isExt ? ' target="_blank" rel="noopener noreferrer"' : '';
-            return `<a href="${escA(item.url||'#')}" class="link-card" style="${borderStyle}"${target}>
+            return `<a href="${escA(item.url||'#')}" class="link-card" style="${borderStyle}"${target} data-search="${busca}">
                 <div class="card-icon" style="${iconStyle}">${esc(item.icone||'🔗')}</div>
                 <div class="card-texts">
                     <div class="card-title" style="${titleStyle}">${esc(item.titulo)}</div>
                     <div class="card-obs">${esc(item.obs||'')}</div>
                 </div>
+                ${favStar(item)}
                 <i class="ph ph-arrow-up-right card-arrow"></i>
             </a>`;
         }

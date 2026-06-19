@@ -42,3 +42,42 @@
 .card-obs { font-size: 10px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card-arrow { flex-shrink: 0; font-size: 14px; color: var(--text-muted); transition: color 0.2s,transform 0.2s; }
 .link-card:hover .card-arrow { color: var(--accent); transform: translate(2px,-2px); }
+
+/* ===== Barra de busca ===== */
+.admin-toolbar { position: relative; margin: 8px 0 4px; }
+.admin-toolbar .admin-search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; color: var(--text-muted); pointer-events: none;
+}
+#admin-search {
+    width: 100%; box-sizing: border-box;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px 12px 42px;
+    color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 13px;
+    transition: border-color 0.2s, background 0.2s;
+}
+#admin-search::placeholder { color: var(--text-muted); }
+#admin-search:focus { outline: none; border-color: var(--border-hover); background: rgba(99,179,237,0.06); }
+
+/* ===== Seções recolhíveis ===== */
+.section-label { cursor: pointer; user-select: none; }
+.section-caret { flex-shrink: 0; font-size: 12px; color: var(--text-muted); transition: transform 0.25s, color 0.2s; }
+.section-label:hover .section-caret { color: var(--accent); }
+.admin-section.is-collapsed .section-caret,
+.fav-section.is-collapsed .section-caret { transform: rotate(-90deg); }
+.admin-section.is-collapsed .cards-grid,
+.fav-section.is-collapsed .cards-grid { display: none; }
+.admin-main.searching .admin-section.is-collapsed .cards-grid { display: grid; } /* busca expande tudo */
+.admin-main.searching .fav-section { display: none; }                            /* sem duplicar favoritos na busca */
+.link-card.search-hidden { display: none !important; }
+.admin-section.no-match { display: none !important; }
+
+/* ===== Botão favoritar ===== */
+.card-fav {
+    flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 4px;
+    font-size: 15px; line-height: 1; color: rgba(148,163,184,0.35);
+    transition: color 0.2s, transform 0.2s;
+    position: relative; z-index: 2;   /* acima da camada decorativa .link-card::before */
+}
+.card-fav:hover { color: #fbbf24; transform: scale(1.2); }
+.card-fav.is-fav { color: #fbbf24; }
