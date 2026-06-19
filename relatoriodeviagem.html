@@ -192,7 +192,7 @@
       /* Reports do usuário */
       useEffect(() => {
         if (!user) { setReports([]); return; }
-        const q = fb.query(fb.collection(fb.db, 'reports'), fb.where('uid', '==', user.uid), fb.orderBy('createdAt', 'desc'));
+        const q = fb.query(fb.collection(fb.db, 'reports'), fb.orderBy('createdAt', 'desc'));
         return fb.onSnapshot(q, (snap) => setReports(snap.docs.map(d => ({ id: d.id, ...d.data() }))), (e) => fail(e, 'reports'));
       }, [user]);
 
@@ -206,7 +206,7 @@
       /* Todas as despesas (dashboard + totais da lista) */
       useEffect(() => {
         if (!user) { setAllExpenses([]); return; }
-        const q = fb.query(fb.collectionGroup(fb.db, 'expenses'), fb.where('uid', '==', user.uid));
+        const q = fb.query(fb.collectionGroup(fb.db, 'expenses'));
         return fb.onSnapshot(q, (snap) => setAllExpenses(snap.docs.map(d => ({ id: d.id, ...d.data() }))), (e) => fail(e, 'collectionGroup'));
       }, [user]);
 

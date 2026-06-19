@@ -2,14 +2,19 @@ rules_version = '2';
 // Regras do banco do app de Relatório de Viagem.
 // Projeto: gen-lang-client-0821007726 | Database (nomeada): ai-studio-6e8ee6cf-2e0e-4813-8221-70d1cc511c09
 // NÃO é o banco do reg655 (regiao655-admin). Deploy feito via Firebase Rules API.
+//
+// Acesso COMPARTILHADO entre as contas autorizadas (allowlist). As duas contas
+// veem/editam os mesmos relatórios; qualquer outra conta Google é bloqueada.
+//   gEiATbiJhqZ8Td1uqlwmi6g16h23 = eduardoalx@gmail.com
+//   TwjNem78lsMtN6NuXG89JUmlKkl2 = centralieq@gmail.com
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function authed() { return request.auth != null; }
-    function ownsNew() { return authed() && request.resource.data.uid == request.auth.uid; }
-    function ownsOld() { return authed() && resource.data.uid == request.auth.uid; }
-    function reportOwner(reportId) {
-      return get(/databases/$(database)/documents/reports/$(reportId)).data.uid;
+    function allowed() {
+      return request.auth != null && request.auth.uid in [
+        'gEiATbiJhqZ8Td1uqlwmi6g16h23',
+        'TwjNem78lsMtN6NuXG89JUmlKkl2'
+      ];
     }
 
     function validReport(d) {
@@ -27,27 +32,24 @@ service cloud.firestore {
     }
 
     match /reports/{reportId} {
-      // A query da lista usa where('uid','==', uid), então a regra por resource.data.uid é válida.
-      allow read, delete: if ownsOld();
-      allow create: if ownsNew() && validReport(request.resource.data);
-      allow update: if ownsOld() && ownsNew() && validReport(request.resource.data);
+      allow read, delete: if allowed();
+      allow create: if allowed() && validReport(request.resource.data);
+      allow update: if allowed() && validReport(request.resource.data);
 
       match /expenses/{expenseId} {
-        // A query por relatório lista sem filtro de uid, então a permissão vem do
-        // dono do relatório-pai (não de resource.data) — assim a query de lista é aceita.
-        allow read, delete: if authed() && reportOwner(reportId) == request.auth.uid;
-        allow create: if authed() && reportOwner(reportId) == request.auth.uid && validExpense(request.resource.data);
-        allow update: if authed() && reportOwner(reportId) == request.auth.uid && validExpense(request.resource.data);
+        allow read, delete: if allowed();
+        allow create: if allowed() && validExpense(request.resource.data);
+        allow update: if allowed() && validExpense(request.resource.data);
       }
     }
 
-    // Dashboard usa collectionGroup('expenses') COM where('uid','==', uid) → regra por resource.data.uid é válida aqui.
+    // Dashboard usa collectionGroup('expenses')
     match /{path=**}/expenses/{expenseId} {
-      allow read: if ownsOld();
+      allow read: if allowed();
     }
 
     match /users/{userId} {
-      allow read, write: if authed() && request.auth.uid == userId;
+      allow read, write: if allowed();
     }
   }
 }
