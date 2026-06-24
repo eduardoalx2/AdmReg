@@ -96,7 +96,7 @@
 
         <!-- Filtro e Busca -->
         <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Igreja</label>
                     <select id="filtro-igreja" onchange="aplicarFiltros()"
@@ -109,6 +109,13 @@
                     <select id="filtro-periodo" onchange="aplicarFiltros()"
                         class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
                         <option value="">Todas as referências</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Emissão</label>
+                    <select id="filtro-emissao" onchange="aplicarFiltros()"
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        <option value="">Todas as emissões</option>
                     </select>
                 </div>
                 <div>
@@ -451,6 +458,7 @@
 
         let recibosList = [];
         let periodosSet = new Set();
+        let emissoesSet = new Set();
         let paginaAtual = 1;
         const POR_PAGINA = 20;
 
@@ -466,6 +474,7 @@
                 const querySnapshot = await getDocs(collection(db, "recibos"));
                 recibosList = [];
                 periodosSet.clear();
+                emissoesSet.clear();
                 const igrejasSet = new Set();
 
                 querySnapshot.forEach((doc) => {
@@ -473,6 +482,8 @@
                     recibosList.push({ id: doc.id, ...data });
                     if (data.referenceDate) periodosSet.add(data.referenceDate);
                     if (data.igrejaFormatada) igrejasSet.add(data.igrejaFormatada);
+                    const emissaoParts = (data.dataEmissao || '').split('/');
+                    if (emissaoParts.length === 3) emissoesSet.add(`${emissaoParts[1]}/${emissaoParts[2]}`);
                 });
 
                 const selectPeriodo = document.getElementById('filtro-periodo');
@@ -489,6 +500,21 @@
                 });
                 selectPeriodo.innerHTML = optionsHTML;
                 selectPeriodo.value = valorAtual;
+
+                const selectEmissao = document.getElementById('filtro-emissao');
+                const valorAtualEmissao = selectEmissao.value;
+
+                const emissoesArr = Array.from(emissoesSet).sort((a, b) => {
+                    const [mA, yA] = a.split('/');
+                    const [mB, yB] = b.split('/');
+                    return new Date(yB, mB - 1) - new Date(yA, mA - 1);
+                });
+                let optionsEmissaoHTML = '<option value="">Todas as emissões</option>';
+                emissoesArr.forEach(e => {
+                    optionsEmissaoHTML += `<option value="${e}">${e}</option>`;
+                });
+                selectEmissao.innerHTML = optionsEmissaoHTML;
+                selectEmissao.value = valorAtualEmissao;
 
                 const selectIgreja = document.getElementById('filtro-igreja');
                 const valorAtualIgreja = selectIgreja.value;
@@ -626,6 +652,7 @@
         window.limparFiltros = () => {
             document.getElementById('filtro-igreja').value = '';
             document.getElementById('filtro-periodo').value = '';
+            document.getElementById('filtro-emissao').value = '';
             document.getElementById('filtro-ordem').value = 'recentes';
             renderizarTabela();
         };
@@ -633,12 +660,16 @@
         function renderizarTabela() {
             const filtroIgreja = document.getElementById('filtro-igreja').value;
             const filtroPeriodo = document.getElementById('filtro-periodo').value;
+            const filtroEmissao = document.getElementById('filtro-emissao').value;
             const filtroOrdem = document.getElementById('filtro-ordem').value;
 
             const filtrados = recibosList.filter(r => {
                 const matchIgreja = !filtroIgreja || (r.igrejaFormatada === filtroIgreja);
                 const matchPeriodo = !filtroPeriodo || r.referenceDate === filtroPeriodo;
-                return matchIgreja && matchPeriodo;
+                const emissaoParts = (r.dataEmissao || '').split('/');
+                const emissaoMesAno = emissaoParts.length === 3 ? `${emissaoParts[1]}/${emissaoParts[2]}` : '';
+                const matchEmissao = !filtroEmissao || emissaoMesAno === filtroEmissao;
+                return matchIgreja && matchPeriodo && matchEmissao;
             });
 
             filtrados.sort((a, b) => {
