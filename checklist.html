@@ -207,7 +207,7 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import {
-            collection, getDocs, doc, setDoc, getDoc
+            collection, getDocs, doc, setDoc, getDoc, query, where
         } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         // ─── Utils ───────────────────────────────────────────────────────────
@@ -237,6 +237,11 @@
         function normalizeString(str) {
             if (!str) return "";
             return str.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, ' ').trim();
+        }
+
+        function extrairCodigo(nome) {
+            const m = (nome || '').match(/^(\d+)/);
+            return m ? String(parseInt(m[1])).padStart(4, '0') : '0000';
         }
 
         function formatCurrency(val) {
@@ -420,10 +425,10 @@
             const mes = document.getElementById('sgafMes').value;
             document.getElementById('sgafLista').innerHTML = `<div class="flex justify-center py-12"><div class="spinner"></div></div>`;
 
-            // Checks salvos
-            const docRef = doc(db, "checklist_sgaf", mes);
-            const snap = await getDoc(docRef);
-            sgafChecks = snap.exists() ? (snap.data().checks || {}) : {};
+            const q = query(collection(db, "saldo_informado"), where("competencia", "==", mes));
+            const snap = await getDocs(q);
+            sgafChecks = {};
+            snap.forEach(d => { sgafChecks[d.id] = d.data().informado === true; });
 
             renderSgaf(mes);
         }
@@ -455,7 +460,7 @@
             let marcados = 0;
 
             saldosMes.forEach((s, idx) => {
-                const chave = `${idx}_${normalizeString(s.nomeOriginal)}`;
+                const chave = `${extrairCodigo(s.nomeOriginal)}_${mes}`;
                 const checked = !!sgafChecks[chave];
                 if (checked) marcados++;
 
@@ -529,14 +534,11 @@
 
             // Recalcula progresso
             const saldosMes = saldosData.filter(s => s.competencia === mes);
-            const marcados = saldosMes.filter((_, i) => {
-                const k = `${i}_${normalizeString(saldosMes[i].nomeOriginal)}`;
-                return !!sgafChecks[k];
-            }).length;
+            const marcados = saldosMes.filter(s => !!sgafChecks[`${extrairCodigo(s.nomeOriginal)}_${mes}`]).length;
             atualizarProgressoSgaf(marcados, saldosMes.length);
 
             try {
-                await setDoc(doc(db, "checklist_sgaf", mes), { checks: sgafChecks, updatedAt: new Date().toISOString() });
+                await setDoc(doc(db, "saldo_informado", chave), { informado: novo, competencia: mes, atualizadoEm: new Date().toISOString() }, { merge: true });
                 showToast(novo ? '✓ Lançado no SGAF' : 'Desmarcado', novo ? '#4338ca' : '#64748b');
             } catch (e) {
                 showToast('Erro ao salvar!', '#dc2626');
