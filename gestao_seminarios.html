@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Seminários - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!hasAnyPermission(['admin', 'secretario', 'superintendente'])) window.location.replace('index.html');
+        } catch (error) {}
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .table-custom { font-size: 0.8rem; }
+        .table-custom th { padding: 8px 10px; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
+        .table-custom td { padding: 8px 10px; }
+        .badge-agendar   { background:#f3f4f6; color:#6b7280; }
+        .badge-agendado  { background:#dbeafe; color:#1d4ed8; }
+        .badge-realizado { background:#dcfce7; color:#15803d; }
+        .badge-pendente  { background:#fef3c7; color:#92400e; }
+        .badge-preenchido{ background:#dcfce7; color:#15803d; }
+        .tab-btn { border-bottom: 2px solid transparent; }
+        .tab-btn.active { border-bottom: 2px solid #2563eb; color:#2563eb; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<header class="header-gradient shadow-lg sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-4 h-4 text-blue-400"></i>
+                    Gestão de Seminários
+                </h1>
+                <p class="text-slate-400 text-[10px] uppercase tracking-wider">Os 5 Pães da Transformação · Campanha Regional 2026 · Região 655</p>
+            </div>
+        </div>
+        <button onclick="abrirModalNovo()"
+            class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Novo Seminário
+        </button>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto py-6 px-4">
+
+    <!-- Filtros -->
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Igreja</label>
+                <select id="filtro-igreja" onchange="aplicarFiltros()"
+                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <option value="">Todas as Igrejas</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
+                <select id="filtro-status" onchange="aplicarFiltros()"
+                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <option value="">Todos</option>
+                    <option value="A Agendar">A Agendar</option>
+                    <option value="Agendado">Agendado</option>
+                    <option value="Realizado">Realizado</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar</label>
+                <input type="text" id="filtro-nome" oninput="aplicarFiltros()" placeholder="Nome da igreja..."
+                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+            </div>
+        </div>
+        <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-3">
+            <button onclick="limparFiltros()" class="text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <i data-lucide="filter-x" class="w-3.5 h-3.5"></i> Limpar
+            </button>
+            <span class="text-[10px] text-slate-500 uppercase font-bold">Total: <span id="total-count" class="text-blue-600 text-base font-black">0</span></span>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse table-custom whitespace-nowrap">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                        <th>Igreja</th>
+                        <th>Data</th>
+                        <th>Equipe</th>
+                        <th>Material</th>
+                        <th>Ministrações</th>
+                        <th>Participantes</th>
+                        <th>Relatório</th>
+                        <th>Status</th>
+                        <th class="w-20 text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-corpo" class="divide-y divide-slate-100">
+                    <tr><td colspan="9" class="text-center py-8 text-slate-400 text-sm">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="bg-slate-50 border-t border-slate-200 px-4 py-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                <div>
+                    <div class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Seminários Realizados</div>
+                    <div id="tot-realizados" class="text-lg font-black text-slate-800">0</div>
+                </div>
+                <div>
+                    <div class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Total de Participantes</div>
+                    <div id="tot-participantes" class="text-lg font-black text-slate-800">0</div>
+                </div>
+                <div>
+                    <div class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Total de Material Entregue</div>
+                    <div id="tot-material" class="text-lg font-black text-slate-800">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal -->
+<div id="modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[95vh]">
+
+        <div class="bg-slate-800 px-5 py-4 flex justify-between items-center shrink-0 rounded-t-2xl">
+            <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                <i data-lucide="book-open" class="w-4 h-4"></i>
+                <span id="modal-titulo">Novo Seminário</span>
+            </h2>
+            <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Abas -->
+        <div class="flex gap-6 border-b border-slate-200 px-5 shrink-0">
+            <button type="button" onclick="setTab('dados')" id="tab-btn-dados" class="tab-btn active py-3 text-[11px] font-bold uppercase tracking-wider transition-all">Dados do Seminário</button>
+            <button type="button" onclick="setTab('relatorio')" id="tab-btn-relatorio" class="tab-btn py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider transition-all">Relatório Pós-Evento</button>
+        </div>
+
+        <div class="p-5 overflow-y-auto custom-scrollbar flex-1">
+            <input type="hidden" id="sem-id">
+
+            <!-- TAB: DADOS DO SEMINÁRIO -->
+            <div id="tab-content-dados" class="space-y-5">
+
+                <!-- Dados Gerais -->
+                <div>
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Dados Gerais</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Igreja *</label>
+                            <select id="sem-igreja" required onchange="onIgrejaChange()"
+                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                                <option value="">Selecione a igreja...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pastor Titular</label>
+                            <input type="text" id="sem-pastor-titular" readonly placeholder="Definido ao selecionar a igreja"
+                                class="w-full p-2 bg-slate-100 border border-slate-200 rounded text-sm font-semibold text-slate-500 cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Coordenador Local de Cidadania</label>
+                            <select id="sem-coordenador"
+                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                                <option value="">Selecione a igreja primeiro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data de Realização *</label>
+                            <input type="date" id="sem-data" required
+                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Quantidade de Material</label>
+                            <input type="number" id="sem-material" min="0" placeholder="0"
+                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
+                            <select id="sem-status" onchange="onStatusChange()"
+                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                                <option value="A Agendar">A Agendar</option>
+                                <option value="Agendado">Agendado</option>
+                                <option value="Realizado">Realizado</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observações Gerais</label>
+                            <textarea id="sem-observacoes" rows="2"
+                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equipe Visitante -->
+                <div>
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Equipe Visitante *</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pastor 1</label>
+                            <select id="sem-pastor1" onchange="onEquipeChange()"
+                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pastor 2</label>
+                            <select id="sem-pastor2" onchange="onEquipeChange()"
+                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ministrações -->
+                <div>
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Ministrações — 7 Blocos Fixos</h3>
+                    <div id="blocos-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+
+            <!-- TAB: RELATÓRIO PÓS-EVENTO -->
+            <div id="tab-content-relatorio" class="hidden">
+                <div id="relatorio-lock" class="text-center py-14 text-slate-400 text-sm font-semibold flex flex-col items-center gap-2">
+                    <i data-lucide="lock" class="w-8 h-8 text-slate-300"></i>
+                    Disponível após a realização do seminário.
+                </div>
+
+                <div id="relatorio-fields" class="hidden space-y-5">
+
+                    <div>
+                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Presença e Material</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total de Participantes</label>
+                                <input type="number" id="rel-participantes" min="0" placeholder="0"
+                                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Material Entregue</label>
+                                <input type="number" id="rel-material-entregue" min="0" placeholder="0" oninput="onMaterialEntregueInput()"
+                                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Material Sobrado</label>
+                                <input type="number" id="rel-material-sobra" readonly
+                                    class="w-full p-2 bg-slate-100 border border-slate-200 rounded text-sm font-semibold text-slate-500 cursor-not-allowed">
+                            </div>
+                        </div>
+                        <p id="rel-material-alerta" class="hidden mt-2 text-[11px] font-bold text-amber-600 flex items-center gap-1">
+                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Material entregue é maior que o previsto no cadastro.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Avaliação Geral</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Como foi o evento</label>
+                                <select id="rel-avaliacao" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                                    <option value="">Selecione...</option>
+                                    <option value="Ótimo">Ótimo</option>
+                                    <option value="Bom">Bom</option>
+                                    <option value="Regular">Regular</option>
+                                    <option value="Abaixo do esperado">Abaixo do esperado</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Engajamento da liderança local</label>
+                                <select id="rel-engajamento" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                                    <option value="">Selecione...</option>
+                                    <option value="Alto">Alto</option>
+                                    <option value="Médio">Médio</option>
+                                    <option value="Baixo">Baixo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Projeto 5x5 apresentado/preenchido</label>
+                                <select id="rel-projeto5x5" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                                    <option value="">Selecione...</option>
+                                    <option value="Sim todos preencheram">Sim, todos preencheram</option>
+                                    <option value="Sim parcialmente">Sim, parcialmente</option>
+                                    <option value="Não foi possível">Não foi possível</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Narrativa</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Destaques do evento</label>
+                                <textarea id="rel-destaques" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Dificuldades ou imprevistos</label>
+                                <textarea id="rel-dificuldades" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observações gerais</label>
+                                <textarea id="rel-observacoes" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Encaminhamentos</h3>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Algum follow-up necessário?</label>
+                        <div class="flex gap-4 mb-2">
+                            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                <input type="radio" name="rel-followup" value="sim" onchange="onFollowupChange()"> Sim
+                            </label>
+                            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                <input type="radio" name="rel-followup" value="nao" onchange="onFollowupChange()" checked> Não
+                            </label>
+                        </div>
+                        <div id="rel-followup-descricao-wrap" class="hidden">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">O que precisa ser feito e por quem</label>
+                            <textarea id="rel-followup-descricao" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <p id="rel-preenchido-em" class="text-[10px] text-slate-400"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-5 pb-5 pt-3 border-t border-slate-100 flex gap-3 shrink-0">
+            <button onclick="fecharModal()" type="button"
+                class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                Cancelar
+            </button>
+            <button onclick="salvarSeminario()" type="button" id="btn-salvar"
+                class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold text-white transition-colors">
+                Salvar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-sm font-bold px-5 py-3 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-[9999]"></div>
+
+<script type="module">
+import { db } from './firebase-config.js';
+import {
+    collection, getDocs, doc, addDoc, updateDoc, deleteDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { toastSuccess, toastError, toastWarning } from './js/toast.js';
+import { esc, escA } from './js/utils.js';
+
+const BLOCOS_FIXOS = [
+    { bloco: 1, nome: 'Introdução',                    duracao: 10 },
+    { bloco: 2, nome: '1º Pão: Identidade',             duracao: 10 },
+    { bloco: 3, nome: '2º Pão: Responsabilidade',       duracao: 10 },
+    { bloco: 4, nome: '3º Pão: Influência',             duracao: 10 },
+    { bloco: 5, nome: '4º Pão: Integridade',            duracao: 10 },
+    { bloco: 6, nome: '5º Pão: Multiplicação',          duracao: 10 },
+    { bloco: 7, nome: 'Projeto 5x5 + Conclusão',        duracao: 20 }
+];
+
+let seminariosList = [];
+let igrejasList = [];
+let pastoresList = [];
+let coordList = [];
+let relatorioAnterior = null; // preserva o preenchidoEm original ao editar
+
+// ── Carregar dados base ──────────────────────────────────────────────────────
+async function init() {
+    await Promise.all([carregarIgrejas(), carregarPastores(), carregarCoordenadores()]);
+    await carregarSeminarios();
+    if (window.lucide) window.lucide.createIcons();
+}
+
+async function carregarIgrejas() {
+    const snap = await getDocs(collection(db, "igrejas"));
+    igrejasList = [];
+    snap.forEach(d => igrejasList.push({ id: d.id, ...d.data() }));
+    igrejasList.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+
+    const selFiltro = document.getElementById('filtro-igreja');
+    const selModal  = document.getElementById('sem-igreja');
+    igrejasList.forEach(ig => {
+        const label = `${ig.codigo} - ${ig.nome}`;
+        selFiltro.innerHTML += `<option value="${escA(label)}">${esc(label)}</option>`;
+        selModal.innerHTML  += `<option value="${ig.id}" data-nome="${escA(label)}">${esc(label)}</option>`;
+    });
+}
+
+async function carregarPastores() {
+    const snap = await getDocs(collection(db, "pastores"));
+    pastoresList = [];
+    snap.forEach(d => pastoresList.push({ id: d.id, ...d.data() }));
+    pastoresList.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
+    const sel1 = document.getElementById('sem-pastor1');
+    const sel2 = document.getElementById('sem-pastor2');
+    pastoresList.forEach(p => {
+        sel1.innerHTML += `<option value="${p.id}">${esc(p.nome)}</option>`;
+        sel2.innerHTML += `<option value="${p.id}">${esc(p.nome)}</option>`;
+    });
+}
+
+async function carregarCoordenadores() {
+    const snap = await getDocs(collection(db, "coordenadores_cidadania"));
+    coordList = [];
+    snap.forEach(d => coordList.push({ id: d.id, ...d.data() }));
+}
+
+async function carregarSeminarios() {
+    const snap = await getDocs(collection(db, "seminarios"));
+    seminariosList = [];
+    snap.forEach(d => seminariosList.push({ id: d.id, ...d.data() }));
+    seminariosList.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+    renderTabela();
+}
+
+// ── Renderização da listagem ─────────────────────────────────────────────────
+function renderTabela() {
+    const filtroIgreja = document.getElementById('filtro-igreja').value;
+    const filtroStatus = document.getElementById('filtro-status').value;
+    const filtroNome   = document.getElementById('filtro-nome').value.toLowerCase();
+
+    const filtrados = seminariosList.filter(s => {
+        if (filtroIgreja && s.igrejaNome !== filtroIgreja) return false;
+        if (filtroStatus && (s.status || 'A Agendar') !== filtroStatus) return false;
+        if (filtroNome && !(s.igrejaNome || '').toLowerCase().includes(filtroNome)) return false;
+        return true;
+    });
+
+    document.getElementById('total-count').textContent = filtrados.length;
+
+    const tbody = document.getElementById('tabela-corpo');
+    if (!filtrados.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400 text-sm">Nenhum seminário encontrado</td></tr>';
+    } else {
+        tbody.innerHTML = filtrados.map(s => {
+            const dataFmt = s.data ? s.data.split('-').reverse().join('/') : '-';
+            const equipe = `${s.pastor1Nome || '-'} / ${s.pastor2Nome || '-'}`;
+            const ministracoes = (s.blocos || []).filter(b => b.ministradorNome).length;
+            const participantes = (s.relatorio && s.relatorio.totalParticipantes != null) ? s.relatorio.totalParticipantes : '-';
+            const relatorioPreenchido = !!(s.relatorio && s.relatorio.preenchidoEm);
+            const relatorioBadge = relatorioPreenchido
+                ? '<span class="badge-preenchido px-2 py-0.5 rounded text-[9px] font-bold uppercase">Preenchido</span>'
+                : '<span class="badge-pendente px-2 py-0.5 rounded text-[9px] font-bold uppercase">Pendente</span>';
+
+            const statusCls = s.status === 'Realizado' ? 'badge-realizado' : (s.status === 'Agendado' ? 'badge-agendado' : 'badge-agendar');
+            const statusBadge = `<span class="${statusCls} px-2 py-0.5 rounded text-[9px] font-bold uppercase">${esc(s.status || 'A Agendar')}</span>`;
+
+            return `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="font-bold text-slate-800">${esc(s.igrejaNome || '-')}</td>
+                <td class="text-slate-600 font-medium">${dataFmt}</td>
+                <td class="text-slate-600 font-medium">${esc(equipe)}</td>
+                <td class="text-slate-600 font-medium text-center">${s.quantidadeMaterial ?? '-'}</td>
+                <td class="text-slate-600 font-medium text-center">${ministracoes}/7</td>
+                <td class="text-slate-600 font-medium text-center">${participantes}</td>
+                <td>${relatorioBadge}</td>
+                <td>${statusBadge}</td>
+                <td class="text-center">
+                    <div class="flex items-center justify-center gap-2">
+                        <button onclick="window.editarSeminario('${s.id}')" class="text-blue-600 hover:text-blue-800 transition-colors" title="Editar">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="window.excluirSeminario('${s.id}', '${escA(s.igrejaNome || '')}')" class="text-red-500 hover:text-red-700 transition-colors" title="Excluir">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    // Totalizador (calculado sobre TODOS os seminários, não só os filtrados)
+    const realizados = seminariosList.filter(s => s.status === 'Realizado').length;
+    const totalParticipantes = seminariosList.reduce((acc, s) => acc + (s.relatorio && s.relatorio.totalParticipantes ? Number(s.relatorio.totalParticipantes) : 0), 0);
+    const totalMaterial = seminariosList.reduce((acc, s) => acc + (s.relatorio && s.relatorio.materialEntregue ? Number(s.relatorio.materialEntregue) : 0), 0);
+    document.getElementById('tot-realizados').textContent = realizados;
+    document.getElementById('tot-participantes').textContent = totalParticipantes;
+    document.getElementById('tot-material').textContent = totalMaterial;
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+// ── Filtros ───────────────────────────────────────────────────────────────────
+window.aplicarFiltros = renderTabela;
+window.limparFiltros = () => {
+    document.getElementById('filtro-igreja').value = '';
+    document.getElementById('filtro-status').value = '';
+    document.getElementById('filtro-nome').value = '';
+    renderTabela();
+};
+
+// ── Abas do modal ─────────────────────────────────────────────────────────────
+window.setTab = (tab) => {
+    document.getElementById('tab-btn-dados').classList.toggle('active', tab === 'dados');
+    document.getElementById('tab-btn-relatorio').classList.toggle('active', tab === 'relatorio');
+    document.getElementById('tab-content-dados').classList.toggle('hidden', tab !== 'dados');
+    document.getElementById('tab-content-relatorio').classList.toggle('hidden', tab !== 'relatorio');
+};
+
+window.onStatusChange = () => {
+    const liberado = document.getElementById('sem-status').value === 'Realizado';
+    document.getElementById('relatorio-lock').classList.toggle('hidden', liberado);
+    document.getElementById('relatorio-fields').classList.toggle('hidden', !liberado);
+};
+
+// ── Blocos de ministração ─────────────────────────────────────────────────────
+function buildMinistradorOptionsHtml() {
+    const p1Id = document.getElementById('sem-pastor1').value;
+    const p2Id = document.getElementById('sem-pastor2').value;
+    const p1Nome = p1Id ? (pastoresList.find(p => p.id === p1Id) || {}).nome : '';
+    const p2Nome = p2Id ? (pastoresList.find(p => p.id === p2Id) || {}).nome : '';
+    const igrejaId = document.getElementById('sem-igreja').value;
+    const coordsDaIgreja = coordList.filter(c => c.igrejaId === igrejaId);
+
+    let html = '<option value="">— Não definido —</option>';
+    if (p1Nome || p2Nome) {
+        html += '<optgroup label="Equipe Visitante">';
+        if (p1Nome) html += `<option value="equipe:1">${esc(p1Nome)}</option>`;
+        if (p2Nome) html += `<option value="equipe:2">${esc(p2Nome)}</option>`;
+        html += '</optgroup>';
+    }
+    html += '<optgroup label="Pastores/Obreiros">' +
+        pastoresList.map(p => `<option value="pastor:${p.id}">${esc(p.nome)}</option>`).join('') +
+        '</optgroup>';
+    if (coordsDaIgreja.length) {
+        html += '<optgroup label="Coordenadores de Cidadania">' +
+            coordsDaIgreja.map(c => `<option value="coord:${c.id}">${esc(c.nome)}</option>`).join('') +
+            '</optgroup>';
+    }
+    html += '<option value="livre">✏️ Nome livre (não cadastrado)</option>';
+    return html;
+}
+
+function renderBlocosForm(preserve) {
+    const container = document.getElementById('blocos-container');
+
+    const preservado = [];
+    for (let i = 0; i < 7; i++) {
+        if (preserve) {
+            const sel = container.querySelector(`[data-bloco="${i}"]`);
+            const txt = container.querySelector(`[data-bloco-livre="${i}"]`);
+            preservado.push({ value: sel ? sel.value : '', texto: txt ? txt.value : '' });
+        } else {
+            preservado.push({ value: '', texto: '' });
+        }
+    }
+
+    container.innerHTML = BLOCOS_FIXOS.map((b, i) => `
+        <div class="border border-slate-200 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-slate-700">${b.bloco}. ${esc(b.nome)}</span>
+                <span class="text-[9px] text-slate-400 uppercase font-bold">${b.duracao} min</span>
+            </div>
+            <select data-bloco="${i}" onchange="window.onBlocoChange(${i})"
+                class="w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-700 mb-2">
+                ${buildMinistradorOptionsHtml()}
+            </select>
+            <input type="text" data-bloco-livre="${i}" placeholder="Nome de quem vai ministrar"
+                class="hidden w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-700">
+        </div>
+    `).join('');
+
+    preservado.forEach((p, i) => {
+        const sel = container.querySelector(`[data-bloco="${i}"]`);
+        if (sel && [...sel.options].some(o => o.value === p.value)) sel.value = p.value;
+        const txt = container.querySelector(`[data-bloco-livre="${i}"]`);
+        if (txt) txt.value = p.texto;
+        window.onBlocoChange(i);
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+window.onBlocoChange = (i) => {
+    const sel = document.querySelector(`[data-bloco="${i}"]`);
+    const txt = document.querySelector(`[data-bloco-livre="${i}"]`);
+    if (!sel || !txt) return;
+    txt.classList.toggle('hidden', sel.value !== 'livre');
+};
+
+window.onEquipeChange = () => renderBlocosForm(true);
+
+window.onIgrejaChange = () => {
+    const sel = document.getElementById('sem-igreja');
+    const opt = sel.options[sel.selectedIndex];
+    const igrejaNome = opt ? (opt.dataset.nome || '') : '';
+
+    // Pastor Titular — mesma lógica usada em s_coordenadores_cidadania.html
+    const titular = pastoresList.find(p =>
+        p.funcao === 'Pastor Titular' &&
+        Array.isArray(p.igreja) &&
+        p.igreja.some(i => igrejaNome && igrejaNome.includes(i))
+    );
+    document.getElementById('sem-pastor-titular').value = titular ? titular.nome : 'Não cadastrado';
+
+    // Coordenador filtrado pela igreja
+    const igrejaId = sel.value;
+    const coordSel = document.getElementById('sem-coordenador');
+    const coordsDaIgreja = coordList.filter(c => c.igrejaId === igrejaId);
+    coordSel.innerHTML = '<option value="">Nenhum</option>' +
+        coordsDaIgreja.map(c => `<option value="${c.id}" data-nome="${escA(c.nome)}">${esc(c.nome)}</option>`).join('');
+
+    renderBlocosForm(true);
+};
+
+// ── Material sobra / alerta ───────────────────────────────────────────────────
+window.onMaterialEntregueInput = () => {
+    const previsto = parseInt(document.getElementById('sem-material').value) || 0;
+    const entregue = parseInt(document.getElementById('rel-material-entregue').value) || 0;
+    document.getElementById('rel-material-sobra').value = previsto - entregue;
+    document.getElementById('rel-material-alerta').classList.toggle('hidden', entregue <= previsto);
+};
+
+window.onFollowupChange = () => {
+    const val = document.querySelector('input[name="rel-followup"]:checked')?.value;
+    document.getElementById('rel-followup-descricao-wrap').classList.toggle('hidden', val !== 'sim');
+};
+
+// ── Modal: abrir / fechar / resetar ───────────────────────────────────────────
+function resetModal() {
+    document.getElementById('sem-id').value = '';
+    document.getElementById('sem-igreja').value = '';
+    document.getElementById('sem-pastor-titular').value = '';
+    document.getElementById('sem-coordenador').innerHTML = '<option value="">Selecione a igreja primeiro</option>';
+    document.getElementById('sem-data').value = '';
+    document.getElementById('sem-material').value = '';
+    document.getElementById('sem-observacoes').value = '';
+    document.getElementById('sem-status').value = 'A Agendar';
+    document.getElementById('sem-pastor1').value = '';
+    document.getElementById('sem-pastor2').value = '';
+    document.getElementById('modal-titulo').textContent = 'Novo Seminário';
+
+    document.getElementById('rel-participantes').value = '';
+    document.getElementById('rel-material-entregue').value = '';
+    document.getElementById('rel-material-sobra').value = '';
+    document.getElementById('rel-material-alerta').classList.add('hidden');
+    document.getElementById('rel-avaliacao').value = '';
+    document.getElementById('rel-engajamento').value = '';
+    document.getElementById('rel-projeto5x5').value = '';
+    document.getElementById('rel-destaques').value = '';
+    document.getElementById('rel-dificuldades').value = '';
+    document.getElementById('rel-observacoes').value = '';
+    document.getElementById('rel-followup-descricao').value = '';
+    document.querySelector('input[name="rel-followup"][value="nao"]').checked = true;
+    document.getElementById('rel-followup-descricao-wrap').classList.add('hidden');
+    document.getElementById('rel-preenchido-em').textContent = '';
+    relatorioAnterior = null;
+
+    renderBlocosForm(false);
+    setTab('dados');
+    onStatusChange();
+}
+
+window.abrirModalNovo = () => {
+    resetModal();
+    document.getElementById('modal').classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.fecharModal = () => {
+    document.getElementById('modal').classList.add('hidden');
+};
+
+window.editarSeminario = (id) => {
+    const s = seminariosList.find(x => x.id === id);
+    if (!s) return;
+    resetModal();
+
+    document.getElementById('sem-id').value = s.id;
+    document.getElementById('modal-titulo').textContent = 'Editar Seminário';
+
+    document.getElementById('sem-igreja').value = s.igrejaId || '';
+    document.getElementById('sem-data').value = s.data || '';
+    document.getElementById('sem-material').value = s.quantidadeMaterial ?? '';
+    document.getElementById('sem-observacoes').value = s.observacoes || '';
+    document.getElementById('sem-status').value = s.status || 'A Agendar';
+    document.getElementById('sem-pastor1').value = s.pastor1Id || '';
+    document.getElementById('sem-pastor2').value = s.pastor2Id || '';
+
+    onIgrejaChange(); // recalcula titular, coordenadores e opções de blocos
+    if (s.coordenadorId) document.getElementById('sem-coordenador').value = s.coordenadorId;
+
+    // Reaplica opções de equipe (pastor1/2 já setados acima) e popula blocos salvos
+    renderBlocosForm(false);
+    (s.blocos || []).forEach((b, i) => {
+        const sel = document.querySelector(`[data-bloco="${i}"]`);
+        const txt = document.querySelector(`[data-bloco-livre="${i}"]`);
+        if (!sel) return;
+        let value = '';
+        if (b.tipo === 'equipe') {
+            value = (b.ministradorId && b.ministradorId === s.pastor1Id) ? 'equipe:1' : 'equipe:2';
+        } else if (b.tipo === 'cadastro' && b.ministradorId) {
+            const ehPastor = pastoresList.some(p => p.id === b.ministradorId);
+            value = ehPastor ? `pastor:${b.ministradorId}` : `coord:${b.ministradorId}`;
+        } else if (b.tipo === 'livre') {
+            value = 'livre';
+            if (txt) txt.value = b.ministradorNome || '';
+        }
+        if (value && [...sel.options].some(o => o.value === value)) sel.value = value;
+        window.onBlocoChange(i);
+    });
+
+    // Relatório
+    relatorioAnterior = s.relatorio || null;
+    if (s.relatorio) {
+        document.getElementById('rel-participantes').value = s.relatorio.totalParticipantes ?? '';
+        document.getElementById('rel-material-entregue').value = s.relatorio.materialEntregue ?? '';
+        onMaterialEntregueInput();
+        document.getElementById('rel-avaliacao').value = s.relatorio.avaliacaoGeral || '';
+        document.getElementById('rel-engajamento').value = s.relatorio.engajamentoLideranca || '';
+        document.getElementById('rel-projeto5x5').value = s.relatorio.projeto5x5 || '';
+        document.getElementById('rel-destaques').value = s.relatorio.destaques || '';
+        document.getElementById('rel-dificuldades').value = s.relatorio.dificuldades || '';
+        document.getElementById('rel-observacoes').value = s.relatorio.observacoes || '';
+        const followup = s.relatorio.followUpNecessario ? 'sim' : 'nao';
+        document.querySelector(`input[name="rel-followup"][value="${followup}"]`).checked = true;
+        document.getElementById('rel-followup-descricao').value = s.relatorio.followUpDescricao || '';
+        onFollowupChange();
+        if (s.relatorio.preenchidoEm && s.relatorio.preenchidoEm.toDate) {
+            document.getElementById('rel-preenchido-em').textContent =
+                'Preenchido em: ' + s.relatorio.preenchidoEm.toDate().toLocaleString('pt-BR');
+        }
+    }
+
+    onStatusChange();
+    document.getElementById('modal').classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.excluirSeminario = async (id, igrejaNome) => {
+    if (!confirm(`Excluir o seminário de "${igrejaNome}"?`)) return;
+    try {
+        await deleteDoc(doc(db, "seminarios", id));
+        seminariosList = seminariosList.filter(s => s.id !== id);
+        renderTabela();
+        toastSuccess('Seminário excluído.');
+    } catch (e) {
+        toastError('Erro ao excluir.');
+        console.error(e);
+    }
+};
+
+// ── Salvar ─────────────────────────────────────────────────────────────────────
+window.salvarSeminario = async () => {
+    const id = document.getElementById('sem-id').value;
+
+    const igrejaEl = document.getElementById('sem-igreja');
+    const igrejaId = igrejaEl.value;
+    const igrejaOpt = igrejaEl.options[igrejaEl.selectedIndex];
+    const data = document.getElementById('sem-data').value;
+
+    if (!igrejaId) { toastWarning('Selecione a igreja.'); return; }
+    if (!data) { toastWarning('Informe a data de realização.'); return; }
+
+    const igrejaNome = igrejaOpt.dataset.nome || igrejaOpt.text;
+
+    // Aviso (não bloqueante): igreja já tem seminário nessa data
+    const conflito = seminariosList.some(s => s.id !== id && s.igrejaId === igrejaId && s.data === data);
+    if (conflito && !confirm('Já existe um seminário cadastrado para essa igreja nessa data. Deseja continuar mesmo assim?')) return;
+
+    const pastor1Id = document.getElementById('sem-pastor1').value;
+    const pastor2Id = document.getElementById('sem-pastor2').value;
+    const pastor1Nome = pastor1Id ? (pastoresList.find(p => p.id === pastor1Id) || {}).nome || '' : '';
+    const pastor2Nome = pastor2Id ? (pastoresList.find(p => p.id === pastor2Id) || {}).nome || '' : '';
+
+    // Aviso (não bloqueante): mesmo pastor nas duas vagas
+    if (pastor1Id && pastor2Id && pastor1Id === pastor2Id) {
+        if (!confirm('Pastor 1 e Pastor 2 são a mesma pessoa. Deseja continuar mesmo assim?')) return;
+    }
+
+    const coordSel = document.getElementById('sem-coordenador');
+    const coordOpt = coordSel.options[coordSel.selectedIndex];
+    const coordenadorId = coordSel.value || null;
+    const coordenadorNome = coordenadorId ? (coordOpt.dataset.nome || '') : '';
+
+    // Blocos
+    const blocos = BLOCOS_FIXOS.map((b, i) => {
+        const sel = document.querySelector(`[data-bloco="${i}"]`);
+        const val = sel ? sel.value : '';
+        let tipo = '', ministradorId = null, ministradorNome = '';
+
+        if (val === 'livre') {
+            tipo = 'livre';
+            const txt = document.querySelector(`[data-bloco-livre="${i}"]`);
+            ministradorNome = txt ? txt.value.trim() : '';
+        } else if (val.startsWith('equipe:')) {
+            tipo = 'equipe';
+            const n = val.split(':')[1];
+            ministradorId = n === '1' ? pastor1Id : pastor2Id;
+            ministradorNome = n === '1' ? pastor1Nome : pastor2Nome;
+        } else if (val.startsWith('pastor:')) {
+            tipo = 'cadastro';
+            ministradorId = val.split(':')[1];
+            ministradorNome = (pastoresList.find(p => p.id === ministradorId) || {}).nome || '';
+        } else if (val.startsWith('coord:')) {
+            tipo = 'cadastro';
+            ministradorId = val.split(':')[1];
+            ministradorNome = (coordList.find(c => c.id === ministradorId) || {}).nome || '';
+        }
+
+        return { bloco: b.bloco, nome: b.nome, tipo, ministradorId, ministradorNome };
+    });
+
+    // Relatório
+    const quantidadeMaterial = Math.max(0, parseInt(document.getElementById('sem-material').value) || 0);
+    const relParticipantesRaw = document.getElementById('rel-participantes').value;
+    const relMaterialRaw = document.getElementById('rel-material-entregue').value;
+    const totalParticipantes = relParticipantesRaw ? Math.max(0, parseInt(relParticipantesRaw) || 0) : null;
+    const materialEntregue = relMaterialRaw ? Math.max(0, parseInt(relMaterialRaw) || 0) : null;
+    const materialSobra = (materialEntregue != null) ? (quantidadeMaterial - materialEntregue) : null;
+    const followUpNecessario = document.querySelector('input[name="rel-followup"]:checked')?.value === 'sim';
+
+    const relatorioTemDados = totalParticipantes != null || materialEntregue != null ||
+        document.getElementById('rel-avaliacao').value || document.getElementById('rel-engajamento').value ||
+        document.getElementById('rel-projeto5x5').value || document.getElementById('rel-destaques').value.trim() ||
+        document.getElementById('rel-dificuldades').value.trim() || document.getElementById('rel-observacoes').value.trim();
+
+    const relatorio = {
+        totalParticipantes,
+        materialEntregue,
+        materialSobra,
+        avaliacaoGeral: document.getElementById('rel-avaliacao').value,
+        engajamentoLideranca: document.getElementById('rel-engajamento').value,
+        projeto5x5: document.getElementById('rel-projeto5x5').value,
+        destaques: document.getElementById('rel-destaques').value.trim(),
+        dificuldades: document.getElementById('rel-dificuldades').value.trim(),
+        observacoes: document.getElementById('rel-observacoes').value.trim(),
+        followUpNecessario,
+        followUpDescricao: followUpNecessario ? document.getElementById('rel-followup-descricao').value.trim() : '',
+        preenchidoEm: relatorioAnterior?.preenchidoEm || (relatorioTemDados ? serverTimestamp() : null)
+    };
+
+    const payload = {
+        igrejaId,
+        igrejaNome,
+        pastorTitularNome: document.getElementById('sem-pastor-titular').value,
+        coordenadorId,
+        coordenadorNome,
+        data,
+        quantidadeMaterial,
+        observacoes: document.getElementById('sem-observacoes').value.trim(),
+        pastor1Id: pastor1Id || null,
+        pastor1Nome,
+        pastor2Id: pastor2Id || null,
+        pastor2Nome,
+        blocos,
+        status: document.getElementById('sem-status').value,
+        relatorio,
+        updatedAt: serverTimestamp()
+    };
+
+    try {
+        if (id) {
+            await updateDoc(doc(db, "seminarios", id), payload);
+            const idx = seminariosList.findIndex(s => s.id === id);
+            if (idx !== -1) seminariosList[idx] = { id, ...seminariosList[idx], ...payload };
+            toastSuccess('Seminário atualizado.');
+        } else {
+            payload.createdAt = serverTimestamp();
+            const ref = await addDoc(collection(db, "seminarios"), payload);
+            seminariosList.push({ id: ref.id, ...payload });
+            toastSuccess('Seminário cadastrado.');
+        }
+        fecharModal();
+        seminariosList.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+        renderTabela();
+    } catch (e) {
+        toastError('Erro ao salvar.');
+        console.error(e);
+    }
+};
+
+init();
+</script>
+</body>
+</html>
