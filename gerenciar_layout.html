@@ -229,7 +229,8 @@
                 itens: [
                     { id: 'i-pastores', tipo: 'sistema', titulo: 'Pastores', obs: 'Obreiros, Aspirantes e Ministros', url: 's_pastores.html', icone: '👨‍💼', perm: 'superintendente', visivel: true, ordem: 0 },
                     { id: 'i-igrejas', tipo: 'sistema', titulo: 'Igrejas', obs: 'Unidades Locais e vinculação de Pastores', url: 's_igrejas.html', icone: '⛪', perm: 'superintendente', visivel: true, ordem: 1 },
-                    { id: 'i-coord', tipo: 'sistema', titulo: 'Coordenadorias', obs: 'Coordenadores e departamentos regionais', url: 'coordenadorias.html', icone: '🏛️', perm: 'admin', visivel: true, ordem: 2 }
+                    { id: 'i-coord-cid', tipo: 'sistema', titulo: 'Coord. Cidadania', obs: 'Coordenadores locais da Campanha 2026', url: 's_coordenadores_cidadania.html', icone: '🗳️', perm: 'superintendente', visivel: true, ordem: 2 },
+                    { id: 'i-coord', tipo: 'sistema', titulo: 'Coordenadorias', obs: 'Coordenadores e departamentos regionais', url: 'coordenadorias.html', icone: '🏛️', perm: 'admin', visivel: true, ordem: 3 }
                 ]
             },
             {
@@ -596,6 +597,7 @@
             'pendenciasreg655.html':       { titulo:'Pendências',              tipo:'privada',       perms:['admin','secretario','superintendente'] },
             'relatorio_avisos.html':       { titulo:'Relatório de Avisos',     tipo:'privada',       perms:['admin','secretario','superintendente','pastor_titular'] },
             'relatorio_pendencias.html':   { titulo:'Rel. Pendências',         tipo:'privada',       perms:['admin','secretario','superintendente'] },
+            's_coordenadores_cidadania.html': { titulo:'Coord. Cidadania',       tipo:'privada',       perms:['admin','secretario','superintendente'] },
             's_igrejas.html':              { titulo:'Igrejas',                 tipo:'privada',       perms:['admin','secretario','superintendente'] },
             's_pastores.html':             { titulo:'Pastores',                tipo:'privada',       perms:['admin','pastores','secretario','superintendente'] },
             'visualizar_como.html':        { titulo:'Visualizar Como',         tipo:'privada',       perms:['admin'] },

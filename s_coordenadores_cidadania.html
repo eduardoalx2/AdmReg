@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordenadores de Cidadania - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!hasAnyPermission(['admin', 'secretario', 'superintendente'])) window.location.replace('index.html');
+        } catch (error) {}
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .table-custom { font-size: 0.8rem; }
+        .table-custom th { padding: 8px 10px; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
+        .table-custom td { padding: 8px 10px; }
+        .badge-titular   { background:#dbeafe; color:#1d4ed8; }
+        .badge-obreiro   { background:#dcfce7; color:#15803d; }
+        .badge-externo   { background:#f3f4f6; color:#6b7280; }
+    </style>
+</head>
+<body>
+
+<header class="header-gradient shadow-lg sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4 text-blue-400"></i>
+                    Coordenadores de Cidadania
+                </h1>
+                <p class="text-slate-400 text-[10px] uppercase tracking-wider">Campanha Regional 2026 · Região 655</p>
+            </div>
+        </div>
+        <button onclick="abrirModalNovo()"
+            class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Novo
+        </button>
+    </div>
+</header>
+
+<main class="max-w-6xl mx-auto py-6 px-4">
+
+    <!-- Filtros -->
+    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Igreja</label>
+                <select id="filtro-igreja" onchange="aplicarFiltros()"
+                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <option value="">Todas as Igrejas</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Vínculo</label>
+                <select id="filtro-tipo" onchange="aplicarFiltros()"
+                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <option value="">Todos</option>
+                    <option value="titular">Pastor Titular</option>
+                    <option value="obreiro">Obreiro Credenciado</option>
+                    <option value="externo">Sem vínculo ministerial</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar</label>
+                <input type="text" id="filtro-nome" oninput="aplicarFiltros()" placeholder="Nome do coordenador..."
+                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+            </div>
+        </div>
+        <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-3">
+            <button onclick="limparFiltros()" class="text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+                <i data-lucide="filter-x" class="w-3.5 h-3.5"></i> Limpar
+            </button>
+            <span class="text-[10px] text-slate-500 uppercase font-bold">Total: <span id="total-count" class="text-blue-600 text-base font-black">0</span></span>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse table-custom whitespace-nowrap">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Igreja</th>
+                        <th>Vínculo</th>
+                        <th class="w-20 text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-corpo" class="divide-y divide-slate-100">
+                    <tr><td colspan="5" class="text-center py-8 text-slate-400 text-sm">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Modal -->
+<div id="modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[95vh]">
+
+        <div class="bg-slate-800 px-5 py-4 flex justify-between items-center shrink-0 rounded-t-2xl">
+            <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span id="modal-titulo">Novo Coordenador</span>
+            </h2>
+            <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form id="form-coord" class="p-5 space-y-4 overflow-y-auto">
+            <input type="hidden" id="coord-id">
+
+            <!-- Igreja -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Igreja *</label>
+                <select id="coord-igreja" required onchange="onIgrejaChange()"
+                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <option value="">Selecione a igreja...</option>
+                </select>
+            </div>
+
+            <!-- Tipo de vínculo -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Vínculo ministerial</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                        <input type="radio" name="vinculo" id="vinculo-titular" value="titular" onchange="onVinculoChange()"
+                            class="w-4 h-4 text-blue-600">
+                        <div>
+                            <div class="text-sm font-bold text-slate-700">É o próprio Pastor Titular</div>
+                            <div class="text-[11px] text-slate-500">Dados importados automaticamente do cadastro de pastores</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                        <input type="radio" name="vinculo" id="vinculo-obreiro" value="obreiro" onchange="onVinculoChange()"
+                            class="w-4 h-4 text-blue-600">
+                        <div>
+                            <div class="text-sm font-bold text-slate-700">Obreiro credenciado</div>
+                            <div class="text-[11px] text-slate-500">Possui cadastro na página de pastores/obreiros</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                        <input type="radio" name="vinculo" id="vinculo-externo" value="externo" onchange="onVinculoChange()" checked
+                            class="w-4 h-4 text-blue-600">
+                        <div>
+                            <div class="text-sm font-bold text-slate-700">Sem vínculo ministerial</div>
+                            <div class="text-[11px] text-slate-500">Cadastro manual de nome e telefone</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Seleção de pastor (titular ou obreiro) -->
+            <div id="campo-pastor-select" class="hidden">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Selecionar do cadastro de pastores *</label>
+                <select id="coord-pastor-ref" onchange="onPastorRefChange()"
+                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <option value="">Selecione...</option>
+                </select>
+                <p id="pastor-ref-hint" class="text-[10px] text-slate-400 mt-1"></p>
+            </div>
+
+            <!-- Nome e telefone -->
+            <div id="campos-manuais">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nome *</label>
+                        <input type="text" id="coord-nome" required
+                            class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-800"
+                            placeholder="Nome completo">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Telefone / WhatsApp</label>
+                        <input type="tel" id="coord-telefone"
+                            class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold"
+                            placeholder="(43) 99999-9999">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensagem de readonly quando vinculado -->
+            <div id="campos-readonly" class="hidden">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-[11px] text-blue-700 font-semibold mb-2">Dados importados do cadastro de pastores:</p>
+                    <p id="readonly-nome" class="text-sm font-bold text-slate-800"></p>
+                    <p id="readonly-tel" class="text-xs text-slate-500 mt-0.5"></p>
+                </div>
+            </div>
+        </form>
+
+        <div class="px-5 pb-5 flex gap-3 shrink-0">
+            <button onclick="fecharModal()" type="button"
+                class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                Cancelar
+            </button>
+            <button onclick="salvarCoord()" type="button"
+                class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold text-white transition-colors">
+                Salvar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-sm font-bold px-5 py-3 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-[9999]"></div>
+
+<script type="module">
+import { db } from './firebase-config.js';
+import {
+    collection, getDocs, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, where
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { toastSuccess, toastError } from './js/toast.js';
+
+let coordList   = [];
+let igrejasList = [];
+let pastoresList = [];
+
+// ── Carregar dados base ──────────────────────────────────────────────────────
+async function init() {
+    await Promise.all([carregarIgrejas(), carregarPastores()]);
+    await carregarCoord();
+    if (window.lucide) window.lucide.createIcons();
+}
+
+async function carregarIgrejas() {
+    const snap = await getDocs(collection(db, "igrejas"));
+    igrejasList = [];
+    snap.forEach(d => igrejasList.push({ id: d.id, ...d.data() }));
+    igrejasList.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+
+    const selFiltro = document.getElementById('filtro-igreja');
+    const selModal  = document.getElementById('coord-igreja');
+    igrejasList.forEach(ig => {
+        const label = `${ig.codigo} - ${ig.nome}`;
+        selFiltro.innerHTML += `<option value="${label}">${label}</option>`;
+        selModal.innerHTML  += `<option value="${ig.id}" data-nome="${label}">${label}</option>`;
+    });
+}
+
+async function carregarPastores() {
+    const snap = await getDocs(collection(db, "pastores"));
+    pastoresList = [];
+    snap.forEach(d => pastoresList.push({ id: d.id, ...d.data() }));
+    pastoresList.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+}
+
+async function carregarCoord() {
+    const snap = await getDocs(query(collection(db, "coordenadores_cidadania"), orderBy("igrejaNome")));
+    coordList = [];
+    snap.forEach(d => coordList.push({ id: d.id, ...d.data() }));
+    renderTabela();
+}
+
+// ── Renderização ─────────────────────────────────────────────────────────────
+function renderTabela() {
+    const filtroIgreja = document.getElementById('filtro-igreja').value;
+    const filtroTipo   = document.getElementById('filtro-tipo').value;
+    const filtroNome   = document.getElementById('filtro-nome').value.toLowerCase();
+
+    const filtrados = coordList.filter(c => {
+        if (filtroIgreja && c.igrejaNome !== filtroIgreja) return false;
+        if (filtroNome   && !(c.nome || '').toLowerCase().includes(filtroNome)) return false;
+        if (filtroTipo === 'titular'  && !c.ehPastorTitular)      return false;
+        if (filtroTipo === 'obreiro'  && !c.ehObreiroCredenciado) return false;
+        if (filtroTipo === 'externo'  && (c.ehPastorTitular || c.ehObreiroCredenciado)) return false;
+        return true;
+    });
+
+    document.getElementById('total-count').textContent = filtrados.length;
+
+    const tbody = document.getElementById('tabela-corpo');
+    if (!filtrados.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400 text-sm">Nenhum coordenador encontrado</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtrados.map(c => {
+        let badgeHtml = '';
+        if (c.ehPastorTitular) {
+            badgeHtml = '<span class="badge-titular px-2 py-0.5 rounded text-[9px] font-bold uppercase">Pastor Titular</span>';
+        } else if (c.ehObreiroCredenciado) {
+            badgeHtml = '<span class="badge-obreiro px-2 py-0.5 rounded text-[9px] font-bold uppercase">Obreiro Credenciado</span>';
+        } else {
+            badgeHtml = '<span class="badge-externo px-2 py-0.5 rounded text-[9px] font-bold uppercase">Externo</span>';
+        }
+        return `
+        <tr class="hover:bg-slate-50 transition-colors">
+            <td class="font-bold text-slate-800">${c.nome || '-'}</td>
+            <td class="text-slate-600">${c.telefone || '-'}</td>
+            <td class="text-slate-600 font-medium">${c.igrejaNome || '-'}</td>
+            <td>${badgeHtml}</td>
+            <td class="text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <button onclick="window.editarCoord('${c.id}')" class="text-blue-600 hover:text-blue-800 transition-colors" title="Editar">
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="window.excluirCoord('${c.id}', '${(c.nome || '').replace(/'/g, "\\'")}' )" class="text-red-500 hover:text-red-700 transition-colors" title="Excluir">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+// ── Filtros ───────────────────────────────────────────────────────────────────
+window.aplicarFiltros = renderTabela;
+window.limparFiltros = () => {
+    document.getElementById('filtro-igreja').value = '';
+    document.getElementById('filtro-tipo').value   = '';
+    document.getElementById('filtro-nome').value   = '';
+    renderTabela();
+};
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function resetModal() {
+    document.getElementById('coord-id').value      = '';
+    document.getElementById('coord-igreja').value  = '';
+    document.getElementById('coord-pastor-ref').value = '';
+    document.getElementById('coord-nome').value    = '';
+    document.getElementById('coord-telefone').value = '';
+    document.getElementById('vinculo-externo').checked = true;
+    document.getElementById('modal-titulo').textContent = 'Novo Coordenador';
+    onVinculoChange();
+}
+
+window.abrirModalNovo = () => {
+    resetModal();
+    document.getElementById('modal').classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.fecharModal = () => {
+    document.getElementById('modal').classList.add('hidden');
+};
+
+window.editarCoord = (id) => {
+    const c = coordList.find(x => x.id === id);
+    if (!c) return;
+
+    document.getElementById('coord-id').value = id;
+    document.getElementById('modal-titulo').textContent = 'Editar Coordenador';
+
+    // Igreja
+    const igrejaOpt = Array.from(document.getElementById('coord-igreja').options)
+        .find(o => o.value === c.igrejaId);
+    if (igrejaOpt) document.getElementById('coord-igreja').value = c.igrejaId;
+
+    // Vínculo
+    if (c.ehPastorTitular) {
+        document.getElementById('vinculo-titular').checked = true;
+    } else if (c.ehObreiroCredenciado) {
+        document.getElementById('vinculo-obreiro').checked = true;
+    } else {
+        document.getElementById('vinculo-externo').checked = true;
+    }
+    onVinculoChange();
+
+    // Dados
+    if (c.pastorId) {
+        popularSelectPastor(c.ehPastorTitular ? 'titular' : 'obreiro', c.igrejaId);
+        document.getElementById('coord-pastor-ref').value = c.pastorId;
+        onPastorRefChange();
+    } else {
+        document.getElementById('coord-nome').value     = c.nome || '';
+        document.getElementById('coord-telefone').value = c.telefone || '';
+    }
+
+    document.getElementById('modal').classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.excluirCoord = async (id, nome) => {
+    if (!confirm(`Excluir o coordenador "${nome}"?`)) return;
+    try {
+        await deleteDoc(doc(db, "coordenadores_cidadania", id));
+        coordList = coordList.filter(c => c.id !== id);
+        renderTabela();
+        toastSuccess('Coordenador excluído.');
+    } catch (e) {
+        toastError('Erro ao excluir.');
+        console.error(e);
+    }
+};
+
+// ── Lógica do formulário ───────────────────────────────────────────────────────
+window.onIgrejaChange = () => {
+    const vinculo = document.querySelector('input[name="vinculo"]:checked')?.value;
+    if (vinculo === 'titular' || vinculo === 'obreiro') {
+        popularSelectPastor(vinculo, document.getElementById('coord-igreja').value);
+    }
+};
+
+window.onVinculoChange = () => {
+    const vinculo = document.querySelector('input[name="vinculo"]:checked')?.value;
+    const igrejaId = document.getElementById('coord-igreja').value;
+
+    const showPastorSelect = vinculo === 'titular' || vinculo === 'obreiro';
+
+    document.getElementById('campo-pastor-select').classList.toggle('hidden', !showPastorSelect);
+    document.getElementById('campos-manuais').classList.toggle('hidden', showPastorSelect);
+    document.getElementById('campos-readonly').classList.add('hidden');
+
+    if (showPastorSelect && igrejaId) {
+        popularSelectPastor(vinculo, igrejaId);
+    } else if (showPastorSelect) {
+        document.getElementById('coord-pastor-ref').innerHTML = '<option value="">Selecione a igreja primeiro</option>';
+    }
+
+    if (!showPastorSelect) {
+        document.getElementById('coord-nome').readOnly = false;
+        document.getElementById('coord-telefone').readOnly = false;
+        document.getElementById('coord-nome').classList.remove('bg-blue-50');
+        document.getElementById('coord-telefone').classList.remove('bg-blue-50');
+    }
+};
+
+function popularSelectPastor(vinculo, igrejaId) {
+    const sel = document.getElementById('coord-pastor-ref');
+    sel.innerHTML = '<option value="">Selecione...</option>';
+
+    const hint = document.getElementById('pastor-ref-hint');
+
+    // Igreja selecionada
+    const igrejaOpt = document.getElementById('coord-igreja').querySelector(`option[value="${igrejaId}"]`);
+    const igrejaNome = igrejaOpt ? igrejaOpt.dataset.nome : '';
+
+    let candidatos = [];
+
+    if (vinculo === 'titular') {
+        // Pastor Titular desta igreja
+        candidatos = pastoresList.filter(p =>
+            p.funcao === 'Pastor Titular' &&
+            Array.isArray(p.igreja) &&
+            p.igreja.some(i => igrejaNome && igrejaNome.includes(i))
+        );
+        hint.textContent = 'Mostrando pastores titulares vinculados a esta igreja.';
+    } else {
+        // Obreiros credenciados: todos do cadastro que não são o titular desta igreja
+        candidatos = pastoresList;
+        hint.textContent = 'Mostrando todos os obreiros/pastores do cadastro regional.';
+    }
+
+    if (!candidatos.length) {
+        sel.innerHTML = '<option value="">Nenhum encontrado — verifique o cadastro de pastores</option>';
+        hint.textContent = vinculo === 'titular'
+            ? 'Nenhum pastor titular cadastrado para esta igreja. Cadastre primeiro em Pastores.'
+            : 'Nenhum obreiro credenciado encontrado.';
+        return;
+    }
+
+    candidatos.forEach(p => {
+        const label = `${p.nome}${p.funcao ? ' · ' + p.funcao : ''}${p.categoria ? ' · ' + p.categoria : ''}`;
+        sel.innerHTML += `<option value="${p.id}" data-nome="${p.nome}" data-tel="${p.telefone || ''}">${label}</option>`;
+    });
+}
+
+window.onPastorRefChange = () => {
+    const sel = document.getElementById('coord-pastor-ref');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) {
+        document.getElementById('campos-readonly').classList.add('hidden');
+        return;
+    }
+    document.getElementById('readonly-nome').textContent = opt.dataset.nome || '';
+    document.getElementById('readonly-tel').textContent  = opt.dataset.tel  || 'Telefone não informado';
+    document.getElementById('campos-readonly').classList.remove('hidden');
+};
+
+// ── Salvar ─────────────────────────────────────────────────────────────────────
+window.salvarCoord = async () => {
+    const id      = document.getElementById('coord-id').value;
+    const igrejaEl = document.getElementById('coord-igreja');
+    const igrejaId = igrejaEl.value;
+    const igrejaOpt = igrejaEl.options[igrejaEl.selectedIndex];
+
+    if (!igrejaId) { alert('Selecione a igreja.'); return; }
+
+    const vinculo = document.querySelector('input[name="vinculo"]:checked')?.value || 'externo';
+    const ehPastorTitular      = vinculo === 'titular';
+    const ehObreiroCredenciado = vinculo === 'obreiro';
+
+    let nome = '', telefone = '', pastorId = null;
+
+    if (vinculo === 'titular' || vinculo === 'obreiro') {
+        const pastorSel = document.getElementById('coord-pastor-ref');
+        pastorId = pastorSel.value;
+        if (!pastorId) { alert('Selecione o pastor/obreiro no cadastro.'); return; }
+        const opt = pastorSel.options[pastorSel.selectedIndex];
+        nome     = opt.dataset.nome || '';
+        telefone = opt.dataset.tel  || '';
+    } else {
+        nome     = document.getElementById('coord-nome').value.trim();
+        telefone = document.getElementById('coord-telefone').value.trim();
+        if (!nome) { alert('Informe o nome do coordenador.'); return; }
+    }
+
+    const payload = {
+        nome,
+        telefone,
+        igrejaId,
+        igrejaNome:   igrejaOpt.dataset.nome || igrejaOpt.text,
+        ehPastorTitular,
+        ehObreiroCredenciado,
+        pastorId,
+        updatedAt: serverTimestamp()
+    };
+
+    try {
+        if (id) {
+            await updateDoc(doc(db, "coordenadores_cidadania", id), payload);
+            const idx = coordList.findIndex(c => c.id === id);
+            if (idx !== -1) coordList[idx] = { id, ...payload };
+            toastSuccess('Coordenador atualizado.');
+        } else {
+            const ref = await addDoc(collection(db, "coordenadores_cidadania"), payload);
+            coordList.push({ id: ref.id, ...payload });
+            toastSuccess('Coordenador cadastrado.');
+        }
+        fecharModal();
+        // Re-sort by igrejaNome
+        coordList.sort((a, b) => (a.igrejaNome || '').localeCompare(b.igrejaNome || ''));
+        renderTabela();
+    } catch (e) {
+        toastError('Erro ao salvar.');
+        console.error(e);
+    }
+};
+
+init();
+</script>
+</body>
+</html>
