@@ -113,10 +113,10 @@
 
     <!-- Filtros e Busca -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 no-print">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <!-- Busca por texto -->
             <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar por Igreja ou Preletor</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar por Igreja/Preletor</label>
                 <div class="relative">
                     <input type="text" id="filtro-busca" oninput="window.filtrarEExibir()" placeholder="Pesquise..."
                         class="w-full p-2.5 pl-9 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-slate-700 transition-all">
@@ -149,6 +149,18 @@
                     class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
                     <option value="">Todas as Igrejas</option>
                 </select>
+            </div>
+            <!-- Filtro por data de início (De) -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">De Data</label>
+                <input type="date" id="filtro-data-de" onchange="window.filtrarEExibir()"
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+            </div>
+            <!-- Filtro por data de fim (Até) -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Até Data</label>
+                <input type="date" id="filtro-data-ate" onchange="window.filtrarEExibir()"
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
             </div>
         </div>
         <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-4">
@@ -259,11 +271,31 @@ async function carregarSeminarios() {
     const snap = await getDocs(collection(db, "seminarios"));
     seminarios = [];
     snap.forEach(d => seminarios.push({ id: d.id, ...d.data() }));
-    // Ordena por data (os sem data ficam por último)
+    
+    // Obter data de hoje no formato local YYYY-MM-DD
+    const now = new Date();
+    const ano = now.getFullYear();
+    const mes = String(now.getMonth() + 1).padStart(2, '0');
+    const dia = String(now.getDate()).padStart(2, '0');
+    const hojeStr = `${ano}-${mes}-${dia}`;
+
+    // Ordena por data (mais atual/próxima primeiro, futuros depois, passados em seguida, sem data por último)
     seminarios.sort((a, b) => {
+        if (!a.data && !b.data) return 0;
         if (!a.data) return 1;
         if (!b.data) return -1;
-        return a.data.localeCompare(b.data);
+
+        const aFuturo = a.data >= hojeStr;
+        const bFuturo = b.data >= hojeStr;
+
+        if (aFuturo && bFuturo) {
+            return a.data.localeCompare(b.data); // Ascendente
+        }
+        if (!aFuturo && !bFuturo) {
+            return b.data.localeCompare(a.data); // Descendente (mais recente primeiro)
+        }
+
+        return aFuturo ? -1 : 1;
     });
 }
 
@@ -319,6 +351,8 @@ window.filtrarEExibir = () => {
     const filtroStatus = document.getElementById('filtro-status').value;
     const filtroPreletor = document.getElementById('filtro-preletor').value;
     const filtroIgreja = document.getElementById('filtro-igreja').value;
+    const filtroDataDe = document.getElementById('filtro-data-de').value;
+    const filtroDataAte = document.getElementById('filtro-data-ate').value;
 
     const filtrados = seminarios.filter(s => {
         // Busca textual (busca na igreja, preletores, observações ou pastor titular)
@@ -349,6 +383,16 @@ window.filtrarEExibir = () => {
             return false;
         }
 
+        // Filtro de data De
+        if (filtroDataDe) {
+            if (!s.data || s.data < filtroDataDe) return false;
+        }
+
+        // Filtro de data Até
+        if (filtroDataAte) {
+            if (!s.data || s.data > filtroDataAte) return false;
+        }
+
         return true;
     });
 
@@ -375,6 +419,8 @@ window.limparFiltros = () => {
     document.getElementById('filtro-status').value = '';
     document.getElementById('filtro-preletor').value = '';
     document.getElementById('filtro-igreja').value = '';
+    document.getElementById('filtro-data-de').value = '';
+    document.getElementById('filtro-data-ate').value = '';
     window.filtrarEExibir();
     toastSuccess("Filtros limpos!");
 };
