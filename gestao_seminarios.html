@@ -16,21 +16,26 @@
         } catch (error) {}
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
         .table-custom { font-size: 0.8rem; }
-        .table-custom th { padding: 8px 10px; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
-        .table-custom td { padding: 8px 10px; }
-        .badge-agendar   { background:#f3f4f6; color:#6b7280; }
-        .badge-agendado  { background:#dbeafe; color:#1d4ed8; }
-        .badge-realizado { background:#dcfce7; color:#15803d; }
-        .badge-pendente  { background:#fef3c7; color:#92400e; }
-        .badge-preenchido{ background:#dcfce7; color:#15803d; }
-        .tab-btn { border-bottom: 2px solid transparent; }
-        .tab-btn.active { border-bottom: 2px solid #2563eb; color:#2563eb; }
+        .table-custom th { padding: 12px 16px; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
+        .table-custom td { padding: 12px 16px; }
+        
+        .badge-agendar   { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .badge-agendado  { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .badge-realizado { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-pendente  { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+        .badge-preenchido{ background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        
+        .tab-btn { border-bottom: 2px solid transparent; transition: all 0.2s ease; }
+        .tab-btn.active { border-bottom: 2px solid #2563eb; color:#2563eb; font-weight: 700; }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         @media print {
             body { background-color: white !important; }
             @page { size: portrait; margin: 10mm; }
@@ -40,87 +45,135 @@
 <body>
 
 <header class="header-gradient shadow-lg sticky top-0 z-40 print:hidden">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-col sm:flex-row justify-between items-center gap-4">
         <div class="flex items-center gap-3">
-            <a href="index.html" class="text-slate-400 hover:text-white transition-colors">
+            <a href="index.html" class="text-slate-400 hover:text-white transition-colors" title="Voltar ao Painel">
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
             </a>
             <div>
-                <h1 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
-                    <i data-lucide="book-open" class="w-4 h-4 text-blue-400"></i>
+                <h1 class="text-white font-extrabold text-base uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-4 h-4 text-blue-400 animate-pulse"></i>
                     Gestão de Seminários
                 </h1>
                 <p class="text-slate-400 text-[10px] uppercase tracking-wider">Os 5 Pães da Transformação · Campanha Regional 2026 · Região 655</p>
             </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
             <a href="s_coordenadores_cidadania.html"
-                class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+                class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-all shadow-sm">
                 <i data-lucide="users" class="w-3.5 h-3.5"></i> Coordenadores
             </a>
             <a href="resumo_seminarios.html"
-                class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+                class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-all shadow-sm">
                 <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Resumo dos Agendamentos
             </a>
             <button onclick="abrirModalNovo()"
-                class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+                class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-all shadow-sm">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Novo Seminário
             </button>
         </div>
     </div>
 </header>
 
-<main class="max-w-6xl mx-auto py-6 px-4 print:hidden">
+<main class="max-w-7xl mx-auto py-6 px-4 print:hidden w-full flex-1">
+
+    <!-- Dashboard de Métricas no Topo -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="p-3 rounded-lg bg-blue-50 text-blue-600">
+                <i data-lucide="book-open" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total de Seminários</div>
+                <div id="total-count" class="text-xl font-black text-slate-800">0</div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="p-3 rounded-lg bg-emerald-50 text-emerald-600">
+                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Realizados</div>
+                <div id="tot-realizados" class="text-xl font-black text-slate-800">0</div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="p-3 rounded-lg bg-purple-50 text-purple-600">
+                <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Participantes</div>
+                <div id="tot-participantes" class="text-xl font-black text-slate-800">0</div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="p-3 rounded-lg bg-amber-50 text-amber-600">
+                <i data-lucide="package" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mat. Entregue</div>
+                <div id="tot-material" class="text-xl font-black text-slate-800">0</div>
+            </div>
+        </div>
+    </div>
 
     <!-- Filtros -->
-    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Igreja</label>
-                <select id="filtro-igreja" onchange="aplicarFiltros()"
-                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                    <option value="">Todas as Igrejas</option>
-                </select>
+                <div class="relative">
+                    <select id="filtro-igreja" onchange="aplicarFiltros()"
+                        class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none">
+                        <option value="">Todas as Igrejas</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                </div>
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
-                <select id="filtro-status" onchange="aplicarFiltros()"
-                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                    <option value="">Todos</option>
-                    <option value="A Agendar">A Agendar</option>
-                    <option value="Agendado">Agendado</option>
-                    <option value="Realizado">Realizado</option>
-                </select>
+                <div class="relative">
+                    <select id="filtro-status" onchange="aplicarFiltros()"
+                        class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none">
+                        <option value="">Todos os Status</option>
+                        <option value="A Agendar">A Agendar</option>
+                        <option value="Agendado">Agendado</option>
+                        <option value="Realizado">Realizado</option>
+                    </select>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                </div>
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar</label>
-                <input type="text" id="filtro-nome" oninput="aplicarFiltros()" placeholder="Nome da igreja..."
-                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                <div class="relative">
+                    <input type="text" id="filtro-nome" oninput="aplicarFiltros()" placeholder="Nome da igreja..."
+                        class="w-full p-2.5 pl-9 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+                </div>
             </div>
         </div>
-        <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-3">
-            <button onclick="limparFiltros()" class="text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
-                <i data-lucide="filter-x" class="w-3.5 h-3.5"></i> Limpar
+        <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-4">
+            <button onclick="limparFiltros()" class="text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1 uppercase tracking-wider">
+                <i data-lucide="filter-x" class="w-4 h-4"></i> Limpar Filtros
             </button>
-            <span class="text-[10px] text-slate-500 uppercase font-bold">Total: <span id="total-count" class="text-blue-600 text-base font-black">0</span></span>
         </div>
     </div>
 
     <!-- Tabela -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
         <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-left border-collapse table-custom whitespace-nowrap">
                 <thead>
                     <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
-                        <th>Igreja</th>
-                        <th>Data</th>
-                        <th>Equipe</th>
-                        <th>Material</th>
-                        <th>Ministrações</th>
-                        <th>Participantes</th>
-                        <th>Relatório</th>
-                        <th>Status</th>
-                        <th class="w-20 text-center">Ações</th>
+                        <th class="py-3.5 px-4 font-bold text-[10px] tracking-wider uppercase">Igreja</th>
+                        <th class="py-3.5 px-4 font-bold text-[10px] tracking-wider uppercase">Data</th>
+                        <th class="py-3.5 px-4 font-bold text-[10px] tracking-wider uppercase">Equipe Visitante</th>
+                        <th class="py-3.5 px-4 font-bold text-[10px] tracking-wider uppercase text-center">Material</th>
+                        <th class="py-3.5 px-4 font-bold text-[10px] tracking-wider uppercase text-center">Ministrações</th>
+                        <th class="py-3.5 px-4 font-bold text-[10px] tracking-wider uppercase text-center">Participantes</th>
+                        <th class="py-3.5 px-4 font-bold text-[10px] tracking-wider uppercase">Relatório</th>
+                        <th class="py-3.5 px-4 font-bold text-[10px] tracking-wider uppercase">Status</th>
+                        <th class="py-3.5 px-4 font-bold text-[10px] tracking-wider uppercase text-center w-24">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tabela-corpo" class="divide-y divide-slate-100">
@@ -128,254 +181,289 @@
                 </tbody>
             </table>
         </div>
-        <div class="bg-slate-50 border-t border-slate-200 px-4 py-3">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
-                <div>
-                    <div class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Seminários Realizados</div>
-                    <div id="tot-realizados" class="text-lg font-black text-slate-800">0</div>
-                </div>
-                <div>
-                    <div class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Total de Participantes</div>
-                    <div id="tot-participantes" class="text-lg font-black text-slate-800">0</div>
-                </div>
-                <div>
-                    <div class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Total de Material Entregue</div>
-                    <div id="tot-material" class="text-lg font-black text-slate-800">0</div>
-                </div>
-            </div>
-        </div>
     </div>
 </main>
 
 <!-- Modal -->
-<div id="modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 print:hidden">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[95vh]">
+<div id="modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 print:hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[92vh]">
 
-        <div class="bg-slate-800 px-5 py-4 flex justify-between items-center shrink-0 rounded-t-2xl">
-            <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
-                <i data-lucide="book-open" class="w-4 h-4"></i>
+        <div class="bg-slate-900 px-6 py-4 flex justify-between items-center shrink-0 rounded-t-2xl">
+            <h2 class="text-white font-extrabold text-sm uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="book-open" class="w-4 h-4 text-blue-400"></i>
                 <span id="modal-titulo">Novo Seminário</span>
             </h2>
-            <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors">
+            <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors p-1 hover:bg-slate-800 rounded-full">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
 
         <!-- Abas -->
-        <div class="flex gap-6 border-b border-slate-200 px-5 shrink-0">
-            <button type="button" onclick="setTab('dados')" id="tab-btn-dados" class="tab-btn active py-3 text-[11px] font-bold uppercase tracking-wider transition-all">Dados do Seminário</button>
-            <button type="button" onclick="setTab('relatorio')" id="tab-btn-relatorio" class="tab-btn py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider transition-all">Relatório Pós-Evento</button>
+        <div class="flex gap-6 border-b border-slate-200 px-6 shrink-0 bg-slate-50">
+            <button type="button" onclick="setTab('dados')" id="tab-btn-dados" class="tab-btn active py-3.5 text-xs font-bold uppercase tracking-wider transition-all">Dados do Seminário</button>
+            <button type="button" onclick="setTab('relatorio')" id="tab-btn-relatorio" class="tab-btn py-3.5 text-xs font-bold text-slate-400 uppercase tracking-wider transition-all">Relatório Pós-Evento</button>
         </div>
 
-        <div class="p-5 overflow-y-auto custom-scrollbar flex-1">
+        <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
             <input type="hidden" id="sem-id">
 
             <!-- TAB: DADOS DO SEMINÁRIO -->
-            <div id="tab-content-dados" class="space-y-5">
+            <div id="tab-content-dados" class="space-y-6">
 
                 <!-- Dados Gerais -->
                 <div>
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Dados Gerais</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-blue-500"></i>
+                        Dados Gerais
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="sm:col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Igreja *</label>
-                            <select id="sem-igreja" required onchange="onIgrejaChange()"
-                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                                <option value="">Selecione a igreja...</option>
-                            </select>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Igreja *</label>
+                            <div class="relative">
+                                <select id="sem-igreja" required onchange="onIgrejaChange()"
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none transition-all">
+                                    <option value="">Selecione a igreja...</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pastor Titular</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Pastor Titular</label>
                             <input type="text" id="sem-pastor-titular" readonly placeholder="Definido ao selecionar a igreja"
-                                class="w-full p-2 bg-slate-100 border border-slate-200 rounded text-sm font-semibold text-slate-500 cursor-not-allowed">
+                                class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-500 cursor-not-allowed">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Coordenador Local de Cidadania</label>
-                            <select id="sem-coordenador"
-                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                                <option value="">Selecione a igreja primeiro</option>
-                            </select>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Coordenador Local de Cidadania</label>
+                            <div class="relative">
+                                <select id="sem-coordenador"
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none transition-all">
+                                    <option value="">Selecione a igreja primeiro</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data de Realização *</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Data de Realização *</label>
                             <input type="date" id="sem-data" required onchange="verificarDisponibilidadePreletores()"
-                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold transition-all">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Horário de Início</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Horário de Início</label>
                             <input type="time" id="sem-horario"
-                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold transition-all">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Quantidade de Material</label>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Quantidade de Material</label>
                             <input type="number" id="sem-material" min="0" placeholder="0"
-                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold transition-all">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status</label>
-                            <select id="sem-status" onchange="onStatusChange()"
-                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                                <option value="A Agendar">A Agendar</option>
-                                <option value="Agendado">Agendado</option>
-                                <option value="Realizado">Realizado</option>
-                            </select>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Status</label>
+                            <div class="relative">
+                                <select id="sem-status" onchange="onStatusChange()"
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none transition-all">
+                                    <option value="A Agendar">A Agendar</option>
+                                    <option value="Agendado">Agendado</option>
+                                    <option value="Realizado">Realizado</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                            </div>
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observações Gerais</label>
-                            <textarea id="sem-observacoes" rows="2"
-                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Observações Gerais</label>
+                            <textarea id="sem-observacoes" rows="2" placeholder="Informações ou observações adicionais..."
+                                class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 resize-none transition-all"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <!-- Equipe Visitante -->
-                <div>
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Equipe Visitante *</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="pt-4 border-t border-slate-100">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                        <i data-lucide="users" class="w-3.5 h-3.5 text-blue-500"></i>
+                        Equipe Visitante *
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pastor 1</label>
-                            <select id="sem-pastor1" onchange="onEquipeChange()"
-                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                                <option value="">Selecione...</option>
-                            </select>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Pastor 1</label>
+                            <div class="relative">
+                                <select id="sem-pastor1" onchange="onEquipeChange()"
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none transition-all">
+                                    <option value="">Selecione...</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pastor 2</label>
-                            <select id="sem-pastor2" onchange="onEquipeChange()"
-                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                                <option value="">Selecione...</option>
-                            </select>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Pastor 2</label>
+                            <div class="relative">
+                                <select id="sem-pastor2" onchange="onEquipeChange()"
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none transition-all">
+                                    <option value="">Selecione...</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                            </div>
                         </div>
                     </div>
-                    <div id="sem-conflito-preletores" class="hidden mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5">
-                        <p class="text-[11px] font-bold text-amber-700 flex items-center gap-1.5 mb-1">
-                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Alerta de indisponibilidade
+                    <div id="sem-conflito-preletores" class="hidden mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                        <p class="text-xs font-bold text-amber-800 flex items-center gap-1.5 mb-1.5">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i> Alerta de indisponibilidade
                         </p>
-                        <ul id="sem-conflito-lista" class="list-disc list-inside text-[11px] font-medium text-amber-700 space-y-0.5"></ul>
+                        <ul id="sem-conflito-lista" class="list-disc list-inside text-xs font-medium text-amber-700 space-y-1"></ul>
                     </div>
                 </div>
 
                 <!-- Ministrações -->
-                <div>
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Ministrações — 7 Blocos Fixos</h3>
-                    <div id="blocos-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                <div class="pt-4 border-t border-slate-100">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                        <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-blue-500"></i>
+                        Ministrações — 7 Blocos Fixos
+                    </h3>
+                    <div id="blocos-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                 </div>
             </div>
 
             <!-- TAB: RELATÓRIO PÓS-EVENTO -->
-            <div id="tab-content-relatorio" class="hidden">
-                <div id="relatorio-lock" class="text-center py-14 text-slate-400 text-sm font-semibold flex flex-col items-center gap-2">
-                    <i data-lucide="lock" class="w-8 h-8 text-slate-300"></i>
-                    Disponível após a realização do seminário.
+            <div id="tab-content-relatorio" class="hidden space-y-6">
+                <div id="relatorio-lock" class="text-center py-20 text-slate-400 text-sm font-semibold flex flex-col items-center justify-center gap-3 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <i data-lucide="lock" class="w-10 h-10 text-slate-300"></i>
+                    <p class="uppercase text-xs tracking-wider font-extrabold text-slate-500">Relatório Bloqueado</p>
+                    <p class="text-xs text-slate-400 max-w-xs font-medium">Este relatório estará disponível assim que o status do seminário for alterado para "Realizado".</p>
                 </div>
 
-                <div id="relatorio-fields" class="hidden space-y-5">
+                <div id="relatorio-fields" class="hidden space-y-6">
 
                     <div>
-                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Presença e Material</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                            <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 text-blue-500"></i>
+                            Presença e Material
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total de Participantes</label>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Total de Participantes</label>
                                 <input type="number" id="rel-participantes" min="0" placeholder="0"
-                                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold transition-all">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Material Entregue</label>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Material Entregue</label>
                                 <input type="number" id="rel-material-entregue" min="0" placeholder="0" oninput="onMaterialEntregueInput()"
-                                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold transition-all">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Material Sobrado</label>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Material Sobrado</label>
                                 <input type="number" id="rel-material-sobra" readonly
-                                    class="w-full p-2 bg-slate-100 border border-slate-200 rounded text-sm font-semibold text-slate-500 cursor-not-allowed">
+                                    class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-500 cursor-not-allowed">
                             </div>
                         </div>
-                        <p id="rel-material-alerta" class="hidden mt-2 text-[11px] font-bold text-amber-600 flex items-center gap-1">
-                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Material entregue é maior que o previsto no cadastro.
-                        </p>
-                    </div>
-
-                    <div>
-                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Avaliação Geral</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Como foi o evento</label>
-                                <select id="rel-avaliacao" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                                    <option value="">Selecione...</option>
-                                    <option value="Ótimo">Ótimo</option>
-                                    <option value="Bom">Bom</option>
-                                    <option value="Regular">Regular</option>
-                                    <option value="Abaixo do esperado">Abaixo do esperado</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Engajamento da liderança local</label>
-                                <select id="rel-engajamento" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                                    <option value="">Selecione...</option>
-                                    <option value="Alto">Alto</option>
-                                    <option value="Médio">Médio</option>
-                                    <option value="Baixo">Baixo</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Projeto 5x5 apresentado/preenchido</label>
-                                <select id="rel-projeto5x5" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
-                                    <option value="">Selecione...</option>
-                                    <option value="Sim todos preencheram">Sim, todos preencheram</option>
-                                    <option value="Sim parcialmente">Sim, parcialmente</option>
-                                    <option value="Não foi possível">Não foi possível</option>
-                                </select>
-                            </div>
+                        <div id="rel-material-alerta" class="hidden mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 flex items-center gap-2">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
+                            <span class="text-xs font-bold text-amber-700">Material entregue é maior que o previsto no cadastro.</span>
                         </div>
                     </div>
 
-                    <div>
-                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Narrativa</h3>
-                        <div class="space-y-3">
+                    <div class="pt-4 border-t border-slate-100">
+                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                            <i data-lucide="award" class="w-3.5 h-3.5 text-blue-500"></i>
+                            Avaliação Geral
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Destaques do evento</label>
-                                <textarea id="rel-destaques" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Como foi o evento</label>
+                                <div class="relative">
+                                    <select id="rel-avaliacao" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none transition-all">
+                                        <option value="">Selecione...</option>
+                                        <option value="Ótimo">Ótimo</option>
+                                        <option value="Bom">Bom</option>
+                                        <option value="Regular">Regular</option>
+                                        <option value="Abaixo do esperado">Abaixo do esperado</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Dificuldades ou imprevistos</label>
-                                <textarea id="rel-dificuldades" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Engajamento da liderança</label>
+                                <div class="relative">
+                                    <select id="rel-engajamento" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none transition-all">
+                                        <option value="">Selecione...</option>
+                                        <option value="Alto">Alto</option>
+                                        <option value="Médio">Médio</option>
+                                        <option value="Baixo">Baixo</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observações gerais</label>
-                                <textarea id="rel-observacoes" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Projeto 5x5 apresentado</label>
+                                <div class="relative">
+                                    <select id="rel-projeto5x5" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-semibold text-slate-700 appearance-none transition-all">
+                                        <option value="">Selecione...</option>
+                                        <option value="Sim todos preencheram">Sim, todos preencheram</option>
+                                        <option value="Sim parcialmente">Sim, parcialmente</option>
+                                        <option value="Não foi possível">Não foi possível</option>
+                                    </select>
+                                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div>
-                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Encaminhamentos</h3>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Algum follow-up necessário?</label>
-                        <div class="flex gap-4 mb-2">
-                            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                <input type="radio" name="rel-followup" value="sim" onchange="onFollowupChange()"> Sim
+                    <div class="pt-4 border-t border-slate-100">
+                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                            <i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-500"></i>
+                            Narrativa
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Destaques do evento</label>
+                                <textarea id="rel-destaques" rows="2" placeholder="O que correu muito bem..."
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 resize-none transition-all"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Dificuldades ou imprevistos</label>
+                                <textarea id="rel-dificuldades" rows="2" placeholder="Problemas enfrentados ou pontos de atenção..."
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 resize-none transition-all"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Observações gerais do relatório</label>
+                                <textarea id="rel-observacoes" rows="2" placeholder="Comentários adicionais da equipe..."
+                                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 resize-none transition-all"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100">
+                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                            <i data-lucide="navigation" class="w-3.5 h-3.5 text-blue-500"></i>
+                            Encaminhamentos
+                        </h3>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Algum follow-up necessário?</label>
+                        <div class="flex gap-6 mb-3">
+                            <label class="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
+                                <input type="radio" name="rel-followup" value="sim" onchange="onFollowupChange()" class="w-4 h-4 text-blue-600"> Sim
                             </label>
-                            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                <input type="radio" name="rel-followup" value="nao" onchange="onFollowupChange()" checked> Não
+                            <label class="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
+                                <input type="radio" name="rel-followup" value="nao" onchange="onFollowupChange()" checked class="w-4 h-4 text-blue-600"> Não
                             </label>
                         </div>
                         <div id="rel-followup-descricao-wrap" class="hidden">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">O que precisa ser feito e por quem</label>
-                            <textarea id="rel-followup-descricao" rows="2" class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-medium text-slate-700 resize-none"></textarea>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">O que precisa ser feito e por quem</label>
+                            <textarea id="rel-followup-descricao" rows="2" placeholder="Descreva as próximas tarefas e os responsáveis..."
+                                class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 resize-none transition-all"></textarea>
                         </div>
                     </div>
 
-                    <p id="rel-preenchido-em" class="text-[10px] text-slate-400"></p>
+                    <p id="rel-preenchido-em" class="text-[10px] text-slate-400 italic font-semibold"></p>
                 </div>
             </div>
         </div>
 
-        <div class="px-5 pb-5 pt-3 border-t border-slate-100 flex gap-3 shrink-0">
+        <div class="px-6 py-4 border-t border-slate-100 flex gap-3 shrink-0 bg-slate-50 rounded-b-2xl">
             <button onclick="fecharModal()" type="button"
-                class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                class="flex-1 py-2.5 border border-slate-200 bg-white rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
                 Cancelar
             </button>
             <button onclick="salvarSeminario()" type="button" id="btn-salvar"
-                class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold text-white transition-colors">
+                class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold text-white transition-colors shadow-sm">
                 Salvar
             </button>
         </div>
@@ -508,7 +596,7 @@ function renderTabela() {
 
     const tbody = document.getElementById('tabela-corpo');
     if (!filtrados.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400 text-sm">Nenhum seminário encontrado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400 text-sm font-semibold">Nenhum seminário encontrado</td></tr>';
     } else {
         tbody.innerHTML = filtrados.map(s => {
             const dataFmt = (s.data ? s.data.split('-').reverse().join('/') : '-') + (s.horario ? ' · ' + s.horario : '');
@@ -517,31 +605,39 @@ function renderTabela() {
             const participantes = (s.relatorio && s.relatorio.totalParticipantes != null) ? s.relatorio.totalParticipantes : '-';
             const relatorioPreenchido = !!(s.relatorio && s.relatorio.preenchidoEm);
             const relatorioBadge = relatorioPreenchido
-                ? '<span class="badge-preenchido px-2 py-0.5 rounded text-[9px] font-bold uppercase">Preenchido</span>'
-                : '<span class="badge-pendente px-2 py-0.5 rounded text-[9px] font-bold uppercase">Pendente</span>';
+                ? '<span class="badge-preenchido px-2 py-0.5 rounded-full text-[9px] font-black uppercase border tracking-wider">Preenchido</span>'
+                : '<span class="badge-pendente px-2 py-0.5 rounded-full text-[9px] font-black uppercase border tracking-wider">Pendente</span>';
 
             const statusCls = s.status === 'Realizado' ? 'badge-realizado' : (s.status === 'Agendado' ? 'badge-agendado' : 'badge-agendar');
-            const statusBadge = `<span class="${statusCls} px-2 py-0.5 rounded text-[9px] font-bold uppercase">${esc(s.status || 'A Agendar')}</span>`;
+            const statusBadge = `<span class="${statusCls} px-2 py-0.5 rounded-full text-[9px] font-black uppercase border tracking-wider">${esc(s.status || 'A Agendar')}</span>`;
 
             return `
-            <tr class="hover:bg-slate-50 transition-colors">
-                <td class="font-bold text-slate-800">${esc(s.igrejaNome || '-')}</td>
-                <td class="text-slate-600 font-medium">${dataFmt}</td>
-                <td class="text-slate-600 font-medium">${esc(equipe)}</td>
-                <td class="text-slate-600 font-medium text-center">${s.quantidadeMaterial ?? '-'}</td>
-                <td class="text-slate-600 font-medium text-center">${ministracoes}/7</td>
-                <td class="text-slate-600 font-medium text-center">${participantes}</td>
-                <td>${relatorioBadge}</td>
-                <td>${statusBadge}</td>
-                <td class="text-center">
-                    <div class="flex items-center justify-center gap-2">
-                        <button onclick="window.abrirFicha('${s.id}')" class="text-slate-500 hover:text-slate-700 transition-colors" title="Ver Ficha / Programação">
+            <tr class="hover:bg-slate-50/80 transition-colors">
+                <td class="font-bold text-slate-800 text-xs py-3 px-4">${esc(s.igrejaNome || '-')}</td>
+                <td class="text-slate-600 font-semibold text-xs py-3 px-4">${dataFmt}</td>
+                <td class="text-slate-600 font-semibold text-xs py-3 px-4">${esc(equipe)}</td>
+                <td class="text-slate-600 font-semibold text-xs text-center py-3 px-4">${s.quantidadeMaterial ?? '-'}</td>
+                <td class="text-slate-700 font-bold text-xs text-center py-3 px-4">
+                    <span class="bg-slate-100 px-2 py-0.5 rounded text-[11px]">${ministracoes}/7</span>
+                </td>
+                <td class="text-slate-600 font-semibold text-xs text-center py-3 px-4">${participantes}</td>
+                <td class="py-3 px-4">${relatorioBadge}</td>
+                <td class="py-3 px-4">${statusBadge}</td>
+                <td class="text-center py-3 px-4">
+                    <div class="flex items-center justify-center gap-1.5">
+                        <button onclick="window.abrirFicha('${s.id}')" 
+                            class="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center" 
+                            title="Ver Ficha / Programação">
                             <i data-lucide="file-text" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="window.editarSeminario('${s.id}')" class="text-blue-600 hover:text-blue-800 transition-colors" title="Editar">
+                        <button onclick="window.editarSeminario('${s.id}')" 
+                            class="p-1.5 rounded-full hover:bg-blue-50 text-blue-600 hover:text-blue-800 transition-colors flex items-center justify-center" 
+                            title="Editar">
                             <i data-lucide="pencil" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="window.excluirSeminario('${s.id}', '${escA(s.igrejaNome || '')}')" class="text-red-500 hover:text-red-700 transition-colors" title="Excluir">
+                        <button onclick="window.excluirSeminario('${s.id}', '${escA(s.igrejaNome || '')}')" 
+                            class="p-1.5 rounded-full hover:bg-red-50 text-red-500 hover:text-red-700 transition-colors flex items-center justify-center" 
+                            title="Excluir">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
