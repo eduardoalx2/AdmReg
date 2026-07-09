@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devolução 9018 — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!hasAnyPermission(['admin', 'secretario', 'superintendente'])) window.location.replace('index.html');
+        } catch (error) {}
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .table-custom { font-size: 0.8rem; }
+        .table-custom th { padding: 8px 12px; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
+        .table-custom td { padding: 9px 12px; }
+        .progress-bar { transition: width 0.6s ease; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .print-card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+            .header-gradient { background: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header-gradient shadow-lg sticky top-0 z-40 no-print">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="landmark" class="w-4 h-4 text-amber-400"></i>
+                    Devolução — Ref. 9018
+                </h1>
+                <p class="text-slate-400 text-[10px] uppercase tracking-wider">Controle de pagamentos parcelados</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="window.print()" class="flex items-center gap-1.5 border border-slate-600 hover:border-slate-400 text-slate-300 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Relatório
+            </button>
+            <button onclick="abrirModal()"
+                class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Registrar Pagamento
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- PRINT HEADER (só aparece ao imprimir) -->
+<div class="hidden print:block p-6 border-b-2 border-slate-800 mb-4">
+    <h1 class="text-xl font-black text-slate-900 uppercase tracking-wide">Relatório de Devolução — Ref. 9018</h1>
+    <p class="text-sm text-slate-500 mt-1">Igreja do Evangelho Quadrangular · Região 655 · Londrina/PR</p>
+    <p class="text-xs text-slate-400 mt-0.5">Chave PIX: ieqpalhano@pixieq.com.br</p>
+</div>
+
+<main class="max-w-4xl mx-auto py-6 px-4 space-y-4">
+
+    <!-- CARDS DE RESUMO -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 print-card">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Valor Total da Dívida</div>
+            <div class="text-2xl font-black text-slate-800" id="total-divida">R$ 6.553,89</div>
+            <div class="text-[11px] text-slate-400 mt-1">Valor fixo de referência</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 print-card">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Pago</div>
+            <div class="text-2xl font-black text-emerald-600" id="total-pago">R$ 0,00</div>
+            <div class="text-[11px] text-slate-400 mt-1" id="count-pagamentos">0 pagamento(s) registrado(s)</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 print-card">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Saldo Restante</div>
+            <div class="text-2xl font-black text-rose-600" id="saldo-restante">R$ 6.553,89</div>
+            <div class="text-[11px] text-slate-400 mt-1" id="pct-label">0% quitado</div>
+        </div>
+    </div>
+
+    <!-- BARRA DE PROGRESSO -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 print-card">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Progresso da quitação</span>
+            <span class="text-[11px] font-bold text-slate-600" id="pct-bar-label">0%</span>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+            <div id="progress-bar" class="progress-bar h-3 rounded-full bg-emerald-500" style="width:0%"></div>
+        </div>
+    </div>
+
+    <!-- PIX INFO -->
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-4 no-print print-card">
+        <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <i data-lucide="qr-code" class="w-5 h-5 text-amber-600"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-0.5">Chave PIX para pagamento</div>
+            <div class="text-sm font-bold text-amber-900 font-mono">ieqpalhano@pixieq.com.br</div>
+        </div>
+        <button onclick="copiarPix()" id="btn-copiar"
+            class="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors flex-shrink-0 no-print">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar
+        </button>
+    </div>
+
+    <!-- TABELA DE PAGAMENTOS -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200 print-card">
+        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Histórico de Pagamentos</span>
+            <span class="text-[10px] text-slate-400 font-semibold">Todos via PIX</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse table-custom">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                        <th>#</th>
+                        <th>Data do Pagamento</th>
+                        <th>Valor Pago</th>
+                        <th>Observação</th>
+                        <th>Saldo após</th>
+                        <th class="no-print w-16 text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-corpo" class="divide-y divide-slate-100">
+                    <tr><td colspan="6" class="text-center py-8 text-slate-400 text-sm">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RODAPÉ DO RELATÓRIO (só no print) -->
+    <div class="hidden print:block border-t border-slate-200 pt-4 mt-4">
+        <div class="flex justify-between text-xs text-slate-500">
+            <span>Região Eclesiástica 655 · Londrina/PR</span>
+            <span>Emitido em: <span id="data-emissao"></span></span>
+        </div>
+    </div>
+
+</main>
+
+<!-- MODAL REGISTRAR PAGAMENTO -->
+<div id="modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+
+        <div class="bg-slate-800 px-5 py-4 flex justify-between items-center rounded-t-2xl">
+            <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                <i data-lucide="circle-dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+                <span id="modal-titulo">Registrar Pagamento</span>
+            </h2>
+            <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-5 space-y-4">
+            <input type="hidden" id="pag-id">
+
+            <!-- Info PIX -->
+            <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-800 font-semibold">
+                PIX · <span class="font-mono">ieqpalhano@pixieq.com.br</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data do Pagamento *</label>
+                    <input type="date" id="pag-data" required
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Valor Pago (R$) *</label>
+                    <input type="text" id="pag-valor" required inputmode="decimal"
+                        placeholder="0,00"
+                        oninput="mascaraMoeda(this)"
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-bold text-emerald-700">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observação</label>
+                <input type="text" id="pag-obs" placeholder="Ex: 1ª parcela, pagamento complementar..."
+                    class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm text-slate-700">
+            </div>
+
+            <!-- Saldo disponível -->
+            <div class="bg-slate-50 rounded-lg p-3 text-xs text-slate-500">
+                Saldo restante atual: <strong class="text-rose-600" id="modal-saldo">—</strong>
+            </div>
+        </div>
+
+        <div class="px-5 pb-5 flex gap-3">
+            <button onclick="fecharModal()" type="button"
+                class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                Cancelar
+            </button>
+            <button onclick="salvarPagamento()" type="button"
+                class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-bold text-white transition-colors">
+                Salvar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-sm font-bold px-5 py-3 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-[9999]"></div>
+
+<script type="module">
+import { db } from './firebase-config.js';
+import {
+    collection, getDocs, doc, addDoc, updateDoc, deleteDoc,
+    serverTimestamp, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { toastSuccess, toastError } from './js/toast.js';
+
+const TOTAL_DIVIDA = 6553.89;
+let pagamentos = [];
+
+// ── Inicialização ─────────────────────────────────────────────────────────────
+async function init() {
+    document.getElementById('data-emissao').textContent = new Date().toLocaleDateString('pt-BR');
+    await carregarPagamentos();
+    if (window.lucide) window.lucide.createIcons();
+}
+
+async function carregarPagamentos() {
+    try {
+        const snap = await getDocs(query(collection(db, "devolucao_9018"), orderBy("dataPagamento")));
+        pagamentos = [];
+        snap.forEach(d => pagamentos.push({ id: d.id, ...d.data() }));
+        renderizar();
+    } catch (e) {
+        console.error(e);
+        toastError('Erro ao carregar pagamentos.');
+    }
+}
+
+// ── Renderização ─────────────────────────────────────────────────────────────
+function renderizar() {
+    const totalPago = pagamentos.reduce((s, p) => s + (p.valor || 0), 0);
+    const restante  = TOTAL_DIVIDA - totalPago;
+    const pct       = Math.min(100, (totalPago / TOTAL_DIVIDA) * 100);
+
+    document.getElementById('total-pago').textContent    = formatMoeda(totalPago);
+    document.getElementById('saldo-restante').textContent = formatMoeda(Math.max(0, restante));
+    document.getElementById('count-pagamentos').textContent = `${pagamentos.length} pagamento(s) registrado(s)`;
+    document.getElementById('pct-label').textContent     = `${pct.toFixed(1)}% quitado`;
+    document.getElementById('pct-bar-label').textContent = `${pct.toFixed(1)}%`;
+    document.getElementById('progress-bar').style.width  = pct + '%';
+    document.getElementById('progress-bar').className    = `progress-bar h-3 rounded-full ${pct >= 100 ? 'bg-blue-500' : pct >= 60 ? 'bg-emerald-500' : pct >= 30 ? 'bg-amber-500' : 'bg-rose-400'}`;
+
+    const tbody = document.getElementById('tabela-corpo');
+    if (!pagamentos.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400 text-sm">Nenhum pagamento registrado ainda</td></tr>';
+        return;
+    }
+
+    let acumulado = 0;
+    tbody.innerHTML = pagamentos.map((p, i) => {
+        acumulado += p.valor || 0;
+        const saldoApos = Math.max(0, TOTAL_DIVIDA - acumulado);
+        return `
+        <tr class="hover:bg-slate-50 transition-colors">
+            <td class="text-slate-400 font-bold">${i + 1}</td>
+            <td class="font-semibold text-slate-700">${formatData(p.dataPagamento)}</td>
+            <td class="font-black text-emerald-700">${formatMoeda(p.valor)}</td>
+            <td class="text-slate-500">${p.observacao || '—'}</td>
+            <td class="font-semibold ${saldoApos === 0 ? 'text-blue-600' : 'text-rose-600'}">${saldoApos === 0 ? '✓ Quitado' : formatMoeda(saldoApos)}</td>
+            <td class="text-center no-print">
+                <div class="flex items-center justify-center gap-2">
+                    <button onclick="window.editarPagamento('${p.id}')" class="text-blue-600 hover:text-blue-800 transition-colors" title="Editar">
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="window.excluirPagamento('${p.id}', ${p.valor})" class="text-red-500 hover:text-red-700 transition-colors" title="Excluir">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+window.abrirModal = () => {
+    document.getElementById('pag-id').value    = '';
+    document.getElementById('pag-data').value  = new Date().toISOString().split('T')[0];
+    document.getElementById('pag-valor').value = '';
+    document.getElementById('pag-obs').value   = '';
+    document.getElementById('modal-titulo').textContent = 'Registrar Pagamento';
+    atualizarSaldoModal();
+    document.getElementById('modal').classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+    setTimeout(() => document.getElementById('pag-valor').focus(), 100);
+};
+
+window.fecharModal = () => document.getElementById('modal').classList.add('hidden');
+
+window.editarPagamento = (id) => {
+    const p = pagamentos.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('pag-id').value    = id;
+    document.getElementById('pag-data').value  = p.dataPagamento;
+    document.getElementById('pag-valor').value = formatMoedaInput(p.valor);
+    document.getElementById('pag-obs').value   = p.observacao || '';
+    document.getElementById('modal-titulo').textContent = 'Editar Pagamento';
+    atualizarSaldoModal();
+    document.getElementById('modal').classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
+
+function atualizarSaldoModal() {
+    const totalPago = pagamentos.reduce((s, p) => s + (p.valor || 0), 0);
+    const restante  = Math.max(0, TOTAL_DIVIDA - totalPago);
+    document.getElementById('modal-saldo').textContent = formatMoeda(restante);
+}
+
+// ── Salvar ─────────────────────────────────────────────────────────────────────
+window.salvarPagamento = async () => {
+    const id   = document.getElementById('pag-id').value;
+    const data = document.getElementById('pag-data').value;
+    const valorStr = document.getElementById('pag-valor').value;
+    const obs  = document.getElementById('pag-obs').value.trim();
+
+    if (!data)     { alert('Informe a data do pagamento.'); return; }
+    if (!valorStr) { alert('Informe o valor pago.'); return; }
+
+    const valor = parseMoeda(valorStr);
+    if (!valor || valor <= 0) { alert('Valor inválido.'); return; }
+
+    const payload = {
+        dataPagamento: data,
+        valor,
+        observacao: obs || '',
+        updatedAt: serverTimestamp()
+    };
+
+    try {
+        if (id) {
+            await updateDoc(doc(db, "devolucao_9018", id), payload);
+            const idx = pagamentos.findIndex(p => p.id === id);
+            if (idx !== -1) pagamentos[idx] = { id, ...payload };
+            toastSuccess('Pagamento atualizado.');
+        } else {
+            const ref = await addDoc(collection(db, "devolucao_9018"), { ...payload, criadoEm: serverTimestamp() });
+            pagamentos.push({ id: ref.id, ...payload });
+            toastSuccess('Pagamento registrado.');
+        }
+        pagamentos.sort((a, b) => a.dataPagamento.localeCompare(b.dataPagamento));
+        fecharModal();
+        renderizar();
+    } catch (e) {
+        toastError('Erro ao salvar.');
+        console.error(e);
+    }
+};
+
+window.excluirPagamento = async (id, valor) => {
+    if (!confirm(`Excluir pagamento de ${formatMoeda(valor)}?`)) return;
+    try {
+        await deleteDoc(doc(db, "devolucao_9018", id));
+        pagamentos = pagamentos.filter(p => p.id !== id);
+        renderizar();
+        toastSuccess('Pagamento excluído.');
+    } catch (e) {
+        toastError('Erro ao excluir.');
+        console.error(e);
+    }
+};
+
+// ── PIX ───────────────────────────────────────────────────────────────────────
+window.copiarPix = () => {
+    navigator.clipboard.writeText('ieqpalhano@pixieq.com.br').then(() => {
+        const btn = document.getElementById('btn-copiar');
+        btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i> Copiado!';
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => {
+            btn.innerHTML = '<i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar';
+            if (window.lucide) window.lucide.createIcons();
+        }, 2000);
+    });
+};
+
+// ── Formatação ────────────────────────────────────────────────────────────────
+function formatMoeda(v) {
+    return (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+function formatMoedaInput(v) {
+    return (v || 0).toFixed(2).replace('.', ',');
+}
+function parseMoeda(s) {
+    return parseFloat((s || '').replace(/\./g, '').replace(',', '.')) || 0;
+}
+function formatData(s) {
+    if (!s) return '—';
+    const [y, m, d] = s.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+window.mascaraMoeda = (el) => {
+    let v = el.value.replace(/\D/g, '');
+    if (!v) { el.value = ''; return; }
+    v = (parseInt(v, 10) / 100).toFixed(2);
+    el.value = v.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, ok = true) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = ok ? '#1e293b' : '#dc2626';
+    t.style.opacity = '1';
+    setTimeout(() => t.style.opacity = '0', 2200);
+}
+
+init();
+</script>
+</body>
+</html>

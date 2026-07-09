@@ -93,6 +93,10 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
 
+    match /devolucao_9018/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
     // Presenças de Evento Aberto: escrita pública com validação
     match /presencas_evento_aberto/{docId} {
       allow read: if true;
