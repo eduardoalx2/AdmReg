@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script type="module">
         import { requireAuth, hasAnyPermission } from './js/auth.js';
         try {
@@ -30,11 +31,15 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @media print {
+            body { background-color: white !important; }
+            @page { size: portrait; margin: 10mm; }
+        }
     </style>
 </head>
 <body>
 
-<header class="header-gradient shadow-lg sticky top-0 z-40">
+<header class="header-gradient shadow-lg sticky top-0 z-40 print:hidden">
     <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <a href="index.html" class="text-slate-400 hover:text-white transition-colors">
@@ -55,7 +60,7 @@
     </div>
 </header>
 
-<main class="max-w-6xl mx-auto py-6 px-4">
+<main class="max-w-6xl mx-auto py-6 px-4 print:hidden">
 
     <!-- Filtros -->
     <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
@@ -133,7 +138,7 @@
 </main>
 
 <!-- Modal -->
-<div id="modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+<div id="modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 print:hidden">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[95vh]">
 
         <div class="bg-slate-800 px-5 py-4 flex justify-between items-center shrink-0 rounded-t-2xl">
@@ -183,7 +188,12 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data de Realização *</label>
-                            <input type="date" id="sem-data" required
+                            <input type="date" id="sem-data" required onchange="verificarDisponibilidadePreletores()"
+                                class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Horário de Início</label>
+                            <input type="time" id="sem-horario"
                                 class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold">
                         </div>
                         <div>
@@ -226,6 +236,12 @@
                                 <option value="">Selecione...</option>
                             </select>
                         </div>
+                    </div>
+                    <div id="sem-conflito-preletores" class="hidden mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5">
+                        <p class="text-[11px] font-bold text-amber-700 flex items-center gap-1.5 mb-1">
+                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Alerta de indisponibilidade
+                        </p>
+                        <ul id="sem-conflito-lista" class="list-disc list-inside text-[11px] font-medium text-amber-700 space-y-0.5"></ul>
                     </div>
                 </div>
 
@@ -356,6 +372,38 @@
     </div>
 </div>
 
+<!-- Modal Ficha do Seminário (visualização ampla + fonte do PDF) -->
+<div id="modal-ficha" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 print:p-0 print:bg-white print:block">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[95vh] print:shadow-none print:w-full print:max-w-full print:rounded-none print:max-h-none">
+
+        <div class="bg-slate-800 px-5 py-4 flex justify-between items-center shrink-0 rounded-t-2xl print:hidden">
+            <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4"></i> Ficha do Seminário
+            </h2>
+            <button onclick="fecharFicha()" class="text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div id="ficha-conteudo" class="p-6 overflow-y-auto custom-scrollbar flex-1 print:overflow-visible"></div>
+
+        <div class="px-5 pb-5 pt-3 border-t border-slate-100 flex gap-3 shrink-0 print:hidden">
+            <button onclick="fecharFicha()" type="button"
+                class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                Fechar
+            </button>
+            <button onclick="window.print()" type="button"
+                class="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i> Imprimir
+            </button>
+            <button onclick="window.baixarPdfFicha()" type="button"
+                class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold text-white transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i> Baixar PDF
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast -->
 <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-sm font-bold px-5 py-3 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-[9999]"></div>
 
@@ -453,7 +501,7 @@ function renderTabela() {
         tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400 text-sm">Nenhum seminário encontrado</td></tr>';
     } else {
         tbody.innerHTML = filtrados.map(s => {
-            const dataFmt = s.data ? s.data.split('-').reverse().join('/') : '-';
+            const dataFmt = (s.data ? s.data.split('-').reverse().join('/') : '-') + (s.horario ? ' · ' + s.horario : '');
             const equipe = `${s.pastor1Nome || '-'} / ${s.pastor2Nome || '-'}`;
             const ministracoes = (s.blocos || []).filter(b => b.ministradorNome).length;
             const participantes = (s.relatorio && s.relatorio.totalParticipantes != null) ? s.relatorio.totalParticipantes : '-';
@@ -477,6 +525,9 @@ function renderTabela() {
                 <td>${statusBadge}</td>
                 <td class="text-center">
                     <div class="flex items-center justify-center gap-2">
+                        <button onclick="window.abrirFicha('${s.id}')" class="text-slate-500 hover:text-slate-700 transition-colors" title="Ver Ficha / Programação">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                        </button>
                         <button onclick="window.editarSeminario('${s.id}')" class="text-blue-600 hover:text-blue-800 transition-colors" title="Editar">
                             <i data-lucide="pencil" class="w-4 h-4"></i>
                         </button>
@@ -598,7 +649,59 @@ window.onBlocoChange = (i) => {
     txt.classList.toggle('hidden', sel.value !== 'livre');
 };
 
-window.onEquipeChange = () => renderBlocosForm(true);
+window.onEquipeChange = () => {
+    renderBlocosForm(true);
+    verificarDisponibilidadePreletores();
+};
+
+// ── Disponibilidade dos preletores (mesma data, igreja diferente) ─────────────
+// Retorna a lista de conflitos: cada preletor da equipe visitante que já está
+// escalado (como Pastor 1 ou 2) em OUTRO seminário na MESMA data.
+function calcularConflitosPreletores() {
+    const idAtual   = document.getElementById('sem-id').value;
+    const igrejaId  = document.getElementById('sem-igreja').value;
+    const data      = document.getElementById('sem-data').value;
+    const pastor1Id = document.getElementById('sem-pastor1').value;
+    const pastor2Id = document.getElementById('sem-pastor2').value;
+
+    if (!data) return [];
+
+    const preletores = [];
+    if (pastor1Id) preletores.push(pastor1Id);
+    if (pastor2Id && pastor2Id !== pastor1Id) preletores.push(pastor2Id);
+    if (!preletores.length) return [];
+
+    const conflitos = [];
+    preletores.forEach(pid => {
+        const nome = (pastoresList.find(p => p.id === pid) || {}).nome || 'Preletor';
+        const outros = seminariosList.filter(s =>
+            s.id !== idAtual &&
+            s.data === data &&
+            s.igrejaId !== igrejaId &&
+            (s.pastor1Id === pid || s.pastor2Id === pid)
+        );
+        outros.forEach(s => conflitos.push({ nome, igrejaNome: s.igrejaNome || 'Igreja não identificada' }));
+    });
+    return conflitos;
+}
+
+window.verificarDisponibilidadePreletores = () => {
+    const box   = document.getElementById('sem-conflito-preletores');
+    const lista = document.getElementById('sem-conflito-lista');
+    const conflitos = calcularConflitosPreletores();
+
+    if (!conflitos.length) {
+        box.classList.add('hidden');
+        lista.innerHTML = '';
+        return;
+    }
+
+    lista.innerHTML = conflitos.map(c =>
+        `<li><strong>${esc(c.nome)}</strong> já está escalado em <strong>${esc(c.igrejaNome)}</strong> nesta data.</li>`
+    ).join('');
+    box.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
 
 window.onIgrejaChange = () => {
     const sel = document.getElementById('sem-igreja');
@@ -621,6 +724,7 @@ window.onIgrejaChange = () => {
         coordsDaIgreja.map(c => `<option value="${c.id}" data-nome="${escA(c.nome)}">${esc(c.nome)}</option>`).join('');
 
     renderBlocosForm(true);
+    verificarDisponibilidadePreletores();
 };
 
 // ── Material sobra / alerta ───────────────────────────────────────────────────
@@ -643,6 +747,7 @@ function resetModal() {
     document.getElementById('sem-pastor-titular').value = '';
     document.getElementById('sem-coordenador').innerHTML = '<option value="">Selecione a igreja primeiro</option>';
     document.getElementById('sem-data').value = '';
+    document.getElementById('sem-horario').value = '';
     document.getElementById('sem-material').value = '';
     document.getElementById('sem-observacoes').value = '';
     document.getElementById('sem-status').value = 'A Agendar';
@@ -665,6 +770,9 @@ function resetModal() {
     document.getElementById('rel-followup-descricao-wrap').classList.add('hidden');
     document.getElementById('rel-preenchido-em').textContent = '';
     relatorioAnterior = null;
+
+    document.getElementById('sem-conflito-preletores').classList.add('hidden');
+    document.getElementById('sem-conflito-lista').innerHTML = '';
 
     renderBlocosForm(false);
     setTab('dados');
@@ -691,6 +799,7 @@ window.editarSeminario = (id) => {
 
     document.getElementById('sem-igreja').value = s.igrejaId || '';
     document.getElementById('sem-data').value = s.data || '';
+    document.getElementById('sem-horario').value = s.horario || '';
     document.getElementById('sem-material').value = s.quantidadeMaterial ?? '';
     document.getElementById('sem-observacoes').value = s.observacoes || '';
     document.getElementById('sem-status').value = s.status || 'A Agendar';
@@ -743,6 +852,7 @@ window.editarSeminario = (id) => {
     }
 
     onStatusChange();
+    verificarDisponibilidadePreletores();
     document.getElementById('modal').classList.remove('hidden');
     if (window.lucide) window.lucide.createIcons();
 };
@@ -758,6 +868,121 @@ window.excluirSeminario = async (id, igrejaNome) => {
         toastError('Erro ao excluir.');
         console.error(e);
     }
+};
+
+// ── Ficha do Seminário (visualização ampla + fonte do PDF) ────────────────────
+function addMinutos(horaStr, minutos) {
+    const [h, m] = horaStr.split(':').map(Number);
+    const total = h * 60 + m + minutos;
+    const hh = Math.floor(total / 60) % 24;
+    const mm = total % 60;
+    return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+}
+
+function buildFichaHtml(s) {
+    const igreja = igrejasList.find(ig => ig.id === s.igrejaId);
+    const dataFmt = s.data ? s.data.split('-').reverse().join('/') : '-';
+    const statusCls = s.status === 'Realizado' ? 'badge-realizado' : (s.status === 'Agendado' ? 'badge-agendado' : 'badge-agendar');
+    const blocosSalvos = (s.blocos && s.blocos.length === 7) ? s.blocos : BLOCOS_FIXOS.map(b => ({ ...b, ministradorNome: '' }));
+
+    let cursor = s.horario || null;
+    const linhasBlocos = blocosSalvos.map((b, i) => {
+        const def = BLOCOS_FIXOS[i];
+        const inicio = cursor;
+        const fim = cursor ? addMinutos(cursor, def.duracao) : null;
+        cursor = fim;
+        return `
+            <tr class="border-b border-slate-100">
+                <td class="py-2 px-2 text-xs font-mono text-slate-500">${inicio || '-'}</td>
+                <td class="py-2 px-2 text-xs font-mono text-slate-500">${fim || '-'}</td>
+                <td class="py-2 px-2 text-sm font-semibold text-slate-700">${def.bloco}. ${esc(def.nome)}</td>
+                <td class="py-2 px-2 text-sm text-slate-600">${esc(b.ministradorNome || '—')}</td>
+            </tr>`;
+    }).join('');
+
+    return `
+        <div class="text-center mb-6 pb-4 border-b-2 border-slate-100">
+            <img src="logo.png" class="h-14 mx-auto mb-2 object-contain" onerror="this.style.display='none'">
+            <h2 class="text-lg font-black text-slate-800 uppercase">Seminário "Os 5 Pães da Transformação"</h2>
+            <p class="text-[11px] text-slate-500 uppercase tracking-wider font-bold">Campanha Regional 2026 · Região 655</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-6 text-sm">
+            <div class="col-span-2">
+                <div class="text-[9px] font-bold text-slate-400 uppercase">Igreja</div>
+                <div class="font-bold text-slate-800">${esc(s.igrejaNome || '-')}</div>
+                ${igreja && igreja.endereco ? `<div class="text-xs text-slate-500">${esc(igreja.endereco)}</div>` : ''}
+            </div>
+            <div>
+                <div class="text-[9px] font-bold text-slate-400 uppercase">Data</div>
+                <div class="font-semibold text-slate-700">${dataFmt}</div>
+            </div>
+            <div>
+                <div class="text-[9px] font-bold text-slate-400 uppercase">Horário</div>
+                <div class="font-semibold text-slate-700">${esc(s.horario || 'Não definido')}</div>
+            </div>
+            <div>
+                <div class="text-[9px] font-bold text-slate-400 uppercase">Pastor Titular</div>
+                <div class="font-semibold text-slate-700">${esc(s.pastorTitularNome || '-')}</div>
+            </div>
+            <div>
+                <div class="text-[9px] font-bold text-slate-400 uppercase">Coordenador de Cidadania</div>
+                <div class="font-semibold text-slate-700">${esc(s.coordenadorNome || 'Não definido')}</div>
+            </div>
+            <div>
+                <div class="text-[9px] font-bold text-slate-400 uppercase">Equipe Visitante</div>
+                <div class="font-semibold text-slate-700">${esc(s.pastor1Nome || '-')} / ${esc(s.pastor2Nome || '-')}</div>
+            </div>
+            <div>
+                <div class="text-[9px] font-bold text-slate-400 uppercase">Quantidade de Material</div>
+                <div class="font-semibold text-slate-700">${s.quantidadeMaterial ?? '-'}</div>
+            </div>
+            <div class="col-span-2">
+                <div class="text-[9px] font-bold text-slate-400 uppercase mb-1">Status</div>
+                <span class="${statusCls} px-2 py-0.5 rounded text-[10px] font-bold uppercase">${esc(s.status || 'A Agendar')}</span>
+            </div>
+            ${s.observacoes ? `<div class="col-span-2"><div class="text-[9px] font-bold text-slate-400 uppercase">Observações</div><div class="text-sm text-slate-600">${esc(s.observacoes)}</div></div>` : ''}
+        </div>
+
+        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Programação</h3>
+        <table class="w-full border-collapse mb-2">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 text-[9px] uppercase font-bold">
+                    <th class="py-2 px-2 text-left">Início</th>
+                    <th class="py-2 px-2 text-left">Fim</th>
+                    <th class="py-2 px-2 text-left">Bloco</th>
+                    <th class="py-2 px-2 text-left">Ministrador</th>
+                </tr>
+            </thead>
+            <tbody>${linhasBlocos}</tbody>
+        </table>
+        ${!s.horario ? '<p class="text-[10px] text-slate-400 italic">Defina o horário de início no cadastro para calcular os horários de cada bloco.</p>' : ''}
+    `;
+}
+
+window.abrirFicha = (id) => {
+    const s = seminariosList.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('ficha-conteudo').innerHTML = buildFichaHtml(s);
+    document.getElementById('modal-ficha').classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+};
+
+window.fecharFicha = () => {
+    document.getElementById('modal-ficha').classList.add('hidden');
+};
+
+window.baixarPdfFicha = () => {
+    if (!window.html2pdf) { toastWarning('Gerador de PDF ainda carregando, tente novamente em instantes.'); return; }
+    const el = document.getElementById('ficha-conteudo');
+    const opt = {
+        margin: 10,
+        filename: 'seminario.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    window.html2pdf().set(opt).from(el).save();
 };
 
 // ── Salvar ─────────────────────────────────────────────────────────────────────
@@ -786,6 +1011,13 @@ window.salvarSeminario = async () => {
     // Aviso (não bloqueante): mesmo pastor nas duas vagas
     if (pastor1Id && pastor2Id && pastor1Id === pastor2Id) {
         if (!confirm('Pastor 1 e Pastor 2 são a mesma pessoa. Deseja continuar mesmo assim?')) return;
+    }
+
+    // Aviso (não bloqueante): preletor já escalado em outra igreja na mesma data
+    const conflitosPreletores = calcularConflitosPreletores();
+    if (conflitosPreletores.length) {
+        const detalhe = conflitosPreletores.map(c => `• ${c.nome} — ${c.igrejaNome}`).join('\n');
+        if (!confirm(`Indisponibilidade detectada nesta data:\n\n${detalhe}\n\nDeseja continuar mesmo assim?`)) return;
     }
 
     const coordSel = document.getElementById('sem-coordenador');
@@ -857,6 +1089,7 @@ window.salvarSeminario = async () => {
         coordenadorId,
         coordenadorNome,
         data,
+        horario: document.getElementById('sem-horario').value,
         quantidadeMaterial,
         observacoes: document.getElementById('sem-observacoes').value.trim(),
         pastor1Id: pastor1Id || null,
