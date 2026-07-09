@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumo dos Seminários - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        try {
+            await requireAuth();
+            if (!hasAnyPermission(['admin', 'secretario', 'superintendente'])) window.location.replace('index.html');
+        } catch (error) {}
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Estilos de impressão personalizados */
+        @media print {
+            body { background-color: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            .print-card {
+                break-inside: avoid;
+                border: 1px solid #e2e8f0 !important;
+                box-shadow: none !important;
+                background: white !important;
+            }
+            .print-grid {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="header-gradient shadow-lg sticky top-0 z-40 no-print">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <a href="gestao_seminarios.html" class="text-slate-400 hover:text-white transition-colors" title="Voltar para Gestão">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </a>
+            <div>
+                <h1 class="text-white font-extrabold text-base sm:text-lg uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-5 h-5 text-blue-400 animate-pulse"></i>
+                    Cronograma & Resumo de Seminários
+                </h1>
+                <p class="text-slate-400 text-[10px] sm:text-xs uppercase tracking-wider">Visualização Geral dos Agendamentos · Campanha Regional 2026</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button onclick="window.baixarPdfResumo()"
+                class="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-sm">
+                <i data-lucide="download" class="w-4 h-4"></i> Baixar PDF
+            </button>
+            <a href="gestao_seminarios.html"
+                class="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-sm">
+                <i data-lucide="settings" class="w-4 h-4"></i> Painel de Gestão
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Conteúdo Principal -->
+<main class="max-w-7xl mx-auto py-6 px-4 flex-1 w-full">
+
+    <!-- Cards de Estatísticas Consolidadas (no-print para PDF limpo se desejado, ou mantido) -->
+    <div id="stats-container" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="p-3 rounded-lg bg-blue-50 text-blue-600">
+                <i data-lucide="book-open" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total de Seminários</div>
+                <div id="stat-total" class="text-2xl font-black text-slate-800">0</div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="p-3 rounded-lg bg-sky-50 text-sky-600">
+                <i data-lucide="calendar-days" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Confirmados (Agendados)</div>
+                <div id="stat-agendados" class="text-2xl font-black text-sky-700">0</div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="p-3 rounded-lg bg-amber-50 text-amber-600">
+                <i data-lucide="calendar-clock" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">A Agendar / Confirmar</div>
+                <div id="stat-a-agendar" class="text-2xl font-black text-amber-700">0</div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="p-3 rounded-lg bg-emerald-50 text-emerald-600">
+                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Realizados</div>
+                <div id="stat-realizados" class="text-2xl font-black text-emerald-700">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros e Busca -->
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 no-print">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Busca por texto -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar por Igreja ou Preletor</label>
+                <div class="relative">
+                    <input type="text" id="filtro-busca" oninput="window.filtrarEExibir()" placeholder="Pesquise..."
+                        class="w-full p-2.5 pl-9 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-slate-700 transition-all">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+                </div>
+            </div>
+            <!-- Filtro por status -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Status do Agendamento</label>
+                <select id="filtro-status" onchange="window.filtrarEExibir()"
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                    <option value="">Todos os Status</option>
+                    <option value="Agendado">Confirmados (Agendados)</option>
+                    <option value="A Agendar">A Agendar / A Confirmar</option>
+                    <option value="Realizado">Realizados</option>
+                </select>
+            </div>
+            <!-- Filtro por preletor -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Preletor Visitante</label>
+                <select id="filtro-preletor" onchange="window.filtrarEExibir()"
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                    <option value="">Todos os Preletores</option>
+                </select>
+            </div>
+            <!-- Filtro por igreja -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Igreja</label>
+                <select id="filtro-igreja" onchange="window.filtrarEExibir()"
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                    <option value="">Todas as Igrejas</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-4">
+            <button onclick="window.limparFiltros()"
+                class="flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase">
+                <i data-lucide="filter-x" class="w-4 h-4"></i> Limpar Filtros
+            </button>
+            <span class="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">
+                Exibindo <span id="filtrados-count" class="text-blue-600 text-sm font-black">0</span> de <span id="total-count" class="text-slate-600 text-sm font-black">0</span> seminários
+            </span>
+        </div>
+    </div>
+
+    <!-- Área de Exibição do Cronograma / Grid de Cards -->
+    <div id="pdf-content">
+        <!-- Título exclusivo para impressão/PDF -->
+        <div class="hidden print-only text-center mb-6 pb-4 border-b-2 border-slate-200">
+            <h1 class="text-xl font-black text-slate-900 uppercase">Relatório Geral de Seminários - Região 655</h1>
+            <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mt-1">Campanha Regional 2026 · Os 5 Pães da Transformação</p>
+            <p class="text-[10px] text-slate-400 mt-2 font-medium" id="print-date"></p>
+        </div>
+
+        <div id="cronograma-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 print-grid">
+            <!-- Carregando Skeleton -->
+            <div class="col-span-full py-20 text-center flex flex-col items-center justify-center gap-3">
+                <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-slate-400 font-bold uppercase text-xs tracking-widest">Carregando dados dos seminários...</p>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 font-medium no-print mt-auto">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <p>© 2026 Região 655 — Portal de Gestão Eclesiástica</p>
+        <p class="uppercase tracking-widest text-[10px] font-bold text-slate-400">Londrina - PR</p>
+    </div>
+</footer>
+
+<!-- Toast Notifications -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs font-bold px-5 py-3 rounded-full shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-[9999]"></div>
+
+<!-- Firebase Logic -->
+<script type="module">
+import { db } from './firebase-config.js';
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { toastSuccess, toastError, toastWarning } from './js/toast.js';
+import { esc } from './js/utils.js';
+
+const BLOCOS_FIXOS = [
+    { bloco: 1, nome: 'Introdução',                    duracao: 10 },
+    { bloco: 2, nome: '1º Pão: Identidade',             duracao: 10 },
+    { bloco: 3, nome: '2º Pão: Responsabilidade',       duracao: 10 },
+    { bloco: 4, nome: '3º Pão: Influência',             duracao: 10 },
+    { bloco: 5, nome: '4º Pão: Integridade',            duracao: 10 },
+    { bloco: 6, nome: '5º Pão: Multiplicação',          duracao: 10 },
+    { bloco: 7, nome: 'Projeto 5x5 + Conclusão',        duracao: 20 }
+];
+
+let seminarios = [];
+let igrejas = [];
+let pastores = [];
+let coordenadores = [];
+
+// Inicialização
+async function init() {
+    try {
+        await Promise.all([
+            carregarIgrejas(),
+            carregarPastores(),
+            carregarCoordenadores(),
+            carregarSeminarios()
+        ]);
+        
+        preencherFiltrosDinamicos();
+        window.filtrarEExibir();
+        
+        document.getElementById('print-date').textContent = `Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`;
+    } catch (error) {
+        console.error("Erro na inicialização:", error);
+        toastError("Erro ao carregar os dados.");
+    }
+}
+
+async function carregarIgrejas() {
+    const snap = await getDocs(collection(db, "igrejas"));
+    igrejas = [];
+    snap.forEach(d => igrejas.push({ id: d.id, ...d.data() }));
+    igrejas.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+}
+
+async function carregarPastores() {
+    const snap = await getDocs(collection(db, "pastores"));
+    pastores = [];
+    snap.forEach(d => pastores.push({ id: d.id, ...d.data() }));
+    pastores.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+}
+
+async function carregarCoordenadores() {
+    const snap = await getDocs(collection(db, "coordenadores_cidadania"));
+    coordenadores = [];
+    snap.forEach(d => coordenadores.push({ id: d.id, ...d.data() }));
+}
+
+async function carregarSeminarios() {
+    const snap = await getDocs(collection(db, "seminarios"));
+    seminarios = [];
+    snap.forEach(d => seminarios.push({ id: d.id, ...d.data() }));
+    // Ordena por data (os sem data ficam por último)
+    seminarios.sort((a, b) => {
+        if (!a.data) return 1;
+        if (!b.data) return -1;
+        return a.data.localeCompare(b.data);
+    });
+}
+
+function preencherFiltrosDinamicos() {
+    // Preenche select de preletores
+    const selectPreletores = document.getElementById('filtro-preletor');
+    // Coleciona todos os nomes únicos de preletores que estão cadastrados como pastor1 ou pastor2 nos seminários
+    const nomesPreletores = new Set();
+    pastores.forEach(p => {
+        if (p.nome) nomesPreletores.add(p.nome);
+    });
+    
+    // Converte para array ordenado e insere no select
+    Array.from(nomesPreletores).sort().forEach(nome => {
+        const option = document.createElement('option');
+        option.value = nome;
+        option.textContent = nome;
+        selectPreletores.appendChild(option);
+    });
+
+    // Preenche select de igrejas
+    const selectIgrejas = document.getElementById('filtro-igreja');
+    igrejas.forEach(ig => {
+        const label = `${ig.codigo} - ${ig.nome}`;
+        const option = document.createElement('option');
+        option.value = label;
+        option.textContent = label;
+        selectIgrejas.appendChild(option);
+    });
+}
+
+// Lógica de cálculo de horário dos blocos
+function calcularHorarioBloco(horaInicio, indexBloco) {
+    if (!horaInicio) return null;
+    let minutosAcumulados = 0;
+    for (let i = 0; i < indexBloco; i++) {
+        minutosAcumulados += BLOCOS_FIXOS[i].duracao;
+    }
+    return addMinutos(horaInicio, minutosAcumulados);
+}
+
+function addMinutos(horaStr, minutos) {
+    const [h, m] = horaStr.split(':').map(Number);
+    const total = h * 60 + m + minutos;
+    const hh = Math.floor(total / 60) % 24;
+    const mm = total % 60;
+    return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+}
+
+// Filtra e Renderiza os Cards
+window.filtrarEExibir = () => {
+    const queryBusca = document.getElementById('filtro-busca').value.toLowerCase().trim();
+    const filtroStatus = document.getElementById('filtro-status').value;
+    const filtroPreletor = document.getElementById('filtro-preletor').value;
+    const filtroIgreja = document.getElementById('filtro-igreja').value;
+
+    const filtrados = seminarios.filter(s => {
+        // Busca textual (busca na igreja, preletores, observações ou pastor titular)
+        if (queryBusca) {
+            const matchesIgreja = (s.igrejaNome || '').toLowerCase().includes(queryBusca);
+            const matchesPastor1 = (s.pastor1Nome || '').toLowerCase().includes(queryBusca);
+            const matchesPastor2 = (s.pastor2Nome || '').toLowerCase().includes(queryBusca);
+            const matchesTitular = (s.pastorTitularNome || '').toLowerCase().includes(queryBusca);
+            const matchesObs = (s.observacoes || '').toLowerCase().includes(queryBusca);
+            
+            if (!matchesIgreja && !matchesPastor1 && !matchesPastor2 && !matchesTitular && !matchesObs) {
+                return false;
+            }
+        }
+
+        // Filtro de status
+        if (filtroStatus && (s.status || 'A Agendar') !== filtroStatus) {
+            return false;
+        }
+
+        // Filtro de preletor (se pastor1 ou pastor2 é igual ao preletor selecionado)
+        if (filtroPreletor && s.pastor1Nome !== filtroPreletor && s.pastor2Nome !== filtroPreletor) {
+            return false;
+        }
+
+        // Filtro de igreja
+        if (filtroIgreja && s.igrejaNome !== filtroIgreja) {
+            return false;
+        }
+
+        return true;
+    });
+
+    // Atualiza contadores
+    document.getElementById('total-count').textContent = seminarios.length;
+    document.getElementById('filtrados-count').textContent = filtrados.length;
+
+    // Atualiza estatísticas com base em TODOS os seminários
+    const totalSeminarios = seminarios.length;
+    const totalAgendados = seminarios.filter(s => s.status === 'Agendado').length;
+    const totalAAgendar = seminarios.filter(s => (s.status === 'A Agendar' || !s.status)).length;
+    const totalRealizados = seminarios.filter(s => s.status === 'Realizado').length;
+
+    document.getElementById('stat-total').textContent = totalSeminarios;
+    document.getElementById('stat-agendados').textContent = totalAgendados;
+    document.getElementById('stat-a-agendar').textContent = totalAAgendar;
+    document.getElementById('stat-realizados').textContent = totalRealizados;
+
+    renderCards(filtrados);
+};
+
+window.limparFiltros = () => {
+    document.getElementById('filtro-busca').value = '';
+    document.getElementById('filtro-status').value = '';
+    document.getElementById('filtro-preletor').value = '';
+    document.getElementById('filtro-igreja').value = '';
+    window.filtrarEExibir();
+    toastSuccess("Filtros limpos!");
+};
+
+// Renderização dos cards no HTML
+function renderCards(lista) {
+    const grid = document.getElementById('cronograma-grid');
+    
+    if (lista.length === 0) {
+        grid.innerHTML = `
+            <div class="col-span-full py-16 text-center text-slate-400 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-3">
+                <i data-lucide="calendar-x" class="w-12 h-12 text-slate-300"></i>
+                <p class="font-extrabold text-sm uppercase tracking-wide">Nenhum seminário encontrado</p>
+                <p class="text-xs text-slate-400 max-w-xs">Altere os filtros acima ou registre novos seminários no Painel de Gestão.</p>
+            </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+    }
+
+    grid.innerHTML = lista.map((s, index) => {
+        const dataFmt = s.data ? s.data.split('-').reverse().join('/') : 'Data a definir';
+        const horaFmt = s.horario ? s.horario : 'Horário a definir';
+        const status = s.status || 'A Agendar';
+        
+        // Estilo dos badges de status
+        let statusBadgeClass = '';
+        let iconClass = '';
+        if (status === 'Realizado') {
+            statusBadgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+            iconClass = 'text-emerald-500';
+        } else if (status === 'Agendado') {
+            statusBadgeClass = 'bg-blue-100 text-blue-800 border-blue-200';
+            iconClass = 'text-blue-500';
+        } else {
+            statusBadgeClass = 'bg-slate-100 text-slate-600 border-slate-200';
+            iconClass = 'text-slate-400';
+        }
+
+        // Ministradores atribuídos nos blocos
+        const blocosDefinidos = (s.blocos || []).filter(b => b.ministradorNome).length;
+        const porcetagemDefinida = Math.round((blocosDefinidos / 7) * 100);
+
+        // Prepara visualização de blocos colapsáveis
+        const blocosHtml = (s.blocos && s.blocos.length === 7) ? s.blocos.map((b, i) => {
+            const hBloco = calcularHorarioBloco(s.horario, i);
+            const horaBlocoStr = hBloco ? `<span class="text-[10px] font-mono bg-slate-100 text-slate-500 px-1 rounded">${hBloco}</span>` : '';
+            return `
+                <div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
+                    <span class="font-medium text-slate-500 truncate flex items-center gap-1.5 max-w-[60%]">
+                        ${horaBlocoStr}
+                        <span class="truncate">${b.bloco}. ${esc(b.nome)}</span>
+                    </span>
+                    <span class="font-bold text-slate-700 truncate max-w-[40%] text-right">
+                        ${esc(b.ministradorNome || '—')}
+                    </span>
+                </div>
+            `;
+        }).join('') : `<p class="text-xs text-slate-400 italic text-center py-2">Nenhum bloco de programação preenchido.</p>`;
+
+        // Se tiver relatório, monta painel do relatório
+        let relatorioHtml = '';
+        if (status === 'Realizado' && s.relatorio) {
+            const rel = s.relatorio;
+            const avaliacaoClass = rel.avaliacaoGeral === 'Ótimo' || rel.avaliacaoGeral === 'Bom' ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50';
+            relatorioHtml = `
+                <div class="mt-4 pt-4 border-t border-dashed border-slate-100">
+                    <div class="flex items-center gap-1 text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">
+                        <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
+                        Relatório Pós-Evento
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center mb-3">
+                        <div class="bg-slate-50 p-2 rounded-lg">
+                            <div class="text-[8px] text-slate-400 uppercase font-bold">Participantes</div>
+                            <div class="text-sm font-extrabold text-slate-700">${rel.totalParticipantes ?? '-'}</div>
+                        </div>
+                        <div class="bg-slate-50 p-2 rounded-lg">
+                            <div class="text-[8px] text-slate-400 uppercase font-bold">Mat. Entregue</div>
+                            <div class="text-sm font-extrabold text-slate-700">${rel.materialEntregue ?? '-'}</div>
+                        </div>
+                        <div class="p-2 rounded-lg ${avaliacaoClass}">
+                            <div class="text-[8px] text-slate-400 uppercase font-bold">Avaliação</div>
+                            <div class="text-xs font-black truncate">${rel.avaliacaoGeral || '-'}</div>
+                        </div>
+                    </div>
+                    ${rel.destaques ? `
+                        <div class="text-[11px] text-slate-600 mb-2 bg-slate-50 p-2 rounded border-l-2 border-emerald-500 italic">
+                            <strong>Destaques:</strong> ${esc(rel.destaques)}
+                        </div>
+                    ` : ''}
+                    ${rel.followUpNecessario ? `
+                        <div class="text-[11px] text-amber-800 bg-amber-50 p-2 rounded border border-amber-200">
+                            <strong class="flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3 text-amber-600"></i> Acompanhamento Necessário:</strong>
+                            <p class="mt-0.5">${esc(rel.followUpDescricao || '')}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        return `
+            <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden flex flex-col print-card">
+                <!-- Top Header Card -->
+                <div class="p-4 border-b border-slate-100 flex justify-between items-start gap-2">
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-sm leading-tight uppercase truncate" title="${esc(s.igrejaNome || '')}">
+                            ${esc(s.igrejaNome || 'Igreja Sem Nome')}
+                        </h3>
+                        <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
+                            Pastor Titular: ${esc(s.pastorTitularNome || 'Não cadastrado')}
+                        </p>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border shrink-0 ${statusBadgeClass}">
+                        ${esc(status)}
+                    </span>
+                </div>
+
+                <!-- Info Body -->
+                <div class="p-4 flex-1 space-y-4">
+                    <!-- Data & Horário -->
+                    <div class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                            <i data-lucide="calendar" class="w-4 h-4 ${iconClass}"></i>
+                            <span>${dataFmt}</span>
+                        </div>
+                        <div class="w-1 h-1 rounded-full bg-slate-300"></div>
+                        <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                            <i data-lucide="clock" class="w-4 h-4 ${iconClass}"></i>
+                            <span>${horaFmt}</span>
+                        </div>
+                    </div>
+
+                    <!-- Preletores / Equipe Visitante -->
+                    <div class="space-y-2">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Equipe Visitante</div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                </div>
+                                <div class="truncate">
+                                    <div class="text-[8px] text-slate-400 font-semibold uppercase">Pastor 1</div>
+                                    <div class="text-[11px] font-bold text-slate-700 truncate" title="${esc(s.pastor1Nome || 'A definir')}">
+                                        ${esc(s.pastor1Nome || 'A definir')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                </div>
+                                <div class="truncate">
+                                    <div class="text-[8px] text-slate-400 font-semibold uppercase">Pastor 2</div>
+                                    <div class="text-[11px] font-bold text-slate-700 truncate" title="${esc(s.pastor2Nome || 'A definir')}">
+                                        ${esc(s.pastor2Nome || 'A definir')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coordenador Local -->
+                    <div class="text-xs text-slate-600 flex items-center gap-1.5">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-slate-400"></i>
+                        <span>
+                            <strong class="text-slate-400 uppercase text-[9px] tracking-wider block">Coordenador Local Cidadania</strong>
+                            <span class="font-bold text-slate-700">${esc(s.coordenadorNome || 'Não definido')}</span>
+                        </span>
+                    </div>
+
+                    <!-- Observações -->
+                    ${s.observacoes ? `
+                        <div class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-start gap-2">
+                            <i data-lucide="sticky-note" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                            <p class="font-medium text-[11px] text-slate-600 leading-relaxed">${esc(s.observacoes)}</p>
+                        </div>
+                    ` : ''}
+
+                    <!-- Indicador Programação -->
+                    <div class="no-print">
+                        <button onclick="window.toggleBlocos(${index})"
+                            class="w-full py-2 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 text-xs font-bold text-slate-600 flex items-center justify-between transition-colors outline-none">
+                            <span class="flex items-center gap-1.5">
+                                <i data-lucide="list-checks" class="w-4 h-4 text-blue-500"></i>
+                                Programação (${blocosDefinidos}/7 ministrantes)
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <!-- Barra de progresso micro -->
+                                <div class="w-10 bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                    <div class="bg-blue-600 h-full rounded-full" style="width: ${porcetagemDefinida}%"></div>
+                                </div>
+                                <i data-lucide="chevron-down" id="chevron-${index}" class="w-4 h-4 text-slate-400 transition-transform duration-300"></i>
+                            </div>
+                        </button>
+                        
+                        <!-- Blocos Programação Container -->
+                        <div id="blocos-wrap-${index}" class="hidden mt-2 p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-1.5">
+                            ${blocosHtml}
+                        </div>
+                    </div>
+
+                    <!-- Programação Visível na Impressão -->
+                    <div class="hidden print-only mt-4 pt-4 border-t border-slate-100">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Programação Atribuída</div>
+                        <div class="space-y-1">
+                            ${blocosHtml}
+                        </div>
+                    </div>
+
+                    <!-- Detalhes do Relatório -->
+                    ${relatorioHtml}
+
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+// Alternar visualização da programação (blocos)
+window.toggleBlocos = (index) => {
+    const wrap = document.getElementById(`blocos-wrap-${index}`);
+    const chevron = document.getElementById(`chevron-${index}`);
+    if (!wrap || !chevron) return;
+    
+    const isHidden = wrap.classList.contains('hidden');
+    wrap.classList.toggle('hidden');
+    chevron.classList.toggle('rotate-180', isHidden);
+};
+
+// Geração de PDF com html2pdf.js
+window.baixarPdfResumo = () => {
+    if (!window.html2pdf) {
+        toastWarning('Gerador de PDF ainda carregando, tente novamente em instantes.');
+        return;
+    }
+
+    // Abre temporariamente todos os blocos de programação colapsados para que saiam no PDF se for baixar em tela cheia
+    // Mas, como desenhamos uma classe "hidden print-only" para o PDF, eles serão impressos naturalmente! 
+    
+    const el = document.getElementById('pdf-content');
+    const opt = {
+        margin: 10,
+        filename: 'cronograma_seminarios_reg655.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } // Horizontal para caber melhor o grid
+    };
+    
+    toastSuccess("Iniciando geração do PDF...");
+    window.html2pdf().set(opt).from(el).save()
+        .then(() => {
+            toastSuccess("PDF baixado com sucesso!");
+        })
+        .catch((err) => {
+            console.error(err);
+            toastError("Erro ao gerar o PDF.");
+        });
+};
+
+init();
+</script>
+</body>
+</html>
