@@ -350,11 +350,9 @@
                     document.getElementById('commitment-value-display').textContent = '0,00';
                 }
 
-                // 2. Carregar Histórico
                 const q = query(
                     collection(db, "franca_ofertas"),
-                    where("igreja", "==", churchName),
-                    orderBy("mesReferencia", "desc")
+                    where("igreja", "==", churchName)
                 );
                 
                 const querySnapshot = await getDocs(q);
@@ -367,8 +365,15 @@
                     return;
                 }
 
+                const ofertas = [];
                 querySnapshot.forEach(d => {
-                    const row = d.data();
+                    ofertas.push(d.data());
+                });
+
+                // Ordenar por mês de referência decrescente
+                ofertas.sort((a, b) => (b.mesReferencia || '').localeCompare(a.mesReferencia || ''));
+
+                ofertas.forEach(row => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors";
                     

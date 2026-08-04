@@ -398,12 +398,22 @@
             if (window.lucide) window.lucide.createIcons();
 
             try {
-                const q = query(collection(db, "franca_ofertas"), orderBy("mesReferencia", "desc"), orderBy("dataLancamento", "desc"));
+                const q = collection(db, "franca_ofertas");
                 const snap = await getDocs(q);
                 
                 ofertasList = [];
                 snap.forEach(d => {
                     ofertasList.push({ id: d.id, ...d.data() });
+                });
+
+                // Ordenar em memória (Mês Referência Decrescente -> Data Lançamento Decrescente)
+                ofertasList.sort((a, b) => {
+                    const mesA = a.mesReferencia || '';
+                    const mesB = b.mesReferencia || '';
+                    if (mesA !== mesB) return mesB.localeCompare(mesA);
+                    const tA = a.dataLancamento ? a.dataLancamento.toDate().getTime() : 0;
+                    const tB = b.dataLancamento ? b.dataLancamento.toDate().getTime() : 0;
+                    return tB - tA;
                 });
 
                 renderHistoricoTable(ofertasList);
