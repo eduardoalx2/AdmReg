@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Master França — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .tab-btn.active {
+            border-color: #2563eb;
+            color: #2563eb;
+            background: #eff6ff;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-10">
+
+    <!-- CABEÇALHO COMPACTO -->
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-5xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <div class="flex items-center gap-4">
+                    <span id="header-user-info" class="text-[10px] font-bold text-slate-600 uppercase">Master</span>
+                    <a href="francapastores.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="eye" class="w-3 h-3"></i> Visualizar Painel Pastor
+                    </a>
+                    <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Principal
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="header-gradient py-4 px-4 text-white">
+            <div class="max-w-5xl mx-auto">
+                <h1 class="text-base md:text-lg font-black tracking-wide uppercase flex items-center gap-2">
+                    <i data-lucide="shield-alert" class="w-5 h-5 text-blue-400"></i> Painel Master — Missão França
+                </h1>
+                <p class="text-[10px] md:text-xs text-slate-400 uppercase font-medium mt-1">
+                    Administração de metas por igreja, lançamentos mensais de ofertas e atualização de relatórios
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- ABAS DE NAVEGAÇÃO -->
+        <div class="flex border-b border-slate-200 bg-white p-1 rounded-xl shadow-sm gap-1">
+            <button onclick="switchTab('tab-lancamentos')" id="btn-tab-lancamentos" class="tab-btn flex-1 py-2 px-3 text-center rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 active">
+                <i data-lucide="banknote" class="w-4 h-4"></i> Lançar & Histórico
+            </button>
+            <button onclick="switchTab('tab-compromissos')" id="btn-tab-compromissos" class="tab-btn flex-1 py-2 px-3 text-center rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700">
+                <i data-lucide="target" class="w-4 h-4"></i> Metas das Igrejas
+            </button>
+            <button onclick="switchTab('tab-relatorios')" id="btn-tab-relatorios" class="tab-btn flex-1 py-2 px-3 text-center rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700">
+                <i data-lucide="scroll" class="w-4 h-4"></i> Report & Links
+            </button>
+        </div>
+
+        <!-- CONTEÚDO DA ABA 1: LANÇAR E HISTÓRICO -->
+        <div id="tab-lancamentos" class="tab-content space-y-6">
+            
+            <!-- FORMULÁRIO DE LANÇAMENTO -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 border-b pb-3 mb-4">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-blue-600"></i> Registrar Nova Oferta Recebida
+                </h2>
+                
+                <form id="form-lancar-oferta" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Igreja</label>
+                        <select id="lancar-igreja" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Mês de Referência</label>
+                        <input type="month" id="lancar-mes" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Valor Recebido (R$)</label>
+                        <input type="number" step="0.01" min="0.01" id="lancar-valor" required placeholder="0.00" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Observações (Opcional)</label>
+                        <input type="text" id="lancar-obs" placeholder="Ex: Via PIX" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                    </div>
+                    <div class="sm:col-span-2 md:col-span-4 flex justify-end">
+                        <button type="submit" id="btn-salvar-oferta" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-5 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 uppercase shadow-sm">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> Confirmar Lançamento
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- TABELA DE HISTÓRICO GERAL -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-3 mb-4">
+                    <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="history" class="w-4 h-4 text-blue-600"></i> Histórico Geral de Ofertas
+                    </h2>
+                    
+                    <!-- Filtros Rápidos -->
+                    <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                        <div class="flex-1 sm:w-48">
+                            <select id="filtro-igreja" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-[10px] font-semibold">
+                                <option value="Todas">Todas as Igrejas</option>
+                            </select>
+                        </div>
+                        <div class="flex-1 sm:w-32">
+                            <input type="month" id="filtro-mes" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-[10px] font-semibold">
+                        </div>
+                        <button id="btn-limpar-filtros" title="Limpar Filtros" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-1.5 rounded-lg border">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar border rounded-xl">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-[9px] uppercase font-bold border-b">
+                                <th class="py-3 px-4">Igreja</th>
+                                <th class="py-3 px-4">Mês Ref.</th>
+                                <th class="py-3 px-4">Data Lançamento</th>
+                                <th class="py-3 px-4">Valor</th>
+                                <th class="py-3 px-4">Lançado Por</th>
+                                <th class="py-3 px-4">Observações</th>
+                                <th class="py-3 px-4 text-center w-16">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-ofertas-body" class="divide-y divide-slate-100 text-xs">
+                            <tr>
+                                <td colspan="7" class="text-center py-8 text-slate-400">Carregando histórico...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CONTEÚDO DA ABA 2: COMPROMISSOS DAS IGREJAS -->
+        <div id="tab-compromissos" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="border-b pb-3 mb-4">
+                    <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="target" class="w-4 h-4 text-blue-600"></i> Metas de Contribuição Mensal
+                    </h2>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+                        Gerencie o valor mensal que cada igreja se comprometeu a doar para a Missão França.
+                    </p>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar border rounded-xl">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-[9px] uppercase font-bold border-b">
+                                <th class="py-3 px-4 w-20">Cod.</th>
+                                <th class="py-3 px-4">Igreja</th>
+                                <th class="py-3 px-4">Pastor(a) Titular</th>
+                                <th class="py-3 px-4 w-44">Meta Mensal (R$)</th>
+                                <th class="py-3 px-4 text-center w-28">Salvar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-compromissos-body" class="divide-y divide-slate-100 text-xs">
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-slate-400">Carregando metas...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTEÚDO DA ABA 3: RELATÓRIOS E LINKS -->
+        <div id="tab-relatorios" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 border-b pb-3 mb-4">
+                    <i data-lucide="scroll" class="w-4 h-4 text-blue-600"></i> Relatório Mensal & Redes Sociais da Missão
+                </h2>
+
+                <form id="form-config-franca" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="sm:col-span-1">
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Período/Mês do Relatório</label>
+                            <input type="text" id="report-period" required placeholder="Ex: Agosto/2026" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Texto do Testemunho / Relatório de Atividades</label>
+                        <textarea id="report-text" rows="8" required placeholder="Escreva aqui o relatório detalhado das atividades, testemunhos e dia a dia da igreja e dos missionários na França..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-medium leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="border-t pt-4">
+                        <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Links de Redes Sociais da Missão</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1 flex items-center gap-1">
+                                    <i data-lucide="instagram" class="w-3.5 h-3.5 text-pink-600"></i> Instagram URL
+                                </label>
+                                <input type="text" id="link-instagram" placeholder="Ex: instagram.com/usuario" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1 flex items-center gap-1">
+                                    <i data-lucide="facebook" class="w-3.5 h-3.5 text-blue-600"></i> Facebook URL
+                                </label>
+                                <input type="text" id="link-facebook" placeholder="Ex: facebook.com/pagina" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 ml-1 flex items-center gap-1">
+                                    <i data-lucide="youtube" class="w-3.5 h-3.5 text-red-600"></i> Youtube URL
+                                </label>
+                                <input type="text" id="link-youtube" placeholder="Ex: youtube.com/@canal" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-2 border-t">
+                        <button type="submit" id="btn-salvar-config" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-5 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 uppercase shadow-sm">
+                            <i data-lucide="save" class="w-4 h-4"></i> Salvar Relatório e Links
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="py-6 text-center text-slate-400 text-[10px]">
+        &copy; 2026 Região 655 - IEQ Londrina/PR
+    </footer>
+
+    <script type="module">
+        import { auth, db } from './firebase-config.js';
+        import { doc, getDoc, getDocs, collection, query, where, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { requireAuth, hasAnyPermission, isAdmin as checkIsAdmin } from './js/auth.js';
+        import { toastSuccess, toastError, toastWarning, toastInfo } from './js/toast.js';
+
+        let authData;
+        let igrejasList = [];
+        let pastoresList = [];
+        let compromissosMap = new Map();
+        let ofertasList = [];
+
+        async function init() {
+            try {
+                authData = await requireAuth();
+                
+                const userEmail = authData.email;
+                const userName = authData.nome;
+                const userIgreja = authData.igrejaNome;
+                const userPerms = authData.permissoes;
+                const isAdmin = checkIsAdmin() || hasAnyPermission(['admin', 'secretario', 'superintendente']);
+
+                if (!isAdmin) {
+                    toastError("Acesso não autorizado. Redirecionando...");
+                    window.location.replace("index.html");
+                    return;
+                }
+
+                // Configurar info do cabeçalho
+                document.getElementById('header-user-info').textContent = `${userName.split(' ')[0]} | Admin`;
+
+                // Set default month selector (current month)
+                const now = new Date();
+                const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                document.getElementById('lancar-mes').value = currentMonthStr;
+
+                // Carregar base de dados
+                await carregarIgrejasEPastores();
+                await carregarCompromissos();
+                await carregarHistoricoOfertas();
+                await carregarConfigFranca();
+
+                // Listeners de Formulários
+                document.getElementById('form-lancar-oferta').addEventListener('submit', salvarLancamentoOferta);
+                document.getElementById('form-config-franca').addEventListener('submit', salvarConfigFranca);
+
+                // Listeners de Filtro de Histórico
+                document.getElementById('filtro-igreja').addEventListener('change', aplicarFiltrosHistorico);
+                document.getElementById('filtro-mes').addEventListener('input', aplicarFiltrosHistorico);
+                document.getElementById('btn-limpar-filtros').addEventListener('click', () => {
+                    document.getElementById('filtro-igreja').value = 'Todas';
+                    document.getElementById('filtro-mes').value = '';
+                    aplicarFiltrosHistorico();
+                });
+
+                // Auto-preencher valor de compromisso ao mudar igreja no lançamento
+                document.getElementById('lancar-igreja').addEventListener('change', (e) => {
+                    const igreja = e.target.value;
+                    if (igreja && compromissosMap.has(igreja)) {
+                        document.getElementById('lancar-valor').value = compromissosMap.get(igreja);
+                    } else {
+                        document.getElementById('lancar-valor').value = '';
+                    }
+                });
+
+                lucide.createIcons();
+
+            } catch (e) {
+                console.error("Erro na inicialização:", e);
+                toastError("Erro ao autenticar ou carregar dados iniciais.");
+            }
+        }
+
+        // --- NAVEGAÇÃO DE ABAS ---
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-blue-600', 'bg-blue-55');
+                btn.classList.add('text-slate-500');
+            });
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.add('active');
+            activeBtn.classList.remove('text-slate-500');
+
+            if (window.lucide) window.lucide.createIcons();
+        };
+
+        // --- CARREGAMENTO DE DADOS ---
+        async function carregarIgrejasEPastores() {
+            try {
+                const [igSnap, pastoresSnap] = await Promise.all([
+                    getDocs(collection(db, "igrejas")),
+                    getDocs(collection(db, "pastores"))
+                ]);
+
+                igrejasList = [];
+                igSnap.forEach(d => {
+                    const data = d.data();
+                    igrejasList.push({ id: d.id, ...data });
+                });
+                // Ordenar por código numérico
+                igrejasList.sort((a, b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+
+                pastoresList = [];
+                pastoresSnap.forEach(d => {
+                    pastoresList.push({ id: d.id, ...d.data() });
+                });
+
+                // Preencher Select do Form de Lançamento
+                const selectLancar = document.getElementById('lancar-igreja');
+                selectLancar.innerHTML = '<option value="">Selecione uma Igreja...</option>';
+
+                // Preencher Select do Filtro do Histórico
+                const selectFiltro = document.getElementById('filtro-igreja');
+                selectFiltro.innerHTML = '<option value="Todas">Todas as Igrejas</option>';
+
+                igrejasList.forEach(ig => {
+                    selectLancar.innerHTML += `<option value="${ig.nome}">${ig.codigo} - ${ig.nome}</option>`;
+                    selectFiltro.innerHTML += `<option value="${ig.nome}">${ig.codigo} - ${ig.nome}</option>`;
+                });
+
+            } catch (e) {
+                console.error("Erro ao carregar igrejas e pastores:", e);
+                toastError("Erro ao carregar lista de igrejas e pastores.");
+            }
+        }
+
+        async function carregarCompromissos() {
+            try {
+                const snap = await getDocs(collection(db, "franca_compromissos"));
+                compromissosMap.clear();
+                
+                snap.forEach(d => {
+                    compromissosMap.set(d.id, parseFloat(d.data().valor || 0));
+                });
+
+                renderCompromissosTable();
+            } catch (e) {
+                console.error("Erro ao carregar compromissos/metas:", e);
+            }
+        }
+
+        async function carregarHistoricoOfertas() {
+            const tableBody = document.getElementById('tabela-ofertas-body');
+            tableBody.innerHTML = `
+                <tr><td colspan="7" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline mr-2"></i>Carregando histórico...</td></tr>
+            `;
+            if (window.lucide) window.lucide.createIcons();
+
+            try {
+                const q = query(collection(db, "franca_ofertas"), orderBy("mesReferencia", "desc"), orderBy("dataLancamento", "desc"));
+                const snap = await getDocs(q);
+                
+                ofertasList = [];
+                snap.forEach(d => {
+                    ofertasList.push({ id: d.id, ...d.data() });
+                });
+
+                renderHistoricoTable(ofertasList);
+            } catch (e) {
+                console.error("Erro ao carregar ofertas:", e);
+                tableBody.innerHTML = `
+                    <tr><td colspan="7" class="text-center py-8 text-red-500 font-bold">Erro ao obter histórico do Firestore.</td></tr>
+                `;
+            }
+        }
+
+        async function carregarConfigFranca() {
+            try {
+                const snap = await getDoc(doc(db, "configuracoes", "franca"));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    document.getElementById('report-period').value = data.periodoTestemunho || '';
+                    document.getElementById('report-text').value = data.testemunho || '';
+                    document.getElementById('link-instagram').value = data.instagram || '';
+                    document.getElementById('link-facebook').value = data.facebook || '';
+                    document.getElementById('link-youtube').value = data.youtube || '';
+                }
+            } catch (e) {
+                console.error("Erro ao carregar dados da França:", e);
+            }
+        }
+
+        // --- RENDERIZADORES DE TABELAS ---
+        function renderCompromissosTable() {
+            const tbody = document.getElementById('tabela-compromissos-body');
+            tbody.innerHTML = '';
+
+            if (igrejasList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400">Nenhuma igreja encontrada.</td></tr>';
+                return;
+            }
+
+            igrejasList.forEach(ig => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+
+                // Obter pastores titulares da igreja
+                const titulares = pastoresList.filter(p => {
+                    const pIgs = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                    return pIgs.includes(ig.nome) && p.funcao === 'Pastor Titular';
+                });
+                const nomePastor = titulares.length > 0 ? titulares.map(t => t.nome).join(', ') : 'Sem titular vinculado';
+
+                const valorCompromisso = compromissosMap.get(ig.nome) || 0;
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-blue-600">${ig.codigo}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-800">${ig.nome}</td>
+                    <td class="py-3 px-4 text-slate-500 font-medium">${nomePastor}</td>
+                    <td class="py-3 px-4">
+                        <div class="relative rounded-md shadow-sm w-36">
+                            <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 font-bold text-[10px]">
+                                R$
+                            </div>
+                            <input type="number" step="0.01" min="0" value="${valorCompromisso}" id="meta-${ig.nome.replace(/\s+/g, '_')}" class="w-full pl-7 pr-2 py-1 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs font-bold text-slate-800">
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="salvarMetaCompromisso('${ig.nome.replace(/\s+/g, '\\ ')}', '${ig.nome}')" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-1 rounded font-bold uppercase text-[9px] transition-colors flex items-center gap-1 mx-auto">
+                            <i data-lucide="save" class="w-3 h-3"></i> Salvar
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        window.salvarMetaCompromisso = async (elementSelector, churchName) => {
+            const inputId = `meta-${churchName.replace(/\s+/g, '_')}`;
+            const inputVal = parseFloat(document.getElementById(inputId).value || 0);
+
+            try {
+                await setDoc(doc(db, "franca_compromissos", churchName), {
+                    valor: inputVal,
+                    atualizadoEm: serverTimestamp(),
+                    atualizadoPor: authData.email
+                });
+
+                compromissosMap.set(churchName, inputVal);
+                toastSuccess(`Meta de ${churchName} salva com sucesso!`);
+            } catch (e) {
+                console.error("Erro ao salvar meta:", e);
+                toastError(`Erro ao salvar meta de ${churchName}.`);
+            }
+        };
+
+        function renderHistoricoTable(list) {
+            const tbody = document.getElementById('tabela-ofertas-body');
+            tbody.innerHTML = '';
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Nenhuma oferta encontrada para os critérios selecionados.</td></tr>';
+                return;
+            }
+
+            list.forEach(oferta => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors group";
+
+                // Formatar Mês de Referência (YYYY-MM -> MM/YYYY)
+                const formatMes = (mesRaw) => {
+                    if (!mesRaw) return '—';
+                    const parts = mesRaw.split('-');
+                    if (parts.length === 2) return `${parts[1]}/${parts[0]}`;
+                    return mesRaw;
+                };
+
+                // Formatar data lançamento
+                const formatData = (ts) => {
+                    if (!ts) return '—';
+                    const date = ts.toDate();
+                    return date.toLocaleDateString('pt-BR');
+                };
+
+                const valStr = parseFloat(oferta.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const editorEmail = (oferta.lancadoPor || '—').split('@')[0];
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-800">${oferta.igreja}</td>
+                    <td class="py-3 px-4 font-bold text-slate-700">${formatMes(oferta.mesReferencia)}</td>
+                    <td class="py-3 px-4 text-slate-500">${formatData(oferta.dataLancamento)}</td>
+                    <td class="py-3 px-4 font-black text-emerald-600">R$ ${valStr}</td>
+                    <td class="py-3 px-4 text-[10px] text-slate-400 font-mono">${editorEmail}</td>
+                    <td class="py-3 px-4 text-slate-500 text-[10px] max-w-xs truncate" title="${oferta.obs || ''}">${oferta.obs || '—'}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="excluirOferta('${oferta.id}')" class="text-red-400 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" title="Excluir Lançamento">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        // --- CRIAÇÃO E EXCLUSÃO DE OFERTAS ---
+        async function salvarLancamentoOferta(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btn-salvar-oferta');
+            const igreja = document.getElementById('lancar-igreja').value;
+            const mes = document.getElementById('lancar-mes').value;
+            const valor = parseFloat(document.getElementById('lancar-valor').value || 0);
+            const obs = document.getElementById('lancar-obs').value.trim();
+
+            if (!igreja || !mes || !valor) {
+                toastWarning("Preencha todos os campos obrigatórios.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Lançando...`;
+            if (window.lucide) window.lucide.createIcons();
+
+            try {
+                await addDoc(collection(db, "franca_ofertas"), {
+                    igreja: igreja,
+                    mesReferencia: mes,
+                    valor: valor,
+                    obs: obs,
+                    dataLancamento: serverTimestamp(),
+                    lancadoPor: authData.email
+                });
+
+                toastSuccess(`Oferta da igreja ${igreja} lançada com sucesso!`);
+                
+                // Limpar campos
+                document.getElementById('lancar-igreja').value = '';
+                document.getElementById('lancar-valor').value = '';
+                document.getElementById('lancar-obs').value = '';
+
+                // Recarregar histórico
+                await carregarHistoricoOfertas();
+
+            } catch (error) {
+                console.error("Erro ao salvar lançamento:", error);
+                toastError("Erro ao registrar oferta no banco de dados.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Confirmar Lançamento`;
+                if (window.lucide) window.lucide.createIcons();
+            }
+        }
+
+        window.excluirOferta = async (id) => {
+            if (confirm("Deseja realmente excluir este lançamento de oferta? Esta ação não poderá ser desfeita.")) {
+                try {
+                    await deleteDoc(doc(db, "franca_ofertas", id));
+                    toastSuccess("Lançamento excluído com sucesso!");
+                    await carregarHistoricoOfertas();
+                } catch (e) {
+                    console.error("Erro ao excluir oferta:", e);
+                    toastError("Não foi possível excluir o lançamento.");
+                }
+            }
+        };
+
+        // --- FILTRAGEM DO HISTÓRICO ---
+        function aplicarFiltrosHistorico() {
+            const filtroIgreja = document.getElementById('filtro-igreja').value;
+            const filtroMes = document.getElementById('filtro-mes').value; // Formato YYYY-MM
+
+            let filtrados = ofertasList;
+
+            if (filtroIgreja !== 'Todas') {
+                filtrados = filtrados.filter(o => o.igreja === filtroIgreja);
+            }
+
+            if (filtroMes) {
+                filtrados = filtrados.filter(o => o.mesReferencia === filtroMes);
+            }
+
+            renderHistoricoTable(filtrados);
+        }
+
+        // --- CONFIGURAÇÃO DE RELATÓRIO & LINKS ---
+        async function salvarConfigFranca(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('btn-salvar-config');
+            const periodo = document.getElementById('report-period').value.trim();
+            const texto = document.getElementById('report-text').value.trim();
+            const inst = document.getElementById('link-instagram').value.trim();
+            const face = document.getElementById('link-facebook').value.trim();
+            const yt = document.getElementById('link-youtube').value.trim();
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...`;
+            if (window.lucide) window.lucide.createIcons();
+
+            try {
+                await setDoc(doc(db, "configuracoes", "franca"), {
+                    periodoTestemunho: periodo,
+                    testemunho: texto,
+                    instagram: inst,
+                    facebook: face,
+                    youtube: yt,
+                    atualizadoEm: serverTimestamp(),
+                    atualizadoPor: authData.email
+                });
+
+                toastSuccess("Relatório e redes sociais atualizados com sucesso!");
+            } catch (error) {
+                console.error("Erro ao salvar configurações da França:", error);
+                toastError("Erro ao salvar informações da missão.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Salvar Relatório e Links`;
+                if (window.lucide) window.lucide.createIcons();
+            }
+        }
+
+        // Inicializar a página
+        init();
+    </script>
+</body>
+</html>

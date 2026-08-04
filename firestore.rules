@@ -32,6 +32,13 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
+    // Seminários: lidos na página pública que gera os links do Roteiro
+    // do Facilitador (cidadania2026). Escrita continua só autenticada.
+    match /seminarios/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
     // Configurações: layout_login e mini_portal são públicos
     match /configuracoes/{docId} {
       allow read: if docId == 'layout_login' || docId == 'mini_portal' || isAuthenticated();

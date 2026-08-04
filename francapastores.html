@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oferta para a França — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-10">
+
+    <!-- CABEÇALHO COMPACTO -->
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-5xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <div class="flex items-center gap-4">
+                    <span id="header-user-info" class="text-[10px] font-bold text-slate-600 uppercase">Carregando...</span>
+                    <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Principal
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="header-gradient py-4 px-4 text-white">
+            <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-base md:text-lg font-black tracking-wide uppercase flex items-center gap-2">
+                        <i data-lucide="globe" class="w-5 h-5 text-blue-400"></i> Oferta Missionária — França
+                    </h1>
+                    <p class="text-[10px] md:text-xs text-slate-400 uppercase font-medium mt-1">
+                        Controle e acompanhamento do envio de apoio e testemunhos da Missão na França
+                    </p>
+                </div>
+                <div id="admin-master-button-container" class="hidden">
+                    <a href="francamaster.html" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors uppercase shadow-sm border border-blue-500">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Painel Master
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- IGREJA SELECTOR (Visível para Admins) -->
+        <div id="church-selector-container" class="hidden bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="eye" class="w-4 h-4 text-blue-600"></i> Visualizar como Administrador
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Selecione uma igreja para conferir o compromisso e o histórico de ofertas</p>
+                </div>
+                <div class="w-full sm:w-72">
+                    <select id="select-igreja-filtro" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                        <option value="">Carregando igrejas...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRID SUPERIOR: META MENSAL + CHAVE PIX -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- META DE CONTRIBUIÇÃO -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 text-slate-100 opacity-50 pointer-events-none">
+                    <i data-lucide="landmark" class="w-32 h-32"></i>
+                </div>
+                <div class="relative">
+                    <div class="flex items-center gap-2 text-slate-500 uppercase tracking-widest text-[9px] font-bold">
+                        <i data-lucide="target" class="w-3.5 h-3.5 text-blue-500"></i> Meta de Contribuição Mensal
+                    </div>
+                    <h2 id="church-name-display" class="text-sm font-bold text-slate-800 mt-2 uppercase">IEQ Local</h2>
+                    <p class="text-[10px] text-slate-400 font-medium">Valor acordado para envio mensal destinado à Missão França</p>
+                </div>
+                <div class="mt-6">
+                    <span class="text-slate-400 text-xs font-bold mr-1">R$</span>
+                    <span id="commitment-value-display" class="text-3xl font-black text-slate-900 leading-none">0,00</span>
+                </div>
+            </div>
+
+            <!-- CHAVE PIX E AÇÃO -->
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl shadow-md text-white flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 text-white/5 pointer-events-none">
+                    <i data-lucide="qr-code" class="w-32 h-32"></i>
+                </div>
+                <div class="relative">
+                    <div class="flex items-center gap-2 text-blue-200 uppercase tracking-widest text-[9px] font-bold">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i> Chave PIX Regional
+                    </div>
+                    <h2 class="text-sm font-bold text-white mt-2 uppercase">Envie o comprovante para a regional</h2>
+                    <p class="text-[10px] text-blue-100 font-medium">Use a chave abaixo no aplicativo do seu banco</p>
+                </div>
+                <div class="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-black/15 p-2 rounded-xl border border-white/10 relative">
+                    <div class="flex-1 font-mono text-xs font-bold tracking-wider text-center sm:text-left select-all py-1.5 px-2">
+                        regiao655@pixieq.com.br
+                    </div>
+                    <button id="btn-copy-pix" class="bg-white hover:bg-slate-100 text-blue-700 text-[10px] font-bold px-3 py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 uppercase shadow-sm whitespace-nowrap">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Chave
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- CONTEÚDO PRINCIPAL: TESTEMUNHOS + TABELA DE HISTÓRICO -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- TESTEMUNHO/RELATÓRIO -->
+            <div class="lg:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 border-b pb-3 mb-4">
+                        <i data-lucide="scroll" class="w-4 h-4 text-blue-600"></i> Relatório & Testemunho
+                    </h2>
+                    <div id="testimony-period-badge" class="mb-3 inline-block bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[9px] uppercase tracking-wider font-extrabold">
+                        Mês: —
+                    </div>
+                    <div id="testimony-text-display" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line italic font-medium bg-slate-50 p-4 rounded-xl border border-slate-100 max-h-96 overflow-y-auto custom-scrollbar">
+                        Nenhum testemunho ou relatório de atividades postado para este mês.
+                    </div>
+                </div>
+
+                <div class="border-t pt-4 mt-6">
+                    <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Acompanhe as Redes Sociais</h3>
+                    <div class="flex gap-2">
+                        <a id="link-instagram" href="#" target="_blank" rel="noopener noreferrer" class="flex-1 bg-slate-100 hover:bg-pink-50 hover:text-pink-600 p-2 rounded-lg text-slate-600 transition-colors flex items-center justify-center gap-1 text-[10px] font-bold uppercase border border-slate-200">
+                            <i data-lucide="instagram" class="w-3.5 h-3.5"></i> Instagram
+                        </a>
+                        <a id="link-facebook" href="#" target="_blank" rel="noopener noreferrer" class="flex-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 p-2 rounded-lg text-slate-600 transition-colors flex items-center justify-center gap-1 text-[10px] font-bold uppercase border border-slate-200">
+                            <i data-lucide="facebook" class="w-3.5 h-3.5"></i> Facebook
+                        </a>
+                        <a id="link-youtube" href="#" target="_blank" rel="noopener noreferrer" class="flex-1 bg-slate-100 hover:bg-red-50 hover:text-red-600 p-2 rounded-lg text-slate-600 transition-colors flex items-center justify-center gap-1 text-[10px] font-bold uppercase border border-slate-200">
+                            <i data-lucide="youtube" class="w-3.5 h-3.5"></i> Youtube
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTÓRICO DE LANÇAMENTOS -->
+            <div class="lg:col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 border-b pb-3 mb-4">
+                    <i data-lucide="history" class="w-4 h-4 text-blue-600"></i> Histórico de Contribuições
+                </h2>
+                
+                <div class="overflow-x-auto custom-scrollbar border rounded-xl">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-[9px] uppercase font-bold border-b">
+                                <th class="py-3 px-4">Mês Ref.</th>
+                                <th class="py-3 px-4">Data Lançamento</th>
+                                <th class="py-3 px-4">Valor Ofertado</th>
+                                <th class="py-3 px-4">Observações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-slate-100 text-xs">
+                            <tr>
+                                <td colspan="4" class="text-center py-8 text-slate-400">Selecione uma igreja ou aguarde o carregamento dos dados...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+
+    </main>
+
+    <footer class="py-6 text-center text-slate-400 text-[10px]">
+        &copy; 2026 Região 655 - IEQ Londrina/PR
+    </footer>
+
+    <script type="module">
+        import { auth, db } from './firebase-config.js';
+        import { doc, getDoc, getDocs, collection, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { requireAuth, hasAnyPermission, isAdmin as checkIsAdmin } from './js/auth.js';
+        import { toastSuccess, toastError, toastWarning, toastInfo } from './js/toast.js';
+
+        let authData;
+        let selectedChurch = '';
+        let allChurches = [];
+
+        async function init() {
+            try {
+                authData = await requireAuth();
+                
+                const userEmail = authData.email;
+                const userName = authData.nome;
+                const userIgreja = authData.igrejaNome;
+                const userPerms = authData.permissoes;
+                const isAdmin = checkIsAdmin() || hasAnyPermission(['admin', 'secretario', 'superintendente']);
+
+                // Configurar info do cabeçalho
+                document.getElementById('header-user-info').textContent = `${userName.split(' ')[0]} | ${userIgreja || 'Regional'}`;
+
+                // Se for Administrador, exibir botão do painel master
+                if (isAdmin) {
+                    document.getElementById('admin-master-button-container').classList.remove('hidden');
+                }
+
+                // Carregar testemunhos/relatório da França (comum a todos)
+                await loadTestimony();
+
+                // Lógica de restrição de visualização
+                if (isAdmin) {
+                    document.getElementById('church-selector-container').classList.remove('hidden');
+                    await loadChurchesDropdown(userIgreja);
+                } else {
+                    if (!userIgreja) {
+                        toastWarning('Seu cadastro não está vinculado a uma igreja. Entre em contato com a regional.');
+                        document.getElementById('history-table-body').innerHTML = `
+                            <tr><td colspan="4" class="text-center py-8 text-amber-600 font-semibold uppercase tracking-widest">Sem igreja vinculada</td></tr>
+                        `;
+                        return;
+                    }
+                    selectedChurch = userIgreja;
+                    document.getElementById('church-name-display').textContent = selectedChurch;
+                    await loadChurchData(selectedChurch);
+                }
+
+                // Configurar PIX copy button
+                document.getElementById('btn-copy-pix').addEventListener('click', () => {
+                    navigator.clipboard.writeText('regiao655@pixieq.com.br')
+                        .then(() => toastSuccess('Chave PIX copiada para a área de transferência!'))
+                        .catch(() => toastError('Erro ao copiar chave PIX. Tente selecionar o texto e copiar manualmente.'));
+                });
+
+            } catch (e) {
+                console.error("Erro ao inicializar página:", e);
+                toastError("Erro ao carregar dados de autenticação.");
+            }
+        }
+
+        async function loadTestimony() {
+            try {
+                const docRef = doc(db, "configuracoes", "franca");
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    if (data.testemunho) {
+                        document.getElementById('testimony-text-display').textContent = data.testemunho;
+                    }
+                    if (data.periodoTestemunho) {
+                        document.getElementById('testimony-period-badge').textContent = `Mês: ${data.periodoTestemunho}`;
+                    }
+                    
+                    // Links de Redes Sociais
+                    const setupLink = (elementId, url) => {
+                        const el = document.getElementById(elementId);
+                        if (url && url.trim() !== '') {
+                            el.href = url.startsWith('http') ? url : `https://${url}`;
+                            el.classList.remove('opacity-50', 'pointer-events-none');
+                        } else {
+                            el.href = '#';
+                            el.classList.add('opacity-50', 'pointer-events-none');
+                        }
+                    };
+
+                    setupLink('link-instagram', data.instagram);
+                    setupLink('link-facebook', data.facebook);
+                    setupLink('link-youtube', data.youtube);
+                }
+            } catch (e) {
+                console.error("Erro ao carregar testemunho da França:", e);
+            }
+        }
+
+        async function loadChurchesDropdown(defaultChurch) {
+            try {
+                const querySnapshot = await getDocs(collection(db, "igrejas"));
+                allChurches = [];
+                querySnapshot.forEach(doc => {
+                    allChurches.push(doc.data().nome);
+                });
+                
+                // Ordenar alfabeticamente
+                allChurches.sort((a, b) => a.localeCompare(b));
+
+                const select = document.getElementById('select-igreja-filtro');
+                select.innerHTML = '<option value="">Selecione uma Igreja...</option>';
+                allChurches.forEach(church => {
+                    const selected = church === defaultChurch ? 'selected' : '';
+                    select.innerHTML += `<option value="${church}" ${selected}>${church}</option>`;
+                });
+
+                if (defaultChurch && allChurches.includes(defaultChurch)) {
+                    selectedChurch = defaultChurch;
+                    document.getElementById('church-name-display').textContent = selectedChurch;
+                    await loadChurchData(selectedChurch);
+                }
+
+                select.addEventListener('change', async (e) => {
+                    selectedChurch = e.target.value;
+                    if (selectedChurch) {
+                        document.getElementById('church-name-display').textContent = selectedChurch;
+                        await loadChurchData(selectedChurch);
+                    } else {
+                        document.getElementById('church-name-display').textContent = 'IEQ Local';
+                        document.getElementById('commitment-value-display').textContent = '0,00';
+                        document.getElementById('history-table-body').innerHTML = `
+                            <tr><td colspan="4" class="text-center py-8 text-slate-400">Selecione uma igreja no menu superior.</td></tr>
+                        `;
+                    }
+                });
+
+            } catch (e) {
+                console.error("Erro ao carregar dropdown de igrejas:", e);
+                toastError("Erro ao carregar lista de igrejas.");
+            }
+        }
+
+        async function loadChurchData(churchName) {
+            const historyBody = document.getElementById('history-table-body');
+            historyBody.innerHTML = `
+                <tr><td colspan="4" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline mr-2"></i>Buscando histórico...</td>
+            `;
+            lucide.createIcons();
+
+            try {
+                // 1. Carregar Compromisso
+                const compRef = doc(db, "franca_compromissos", churchName);
+                const compSnap = await getDoc(compRef);
+                if (compSnap.exists()) {
+                    const compVal = parseFloat(compSnap.data().valor || 0);
+                    document.getElementById('commitment-value-display').textContent = compVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                } else {
+                    document.getElementById('commitment-value-display').textContent = '0,00';
+                }
+
+                // 2. Carregar Histórico
+                const q = query(
+                    collection(db, "franca_ofertas"),
+                    where("igreja", "==", churchName),
+                    orderBy("mesReferencia", "desc")
+                );
+                
+                const querySnapshot = await getDocs(q);
+                historyBody.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    historyBody.innerHTML = `
+                        <tr><td colspan="4" class="text-center py-8 text-slate-400">Nenhum lançamento de oferta registrado no histórico para esta igreja.</td></tr>
+                    `;
+                    return;
+                }
+
+                querySnapshot.forEach(d => {
+                    const row = d.data();
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors";
+                    
+                    // Formatar Mês de Referência (YYYY-MM -> MM/YYYY)
+                    const formatMes = (mesRaw) => {
+                        if (!mesRaw) return '—';
+                        const parts = mesRaw.split('-');
+                        if (parts.length === 2) return `${parts[1]}/${parts[0]}`;
+                        return mesRaw;
+                    };
+
+                    // Formatar data de postagem/lançamento
+                    const formatData = (ts) => {
+                        if (!ts) return '—';
+                        const date = ts.toDate();
+                        return date.toLocaleDateString('pt-BR');
+                    };
+
+                    const valStr = parseFloat(row.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                    tr.innerHTML = `
+                        <td class="py-3 px-4 font-bold text-slate-700">${formatMes(row.mesReferencia)}</td>
+                        <td class="py-3 px-4 text-slate-500">${formatData(row.dataLancamento)}</td>
+                        <td class="py-3 px-4 font-black text-emerald-600">R$ ${valStr}</td>
+                        <td class="py-3 px-4 text-slate-400 text-[10px] max-w-xs truncate" title="${row.obs || ''}">${row.obs || '—'}</td>
+                    `;
+                    historyBody.appendChild(tr);
+                });
+
+            } catch (e) {
+                console.error("Erro ao carregar dados da igreja:", e);
+                toastError("Erro ao carregar dados da igreja.");
+                historyBody.innerHTML = `
+                    <tr><td colspan="4" class="text-center py-8 text-red-500 font-bold">Falha ao buscar dados do servidor.</td></tr>
+                `;
+            }
+        }
+
+        // Inicializar a página
+        init();
+    </script>
+</body>
+</html>

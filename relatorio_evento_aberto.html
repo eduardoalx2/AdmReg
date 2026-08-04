@@ -140,6 +140,14 @@
             </div>
         </div>
 
+        <!-- RESUMO DE PARTICIPAÇÃO POR IGREJA -->
+        <div id="section-resumo" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print:mt-6">
+            <div class="px-4 py-3 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center gap-2">
+                <h2 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex-1">Resumo de Participação por Igreja</h2>
+            </div>
+            <div id="resumo-igrejas-conteudo" class="p-4"></div>
+        </div>
+
         <!-- IGREJAS AUSENTES -->
         <div id="section-ausentes" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print:mt-6">
             <div class="px-4 py-3 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center gap-2">
@@ -297,7 +305,88 @@
             });
 
             renderAusentes(filtered);
+            renderResumoIgrejas(filtered, totalPessoas);
         };
+
+        function renderResumoIgrejas(filtered, totalPessoas) {
+            const container = document.getElementById('resumo-igrejas-conteudo');
+            if (!container) return;
+
+            if (!igrejasList.length) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Carregando igrejas...</p>';
+                return;
+            }
+
+            const presenceMap = new Map();
+            filtered.forEach(r => {
+                const key = (r.igrejaNome || '').trim().toLowerCase();
+                presenceMap.set(key, (presenceMap.get(key) || 0) + (parseInt(r.qtdPessoas) || 0));
+            });
+
+            const activeChurches = igrejasList.filter(ig => {
+                const nome = (ig.nome || '').trim();
+                return !nome.toLowerCase().includes('655') && ig.codigo !== '655';
+            });
+
+            activeChurches.sort((a, b) => {
+                const pA = presenceMap.get((a.nome || '').trim().toLowerCase()) || 0;
+                const pB = presenceMap.get((b.nome || '').trim().toLowerCase()) || 0;
+                if (pA !== pB) return pB - pA;
+                return parseInt(a.codigo || 0) - parseInt(b.codigo || 0);
+            });
+
+            let html = `
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50">
+                                <th class="px-4 py-2.5">Código</th>
+                                <th class="px-4 py-2.5">Igreja</th>
+                                <th class="px-4 py-2.5 text-center">Status</th>
+                                <th class="px-4 py-2.5 text-center">Presenças (Pessoas)</th>
+                                <th class="px-4 py-2.5">% do Total do Evento</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-xs font-semibold text-slate-700">
+            `;
+
+            activeChurches.forEach((ig, idx) => {
+                const key = (ig.nome || '').trim().toLowerCase();
+                const count = presenceMap.get(key) || 0;
+                const isPresent = count > 0;
+                
+                const statusBadge = isPresent 
+                    ? `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">🟢 Presente</span>`
+                    : `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-0.5 rounded-full">🔴 Ausente</span>`;
+                
+                const pct = totalPessoas > 0 ? ((count / totalPessoas) * 100).toFixed(1) : '0.0';
+                const barColor = isPresent ? 'bg-rose-500' : 'bg-slate-200';
+
+                html += `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 text-[10px] text-slate-400 font-bold w-16">${String(ig.codigo || '').padStart(4,'0')}</td>
+                        <td class="px-4 py-3">${ig.nome}</td>
+                        <td class="px-4 py-3 text-center">${statusBadge}</td>
+                        <td class="px-4 py-3 text-center font-bold ${isPresent ? 'text-rose-600' : 'text-slate-400'}" style="font-size: 13px">${count}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-24 bg-slate-100 h-2 rounded-full overflow-hidden hidden sm:block">
+                                    <div class="${barColor} h-full" style="width: ${pct}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-600 min-w-[36px] text-right">${pct}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
 
         function renderAusentes(filtered) {
             const conteudo = document.getElementById('ausentes-conteudo');
