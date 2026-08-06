@@ -647,6 +647,7 @@
             const desc = document.getElementById('edit-descricao').value.trim();
             const resp = document.getElementById('edit-resposta').value.trim();
             const cienteVal = document.getElementById('edit-ciente').checked;
+            const secVal = document.getElementById('edit-sec').checked;
 
             const original = pendenciasList.find(p => p.id === id);
             if (!original) return;
