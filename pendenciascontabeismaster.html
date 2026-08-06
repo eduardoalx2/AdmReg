@@ -302,7 +302,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Comprovante de Pendência - \${p.igreja}</title>
+    <title>Comprovante de Pendência - ${p.igreja}</title>
     <meta charset="utf-8">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -386,41 +386,41 @@
 </head>
 <body>
     <div class="header">
-        <h1 class="church-title">\${p.igreja}</h1>
+        <h1 class="church-title">${p.igreja}</h1>
         <p class="doc-subtitle">Comprovante de Pendência Contábil</p>
     </div>
     
     <div class="card">
         <div class="field">
             <span class="label">Competência</span>
-            <span class="value">\${formatMes(p.competencia)}</span>
+            <span class="value">${formatMes(p.competencia)}</span>
         </div>
         <div class="field">
             <span class="label">Apontamento</span>
-            <span class="value">\${p.descricao}</span>
+            <span class="value">${p.descricao}</span>
         </div>
         <div class="field">
             <span class="label">Valor</span>
-            <span class="value">\${valStr}</span>
+            <span class="value">${valStr}</span>
         </div>
         <div class="field">
             <span class="label">Quantidade</span>
-            <span class="value">\${qtdStr}</span>
+            <span class="value">${qtdStr}</span>
         </div>
         <div class="field">
             <span class="label">Status</span>
-            <span class="value" style="color: \${statusColor}">\${p.status}</span>
+            <span class="value" style="color: ${statusColor}">${p.status}</span>
         </div>
-        \${p.resposta ? `
+        ${p.resposta ? `
         <div class="field" style="margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
             <span class="label" style="background: #eff6ff; color: #1d4ed8;">Resposta</span>
-            <span class="value" style="color: #475569; font-style: italic;">\${p.resposta}</span>
+            <span class="value" style="color: #475569; font-style: italic;">${p.resposta}</span>
         </div>
         ` : ''}
     </div>
 
     <div class="meta-section">
-        <span>Gerado em: \${new Date().toLocaleString('pt-BR')}</span>
+        <span>Gerado em: ${new Date().toLocaleString('pt-BR')}</span>
         <span>Região 655 - Portal AdmReg</span>
     </div>
 
