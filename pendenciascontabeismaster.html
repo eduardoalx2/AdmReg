@@ -173,26 +173,9 @@
                     </div>
                 </div>
 
-                <div class="overflow-x-auto custom-scrollbar border rounded-xl">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 text-slate-500 text-[9px] uppercase font-bold border-b">
-                                <th class="py-3 px-4 w-36 hidden" id="th-igreja">Igreja</th>
-                                <th class="py-3 px-4 w-24">Competência</th>
-                                <th class="py-3 px-4">Descrição da Pendência</th>
-                                <th class="py-3 px-4 w-28">Valor</th>
-                                <th class="py-3 px-4 w-20 text-center">Qtd.</th>
-                                <th class="py-3 px-4 w-32 text-center">Status</th>
-                                <th class="py-3 px-4 w-36 text-center">Ciente</th>
-                                <th class="py-3 px-4 text-center w-20">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-pendencias-body" class="divide-y divide-slate-100 text-xs">
-                            <tr>
-                                <td colspan="7" class="text-center py-8 text-slate-400">Carregando pendências...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- LIST CONTAINER PARA CARDS -->
+                <div id="lista-pendencias" class="space-y-4">
+                    <div class="text-center py-8 text-slate-400 bg-white rounded-2xl border">Carregando pendências...</div>
                 </div>
             </div>
 
@@ -376,9 +359,9 @@
         async function carregarPendencias() {
             if (!selectedChurch) return;
 
-            const tbody = document.getElementById('tabela-pendencias-body');
-            tbody.innerHTML = `
-                <tr><td colspan="7" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline mr-2"></i>Carregando pendências...</td></tr>
+            const container = document.getElementById('lista-pendencias');
+            container.innerHTML = `
+                <div class="text-center py-8 text-slate-400 bg-white rounded-2xl border"><i data-lucide="loader-2" class="w-5 h-5 animate-spin inline mr-2"></i>Carregando pendências...</div>
             `;
             if (window.lucide) window.lucide.createIcons();
 
@@ -441,16 +424,8 @@
         }
 
         function renderizarTabela() {
-            const tbody = document.getElementById('tabela-pendencias-body');
-            tbody.innerHTML = '';
-
-            // Mostrar/ocultar coluna Igreja no header
-            const thIgreja = document.getElementById('th-igreja');
-            if (selectedChurch === 'Todos') {
-                thIgreja.classList.remove('hidden');
-            } else {
-                thIgreja.classList.add('hidden');
-            }
+            const container = document.getElementById('lista-pendencias');
+            container.innerHTML = '';
 
             const statusFiltro = document.getElementById('filtro-status').value;
             let filtrados = pendenciasList;
@@ -460,14 +435,13 @@
             }
 
             if (filtrados.length === 0) {
-                const colSpan = selectedChurch === 'Todos' ? 8 : 7;
-                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-8 text-slate-400">Nenhuma pendência contábil registrada com o filtro selecionado.</td></tr>`;
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 bg-white rounded-2xl border">Nenhuma pendência contábil registrada com o filtro selecionado.</div>`;
                 return;
             }
 
             filtrados.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors group";
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative flex flex-col justify-between";
 
                 // Formatar competência
                 const formatMes = (raw) => {
@@ -477,17 +451,17 @@
                     return raw;
                 };
 
-                const valStr = p.valor ? parseFloat(p.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—';
-                const qtdStr = p.quantidade || '—';
+                const valStr = parseFloat(p.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                const qtdStr = p.quantidade || 1;
 
                 // Status Badge
                 let statusBadge = '';
                 if (p.status === 'Resolvido') {
-                    statusBadge = '<span class="inline-block bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">Resolvido</span>';
+                    statusBadge = '<span class="inline-block bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">Resolvido</span>';
                 } else if (p.status === 'Aguardando') {
-                    statusBadge = '<span class="inline-block bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider animate-pulse">Aguardando</span>';
+                    statusBadge = '<span class="inline-block bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider animate-pulse">Aguardando</span>';
                 } else {
-                    statusBadge = '<span class="inline-block bg-red-100 text-red-700 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">Pendente</span>';
+                    statusBadge = '<span class="inline-block bg-red-100 text-red-700 px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">Pendente</span>';
                 }
 
                 // Sec Badge
@@ -502,29 +476,57 @@
                     cienteBadge = '<span class="text-slate-400 font-bold flex items-center justify-center gap-1 text-[10px]"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Não visto</span>';
                 }
 
-                tr.innerHTML = `
-                    ${selectedChurch === 'Todos' ? `<td class="py-3 px-4 font-extrabold text-blue-600 uppercase text-[9px] truncate max-w-[120px]" title="${p.igreja || ''}">${p.igreja ? p.igreja.split(' - ').pop() : '—'}</td>` : ''}
-                    <td class="py-3 px-4 font-bold text-slate-700">${formatMes(p.competencia)}</td>
-                    <td class="py-3 px-4 text-slate-700">
-                        <div class="font-semibold leading-relaxed max-w-sm sm:max-w-md md:max-w-lg break-words whitespace-pre-wrap">${p.descricao}</div>
-                        ${p.resposta ? `<div class="mt-1.5 p-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] text-slate-600 font-medium leading-relaxed"><strong class="text-blue-600 uppercase text-[8px] block mb-0.5">Resposta do Pastor</strong>${p.resposta}</div>` : ''}
-                    </td>
-                    <td class="py-3 px-4 font-bold text-slate-700">${valStr}</td>
-                    <td class="py-3 px-4 text-center font-bold text-slate-600">${qtdStr}</td>
-                    <td class="py-3 px-4 text-center">${statusBadge} ${secBadge}</td>
-                    <td class="py-3 px-4 text-center">${cienteBadge}</td>
-                    <td class="py-3 px-4 text-center">
-                        <div class="flex items-center justify-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                            <button onclick="window.editarPendencia('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors" title="Editar">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="window.excluirPendencia('${p.id}')" class="text-red-400 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors" title="Excluir">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
+                card.innerHTML = `
+                    <!-- CABEÇALHO DO CARD -->
+                    <div class="flex justify-between items-center gap-3 border-b pb-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            ${selectedChurch === 'Todos' ? `<span class="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider truncate max-w-[150px] inline-block" title="${p.igreja || ''}">${p.igreja ? p.igreja.split(' - ').pop() : '—'}</span>` : ''}
+                            ${statusBadge}
+                            ${secBadge}
                         </div>
-                    </td>
+                        <div class="flex items-center gap-3">
+                            ${cienteBadge}
+                            <!-- Ações -->
+                            <div class="flex gap-1">
+                                <button onclick="window.editarPendencia('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors" title="Editar">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="window.excluirPendencia('${p.id}')" class="text-red-400 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors" title="Excluir">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DISPOSIÇÃO VERTICAL (EXATAMENTE COMO NA FOTO) -->
+                    <div class="space-y-1.5 text-xs">
+                        <div class="flex items-start gap-2">
+                            <span class="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold w-24 text-left shrink-0">Competência</span>
+                            <span class="text-slate-800 font-semibold">${formatMes(p.competencia)}</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold w-24 text-left shrink-0">Apontamento</span>
+                            <span class="text-slate-800 leading-relaxed font-semibold break-words whitespace-pre-wrap">${p.descricao}</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold w-24 text-left shrink-0">Valor</span>
+                            <span class="text-slate-800 font-semibold">${valStr}</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold w-24 text-left shrink-0">Quantidade</span>
+                            <span class="text-slate-800 font-semibold">${qtdStr}</span>
+                        </div>
+                    </div>
+
+                    <!-- RESPOSTA DO PASTOR -->
+                    ${p.resposta ? `
+                        <div class="mt-4 p-3 bg-slate-50 border border-slate-150 rounded-xl text-xs text-slate-600 font-medium leading-relaxed">
+                            <strong class="text-blue-600 uppercase text-[9px] block mb-1">Resposta do Pastor</strong>
+                            ${p.resposta}
+                        </div>
+                    ` : ''}
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(card);
             });
             if (window.lucide) window.lucide.createIcons();
         }

@@ -323,8 +323,8 @@
                     return raw;
                 };
 
-                const valStr = p.valor ? parseFloat(p.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
-                const qtdStr = p.quantidade && p.quantidade > 1 ? `• Qtd: ${p.quantidade}` : '';
+                const valStr = parseFloat(p.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                const qtdStr = p.quantidade || 1;
 
                 // Badges
                 let statusBadge = '';
@@ -355,19 +355,30 @@
                 card.innerHTML = `
                     <!-- CABEÇALHO DO CARD -->
                     <div class="flex justify-between items-start gap-4 border-b pb-3 mb-3">
-                        <div>
-                            <span class="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider">Ref: ${formatMes(p.competencia)}</span>
-                            ${valStr ? `<span class="ml-2 font-bold text-slate-900 text-xs">${valStr} ${qtdStr}</span>` : ''}
-                        </div>
                         <div class="flex items-center gap-2">
                             ${requerCiente ? '<span class="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider animate-bounce">Ação Requerida</span>' : ''}
                             ${statusBadge}
                         </div>
                     </div>
 
-                    <!-- DESCRIÇÃO DA PENDÊNCIA -->
-                    <div class="text-xs text-slate-700 font-semibold leading-relaxed whitespace-pre-wrap mb-4 break-words">
-                        ${p.descricao}
+                    <!-- DISPOSIÇÃO DOS DADOS VERTICAL -->
+                    <div class="space-y-1.5 text-xs mb-4">
+                        <div class="flex items-start gap-2">
+                            <span class="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold w-24 text-left shrink-0">Competência</span>
+                            <span class="text-slate-800 font-semibold">${formatMes(p.competencia)}</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold w-24 text-left shrink-0">Apontamento</span>
+                            <span class="text-slate-800 leading-relaxed font-semibold break-words whitespace-pre-wrap">${p.descricao}</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold w-24 text-left shrink-0">Valor</span>
+                            <span class="text-slate-800 font-semibold">${valStr}</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold w-24 text-left shrink-0">Quantidade</span>
+                            <span class="text-slate-800 font-semibold">${qtdStr}</span>
+                        </div>
                     </div>
 
                     <!-- TICKET DE CIENTE / AÇÃO DO PASTOR -->
