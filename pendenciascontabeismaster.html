@@ -101,7 +101,7 @@
             </div>
 
             <!-- FORMULÁRIO DE CADASTRO -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div id="card-lancar-pendencia" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                 <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 border-b pb-3 mb-4">
                     <i data-lucide="plus-circle" class="w-4 h-4 text-blue-600"></i> Registrar Nova Pendência Contábil
                 </h2>
@@ -139,6 +139,13 @@
                 </form>
             </div>
 
+            <!-- AVISO CADASTRO BLOQUEADO (SELECIONADO TODOS) -->
+            <div id="card-lancar-bloqueado" class="hidden bg-slate-100/80 border border-slate-200 p-6 rounded-2xl text-center shadow-sm">
+                <i data-lucide="info" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+                <p class="text-xs font-bold text-slate-600 uppercase tracking-widest">Cadastro Suspenso na Visão Geral</p>
+                <p class="text-[10px] text-slate-500 mt-1">Para cadastrar uma nova pendência contábil, selecione uma igreja específica no painel superior.</p>
+            </div>
+
             <!-- LISTAGEM DE PENDÊNCIAS -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-3 mb-4">
@@ -162,6 +169,7 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 text-slate-500 text-[9px] uppercase font-bold border-b">
+                                <th class="py-3 px-4 w-36 hidden" id="th-igreja">Igreja</th>
                                 <th class="py-3 px-4 w-24">Competência</th>
                                 <th class="py-3 px-4">Descrição da Pendência</th>
                                 <th class="py-3 px-4 w-28">Valor</th>
@@ -311,7 +319,10 @@
                 igrejasList.sort((a, b) => a.localeCompare(b));
 
                 const select = document.getElementById('select-igreja');
-                select.innerHTML = '<option value="">Selecione uma Igreja...</option>';
+                select.innerHTML = `
+                    <option value="">Selecione uma Igreja...</option>
+                    <option value="Todos">Todas as Igrejas (Visão Geral)</option>
+                `;
                 igrejasList.forEach(church => {
                     select.innerHTML += `<option value="${church}">${church}</option>`;
                 });
@@ -324,6 +335,17 @@
                     if (selectedChurch) {
                         content.classList.remove('hidden');
                         msg.classList.add('hidden');
+
+                        const cardLancar = document.getElementById('card-lancar-pendencia');
+                        const cardBloqueado = document.getElementById('card-lancar-bloqueado');
+                        if (selectedChurch === 'Todos') {
+                            cardLancar.classList.add('hidden');
+                            cardBloqueado.classList.remove('hidden');
+                        } else {
+                            cardLancar.classList.remove('hidden');
+                            cardBloqueado.classList.add('hidden');
+                        }
+
                         carregarPendencias();
                     } else {
                         content.classList.add('hidden');
@@ -347,10 +369,15 @@
             if (window.lucide) window.lucide.createIcons();
 
             try {
-                const q = query(
-                    collection(db, "pendencias_contabeis"),
-                    where("igreja", "==", selectedChurch)
-                );
+                let q;
+                if (selectedChurch === 'Todos') {
+                    q = collection(db, "pendencias_contabeis");
+                } else {
+                    q = query(
+                        collection(db, "pendencias_contabeis"),
+                        where("igreja", "==", selectedChurch)
+                    );
+                }
                 
                 const snap = await getDocs(q);
                 pendenciasList = [];
@@ -398,6 +425,14 @@
             const tbody = document.getElementById('tabela-pendencias-body');
             tbody.innerHTML = '';
 
+            // Mostrar/ocultar coluna Igreja no header
+            const thIgreja = document.getElementById('th-igreja');
+            if (selectedChurch === 'Todos') {
+                thIgreja.classList.remove('hidden');
+            } else {
+                thIgreja.classList.add('hidden');
+            }
+
             const statusFiltro = document.getElementById('filtro-status').value;
             let filtrados = pendenciasList;
 
@@ -406,7 +441,8 @@
             }
 
             if (filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Nenhuma pendência contábil registrada para esta igreja com o filtro selecionado.</td></tr>';
+                const colSpan = selectedChurch === 'Todos' ? 8 : 7;
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-8 text-slate-400">Nenhuma pendência contábil registrada com o filtro selecionado.</td></tr>`;
                 return;
             }
 
@@ -445,6 +481,7 @@
                 }
 
                 tr.innerHTML = `
+                    ${selectedChurch === 'Todos' ? `<td class="py-3 px-4 font-extrabold text-blue-600 uppercase text-[9px] truncate max-w-[120px]" title="${p.igreja || ''}">${p.igreja ? p.igreja.split(' - ').pop() : '—'}</td>` : ''}
                     <td class="py-3 px-4 font-bold text-slate-700">${formatMes(p.competencia)}</td>
                     <td class="py-3 px-4 text-slate-700">
                         <div class="font-semibold leading-relaxed max-w-sm sm:max-w-md md:max-w-lg break-words whitespace-pre-wrap">${p.descricao}</div>
