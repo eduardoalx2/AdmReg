@@ -135,7 +135,11 @@
                         <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Descrição Detalhada do Item Pendente</label>
                         <textarea id="lancar-descricao" required rows="2" placeholder="Descreva o que está faltando ou precisa ser corrigido na contabilidade..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-medium leading-relaxed"></textarea>
                     </div>
-                    <div class="sm:col-span-2 md:col-span-4 flex justify-end">
+                    <div class="sm:col-span-2 md:col-span-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
+                        <div class="flex items-center gap-2 select-none">
+                            <input type="checkbox" id="lancar-sec" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300">
+                            <label for="lancar-sec" class="text-xs font-bold text-slate-600 uppercase">Somente Secretaria (sec) — Ocultar do Pastor</label>
+                        </div>
                         <button type="submit" id="btn-cadastrar" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-5 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 uppercase shadow-sm">
                             <i data-lucide="check-circle" class="w-4 h-4"></i> Adicionar Pendência
                         </button>
@@ -244,10 +248,16 @@
                     <textarea id="edit-resposta" rows="3" placeholder="Insira ou altere notas sobre a resolução da pendência..." class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs font-medium leading-relaxed"></textarea>
                 </div>
 
-                <!-- CONTROLE CIENTE MANUAL (Caso precise redefinir ou forçar ciente) -->
-                <div class="flex items-center gap-2 border-t pt-3">
-                    <input type="checkbox" id="edit-ciente" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300">
-                    <label for="edit-ciente" class="text-xs font-bold text-slate-600 uppercase select-none">Marcar manualmente como "Ciente"</label>
+                <!-- CONTROLES ADICIONAIS -->
+                <div class="flex flex-col sm:flex-row gap-4 border-t pt-3">
+                    <div class="flex items-center gap-2 select-none">
+                        <input type="checkbox" id="edit-ciente" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300">
+                        <label for="edit-ciente" class="text-xs font-bold text-slate-600 uppercase">Marcar como "Ciente"</label>
+                    </div>
+                    <div class="flex items-center gap-2 select-none">
+                        <input type="checkbox" id="edit-sec" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300">
+                        <label for="edit-sec" class="text-xs font-bold text-slate-600 uppercase">Somente Secretaria (sec)</label>
+                    </div>
                 </div>
 
                 <div class="pt-3 border-t flex gap-3">
@@ -480,6 +490,9 @@
                     statusBadge = '<span class="inline-block bg-red-100 text-red-700 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">Pendente</span>';
                 }
 
+                // Sec Badge
+                let secBadge = p.sec ? '<span class="inline-block bg-slate-200 border border-slate-300 text-slate-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ml-1">sec</span>' : '';
+
                 // Ciente Badge
                 let cienteBadge = '';
                 if (p.ciente) {
@@ -498,7 +511,7 @@
                     </td>
                     <td class="py-3 px-4 font-bold text-slate-700">${valStr}</td>
                     <td class="py-3 px-4 text-center font-bold text-slate-600">${qtdStr}</td>
-                    <td class="py-3 px-4 text-center">${statusBadge}</td>
+                    <td class="py-3 px-4 text-center">${statusBadge} ${secBadge}</td>
                     <td class="py-3 px-4 text-center">${cienteBadge}</td>
                     <td class="py-3 px-4 text-center">
                         <div class="flex items-center justify-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
@@ -536,6 +549,7 @@
             if (window.lucide) window.lucide.createIcons();
 
             try {
+                const secVal = document.getElementById('lancar-sec').checked;
                 await addDoc(collection(db, "pendencias_contabeis"), {
                     igreja: selectedChurch,
                     competencia: comp,
@@ -549,6 +563,7 @@
                     resposta: '',
                     respostaEm: null,
                     respostaPor: null,
+                    sec: secVal,
                     criadoEm: serverTimestamp(),
                     criadoPor: authData.email
                 });
@@ -559,6 +574,7 @@
                 document.getElementById('lancar-valor').value = '';
                 document.getElementById('lancar-qtd').value = '';
                 document.getElementById('lancar-descricao').value = '';
+                document.getElementById('lancar-sec').checked = false;
 
                 await carregarPendencias();
 
@@ -597,6 +613,7 @@
             document.getElementById('edit-descricao').value = item.descricao || '';
             document.getElementById('edit-resposta').value = item.resposta || '';
             document.getElementById('edit-ciente').checked = item.ciente || false;
+            document.getElementById('edit-sec').checked = item.sec || false;
 
             const resInfo = document.getElementById('edit-resposta-info');
             if (item.resposta && item.respostaPor) {
@@ -643,7 +660,8 @@
                     status: status,
                     descricao: desc,
                     resposta: resp,
-                    ciente: cienteVal
+                    ciente: cienteVal,
+                    sec: secVal
                 };
 
                 // Tratar auditoria de ciente se mudou manualmente

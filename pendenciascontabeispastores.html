@@ -243,7 +243,10 @@
                 pendenciasList = [];
 
                 snap.forEach(d => {
-                    pendenciasList.push({ id: d.id, ...d.data() });
+                    const data = d.data();
+                    if (!data.sec) {
+                        pendenciasList.push({ id: d.id, ...data });
+                    }
                 });
 
                 // Ordenar em memória (Mês Competência Decrescente -> Data Criação Decrescente)
