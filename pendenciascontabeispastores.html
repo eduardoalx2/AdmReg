@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Pendências Contábeis — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .alert-pulse {
+            animation: borderPulse 2s infinite alternate;
+        }
+        @keyframes borderPulse {
+            0% { border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 4px rgba(239, 68, 68, 0.1); }
+            100% { border-color: rgba(239, 68, 68, 1); box-shadow: 0 0 12px rgba(239, 68, 68, 0.35); }
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-10">
+
+    <!-- CABEÇALHO COMPACTO -->
+    <header class="w-full shadow-sm bg-white border-b">
+        <div class="max-w-4xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <div class="flex items-center gap-4">
+                    <span id="header-user-info" class="text-[10px] font-bold text-slate-600 uppercase">Carregando...</span>
+                    <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel Principal
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="header-gradient py-4 px-4 text-white">
+            <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-base md:text-lg font-black tracking-wide uppercase flex items-center gap-2">
+                        <i data-lucide="alert-octagon" class="w-5 h-5 text-blue-400"></i> Minhas Pendências Contábeis
+                    </h1>
+                    <p class="text-[10px] md:text-xs text-slate-400 uppercase font-medium mt-1">
+                        Consulte as pendências fiscais e contábeis de sua igreja local, confirme a leitura e envie justificativas
+                    </p>
+                </div>
+                <div id="admin-master-button-container" class="hidden">
+                    <a href="pendenciascontabeismaster.html" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors uppercase shadow-sm border border-blue-500">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Painel Master
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- IGREJA SELECTOR (Visível para Admins) -->
+        <div id="church-selector-container" class="hidden bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="eye" class="w-4 h-4 text-blue-600"></i> Visualizar como Administrador
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Selecione uma igreja para conferir e testar as ações das pendências</p>
+                </div>
+                <div class="w-full sm:w-72">
+                    <select id="select-igreja-filtro" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold">
+                        <option value="">Carregando igrejas...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- INDICADORES RESUMIDOS -->
+        <div class="grid grid-cols-3 gap-3">
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center">
+                <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest block">Total Pendências</span>
+                <span id="stat-total" class="text-lg font-black text-slate-800 mt-0.5 block">0</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center">
+                <span class="text-[8px] font-bold text-red-500 uppercase tracking-widest block">Requer Ação (Pendente)</span>
+                <span id="stat-pendentes" class="text-lg font-black text-red-600 mt-0.5 block">0</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center">
+                <span class="text-[8px] font-bold text-emerald-500 uppercase tracking-widest block">Resolvidas</span>
+                <span id="stat-resolvidas" class="text-lg font-black text-emerald-600 mt-0.5 block">0</span>
+            </div>
+        </div>
+
+        <!-- LISTA DE PENDÊNCIAS CARDS -->
+        <div class="space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b">
+                <h2 id="igreja-titulo" class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                    IEQ Local
+                </h2>
+                <div class="flex gap-2">
+                    <select id="filtro-status" class="p-1 px-2.5 bg-white border border-slate-200 rounded-lg text-[9px] font-bold uppercase tracking-wider text-slate-600 focus:outline-none">
+                        <option value="Todos">Todas as Pendências</option>
+                        <option value="Acao">Falta Ler / Responder</option>
+                        <option value="Resolvido">Resolvidas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- CONTAINER DOS CARDS -->
+            <div id="cards-container" class="space-y-4">
+                <div class="bg-white p-8 rounded-2xl border text-center text-slate-400">
+                    Carregando registros contábeis...
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="py-6 text-center text-slate-400 text-[10px]">
+        &copy; 2026 Região 655 - IEQ Londrina/PR
+    </footer>
+
+    <script type="module">
+        import { auth, db } from './firebase-config.js';
+        import { doc, getDoc, getDocs, collection, query, where, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { requireAuth, hasAnyPermission, isAdmin as checkIsAdmin } from './js/auth.js';
+        import { toastSuccess, toastError, toastWarning } from './js/toast.js';
+
+        let authData;
+        let selectedChurch = '';
+        let allChurches = [];
+        let pendenciasList = [];
+
+        async function init() {
+            try {
+                authData = await requireAuth();
+                
+                const userEmail = authData.email;
+                const userName = authData.nome;
+                const userIgreja = authData.igrejaNome;
+                const isAdmin = checkIsAdmin() || hasAnyPermission(['admin', 'secretario', 'superintendente']);
+
+                // Configurar info do cabeçalho
+                document.getElementById('header-user-info').textContent = `${userName.split(' ')[0]} | ${userIgreja || 'Regional'}`;
+
+                // Se for Administrador, exibir seletor e botão master
+                if (isAdmin) {
+                    document.getElementById('admin-master-button-container').classList.remove('hidden');
+                    document.getElementById('church-selector-container').classList.remove('hidden');
+                    await loadChurchesDropdown(userIgreja);
+                } else {
+                    if (!userIgreja) {
+                        toastWarning('Seu cadastro não está vinculado a uma igreja. Entre em contato com a regional.');
+                        document.getElementById('cards-container').innerHTML = `
+                            <div class="bg-white p-8 rounded-2xl border text-center text-amber-600 font-semibold uppercase tracking-widest text-xs">Sem igreja vinculada</div>
+                        `;
+                        return;
+                    }
+                    selectedChurch = userIgreja;
+                    document.getElementById('igreja-titulo').textContent = selectedChurch.toUpperCase();
+                    await loadChurchData(selectedChurch);
+                }
+
+                document.getElementById('filtro-status').addEventListener('change', renderizarCards);
+
+            } catch (e) {
+                console.error("Erro ao inicializar:", e);
+                toastError("Erro ao carregar dados de autenticação.");
+            }
+        }
+
+        async function loadChurchesDropdown(defaultChurch) {
+            try {
+                const querySnapshot = await getDocs(collection(db, "igrejas"));
+                allChurches = [];
+                querySnapshot.forEach(doc => {
+                    allChurches.push(doc.data().nome);
+                });
+                allChurches.sort((a, b) => a.localeCompare(b));
+
+                const select = document.getElementById('select-igreja-filtro');
+                select.innerHTML = '<option value="">Selecione uma Igreja Local...</option>';
+                allChurches.forEach(church => {
+                    const selected = church === defaultChurch ? 'selected' : '';
+                    select.innerHTML += `<option value="${church}" ${selected}>${church}</option>`;
+                });
+
+                if (defaultChurch && allChurches.includes(defaultChurch)) {
+                    selectedChurch = defaultChurch;
+                    document.getElementById('igreja-titulo').textContent = selectedChurch.toUpperCase();
+                    await loadChurchData(selectedChurch);
+                }
+
+                select.addEventListener('change', async (e) => {
+                    selectedChurch = e.target.value;
+                    if (selectedChurch) {
+                        document.getElementById('igreja-titulo').textContent = selectedChurch.toUpperCase();
+                        await loadChurchData(selectedChurch);
+                    } else {
+                        document.getElementById('igreja-titulo').textContent = 'IEQ Local';
+                        document.getElementById('cards-container').innerHTML = `
+                            <div class="bg-white p-8 rounded-2xl border text-center text-slate-400">Selecione uma igreja local no menu superior.</div>
+                        `;
+                        document.getElementById('stat-total').textContent = '0';
+                        document.getElementById('stat-pendentes').textContent = '0';
+                        document.getElementById('stat-resolvidas').textContent = '0';
+                    }
+                });
+
+            } catch (e) {
+                console.error("Erro ao carregar dropdown:", e);
+                toastError("Erro ao carregar lista de igrejas.");
+            }
+        }
+
+        async function loadChurchData(churchName) {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = `
+                <div class="bg-white p-8 rounded-2xl border text-center text-slate-400 flex items-center justify-center gap-2">
+                    <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i> Buscando pendências...
+                </div>
+            `;
+            if (window.lucide) window.lucide.createIcons();
+
+            try {
+                const q = query(
+                    collection(db, "pendencias_contabeis"),
+                    where("igreja", "==", churchName)
+                );
+                
+                const snap = await getDocs(q);
+                pendenciasList = [];
+
+                snap.forEach(d => {
+                    pendenciasList.push({ id: d.id, ...d.data() });
+                });
+
+                // Ordenar em memória (Mês Competência Decrescente -> Data Criação Decrescente)
+                pendenciasList.sort((a, b) => {
+                    const compA = a.competencia || '';
+                    const compB = b.competencia || '';
+                    if (compA !== compB) return compB.localeCompare(compA);
+                    
+                    const tA = a.criadoEm ? a.criadoEm.toDate().getTime() : 0;
+                    const tB = b.criadoEm ? b.criadoEm.toDate().getTime() : 0;
+                    return tB - tA;
+                });
+
+                renderizarCards();
+
+            } catch (e) {
+                console.error("Erro ao buscar dados da igreja:", e);
+                toastError("Erro ao carregar dados do servidor.");
+                container.innerHTML = `
+                    <div class="bg-white p-8 rounded-2xl border text-center text-red-500 font-bold">Falha ao buscar dados de pendências.</div>
+                `;
+            }
+        }
+
+        function renderizarCards() {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+
+            const statusFiltro = document.getElementById('filtro-status').value;
+            let filtrados = pendenciasList;
+
+            // Filtro dinâmico
+            if (statusFiltro === 'Acao') {
+                // Filtra o que requer leitura do pastor OU o que está como pendente simples
+                filtrados = filtrados.filter(p => p.status !== 'Resolvido' && (!p.ciente || !p.resposta));
+            } else if (statusFiltro === 'Resolvido') {
+                filtrados = filtrados.filter(p => p.status === 'Resolvido');
+            }
+
+            // Atualizar Indicadores
+            document.getElementById('stat-total').textContent = pendenciasList.length;
+            document.getElementById('stat-pendentes').textContent = pendenciasList.filter(p => p.status !== 'Resolvido' && (!p.ciente || p.status === 'Pendente')).length;
+            document.getElementById('stat-resolvidas').textContent = pendenciasList.filter(p => p.status === 'Resolvido').length;
+
+            if (filtrados.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white p-8 rounded-2xl border text-center text-slate-400">Nenhuma pendência contábil para os filtros aplicados. Tudo certo!</div>
+                `;
+                return;
+            }
+
+            filtrados.forEach(p => {
+                const card = document.createElement('div');
+                
+                // Tratar Destaque Visual (Se não ciente e não resolvido, piscar alerta)
+                const requerCiente = !p.ciente && p.status !== 'Resolvido';
+                const cardClass = requerCiente
+                    ? 'bg-white rounded-2xl p-5 border-2 shadow-md relative overflow-hidden flex flex-col justify-between alert-pulse'
+                    : 'bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between';
+                
+                card.className = cardClass;
+
+                // Formatar competência
+                const formatMes = (raw) => {
+                    if (!raw) return '—';
+                    const parts = raw.split('-');
+                    if (parts.length === 2) return `${parts[1]}/${parts[0]}`;
+                    return raw;
+                };
+
+                const valStr = p.valor ? parseFloat(p.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
+                const qtdStr = p.quantidade && p.quantidade > 1 ? `• Qtd: ${p.quantidade}` : '';
+
+                // Badges
+                let statusBadge = '';
+                if (p.status === 'Resolvido') {
+                    statusBadge = '<span class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 rounded text-[8.5px] font-black uppercase tracking-wider">Resolvido</span>';
+                } else if (p.status === 'Aguardando') {
+                    statusBadge = '<span class="bg-amber-50 border border-amber-200 text-amber-700 px-2 py-0.5 rounded text-[8.5px] font-black uppercase tracking-wider animate-pulse">Aguardando Avaliação</span>';
+                } else {
+                    statusBadge = '<span class="bg-red-50 border border-red-200 text-red-700 px-2 py-0.5 rounded text-[8.5px] font-black uppercase tracking-wider">Pendente</span>';
+                }
+
+                // Ciente info
+                let cienteBadge = '';
+                if (p.ciente) {
+                    const dataCiente = p.cienteEm ? p.cienteEm.toDate().toLocaleDateString('pt-BR') : '';
+                    cienteBadge = `<span class="text-emerald-600 font-bold flex items-center gap-1 text-[10px]" title="Visualizado por ${p.cientePor || ''}"><i data-lucide="check" class="w-3.5 h-3.5"></i> Ciente em ${dataCiente}</span>`;
+                } else {
+                    cienteBadge = `
+                        <button onclick="window.marcarCiente('${p.id}')" class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 uppercase shadow-sm">
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i> Confirmar Leitura (Marcar Ciente)
+                        </button>
+                    `;
+                }
+
+                // Desabilitar edição de resposta se já resolvido
+                const isResolvido = p.status === 'Resolvido';
+
+                card.innerHTML = `
+                    <!-- CABEÇALHO DO CARD -->
+                    <div class="flex justify-between items-start gap-4 border-b pb-3 mb-3">
+                        <div>
+                            <span class="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider">Ref: ${formatMes(p.competencia)}</span>
+                            ${valStr ? `<span class="ml-2 font-bold text-slate-900 text-xs">${valStr} ${qtdStr}</span>` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${requerCiente ? '<span class="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider animate-bounce">Ação Requerida</span>' : ''}
+                            ${statusBadge}
+                        </div>
+                    </div>
+
+                    <!-- DESCRIÇÃO DA PENDÊNCIA -->
+                    <div class="text-xs text-slate-700 font-semibold leading-relaxed whitespace-pre-wrap mb-4 break-words">
+                        ${p.descricao}
+                    </div>
+
+                    <!-- TICKET DE CIENTE / AÇÃO DO PASTOR -->
+                    <div class="bg-slate-50 border border-slate-100 p-3.5 rounded-xl space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400"></i> Leitura e Ciência
+                            </div>
+                            <div id="ciente-container-${p.id}">
+                                ${cienteBadge}
+                            </div>
+                        </div>
+
+                        <!-- RESPOSTA / JUSTIFICATIVA -->
+                        <div class="border-t border-slate-200/60 pt-3">
+                            <label class="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Escrever Justificativa / Resposta ao Secretário</label>
+                            <div class="flex flex-col sm:flex-row items-stretch gap-2">
+                                <textarea id="resposta-${p.id}" rows="1" ${isResolvido ? 'disabled' : ''} placeholder="${isResolvido ? 'Resolvido — Resposta bloqueada.' : 'Justifique aqui se o item foi pago, enviado no malote ou se não tem como solucionar...'}" class="flex-1 p-2 bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-xs font-semibold leading-relaxed disabled:bg-slate-100 disabled:text-slate-400">${p.resposta || ''}</textarea>
+                                ${!isResolvido ? `
+                                    <button onclick="window.salvarResposta('${p.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 uppercase shadow-sm whitespace-nowrap">
+                                        <i data-lucide="navigation" class="w-3.5 h-3.5"></i> Enviar Justificativa
+                                    </button>
+                                ` : ''}
+                            </div>
+                            ${p.resposta && p.respostaPor ? `
+                                <span class="block mt-1 text-[8px] text-slate-400 font-bold uppercase">
+                                    Enviado em ${p.respostaEm ? p.respostaEm.toDate().toLocaleDateString('pt-BR') : ''} por ${p.respostaPor.split('@')[0]}
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        // --- AÇÕES DOS CARDS (TICKETS) ---
+        window.marcarCiente = async (id) => {
+            const container = document.getElementById(`ciente-container-${id}`);
+            container.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-slate-400 mx-auto"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+
+            try {
+                const docRef = doc(db, "pendencias_contabeis", id);
+                await updateDoc(docRef, {
+                    ciente: true,
+                    cienteEm: serverTimestamp(),
+                    cientePor: authData.email
+                });
+
+                toastSuccess("Confirmado ciente com sucesso!");
+                await loadChurchData(selectedChurch);
+
+            } catch (e) {
+                console.error("Erro ao salvar ciente:", e);
+                toastError("Erro ao confirmar leitura.");
+                await loadChurchData(selectedChurch);
+            }
+        };
+
+        window.salvarResposta = async (id) => {
+            const textVal = document.getElementById(`resposta-${id}`).value.trim();
+            if (!textVal) {
+                toastWarning("Por favor, digite alguma justificativa antes de enviar.");
+                return;
+            }
+
+            try {
+                const docRef = doc(db, "pendencias_contabeis", id);
+                
+                // Conforme planejado, muda o status automaticamente para 'Aguardando' se o pastor responder
+                await updateDoc(docRef, {
+                    resposta: textVal,
+                    respostaEm: serverTimestamp(),
+                    respostaPor: authData.email,
+                    status: 'Aguardando'
+                });
+
+                toastSuccess("Justificativa enviada! O status foi alterado para 'Aguardando' análise.");
+                await loadChurchData(selectedChurch);
+
+            } catch (e) {
+                console.error("Erro ao salvar resposta:", e);
+                toastError("Erro ao enviar sua resposta.");
+            }
+        };
+
+        // Inicializar
+        init();
+    </script>
+</body>
+</html>
