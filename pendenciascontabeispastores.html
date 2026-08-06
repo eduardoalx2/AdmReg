@@ -482,19 +482,6 @@
                 const valStr = parseFloat(p.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 const qtdStr = p.quantidade || 1;
 
-                const msgText = `Olá! Segue abaixo os detalhes da pendência contábil da igreja local:
-
-*Igreja:* ${p.igreja}
-*Competência:* ${formatMes(p.competencia)}
-*Apontamento:* ${p.descricao}
-*Valor:* ${valStr}
-*Quantidade:* ${qtdStr}
-*Status Atual:* ${p.status}
-
-Para mais informações, acesse o portal de pendências.`;
-
-                const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msgText)}`;
-
                 // Badges
                 let statusBadge = '';
                 if (p.status === 'Resolvido') {
@@ -529,9 +516,6 @@ Para mais informações, acesse o portal de pendências.`;
                             ${statusBadge}
                         </div>
                         <div class="flex gap-1">
-                            <a href="${waUrl}" target="_blank" class="text-emerald-500 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 p-1.5 rounded transition-colors flex items-center justify-center font-bold" title="Compartilhar no WhatsApp">
-                                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-                            </a>
                             <button onclick="window.gerarPDF('${p.id}')" class="text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 p-1.5 rounded transition-colors flex items-center justify-center" title="Imprimir / Gerar PDF">
                                 <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                             </button>
