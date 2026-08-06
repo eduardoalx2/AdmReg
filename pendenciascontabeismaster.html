@@ -81,7 +81,7 @@
         <div id="painel-conteudo" class="hidden space-y-6">
 
             <!-- METRICAS / INDICADORES -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
                     <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Lançado</div>
                     <div id="stat-total" class="text-xl font-black text-slate-800 mt-1">0</div>
@@ -97,6 +97,10 @@
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
                     <div class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Resolvidas</div>
                     <div id="stat-resolvidas" class="text-xl font-black text-emerald-600 mt-1">0</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center col-span-2 md:col-span-1">
+                    <div class="text-[9px] font-bold text-red-500 uppercase tracking-widest">Valor Pendente</div>
+                    <div id="stat-valor-pendente" class="text-xl font-black text-red-600 mt-1">R$ 0,00</div>
                 </div>
             </div>
 
@@ -414,11 +418,16 @@
             let semCiente = pendenciasList.filter(p => !p.ciente && p.status !== 'Resolvido').length;
             let aguardando = pendenciasList.filter(p => p.status === 'Aguardando').length;
             let resolvido = pendenciasList.filter(p => p.status === 'Resolvido').length;
+            
+            let valorPendenteTotal = pendenciasList
+                .filter(p => p.status !== 'Resolvido')
+                .reduce((sum, p) => sum + parseFloat(p.valor || 0), 0);
 
             document.getElementById('stat-total').textContent = total;
             document.getElementById('stat-sem-ciente').textContent = semCiente;
             document.getElementById('stat-aguardando').textContent = aguardando;
             document.getElementById('stat-resolvidas').textContent = resolvido;
+            document.getElementById('stat-valor-pendente').textContent = valorPendenteTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         function renderizarTabela() {

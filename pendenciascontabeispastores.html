@@ -82,7 +82,7 @@
         </div>
 
         <!-- INDICADORES RESUMIDOS -->
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center">
                 <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest block">Total Pendências</span>
                 <span id="stat-total" class="text-lg font-black text-slate-800 mt-0.5 block">0</span>
@@ -94,6 +94,10 @@
             <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center">
                 <span class="text-[8px] font-bold text-emerald-500 uppercase tracking-widest block">Resolvidas</span>
                 <span id="stat-resolvidas" class="text-lg font-black text-emerald-600 mt-0.5 block">0</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-center col-span-2 md:col-span-1">
+                <span class="text-[8px] font-bold text-red-600 uppercase tracking-widest block">Valor Pendente</span>
+                <span id="stat-valor-pendente" class="text-lg font-black text-red-600 mt-0.5 block">R$ 0,00</span>
             </div>
         </div>
 
@@ -210,6 +214,7 @@
                         document.getElementById('stat-total').textContent = '0';
                         document.getElementById('stat-pendentes').textContent = '0';
                         document.getElementById('stat-resolvidas').textContent = '0';
+                        document.getElementById('stat-valor-pendente').textContent = 'R$ 0,00';
                     }
                 });
 
@@ -278,10 +283,16 @@
                 filtrados = filtrados.filter(p => p.status === 'Resolvido');
             }
 
+            // Calcular valor pendente total
+            let valorPendenteTotal = pendenciasList
+                .filter(p => p.status !== 'Resolvido')
+                .reduce((sum, p) => sum + parseFloat(p.valor || 0), 0);
+
             // Atualizar Indicadores
             document.getElementById('stat-total').textContent = pendenciasList.length;
             document.getElementById('stat-pendentes').textContent = pendenciasList.filter(p => p.status !== 'Resolvido' && (!p.ciente || p.status === 'Pendente')).length;
             document.getElementById('stat-resolvidas').textContent = pendenciasList.filter(p => p.status === 'Resolvido').length;
+            document.getElementById('stat-valor-pendente').textContent = valorPendenteTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
             if (filtrados.length === 0) {
                 container.innerHTML = `
