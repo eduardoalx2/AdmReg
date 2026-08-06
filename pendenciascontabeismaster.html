@@ -265,6 +265,175 @@
         let selectedChurch = '';
         let igrejasList = [];
         let pendenciasList = [];
+        let pastoresList = [];
+
+        async function carregarPastores() {
+            try {
+                const snap = await getDocs(collection(db, "pastores"));
+                pastoresList = [];
+                snap.forEach(d => {
+                    pastoresList.push({ id: d.id, ...d.data() });
+                });
+            } catch (e) {
+                console.error("Erro ao carregar pastores para WhatsApp:", e);
+            }
+        }
+
+        window.gerarPDF = (id) => {
+            const p = pendenciasList.find(item => item.id === id);
+            if (!p) return;
+
+            const formatMes = (raw) => {
+                if (!raw) return '—';
+                const parts = raw.split('-');
+                if (parts.length === 2) return `${parts[1]}/${parts[0]}`;
+                return raw;
+            };
+
+            const valStr = parseFloat(p.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const qtdStr = p.quantidade || 1;
+            
+            let statusColor = '#ef4444'; // Red
+            if (p.status === 'Resolvido') statusColor = '#10b981'; // Green
+            if (p.status === 'Aguardando') statusColor = '#f59e0b'; // Amber
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comprovante de Pendência - \${p.igreja}</title>
+    <meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            padding: 40px;
+            margin: 0;
+            background: #fff;
+        }
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .church-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #2563eb;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 5px 0;
+        }
+        .doc-subtitle {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 0;
+        }
+        .card {
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 24px;
+            background: #fff;
+            margin-bottom: 20px;
+        }
+        .field {
+            display: flex;
+            align-items: start;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .label {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 800;
+            width: 120px;
+            text-align: left;
+            margin-right: 12px;
+            flex-shrink: 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .value {
+            font-weight: 600;
+            color: #0f172a;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .meta-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed #cbd5e1;
+            font-size: 11px;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+        }
+        @media print {
+            body { padding: 20px; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="church-title">\${p.igreja}</h1>
+        <p class="doc-subtitle">Comprovante de Pendência Contábil</p>
+    </div>
+    
+    <div class="card">
+        <div class="field">
+            <span class="label">Competência</span>
+            <span class="value">\${formatMes(p.competencia)}</span>
+        </div>
+        <div class="field">
+            <span class="label">Apontamento</span>
+            <span class="value">\${p.descricao}</span>
+        </div>
+        <div class="field">
+            <span class="label">Valor</span>
+            <span class="value">\${valStr}</span>
+        </div>
+        <div class="field">
+            <span class="label">Quantidade</span>
+            <span class="value">\${qtdStr}</span>
+        </div>
+        <div class="field">
+            <span class="label">Status</span>
+            <span class="value" style="color: \${statusColor}">\${p.status}</span>
+        </div>
+        \${p.resposta ? `
+        <div class="field" style="margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+            <span class="label" style="background: #eff6ff; color: #1d4ed8;">Resposta</span>
+            <span class="value" style="color: #475569; font-style: italic;">\${p.resposta}</span>
+        </div>
+        ` : ''}
+    </div>
+
+    <div class="meta-section">
+        <span>Gerado em: \${new Date().toLocaleString('pt-BR')}</span>
+        <span>Região 655 - Portal AdmReg</span>
+    </div>
+
+    <script>
+        window.onload = function() {
+            window.print();
+        }
+    <\/script>
+</body>
+</html>
+            `);
+            printWindow.document.close();
+        };
 
         async function init() {
             try {
@@ -290,6 +459,7 @@
                 document.getElementById('lancar-competencia').value = currentMonthStr;
 
                 await carregarIgrejas();
+                await carregarPastores();
 
                 // Listeners
                 document.getElementById('form-nova-pendencia').addEventListener('submit', cadastrarPendencia);
@@ -454,6 +624,33 @@
                 const valStr = parseFloat(p.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 const qtdStr = p.quantidade || 1;
 
+                // Buscar pastor titular desta igreja
+                const pastor = pastoresList.find(pst => {
+                    const pIgs = Array.isArray(pst.igreja) ? pst.igreja : (pst.igreja ? [pst.igreja] : []);
+                    return pIgs.includes(p.igreja) && pst.funcao === 'Pastor Titular';
+                });
+
+                const telPastor = pastor ? pastor.telefone.replace(/\D/g, '') : '';
+                let formattedTel = '';
+                if (telPastor) {
+                    formattedTel = telPastor.startsWith('55') ? telPastor : (telPastor.length >= 10 ? '55' : '') + telPastor;
+                }
+
+                const msgText = `Olá, Pastor! Segue abaixo a pendência contábil da sua igreja:
+
+*Igreja:* ${p.igreja}
+*Competência:* ${formatMes(p.competencia)}
+*Apontamento:* ${p.descricao}
+*Valor:* ${valStr}
+*Quantidade:* ${qtdStr}
+*Status Atual:* ${p.status}
+
+Por gentileza, acesse o portal de pendências para responder ou marcar como ciente.`;
+
+                const waUrl = formattedTel
+                    ? `https://api.whatsapp.com/send?phone=${formattedTel}&text=${encodeURIComponent(msgText)}`
+                    : `https://api.whatsapp.com/send?text=${encodeURIComponent(msgText)}`;
+
                 // Status Badge
                 let statusBadge = '';
                 if (p.status === 'Resolvido') {
@@ -488,10 +685,16 @@
                             ${cienteBadge}
                             <!-- Ações -->
                             <div class="flex gap-1">
-                                <button onclick="window.editarPendencia('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors" title="Editar">
+                                <a href="${waUrl}" target="_blank" class="text-emerald-500 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 p-1.5 rounded transition-colors flex items-center justify-center" title="Enviar p/ WhatsApp do Pastor">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                </a>
+                                <button onclick="window.gerarPDF('${p.id}')" class="text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 p-1.5 rounded transition-colors flex items-center justify-center" title="Imprimir / Gerar PDF">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="window.editarPendencia('${p.id}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition-colors flex items-center justify-center" title="Editar">
                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
                                 </button>
-                                <button onclick="window.excluirPendencia('${p.id}')" class="text-red-400 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors" title="Excluir">
+                                <button onclick="window.excluirPendencia('${p.id}')" class="text-red-400 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors flex items-center justify-center" title="Excluir">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
