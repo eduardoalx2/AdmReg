@@ -314,7 +314,7 @@
                 <div
                     style="border:2px solid #1f2937;padding:24px;display:flex;flex-direction:column;position:relative;">
                     <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:32px;">
-                        <img id="pdf-logo" src="logo.png" style="max-width:80px;max-height:80px;object-fit:contain;">
+                        <img id="pdf-logo" src="logo_recibo.png" style="max-width:80px;max-height:80px;object-fit:contain;">
                         <div>
                             <h1
                                 style="font-size:28px;font-weight:700;color:#1e3a8a;text-transform:uppercase;line-height:1.1;">
@@ -621,7 +621,7 @@
             document.getElementById('pdf-extenso').textContent = numeroPorExtenso(r.total);
             const customLogo = localStorage.getItem('customLogo');
             const customSignature = localStorage.getItem('customSignature');
-            document.getElementById('pdf-logo').src = customLogo || 'logo.png';
+            document.getElementById('pdf-logo').src = customLogo || 'logo_recibo.png';
             if (customSignature) {
                 document.getElementById('pdf-assinatura').src = customSignature;
                 document.getElementById('pdf-assinatura').style.display = 'block';
