@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Financeiro Consolidado — Região 655</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0b0f19;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.05) 0px, transparent 50%);
+    }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .input-dark {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #fff;
+      transition: all 0.3s ease;
+    }
+    .input-dark:focus {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+      outline: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between">
+
+  <!-- PASSWORD GATE MODAL -->
+  <div id="password-gate" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+    <div class="glass-card rounded-3xl p-8 w-full max-w-md border border-slate-800 shadow-2xl">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-3xl mx-auto mb-4">
+          🔐
+        </div>
+        <h2 class="text-2xl font-extrabold text-white">Acesso Financeiro</h2>
+        <p class="text-xs text-slate-400 mt-2">Por favor, digite a senha de acesso administrativo</p>
+      </div>
+
+      <form id="gate-form" onsubmit="verificarSenha(event)" class="space-y-4">
+        <div>
+          <input type="password" id="gate-password" placeholder="Digite a senha..." 
+                 class="w-full input-dark px-4 py-3 rounded-xl font-medium text-center text-lg" required />
+          <p id="gate-error" class="text-xs text-red-400 font-semibold text-center mt-2 hidden">Senha incorreta. Tente novamente.</p>
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20">
+          Entrar no Painel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD CONTENT -->
+  <div id="dashboard-content" class="hidden flex-1 flex flex-col">
+    
+    <!-- Top Navigation Header -->
+    <header class="w-full border-b border-slate-900 bg-slate-950/20 py-6 px-6">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-600/10 border border-emerald-500/30 flex items-center justify-center text-xl font-bold text-emerald-400">
+            $
+          </div>
+          <div>
+            <h1 class="text-xl font-extrabold text-white">Status Financeiro</h1>
+            <p class="text-xs text-slate-400">Consolidado Geral dos Congressos Regionais</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a href="index.html" class="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors uppercase tracking-wider group bg-slate-900/60 px-4 py-2.5 rounded-xl border border-slate-800">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Voltar ao Hub
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Area -->
+    <main class="w-full max-w-7xl mx-auto px-6 py-10 flex-1">
+      
+      <!-- Filter and Loader Section -->
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+        <!-- Interactive Filters -->
+        <div class="flex bg-slate-950/60 p-1.5 rounded-2xl border border-slate-900/80">
+          <button onclick="setFiltro('todos')" id="btn-filtro-todos" class="px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-md">
+            Todos os Congressos
+          </button>
+          <button onclick="setFiltro('mulheres')" id="btn-filtro-mulheres" class="px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
+            Mulheres (🌸)
+          </button>
+          <button onclick="setFiltro('diaconato')" id="btn-filtro-diaconato" class="px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
+            Diaconato (🕊️)
+          </button>
+        </div>
+
+        <!-- Reload / Loader Indicator -->
+        <div id="loader-indicator" class="flex items-center gap-2 text-xs font-semibold text-slate-400">
+          <svg class="animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Sincronizando dados...
+        </div>
+      </div>
+
+      <!-- Financial Cards Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+        
+        <!-- Receita Bruta Prevista -->
+        <div class="glass-card rounded-2xl p-6 border-slate-800/80">
+          <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Receita Prevista</p>
+          <h2 class="text-xl md:text-2xl font-black text-white mt-2" id="stat-prevista">R$ 0,00</h2>
+          <p class="text-[10px] text-slate-500 mt-1">Vagas reservadas x Valor da inscrição</p>
+        </div>
+
+        <!-- Receita Confirmada (Recebido) -->
+        <div class="glass-card rounded-2xl p-6 border-slate-800/80">
+          <p class="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Recebido / Pago</p>
+          <h2 class="text-xl md:text-2xl font-black text-emerald-400 mt-2" id="stat-recebido">R$ 0,00</h2>
+          <p class="text-[10px] text-slate-500 mt-1">Inscrições confirmadas e conferidas</p>
+        </div>
+
+        <!-- Total de Despesas (Saídas) -->
+        <div class="glass-card rounded-2xl p-6 border-slate-800/80">
+          <p class="text-xs text-rose-400 font-semibold uppercase tracking-wider">Total de Despesas</p>
+          <h2 class="text-xl md:text-2xl font-black text-rose-400 mt-2" id="stat-despesas">R$ 0,00</h2>
+          <p class="text-[10px] text-slate-500 mt-1">Notas e recibos de saídas de caixa</p>
+        </div>
+
+        <!-- Saldo Líquido atual em Caixa -->
+        <div class="glass-card rounded-2xl p-6 border-slate-800/80">
+          <p class="text-xs text-indigo-400 font-semibold uppercase tracking-wider">Saldo Líquido</p>
+          <h2 class="text-xl md:text-2xl font-black text-indigo-400 mt-2" id="stat-saldo">R$ 0,00</h2>
+          <p class="text-[10px] text-slate-500 mt-1">Valor em caixa (Recebido - Despesas)</p>
+        </div>
+
+        <!-- Total Pendente (A Receber) -->
+        <div class="glass-card rounded-2xl p-6 border-slate-800/80">
+          <p class="text-xs text-amber-500 font-semibold uppercase tracking-wider">A Receber</p>
+          <h2 class="text-xl md:text-2xl font-black text-amber-500 mt-2" id="stat-pendente">R$ 0,00</h2>
+          <p class="text-[10px] text-slate-500 mt-1">Saldo pendente de quitação por igrejas</p>
+        </div>
+
+      </div>
+
+      <!-- Main Tables Container -->
+      <div class="space-y-10">
+        
+        <!-- Table: Recebimentos por Igreja -->
+        <div class="glass-card rounded-2xl border-slate-800/80 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-900 bg-slate-950/40 flex justify-between items-center">
+            <h3 class="text-base font-bold text-white">Recebimentos e Reservas por Igreja</h3>
+            <span class="text-xs bg-slate-900 text-slate-400 px-3 py-1 rounded-full font-medium" id="tabela-receitas-badge">Todos</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr class="bg-slate-950/20 text-slate-400 text-xs font-bold border-b border-slate-900 uppercase">
+                  <th class="px-6 py-4">Igreja</th>
+                  <th class="px-6 py-4">Congresso</th>
+                  <th class="px-6 py-4 text-center">Vagas Reservadas</th>
+                  <th class="px-6 py-4 text-right">Valor Devido</th>
+                  <th class="px-6 py-4 text-right">Valor Pago</th>
+                  <th class="px-6 py-4 text-right">Saldo Pendente</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-receitas-corpo" class="divide-y divide-slate-900/60">
+                <!-- Linhas inseridas via JS -->
+              </tbody>
+              <tfoot>
+                <tr class="bg-slate-950/40 text-white font-bold border-t border-slate-800">
+                  <td class="px-6 py-4" colspan="2">TOTAL CONSOLIDADO</td>
+                  <td class="px-6 py-4 text-center text-indigo-400" id="total-receitas-vagas">0</td>
+                  <td class="px-6 py-4 text-right text-slate-300" id="total-receitas-devido">R$ 0,00</td>
+                  <td class="px-6 py-4 text-right text-emerald-400" id="total-receitas-pago">R$ 0,00</td>
+                  <td class="px-6 py-4 text-right text-amber-500" id="total-receitas-pendente">R$ 0,00</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Table: Detalhamento de Despesas -->
+        <div class="glass-card rounded-2xl border-slate-800/80 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-900 bg-slate-950/40 flex justify-between items-center">
+            <h3 class="text-base font-bold text-white">Detalhamento de Saídas e Despesas</h3>
+            <span class="text-xs bg-slate-900 text-slate-400 px-3 py-1 rounded-full font-medium" id="tabela-despesas-badge">Todos</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr class="bg-slate-950/20 text-slate-400 text-xs font-bold border-b border-slate-900 uppercase">
+                  <th class="px-6 py-4">Congresso</th>
+                  <th class="px-6 py-4">Descrição</th>
+                  <th class="px-6 py-4 text-center">Data</th>
+                  <th class="px-6 py-4 text-center">Nota Fiscal / Ref</th>
+                  <th class="px-6 py-4 text-right">Valor da Despesa</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-despesas-corpo" class="divide-y divide-slate-900/60">
+                <!-- Linhas inseridas via JS -->
+              </tbody>
+              <tfoot>
+                <tr class="bg-slate-950/40 text-white font-bold border-t border-slate-800">
+                  <td class="px-6 py-4" colspan="4">TOTAL DE SAÍDAS</td>
+                  <td class="px-6 py-4 text-right text-rose-400" id="total-despesas-valor">R$ 0,00</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-slate-900/60 bg-slate-950/20 py-6 px-6">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+        <p>Desenvolvido por Pr. Eduardo Silva — Secretário Regional</p>
+        <p>© 2026 IEQ Região 655. Todos os direitos reservados.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <script type="module">
+    // URLs das APIs de cada congresso
+    const API_MULHERES = 'https://script.google.com/macros/s/AKfycbyitQ6E-O0bbnPBeAPFXUvmJ3_t0i2e_OQxeUROS6q8bwGm6CVjn0WgXl8zD8_usfV4gw/exec';
+    const API_DIACONATO = 'https://script.google.com/macros/s/AKfycbypjv_q6hESFoeYjQTxlpYj5Qb6ymOw6h6DoHhoE-CbNeryi5wclLmUrU6binZ7H5l_/exec';
+
+    const VALOR_MULHERES = 210;
+    const VALOR_DIACONATO = 150;
+
+    let dadosMulheres = { igrejas: [], pagamentos: [], despesas: [] };
+    let dadosDiaconato = { igrejas: [], pagamentos: [], despesas: [] };
+    let filtroAtual = 'todos'; // todos | mulheres | diaconato
+
+    // Função global de verificação de senha
+    window.verificarSenha = function(e) {
+      e.preventDefault();
+      const input = document.getElementById('gate-password').value;
+      const errorEl = document.getElementById('gate-error');
+
+      if (input === 'admin') {
+        sessionStorage.setItem('events_fin_auth', 'true');
+        document.getElementById('password-gate').classList.add('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+        carregarDados();
+      } else {
+        errorEl.classList.remove('hidden');
+        document.getElementById('gate-password').value = '';
+      }
+    };
+
+    // Inicialização da página
+    function init() {
+      if (sessionStorage.getItem('events_fin_auth') === 'true') {
+        document.getElementById('password-gate').classList.add('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+        carregarDados();
+      }
+    }
+
+    // Chamadas assíncronas CORS omitindo cookies
+    async function fetchAPI(apiUrl, action) {
+      const url = `${apiUrl}?action=${action}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      if (!response.ok) {
+        throw new Error(`Erro na chamada ${action}: ${response.statusText}`);
+      }
+      return await response.json();
+    }
+
+    // Carregar todas as informações em paralelo
+    async function carregarDados() {
+      const loader = document.getElementById('loader-indicator');
+      loader.classList.remove('hidden');
+
+      try {
+        const [
+          mulIgrejas, mulPagtos, mulDesp,
+          diaIgrejas, diaPagtos, diaDesp
+        ] = await Promise.all([
+          fetchAPI(API_MULHERES, 'getIgrejas').catch(err => (console.error(err), [])),
+          fetchAPI(API_MULHERES, 'getPagamentos').catch(err => (console.error(err), [])),
+          fetchAPI(API_MULHERES, 'getDespesas').catch(err => (console.error(err), [])),
+          fetchAPI(API_DIACONATO, 'getIgrejas').catch(err => (console.error(err), [])),
+          fetchAPI(API_DIACONATO, 'getPagamentos').catch(err => (console.error(err), [])),
+          fetchAPI(API_DIACONATO, 'getDespesas').catch(err => (console.error(err), []))
+        ]);
+
+        dadosMulheres = { igrejas: mulIgrejas, pagamentos: mulPagtos, despesas: mulDesp };
+        dadosDiaconato = { igrejas: diaIgrejas, pagamentos: diaPagtos, despesas: diaDesp };
+
+        calcularERenderizar();
+      } catch (err) {
+        console.error('Erro ao carregar consolidado:', err);
+        alert('Erro ao conectar com as APIs do Google Sheets. Verifique a internet.');
+      } finally {
+        loader.classList.add('hidden');
+      }
+    }
+
+    // Formatação BRL
+    function formatBRL(value) {
+      return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Define filtro e renderiza
+    window.setFiltro = function(novoFiltro) {
+      filtroAtual = novoFiltro;
+
+      // Estilo dos botões
+      const botoes = {
+        todos: document.getElementById('btn-filtro-todos'),
+        mulheres: document.getElementById('btn-filtro-mulheres'),
+        diaconato: document.getElementById('btn-filtro-diaconato')
+      };
+
+      Object.keys(botoes).forEach(k => {
+        if (k === novoFiltro) {
+          botoes[k].className = "px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-md";
+        } else {
+          botoes[k].className = "px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+        }
+      });
+
+      calcularERenderizar();
+    };
+
+    // Processamento e Renderização
+    function calcularERenderizar() {
+      // 1. Coleta os itens com base no filtro
+      let listaReceitas = [];
+      let listaDespesas = [];
+
+      // Congresso de Mulheres
+      if (filtroAtual === 'todos' || filtroAtual === 'mulheres') {
+        dadosMulheres.igrejas.forEach(ig => {
+          const vagas = Number(ig.qtdVagas || 0);
+          const devido = vagas * VALOR_MULHERES;
+          
+          // Calcula pagamentos correspondentes à igreja
+          const pagosIgreja = dadosMulheres.pagamentos
+            .filter(p => p.igrejaId === ig.id && (p.formaPagamento === 'Dinheiro' || p.conferido === 'sim'))
+            .reduce((s, p) => s + Number(p.valor || 0), 0);
+
+          listaReceitas.push({
+            igreja: ig.nome,
+            congresso: 'Mulheres 🌸',
+            vagas: vagas,
+            devido: devido,
+            pago: pagosIgreja,
+            pendente: Math.max(0, devido - pagosIgreja)
+          });
+        });
+
+        dadosMulheres.despesas.forEach(d => {
+          listaDespesas.push({
+            congresso: 'Mulheres 🌸',
+            descricao: d.descricao || 'Despesa sem descrição',
+            data: d.data || '—',
+            documento: d.notaFiscal || '—',
+            valor: Number(d.valor || 0)
+          });
+        });
+      }
+
+      // Congresso do Diaconato
+      if (filtroAtual === 'todos' || filtroAtual === 'diaconato') {
+        dadosDiaconato.igrejas.forEach(ig => {
+          const vagas = Number(ig.qtdVagas || 0);
+          const devido = vagas * VALOR_DIACONATO;
+
+          // Calcula pagamentos correspondentes à igreja
+          const pagosIgreja = dadosDiaconato.pagamentos
+            .filter(p => p.igrejaId === ig.id && (p.formaPagamento === 'Dinheiro' || p.conferido === 'sim'))
+            .reduce((s, p) => s + Number(p.valor || 0), 0);
+
+          listaReceitas.push({
+            igreja: ig.nome,
+            congresso: 'Diaconato 🕊️',
+            vagas: vagas,
+            devido: devido,
+            pago: pagosIgreja,
+            pendente: Math.max(0, devido - pagosIgreja)
+          });
+        });
+
+        dadosDiaconato.despesas.forEach(d => {
+          listaDespesas.push({
+            congresso: 'Diaconato 🕊️',
+            descricao: d.descricao || 'Despesa sem descrição',
+            data: d.data || '—',
+            documento: d.notaFiscal || '—',
+            valor: Number(d.valor || 0)
+          });
+        });
+      }
+
+      // 2. Soma os Totais Gerais
+      const totalVagas = listaReceitas.reduce((s, r) => s + r.vagas, 0);
+      const totalDevido = listaReceitas.reduce((s, r) => s + r.devido, 0);
+      const totalPago = listaReceitas.reduce((s, r) => s + r.pago, 0);
+      const totalPendente = listaReceitas.reduce((s, r) => s + r.pendente, 0);
+      const totalDespesas = listaDespesas.reduce((s, d) => s + d.valor, 0);
+      const saldoLiquido = totalPago - totalDespesas;
+
+      // 3. Atualiza os Cards de Resumo
+      document.getElementById('stat-prevista').textContent = formatBRL(totalDevido);
+      document.getElementById('stat-recebido').textContent = formatBRL(totalPago);
+      document.getElementById('stat-despesas').textContent = formatBRL(totalDespesas);
+      document.getElementById('stat-saldo').textContent = formatBRL(saldoLiquido);
+      document.getElementById('stat-pendente').textContent = formatBRL(totalPendente);
+
+      // 4. Renderiza Tabela de Receitas
+      const receitasCorpo = document.getElementById('tabela-receitas-corpo');
+      document.getElementById('tabela-receitas-badge').textContent = filtroAtual === 'todos' ? 'Todos os Congressos' : filtroAtual === 'mulheres' ? 'Mulheres' : 'Diaconato';
+      
+      if (listaReceitas.length === 0) {
+        receitasCorpo.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-6 py-10 text-center text-slate-400 font-medium bg-slate-950/10">Nenhum registro de receitas carregado.</td>
+          </tr>
+        `;
+      } else {
+        // Ordena por igreja
+        listaReceitas.sort((a,b) => a.igreja.localeCompare(b.igreja));
+        receitasCorpo.innerHTML = listaReceitas.map(r => `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="px-6 py-4 font-bold text-white">${r.igreja}</td>
+            <td class="px-6 py-4 text-xs font-semibold">
+              <span class="px-2.5 py-1 rounded-full ${r.congresso.includes('Mulheres') ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'}">
+                ${r.congresso}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center font-bold text-slate-300">${r.vagas}</td>
+            <td class="px-6 py-4 text-right text-slate-400 font-medium">${formatBRL(r.devido)}</td>
+            <td class="px-6 py-4 text-right text-emerald-400 font-semibold">${formatBRL(r.pago)}</td>
+            <td class="px-6 py-4 text-right text-amber-500 font-semibold">${formatBRL(r.pendente)}</td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('total-receitas-vagas').textContent = totalVagas;
+      document.getElementById('total-receitas-devido').textContent = formatBRL(totalDevido);
+      document.getElementById('total-receitas-pago').textContent = formatBRL(totalPago);
+      document.getElementById('total-receitas-pendente').textContent = formatBRL(totalPendente);
+
+      // 5. Renderiza Tabela de Despesas
+      const despesasCorpo = document.getElementById('tabela-despesas-corpo');
+      document.getElementById('tabela-despesas-badge').textContent = filtroAtual === 'todos' ? 'Todos os Congressos' : filtroAtual === 'mulheres' ? 'Mulheres' : 'Diaconato';
+
+      if (listaDespesas.length === 0) {
+        despesasCorpo.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-10 text-center text-slate-400 font-medium bg-slate-950/10">Nenhuma despesa ou saída registrada.</td>
+          </tr>
+        `;
+      } else {
+        // Ordena por data (mais recente primeiro)
+        listaDespesas.sort((a,b) => b.data.localeCompare(a.data));
+        despesasCorpo.innerHTML = listaDespesas.map(d => `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="px-6 py-4">
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${d.congresso.includes('Mulheres') ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'}">
+                ${d.congresso}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-white font-medium">${d.descricao}</td>
+            <td class="px-6 py-4 text-center text-slate-400">${d.data}</td>
+            <td class="px-6 py-4 text-center text-slate-300 font-semibold">${d.documento}</td>
+            <td class="px-6 py-4 text-right text-rose-400 font-bold">${formatBRL(d.valor)}</td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('total-despesas-valor').textContent = formatBRL(totalDespesas);
+    }
+
+    // Inicializa
+    init();
+  </script>
+</body>
+</html>
