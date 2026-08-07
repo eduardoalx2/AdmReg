@@ -161,7 +161,11 @@
                         <i data-lucide="list-checks" class="w-4 h-4 text-blue-600"></i> Histórico de Pendências Contábeis
                     </h2>
                     
-                    <div class="flex gap-2 w-full sm:w-auto">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <div class="flex items-center gap-1.5 select-none">
+                            <input type="checkbox" id="check-mostrar-resolvidas" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300">
+                            <label for="check-mostrar-resolvidas" class="text-[10px] font-bold text-slate-500 uppercase cursor-pointer">Mostrar Resolvidas</label>
+                        </div>
                         <div class="flex-1 sm:w-44">
                             <select id="filtro-status" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-[10px] font-bold uppercase tracking-wider text-slate-600">
                                 <option value="Todos">Todos os Status</option>
@@ -465,6 +469,7 @@
                 document.getElementById('form-nova-pendencia').addEventListener('submit', cadastrarPendencia);
                 document.getElementById('form-editar-pendencia').addEventListener('submit', atualizarPendencia);
                 document.getElementById('filtro-status').addEventListener('change', renderizarTabela);
+                document.getElementById('check-mostrar-resolvidas').addEventListener('change', renderizarTabela);
 
                 lucide.createIcons();
 
@@ -598,10 +603,15 @@
             container.innerHTML = '';
 
             const statusFiltro = document.getElementById('filtro-status').value;
+            const mostrarResolvidas = document.getElementById('check-mostrar-resolvidas').checked;
             let filtrados = pendenciasList;
 
             if (statusFiltro !== 'Todos') {
                 filtrados = filtrados.filter(p => p.status === statusFiltro);
+            } else {
+                if (!mostrarResolvidas) {
+                    filtrados = filtrados.filter(p => p.status !== 'Resolvido');
+                }
             }
 
             if (filtrados.length === 0) {

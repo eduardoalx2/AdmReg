@@ -107,7 +107,11 @@
                 <h2 id="igreja-titulo" class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
                     IEQ Local
                 </h2>
-                <div class="flex gap-2">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1.5 select-none">
+                        <input type="checkbox" id="check-mostrar-resolvidas" class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300">
+                        <label for="check-mostrar-resolvidas" class="text-[9px] font-bold text-slate-500 uppercase cursor-pointer">Mostrar Resolvidas</label>
+                    </div>
                     <select id="filtro-status" class="p-1 px-2.5 bg-white border border-slate-200 rounded-lg text-[9px] font-bold uppercase tracking-wider text-slate-600 focus:outline-none">
                         <option value="Todos">Todas as Pendências</option>
                         <option value="Acao">Falta Ler / Responder</option>
@@ -328,6 +332,7 @@
                 }
 
                 document.getElementById('filtro-status').addEventListener('change', renderizarCards);
+                document.getElementById('check-mostrar-resolvidas').addEventListener('change', renderizarCards);
 
             } catch (e) {
                 console.error("Erro ao inicializar:", e);
@@ -432,6 +437,7 @@
             container.innerHTML = '';
 
             const statusFiltro = document.getElementById('filtro-status').value;
+            const mostrarResolvidas = document.getElementById('check-mostrar-resolvidas').checked;
             let filtrados = pendenciasList;
 
             // Filtro dinâmico
@@ -440,6 +446,10 @@
                 filtrados = filtrados.filter(p => p.status !== 'Resolvido' && (!p.ciente || !p.resposta));
             } else if (statusFiltro === 'Resolvido') {
                 filtrados = filtrados.filter(p => p.status === 'Resolvido');
+            } else if (statusFiltro === 'Todos') {
+                if (!mostrarResolvidas) {
+                    filtrados = filtrados.filter(p => p.status !== 'Resolvido');
+                }
             }
 
             // Calcular valor pendente total
