@@ -4,79 +4,62 @@
 
 export const API_URL = 'https://script.google.com/macros/s/AKfycbypjv_q6hESFoeYjQTxlpYj5Qb6ymOw6h6DoHhoE-CbNeryi5wclLmUrU6binZ7H5l_/exec';
 
-// ── Chamadas à API ───────────────────────────────────────────
-// GET — usa parâmetro callback para contornar CORS (JSONP).
-// Faz novas tentativas automáticas: o backend (Apps Script) às vezes "dorme"
-// e a 1ª chamada falha/demora. Repetir a LEITURA é seguro (não duplica dados).
-export function apiGet(action, tentativas = 3) {
-  function umaTentativa(timeoutMs) {
-    return new Promise((resolve, reject) => {
-      const cbName = '_cb_' + Math.random().toString(36).slice(2);
-      const script = document.createElement('script');
-      const timeout = setTimeout(() => {
-        cleanup();
-        reject(new Error('Timeout na requisição'));
-      }, timeoutMs);
+// ── Chamadas à API (CORS com fetch sem credenciais para evitar conflitos de login) ──
+export async function apiGet(action, tentativas = 3) {
+  const url = `${API_URL}?action=${action}`;
 
-      window[cbName] = function(data) {
-        cleanup();
-        if (data && data.error) reject(new Error(data.error));
-        else resolve(data);
-      };
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit' // Evita enviar cookies do Google, contornando o erro de login múltiplo
+      });
 
-      function cleanup() {
-        clearTimeout(timeout);
-        delete window[cbName];
-        if (script.parentNode) script.parentNode.removeChild(script);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      script.onerror = () => { cleanup(); reject(new Error('Erro ao conectar com a API')); };
-      script.src = `${API_URL}?action=${action}&callback=${cbName}`;
-      document.head.appendChild(script);
-    });
+      const data = await response.json();
+      if (data && data.error) {
+        throw new Error(data.error);
+      }
+      return data;
+    } catch (err) {
+      if (i === tentativas - 1) {
+        console.error('Erro na requisição da API:', err);
+        throw new Error('Erro ao conectar com a API do Google Sheets');
+      }
+      // Espera antes de tentar novamente (backoff)
+      await new Promise(r => setTimeout(r, 800 * (i + 1)));
+    }
   }
-
-  function tentar(restantes, timeoutMs) {
-    return umaTentativa(timeoutMs).catch(err => {
-      if (restantes <= 1) throw err;
-      // espera um pouco e tenta de novo, dando mais tempo a cada rodada
-      return new Promise(r => setTimeout(r, 800))
-        .then(() => tentar(restantes - 1, Math.min(timeoutMs + 6000, 25000)));
-    });
-  }
-
-  return tentar(tentativas, 12000);
 }
 
-// POST — usa no-cors com dados via URL (GET com action=post)
 export async function apiPost(action, payload) {
   const body = JSON.stringify({ action, ...payload });
   const url  = `${API_URL}?method=POST&body=${encodeURIComponent(body)}`;
 
-  return new Promise((resolve, reject) => {
-    const cbName = '_cb_' + Math.random().toString(36).slice(2);
-    const script = document.createElement('script');
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error('Timeout na requisição'));
-    }, 15000);
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit' // Evita enviar cookies do Google
+    });
 
-    window[cbName] = function(data) {
-      cleanup();
-      if (data && data.error) reject(new Error(data.error));
-      else resolve(data);
-    };
-
-    function cleanup() {
-      clearTimeout(timeout);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    script.onerror = () => { cleanup(); reject(new Error('Erro ao conectar com a API')); };
-    script.src = `${url}&callback=${cbName}`;
-    document.head.appendChild(script);
-  });
+    const data = await response.json();
+    if (data && data.error) {
+      throw new Error(data.error);
+    }
+    return data;
+  } catch (err) {
+    console.error('Erro no envio da API:', err);
+    throw new Error('Erro ao conectar com a API do Google Sheets ao enviar dados');
+  }
 }
 
 // ── Formatação ───────────────────────────────────────────────
