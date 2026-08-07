@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Central de Congressos — Região 655</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0b0f19;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.08) 0px, transparent 50%);
+    }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card:hover {
+      transform: translateY(-6px);
+      background: rgba(17, 24, 39, 0.85);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+    .rose-glow:hover {
+      border-color: rgba(244, 63, 94, 0.4);
+      box-shadow: 0 20px 40px -15px rgba(244, 63, 94, 0.15), 0 0 50px -10px rgba(244, 63, 94, 0.05);
+    }
+    .indigo-glow:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.15), 0 0 50px -10px rgba(99, 102, 241, 0.05);
+    }
+    .violet-glow:hover {
+      border-color: rgba(139, 92, 246, 0.4);
+      box-shadow: 0 20px 40px -15px rgba(139, 92, 246, 0.15), 0 0 50px -10px rgba(139, 92, 246, 0.05);
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-fade-in {
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .delay-100 { animation-delay: 0.1s; opacity: 0; }
+    .delay-200 { animation-delay: 0.2s; opacity: 0; }
+    .delay-300 { animation-delay: 0.3s; opacity: 0; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between">
+
+  <!-- Main Container -->
+  <main class="w-full max-w-6xl mx-auto px-6 py-12 md:py-20 flex-1 flex flex-col justify-center">
+    
+    <!-- Top Header -->
+    <div class="flex justify-between items-center mb-12 md:mb-16 animate-fade-in">
+      <div class="flex items-center gap-3">
+        <!-- Logo minimalista IEQ -->
+        <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-lg font-bold text-indigo-400">
+          655
+        </div>
+        <div class="border-l border-slate-800 pl-3">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest leading-none">Região Eclesiástica</p>
+          <p class="text-sm font-bold text-slate-300 mt-1">IEQ Londrina/PR</p>
+        </div>
+      </div>
+      
+      <a href="../index.html" class="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors uppercase tracking-wider group">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:-translate-x-1">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Painel Admin
+      </a>
+    </div>
+
+    <!-- Title and Subtitle -->
+    <div class="max-w-3xl mb-12 md:mb-16 animate-fade-in delay-100">
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+        Central de <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Congressos</span>
+      </h1>
+      <p class="text-base md:text-lg text-slate-400 mt-4 leading-relaxed">
+        Selecione o congresso desejado para acessar os painéis de inscrições, acompanhar metas financeiras, gerenciar igrejas participantes e gerar relatórios completos.
+      </p>
+    </div>
+
+    <!-- Congresses Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in delay-200 mb-12">
+      
+      <!-- Congresso de Mulheres -->
+      <a href="./congressodemulheres/index.html" class="glass-card rose-glow rounded-3xl p-8 flex flex-col justify-between group">
+        <div>
+          <div class="w-14 h-14 rounded-2xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-300">
+            🌸
+          </div>
+          <h2 class="text-xl font-bold text-white mb-3">Mulheres</h2>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Painel administrativo do Congresso de Mulheres. Controle de vagas, pagamentos de igrejas e relatórios de inscritas.
+          </p>
+        </div>
+        <div class="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-xs font-semibold text-pink-400 group-hover:text-pink-300 transition-colors uppercase tracking-wider">
+          Acessar Painel
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:translate-x-1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </div>
+      </a>
+
+      <!-- Congresso do Diaconato -->
+      <a href="./congressodiaconato/index.html" class="glass-card indigo-glow rounded-3xl p-8 flex flex-col justify-between group">
+        <div>
+          <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-300">
+            🕊️
+          </div>
+          <h2 class="text-xl font-bold text-white mb-3">Diaconato</h2>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Gestão do Congresso Estadual do Diaconato. Inscrições de diáconos, controle de recebimentos por igreja e listagens gerais.
+          </p>
+        </div>
+        <div class="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors uppercase tracking-wider">
+          Acessar Painel
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:translate-x-1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </div>
+      </a>
+
+      <!-- Congresso de Jovens -->
+      <a href="./jovens/index.html" class="glass-card violet-glow rounded-3xl p-8 flex flex-col justify-between group">
+        <div>
+          <div class="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-300">
+            🔥
+          </div>
+          <h2 class="text-xl font-bold text-white mb-3">Jovens</h2>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Acompanhamento de metas de jovens por igreja, gerenciamento de líderes de jovens e histórico de contatos/conversas.
+          </p>
+        </div>
+        <div class="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-xs font-semibold text-purple-400 group-hover:text-purple-300 transition-colors uppercase tracking-wider">
+          Acessar Painel
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:translate-x-1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </div>
+      </a>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full border-t border-slate-900/60 bg-slate-950/20 py-8 px-6 animate-fade-in delay-300">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+      <p>Desenvolvido por Pr. Eduardo Silva — Secretário Regional</p>
+      <p>© 2026 IEQ Região 655. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

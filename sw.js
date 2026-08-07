@@ -2,7 +2,7 @@
  * sw.js — Service Worker do Portal Região 655
  * Estratégia: Cache-First para assets estáticos, Network-First para HTML
  */
-const CACHE_NAME = 'reg655-v5';
+const CACHE_NAME = 'reg655-v6';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -27,7 +27,8 @@ const STATIC_ASSETS = [
     '/mini_antigo.png',
     '/mini_antigo.webp',
     '/assinatura.png',
-    '/assinatura.webp'
+    '/assinatura.webp',
+    '/eventos/index.html'
 ];
 
 // Instalação: pré-cache de assets essenciais

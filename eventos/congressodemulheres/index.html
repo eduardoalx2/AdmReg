@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Congresso de Mulheres — IEQ Região 655</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .card-hover { transition: transform .15s ease, box-shadow .15s ease; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(244,63,94,.18); }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .fade-up { animation: fadeUp .4s ease forwards; }
+    .delay-1 { animation-delay:.05s; opacity:0; }
+    .delay-2 { animation-delay:.1s;  opacity:0; }
+    .delay-3 { animation-delay:.15s; opacity:0; }
+    .delay-4 { animation-delay:.2s;  opacity:0; }
+  </style>
+</head>
+<body class="bg-rose-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-lg">
+    <div class="max-w-5xl mx-auto px-6 py-5 flex items-center gap-4">
+      <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">🌸</div>
+      <div class="flex-1 min-w-0">
+        <h1 class="text-lg font-bold leading-tight">Congresso de Mulheres</h1>
+        <p class="text-rose-100 text-sm">IEQ — Região Eclesiástica 655 · Londrina/PR</p>
+      </div>
+      <a href="manual.html"
+         class="bg-white/20 hover:bg-white/30 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors flex items-center gap-2 flex-shrink-0">
+        📖 <span class="hidden sm:inline">Manual</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Contadores -->
+  <div class="max-w-5xl mx-auto px-6 mt-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 fade-up">
+      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-rose-100 text-center min-w-0">
+        <p class="text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums break-words text-rose-600" id="cnt-inscritos">—</p>
+        <p class="text-xs text-slate-500 mt-1 font-medium uppercase tracking-wide">Inscritas</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-rose-100 text-center min-w-0">
+        <p class="text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums break-words text-rose-600" id="cnt-igrejas">—</p>
+        <p class="text-xs text-slate-500 mt-1 font-medium uppercase tracking-wide">Igrejas</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-rose-100 text-center min-w-0">
+        <p class="text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums break-words text-emerald-600" id="cnt-pago">—</p>
+        <p class="text-xs text-slate-500 mt-1 font-medium uppercase tracking-wide">Total Pago</p>
+      </div>
+      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-rose-100 text-center min-w-0">
+        <p class="text-xl sm:text-2xl md:text-3xl font-bold leading-tight tabular-nums break-words text-pink-500" id="cnt-pendente">—</p>
+        <p class="text-xs text-slate-500 mt-1 font-medium uppercase tracking-wide">Pendente</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chave PIX -->
+  <div class="max-w-5xl mx-auto px-6 mt-6">
+    <div class="bg-gradient-to-br from-rose-500 to-pink-500 rounded-2xl p-5 shadow-lg shadow-rose-200 fade-up">
+      <div class="flex items-center gap-4 flex-wrap">
+        <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+          <svg viewBox="0 0 512 512" class="w-7 h-7" fill="#32bcad" stroke="none">
+            <path d="M112.57 391.19c20.056 0 38.928-7.808 53.12-21.984l76.694-76.692c5.385-5.404 14.765-5.384 20.15 0l76.989 76.989c14.192 14.176 33.06 21.98 53.12 21.98h15.098l-97.138 97.139c-30.326 30.342-79.505 30.342-109.85 0l-97.413-97.431h9.13zM399.43 120.81c-20.06 0-38.93 7.808-53.12 21.984l-76.99 76.989c-5.563 5.535-14.592 5.572-20.15-.004l-76.694-76.692c-14.192-14.179-33.064-21.987-53.12-21.987h-9.13l97.416-97.434c30.342-30.337 79.519-30.337 109.86 0l97.138 97.142h-15.098z"/>
+            <path d="M481.05 200.96l-58.83-58.834c-1.297.522-2.701.83-4.185.83h-26.062c-13.834 0-27.385 5.61-37.175 15.394l-76.989 76.997c-7.182 7.18-16.62 10.776-26.062 10.776s-18.88-3.596-26.062-10.776l-76.69-76.692c-9.79-9.785-23.341-15.395-37.179-15.395h-32.041c-1.4 0-2.722-.309-3.948-.79l-59.073 59.067c-30.337 30.343-30.337 79.52 0 109.86l59.069 59.063c1.226-.48 2.548-.79 3.948-.79h32.04c13.838 0 27.39-5.61 37.18-15.394l76.69-76.692c13.926-13.927 38.207-13.918 52.123.004l76.989 76.988c9.79 9.785 23.341 15.395 37.175 15.395h26.062c1.484 0 2.888.308 4.185.83l58.83-58.834c30.34-30.343 30.34-79.52 0-109.86z"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-semibold text-rose-100 uppercase tracking-wide">Chave PIX para pagamentos</p>
+          <p class="text-white font-bold text-lg leading-tight truncate" id="pix-key">eventos@pixieq.com.br</p>
+        </div>
+        <button onclick="copyPix()" id="pix-copy-btn"
+          class="bg-white text-rose-600 hover:bg-rose-50 font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2 flex-shrink-0">
+          <span id="pix-copy-icon">📋</span> <span id="pix-copy-text">Copiar chave</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cards de navegação -->
+  <main class="max-w-5xl mx-auto px-6 py-8">
+    <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-5">Módulos</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <a href="igrejas.html" class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-rose-100 flex items-start gap-4 fade-up delay-1">
+        <div class="w-12 h-12 rounded-xl bg-fuchsia-100 flex items-center justify-center text-2xl flex-shrink-0">⛪</div>
+        <div>
+          <h3 class="font-semibold text-slate-800">Igrejas</h3>
+          <p class="text-sm text-slate-500 mt-1">Gerenciar a lista de igrejas participantes.</p>
+        </div>
+      </a>
+
+      <a href="pagamentos.html" class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-rose-100 flex items-start gap-4 fade-up delay-2">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-2xl flex-shrink-0">💰</div>
+        <div>
+          <h3 class="font-semibold text-slate-800">Pagamentos</h3>
+          <p class="text-sm text-slate-500 mt-1">Lançar e acompanhar pagamentos por igreja.</p>
+        </div>
+      </a>
+
+      <a href="inscricoes.html" class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-rose-100 flex items-start gap-4 fade-up delay-3">
+        <div class="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center text-2xl flex-shrink-0">📋</div>
+        <div>
+          <h3 class="font-semibold text-slate-800">Inscrições</h3>
+          <p class="text-sm text-slate-500 mt-1">Cadastrar e gerenciar as mulheres inscritas no congresso.</p>
+        </div>
+      </a>
+
+      <a href="relatorios.html" class="card-hover bg-white rounded-2xl p-6 shadow-sm border border-rose-100 flex items-start gap-4 fade-up delay-4">
+        <div class="w-12 h-12 rounded-xl bg-pink-100 flex items-center justify-center text-2xl flex-shrink-0">📄</div>
+        <div>
+          <h3 class="font-semibold text-slate-800">Relatórios</h3>
+          <p class="text-sm text-slate-500 mt-1">Gerar relatórios em PDF para impressão A4.</p>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Link manual -->
+    <a href="manual.html" class="mt-6 p-4 bg-white rounded-xl border border-rose-100 shadow-sm flex items-center gap-3 fade-up hover:border-rose-300 transition-colors">
+      <span class="text-rose-400 text-lg">📖</span>
+      <div class="flex-1">
+        <p class="text-sm font-medium text-slate-800">Como usar o sistema</p>
+        <p class="text-xs text-slate-500">Manual passo a passo (bem simples)</p>
+      </div>
+      <span class="text-sm font-semibold text-rose-600">Abrir →</span>
+    </a>
+
+    <!-- Link planilha -->
+    <div class="mt-4 p-4 bg-rose-100/60 rounded-xl border border-rose-100 flex items-center gap-3 fade-up">
+      <span class="text-rose-400 text-lg">🔗</span>
+      <div class="flex-1">
+        <p class="text-sm font-medium text-rose-800">Planilha Google Sheets</p>
+        <p class="text-xs text-rose-500">Acesso direto ao banco de dados para edições manuais</p>
+      </div>
+      <a id="link-sheets" href="#" target="_blank"
+         class="text-sm font-semibold text-rose-600 hover:text-rose-800 bg-white px-4 py-2 rounded-lg border border-rose-200 transition-colors">
+        Abrir →
+      </a>
+    </div>
+  </main>
+
+  <!-- Rodapé -->
+  <footer class="text-center pb-8 pt-2">
+    <p class="text-[11px] text-slate-400">Site desenvolvido por Pr. Eduardo Silva — Secretário Regional</p>
+  </footer>
+
+  <script type="module">
+    import { apiGet, formatBRL, VALOR_INSCRICAO } from './js/config.js';
+
+    // Link da planilha — substitua pelo ID real após criar o Sheets
+    const SHEET_LINK = 'https://docs.google.com/spreadsheets/d/1vMnFg4A1sHNgIe6Yu5GkLMhaFkLvtYZxnyamzBaBNXs/edit';
+    document.getElementById('link-sheets').href = SHEET_LINK;
+
+    // Copiar chave PIX
+    window.copyPix = function() {
+      const key  = document.getElementById('pix-key').textContent.trim();
+      const icon = document.getElementById('pix-copy-icon');
+      const text = document.getElementById('pix-copy-text');
+      const done = () => {
+        icon.textContent = '✓';
+        text.textContent = 'Copiado!';
+        setTimeout(() => { icon.textContent = '📋'; text.textContent = 'Copiar chave'; }, 2500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(key).then(done).catch(fallback);
+      } else {
+        fallback();
+      }
+      function fallback() {
+        const el = document.createElement('textarea');
+        el.value = key; el.style.position = 'fixed'; el.style.opacity = '0';
+        document.body.appendChild(el); el.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(el); done();
+      }
+    };
+
+    async function loadStats() {
+      try {
+        const [igrejas, inscricoes, pagamentos] = await Promise.all([
+          apiGet('getIgrejas'),
+          apiGet('getInscricoes'),
+          apiGet('getPagamentos')
+        ]);
+
+        const totalVagas   = igrejas.reduce((s, ig) => s + (Number(ig.qtdVagas) || 0), 0);
+        const totalDevido  = totalVagas * VALOR_INSCRICAO;
+        const totalPago    = pagamentos
+          .filter(p => p.formaPagamento === 'Dinheiro' || p.conferido === 'sim')
+          .reduce((s, p) => s + Number(p.valor || 0), 0);
+
+        document.getElementById('cnt-inscritos').textContent = inscricoes.length;
+        document.getElementById('cnt-igrejas').textContent   = igrejas.length;
+        document.getElementById('cnt-pago').textContent      = formatBRL(totalPago);
+        document.getElementById('cnt-pendente').textContent  = formatBRL(Math.max(0, totalDevido - totalPago));
+      } catch (e) {
+        console.error('[Congresso Mulheres] Erro ao carregar dados da API:', e.message);
+        ['cnt-inscritos','cnt-igrejas','cnt-pago','cnt-pendente'].forEach(id => {
+          document.getElementById(id).textContent = 'Erro';
+          document.getElementById(id).title = e.message;
+        });
+        // Exibe aviso visível para facilitar diagnóstico
+        const aviso = document.createElement('div');
+        aviso.style.cssText = 'background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:12px 16px;border-radius:10px;font-size:13px;margin-top:12px;';
+        aviso.innerHTML = `<strong>Falha ao conectar com a API.</strong> Verifique o console (F12) para detalhes.<br><small style="opacity:.7">${e.message}</small>`;
+        document.querySelector('.max-w-5xl.mx-auto.px-6.mt-8').appendChild(aviso);
+      }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>
