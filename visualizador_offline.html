@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador Offline de Dados — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
+        .font-sora { font-family: 'Sora', sans-serif; }
+        .glass-panel { background: rgba(23, 32, 54, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-panel:hover { border-color: rgba(99, 179, 237, 0.25); }
+        .tab-btn.active { background: #2563eb; color: #ffffff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35); }
+        .table-row-hover:hover { background: rgba(30, 41, 59, 0.6); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
+
+    <!-- CABEÇALHO -->
+    <header class="sticky top-0 z-40 bg-[#0b0f19]/90 backdrop-blur border-b border-slate-800 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <a href="index.html" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+                    <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Voltar
+                </a>
+                <div class="border-l border-slate-800 pl-3">
+                    <h1 class="text-sm md:text-base font-bold text-white font-sora flex items-center gap-2">
+                        <i data-lucide="eye" class="w-4 h-4 text-emerald-400"></i> Visualizador Offline de Emergência
+                    </h1>
+                    <p class="text-[11px] text-slate-400">Navegue e pesquise seus dados mesmo sem internet ou com o banco fora do ar</p>
+                </div>
+            </div>
+
+            <!-- STATUS DO ARQUIVO -->
+            <div id="file-status-tag" class="flex items-center gap-2 text-xs">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span> Nenhum arquivo carregado
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6">
+
+        <!-- ÁREA DE CARREGAMENTO DO BACKUP (DROP ZONE) -->
+        <div id="drop-zone-section" class="glass-panel rounded-2xl p-6 mb-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex-1">
+                    <h2 class="text-base font-bold text-white font-sora flex items-center gap-2">
+                        <i data-lucide="file-json" class="w-5 h-5 text-blue-400"></i> Carregar Arquivo de Backup (.json)
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+                        Selecione o arquivo gerado pela página de backup. Seus dados são processados <strong class="text-white">100% na memória do seu computador</strong>, de forma instantânea e totalmente privada.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <input type="file" id="input-json-file" accept=".json" class="hidden" onchange="carregarArquivoJSON(event)">
+                    <button onclick="document.getElementById('input-json-file').click()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-3 rounded-xl shadow-lg shadow-blue-600/30 flex items-center gap-2 transition-all">
+                        <i data-lucide="upload" class="w-4 h-4"></i> Selecionar Arquivo .json
+                    </button>
+                    <button onclick="carregarExemploDemonstracao()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold px-4 py-3 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-all">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i> Ver Demonstração
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTEÚDO DOS DADOS (EXIBIDO APÓS CARREGAR) -->
+        <div id="data-container" class="hidden space-y-6">
+
+            <!-- CARDS DE MÉTRICAS / RESUMO -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-panel rounded-2xl p-4 border-l-4 border-l-blue-500">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Recibos</span>
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                            <i data-lucide="receipt" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div id="stat-recibos-count" class="text-2xl font-bold text-white font-sora mt-2">0</div>
+                    <div id="stat-recibos-total" class="text-xs text-blue-400 font-mono font-semibold mt-0.5">R$ 0,00 arrecadados</div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-4 border-l-4 border-l-emerald-500">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Igrejas</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                            <i data-lucide="church" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div id="stat-igrejas-count" class="text-2xl font-bold text-white font-sora mt-2">0</div>
+                    <div class="text-xs text-emerald-400 mt-0.5">Unidades cadastradas</div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-4 border-l-4 border-l-purple-500">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pastores & Obreiros</span>
+                        <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                            <i data-lucide="user-check" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div id="stat-pastores-count" class="text-2xl font-bold text-white font-sora mt-2">0</div>
+                    <div class="text-xs text-purple-400 mt-0.5">Membros ministeriais</div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-4 border-l-4 border-l-amber-500">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total de Coleções</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                            <i data-lucide="database" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div id="stat-colecoes-count" class="text-2xl font-bold text-white font-sora mt-2">0</div>
+                    <div id="stat-docs-count" class="text-xs text-amber-400 font-mono mt-0.5">0 documentos no total</div>
+                </div>
+            </div>
+
+            <!-- NAVEGAÇÃO POR ABAS -->
+            <div class="flex flex-wrap gap-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+                <button onclick="mudarAba('recibos')" id="tab-btn-recibos" class="tab-btn active px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all">
+                    <i data-lucide="receipt" class="w-3.5 h-3.5"></i> Recibos Financeiros
+                </button>
+                <button onclick="mudarAba('igrejas')" id="tab-btn-igrejas" class="tab-btn text-slate-400 hover:text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all">
+                    <i data-lucide="church" class="w-3.5 h-3.5"></i> Igrejas
+                </button>
+                <button onclick="mudarAba('pastores')" id="tab-btn-pastores" class="tab-btn text-slate-400 hover:text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all">
+                    <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Pastores & Obreiros
+                </button>
+                <button onclick="mudarAba('presencas')" id="tab-btn-presencas" class="tab-btn text-slate-400 hover:text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all">
+                    <i data-lucide="calendar-check" class="w-3.5 h-3.5"></i> Presenças & Eventos
+                </button>
+                <button onclick="mudarAba('explorador')" id="tab-btn-explorador" class="tab-btn text-slate-400 hover:text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all">
+                    <i data-lucide="code" class="w-3.5 h-3.5"></i> Todas as Coleções (JSON)
+                </button>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- ABA 1: RECIBOS                                 -->
+            <!-- ============================================== -->
+            <div id="view-recibos" class="glass-panel rounded-2xl p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="relative flex-1 w-full">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="filtro-recibos" placeholder="Buscar por igreja, pastor, número do recibo ou referência..." oninput="filtrarRecibos()" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <span id="recibos-badge-filtrados" class="text-xs text-slate-400 font-mono">0 encontrados</span>
+                        <button onclick="exportarCSV('recibos')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all">
+                            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i> Exportar CSV/Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/90 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800">
+                                <th class="p-3">Nº / Data</th>
+                                <th class="p-3">Igreja</th>
+                                <th class="p-3">Pastor</th>
+                                <th class="p-3">Referência</th>
+                                <th class="p-3 text-right">Taxa Reg. (4%)</th>
+                                <th class="p-3 text-right">Total Pago</th>
+                                <th class="p-3 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-recibos" class="divide-y divide-slate-800/60 font-mono">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- ABA 2: IGREJAS                                 -->
+            <!-- ============================================== -->
+            <div id="view-igrejas" class="hidden glass-panel rounded-2xl p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="relative flex-1 w-full">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="filtro-igrejas" placeholder="Buscar por nome da igreja, código, pastor titular ou cidade..." oninput="filtrarIgrejas()" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <button onclick="exportarCSV('igrejas')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all">
+                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i> Exportar CSV/Excel
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/90 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800">
+                                <th class="p-3">Nome da Igreja</th>
+                                <th class="p-3">Pastor Titular</th>
+                                <th class="p-3">Cidade / Bairro</th>
+                                <th class="p-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-igrejas" class="divide-y divide-slate-800/60 font-mono">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- ABA 3: PASTORES                                -->
+            <!-- ============================================== -->
+            <div id="view-pastores" class="hidden glass-panel rounded-2xl p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="relative flex-1 w-full">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="filtro-pastores" placeholder="Buscar por nome do pastor, CPF, igreja ou cargo..." oninput="filtrarPastores()" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <button onclick="exportarCSV('pastores')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all">
+                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i> Exportar CSV/Excel
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/90 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800">
+                                <th class="p-3">Nome</th>
+                                <th class="p-3">Cargo Ministerial</th>
+                                <th class="p-3">Igreja Vinculada</th>
+                                <th class="p-3">Telefone / Contato</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-pastores" class="divide-y divide-slate-800/60 font-mono">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- ABA 4: PRESENÇAS                               -->
+            <!-- ============================================== -->
+            <div id="view-presencas" class="hidden glass-panel rounded-2xl p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="relative flex-1 w-full">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="filtro-presencas" placeholder="Buscar por participante, evento ou igreja..." oninput="filtrarPresencas()" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/90 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800">
+                                <th class="p-3">Nome</th>
+                                <th class="p-3">Igreja</th>
+                                <th class="p-3">Evento ID</th>
+                                <th class="p-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-presencas" class="divide-y divide-slate-800/60 font-mono">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- ABA 5: EXPLORADOR GERAL DE COLEÇÕES            -->
+            <!-- ============================================== -->
+            <div id="view-explorador" class="hidden glass-panel rounded-2xl p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <label class="text-xs text-slate-400 font-semibold whitespace-nowrap">Escolha a Coleção:</label>
+                        <select id="select-colecao-explorer" onchange="trocarColecaoExplorer()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                            <!-- Preenchido dinamicamente -->
+                        </select>
+                    </div>
+                    <button onclick="copiarColecaoJSON()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Coleção (JSON)
+                    </button>
+                </div>
+
+                <pre id="pre-explorer-json" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs text-slate-300 font-mono max-h-96 overflow-auto"></pre>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- MODAL DE VISUALIZAÇÃO DE DETALHES DO RECIBO -->
+    <div id="modal-recibo-detalhe" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-bold text-white font-sora flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i> Detalhes do Recibo
+                </h3>
+                <button onclick="fecharModalRecibo()" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div id="modal-recibo-conteudo" class="text-xs space-y-3 font-mono text-slate-300 max-h-96 overflow-y-auto">
+                <!-- Conteúdo formatado do recibo -->
+            </div>
+            <div class="border-t border-slate-800 pt-3 flex justify-end">
+                <button onclick="fecharModalRecibo()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-lg">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGICA DO VISUALIZADOR OFFLINE -->
+    <script>
+        let GLOBAL_DATA = null;
+
+        // Formatação de Moeda
+        function fmtMoeda(val) {
+            const num = parseFloat(val) || 0;
+            return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // Formatação de Data
+        function fmtData(val) {
+            if (!val) return '-';
+            if (typeof val === 'object' && val.iso) {
+                return new Date(val.iso).toLocaleDateString('pt-BR');
+            }
+            if (typeof val === 'string') {
+                const d = new Date(val);
+                if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
+                return val;
+            }
+            return String(val);
+        }
+
+        // CARREGAMENTO DO ARQUIVO JSON
+        function carregarArquivoJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    if (!json.collections || typeof json.collections !== 'object') {
+                        throw new Error("Formato não reconhecido. Certifique-se de que é o arquivo gerado pelo Backup.");
+                    }
+                    GLOBAL_DATA = json;
+                    inicializarPainel(file.name);
+                } catch (err) {
+                    alert("Erro ao ler o arquivo: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // CARREGA DADOS DE EXEMPLO (DEMONSTRAÇÃO)
+        function carregarExemploDemonstracao() {
+            GLOBAL_DATA = {
+                metadata: {
+                    geradoEm: new Date().toISOString(),
+                    projeto: "regiao655-admin (Demonstração)"
+                },
+                collections: {
+                    recibos: [
+                        { _id: "rec-001", data: { dataEmissao: "2026-08-01", igreja: "IEQ Central Londrina", pastor: "Rev. Valdir Ávila Ramos", referencia: "07/2026", entradas: 25000, taxaRegional: 1000, taxaCoord: 250, seguros: 150, outros: 0, total: 1400 } },
+                        { _id: "rec-002", data: { dataEmissao: "2026-08-03", igreja: "IEQ Jardim Bandeirantes", pastor: "Pr. Eduardo Silva", referencia: "07/2026", entradas: 12000, taxaRegional: 480, taxaCoord: 120, seguros: 100, outros: 0, total: 700 } },
+                        { _id: "rec-003", data: { dataEmissao: "2026-08-05", igreja: "IEQ Cambé", pastor: "Pr. Roberto Oliveira", referencia: "07/2026", entradas: 8500, taxaRegional: 340, taxaCoord: 85, seguros: 100, outros: 0, total: 525 } }
+                    ],
+                    igrejas: [
+                        { _id: "ig-01", data: { nome: "IEQ Central Londrina", pastor: "Rev. Valdir Ávila Ramos", cidade: "Londrina", bairro: "Centro", status: "Ativa" } },
+                        { _id: "ig-02", data: { nome: "IEQ Jardim Bandeirantes", pastor: "Pr. Eduardo Silva", cidade: "Londrina", bairro: "Bandeirantes", status: "Ativa" } },
+                        { _id: "ig-03", data: { nome: "IEQ Cambé", pastor: "Pr. Roberto Oliveira", cidade: "Cambé", bairro: "Centro", status: "Ativa" } }
+                    ],
+                    pastores: [
+                        { _id: "p-01", data: { nome: "Rev. Valdir Ávila Ramos", cargo: "Ministro (Superintendente)", igreja: "IEQ Central Londrina", telefone: "(43) 99999-0001" } },
+                        { _id: "p-02", data: { nome: "Pr. Eduardo Silva", cargo: "Ministro (Secretário Regional)", igreja: "IEQ Jardim Bandeirantes", telefone: "(43) 99999-0002" } },
+                        { _id: "p-03", data: { nome: "Pr. Roberto Oliveira", cargo: "Aspirante", igreja: "IEQ Cambé", telefone: "(43) 99999-0003" } }
+                    ],
+                    presencas: [
+                        { _id: "pr-01", data: { nome: "Pr. Eduardo Silva", igreja: "IEQ Jardim Bandeirantes", eventoId: "convocacao_agosto_2026", status: "Presente" } },
+                        { _id: "pr-02", data: { nome: "Rev. Valdir Ávila Ramos", igreja: "IEQ Central Londrina", eventoId: "convocacao_agosto_2026", status: "Presente" } }
+                    ]
+                }
+            };
+            inicializarPainel("demonstracao_exemplo.json");
+        }
+
+        // INICIALIZA AS TABELAS E MÉTRICAS
+        function inicializarPainel(fileName) {
+            document.getElementById('data-container').classList.remove('hidden');
+            
+            // Tag de status
+            document.getElementById('file-status-tag').innerHTML = `
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ${fileName}
+                </span>
+            `;
+
+            // Métricas
+            const recibos = GLOBAL_DATA.collections.recibos || [];
+            const igrejas = GLOBAL_DATA.collections.igrejas || [];
+            const pastores = GLOBAL_DATA.collections.pastores || [];
+            const presencas = GLOBAL_DATA.collections.presencas || [];
+
+            const totalArrecadado = recibos.reduce((acc, r) => acc + (parseFloat(r.data?.total || r.data?.taxaRegional || 0)), 0);
+            
+            document.getElementById('stat-recibos-count').innerText = recibos.length;
+            document.getElementById('stat-recibos-total').innerText = `${fmtMoeda(totalArrecadado)} total`;
+
+            document.getElementById('stat-igrejas-count').innerText = igrejas.length;
+            document.getElementById('stat-pastores-count').innerText = pastores.length;
+
+            const totalCols = Object.keys(GLOBAL_DATA.collections).length;
+            let totalDocs = 0;
+            Object.values(GLOBAL_DATA.collections).forEach(arr => { totalDocs += (arr ? arr.length : 0); });
+            
+            document.getElementById('stat-colecoes-count').innerText = totalCols;
+            document.getElementById('stat-docs-count').innerText = `${totalDocs} documentos salvos`;
+
+            // Popula Select do Explorer
+            const selExplorer = document.getElementById('select-colecao-explorer');
+            selExplorer.innerHTML = Object.keys(GLOBAL_DATA.collections).map(col => `
+                <option value="${col}">${col} (${GLOBAL_DATA.collections[col].length} docs)</option>
+            `).join('');
+
+            // Renderizar tabelas
+            renderTabelaRecibos(recibos);
+            renderTabelaIgrejas(igrejas);
+            renderTabelaPastores(pastores);
+            renderTabelaPresencas(presencas);
+            trocarColecaoExplorer();
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // ==========================================
+        // RENDERIZAÇÃO DAS TABELAS
+        // ==========================================
+        function renderTabelaRecibos(lista) {
+            const tbody = document.getElementById('tbody-recibos');
+            document.getElementById('recibos-badge-filtrados').innerText = `${lista.length} recibo(s)`;
+
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500">Nenhum recibo encontrado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = lista.map(item => {
+                const d = item.data || {};
+                const id = item._id;
+                const dataEmissao = fmtData(d.dataEmissao || d.criadoEm);
+                const igreja = d.igreja || d.igrejaNome || '-';
+                const pastor = d.pastor || d.pastorNome || '-';
+                const ref = d.referencia || d.periodo || '-';
+                const taxa = fmtMoeda(d.taxaRegional || d.valorRegional || 0);
+                const total = fmtMoeda(d.total || d.totalPago || 0);
+
+                return `
+                    <tr class="table-row-hover transition-colors">
+                        <td class="p-3 text-slate-300 font-bold">${id.substring(0, 10)}...<br><span class="text-[10px] text-slate-500 font-normal">${dataEmissao}</span></td>
+                        <td class="p-3 text-white font-semibold">${igreja}</td>
+                        <td class="p-3 text-slate-300">${pastor}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-800 text-blue-400 border border-slate-700 text-[10px] font-bold">${ref}</span></td>
+                        <td class="p-3 text-right text-slate-300">${taxa}</td>
+                        <td class="p-3 text-right text-emerald-400 font-bold">${total}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="verReciboDetalhes('${id}')" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-1 rounded transition-colors">
+                                Ver Dados
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderTabelaIgrejas(lista) {
+            const tbody = document.getElementById('tbody-igrejas');
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500">Nenhuma igreja encontrada.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = lista.map(item => {
+                const d = item.data || {};
+                return `
+                    <tr class="table-row-hover transition-colors">
+                        <td class="p-3 text-white font-bold">${d.nome || item._id}</td>
+                        <td class="p-3 text-slate-300">${d.pastor || d.pastorTitular || '-'}</td>
+                        <td class="p-3 text-slate-400">${d.cidade || 'Londrina'}${d.bairro ? ' - ' + d.bairro : ''}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">${d.status || 'Ativa'}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderTabelaPastores(lista) {
+            const tbody = document.getElementById('tbody-pastores');
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500">Nenhum pastor encontrado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = lista.map(item => {
+                const d = item.data || {};
+                return `
+                    <tr class="table-row-hover transition-colors">
+                        <td class="p-3 text-white font-bold">${d.nome || item._id}</td>
+                        <td class="p-3 text-purple-300"><span class="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-[10px] font-semibold">${d.cargo || d.funcao || 'Pastor'}</span></td>
+                        <td class="p-3 text-slate-300">${d.igreja || d.igrejaNome || '-'}</td>
+                        <td class="p-3 text-slate-400">${d.telefone || d.celular || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderTabelaPresencas(lista) {
+            const tbody = document.getElementById('tbody-presencas');
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500">Nenhuma presença encontrada.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = lista.map(item => {
+                const d = item.data || {};
+                const statusColor = d.status === 'Presente' ? 'text-emerald-400 bg-emerald-500/10' : 'text-amber-400 bg-amber-500/10';
+                return `
+                    <tr class="table-row-hover transition-colors">
+                        <td class="p-3 text-white font-bold">${d.nome || item._id}</td>
+                        <td class="p-3 text-slate-300">${d.igreja || '-'}</td>
+                        <td class="p-3 text-slate-400 font-mono text-[11px]">${d.eventoId || '-'}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded ${statusColor} text-[10px] font-bold">${d.status || 'Registrado'}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // FILTROS DE BUSCA EM TEMPO REAL
+        // ==========================================
+        function filtrarRecibos() {
+            const termo = document.getElementById('filtro-recibos').value.toLowerCase();
+            const recibos = (GLOBAL_DATA.collections.recibos || []).filter(item => {
+                const d = item.data || {};
+                const str = `${item._id} ${d.igreja} ${d.pastor} ${d.referencia} ${d.total}`.toLowerCase();
+                return str.includes(termo);
+            });
+            renderTabelaRecibos(recibos);
+        }
+
+        function filtrarIgrejas() {
+            const termo = document.getElementById('filtro-igrejas').value.toLowerCase();
+            const igrejas = (GLOBAL_DATA.collections.igrejas || []).filter(item => {
+                const d = item.data || {};
+                const str = `${item._id} ${d.nome} ${d.pastor} ${d.cidade} ${d.bairro}`.toLowerCase();
+                return str.includes(termo);
+            });
+            renderTabelaIgrejas(igrejas);
+        }
+
+        function filtrarPastores() {
+            const termo = document.getElementById('filtro-pastores').value.toLowerCase();
+            const pastores = (GLOBAL_DATA.collections.pastores || []).filter(item => {
+                const d = item.data || {};
+                const str = `${item._id} ${d.nome} ${d.cargo} ${d.igreja} ${d.telefone}`.toLowerCase();
+                return str.includes(termo);
+            });
+            renderTabelaPastores(pastores);
+        }
+
+        function filtrarPresencas() {
+            const termo = document.getElementById('filtro-presencas').value.toLowerCase();
+            const presencas = (GLOBAL_DATA.collections.presencas || []).filter(item => {
+                const d = item.data || {};
+                const str = `${item._id} ${d.nome} ${d.igreja} ${d.eventoId} ${d.status}`.toLowerCase();
+                return str.includes(termo);
+            });
+            renderTabelaPresencas(presencas);
+        }
+
+        // ==========================================
+        // EXPLORADOR GERAL
+        // ==========================================
+        function trocarColecaoExplorer() {
+            const col = document.getElementById('select-colecao-explorer').value;
+            const data = GLOBAL_DATA.collections[col] || [];
+            document.getElementById('pre-explorer-json').innerText = JSON.stringify(data, null, 2);
+        }
+
+        function copiarColecaoJSON() {
+            const text = document.getElementById('pre-explorer-json').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('JSON copiado para a área de transferência!');
+            });
+        }
+
+        // ==========================================
+        // MODAL DETALHE DO RECIBO
+        // ==========================================
+        function verReciboDetalhes(id) {
+            const recibo = (GLOBAL_DATA.collections.recibos || []).find(r => r._id === id);
+            if (!recibo) return;
+
+            const modalContent = document.getElementById('modal-recibo-conteudo');
+            modalContent.innerHTML = `
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                    <p><strong class="text-slate-400">ID:</strong> <span class="text-blue-400">${recibo._id}</span></p>
+                    <p><strong class="text-slate-400">Igreja:</strong> <span class="text-white">${recibo.data.igreja || '-'}</span></p>
+                    <p><strong class="text-slate-400">Pastor:</strong> <span class="text-white">${recibo.data.pastor || '-'}</span></p>
+                    <p><strong class="text-slate-400">Referência:</strong> <span class="text-amber-400">${recibo.data.referencia || '-'}</span></p>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <p class="text-slate-400 font-bold mb-2">Estrutura Completa dos Dados:</p>
+                    <pre class="text-[11px] text-slate-300 overflow-x-auto">${JSON.stringify(recibo.data, null, 2)}</pre>
+                </div>
+            `;
+
+            document.getElementById('modal-recibo-detalhe').classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function fecharModalRecibo() {
+            document.getElementById('modal-recibo-detalhe').classList.add('hidden');
+        }
+
+        // ==========================================
+        // NAVEGAÇÃO ENTRE ABAS
+        // ==========================================
+        function mudarAba(abaId) {
+            const abas = ['recibos', 'igrejas', 'pastores', 'presencas', 'explorador'];
+            abas.forEach(id => {
+                const btn = document.getElementById(`tab-btn-${id}`);
+                const view = document.getElementById(`view-${id}`);
+                const isCurrent = id === abaId;
+
+                if (btn) {
+                    btn.classList.toggle('active', isCurrent);
+                    btn.classList.toggle('text-slate-400', !isCurrent);
+                }
+                if (view) {
+                    view.classList.toggle('hidden', !isCurrent);
+                }
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // ==========================================
+        // EXPORTAÇÃO CSV / EXCEL
+        // ==========================================
+        function exportarCSV(tipo) {
+            const dados = GLOBAL_DATA.collections[tipo] || [];
+            if (dados.length === 0) {
+                alert('Nenhum dado para exportar.');
+                return;
+            }
+
+            const header = Object.keys(dados[0].data || {}).join(',');
+            const rows = dados.map(item => {
+                const d = item.data || {};
+                return Object.values(d).map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',');
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header, ...rows].join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `tabela_${tipo}_export.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        if (window.lucide) lucide.createIcons();
+    </script>
+</body>
+</html>
