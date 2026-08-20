@@ -337,6 +337,7 @@
         // ─── ABA 1: CAIXA ────────────────────────────────────────────────────
         let caixaChecks = {};   // { igrejaCodigo: true/false }
         let caixaObservacoes = {}; // { igrejaCodigo: [ { id, texto, dataCriacao, competencia } ] }
+        let expandedState = {};   // { igrejaCodigo: true/false }
 
         function formatarData(isoString) {
             if (!isoString) return '';
@@ -559,10 +560,12 @@
             if (isExpanded) {
                 obsSecao.classList.remove('block');
                 obsSecao.classList.add('hidden');
+                expandedState[codigo] = false;
                 chevron.innerHTML = `<i data-lucide="chevron-down" class="w-4.5 h-4.5 text-slate-500"></i>`;
             } else {
                 obsSecao.classList.remove('hidden');
                 obsSecao.classList.add('block');
+                expandedState[codigo] = true;
                 chevron.innerHTML = `<i data-lucide="chevron-up" class="w-4.5 h-4.5 text-slate-500"></i>`;
                 const mes = document.getElementById('caixaMes').value;
                 window.renderObservacoesIgreja(codigo, mes);
@@ -573,6 +576,9 @@
         async function carregarCaixa() {
             const mes = document.getElementById('caixaMes').value;
             document.getElementById('caixaLista').innerHTML = `<div class="flex justify-center py-12"><div class="spinner"></div></div>`;
+
+            // Reinicia estados de expansão para o novo mês
+            expandedState = {};
 
             // Busca checks salvos no Firestore
             const docRef = doc(db, "checklist_caixa", mes);
@@ -598,6 +604,13 @@
             itens.forEach(ig => {
                 const checked = !!caixaChecks[ig.codigo];
                 if (checked) marcados++;
+
+                const obsList = caixaObservacoes[ig.codigo] || [];
+                if (checked && expandedState[ig.codigo] === undefined) {
+                    expandedState[ig.codigo] = obsList.length > 0;
+                }
+                const isExpanded = checked && !!expandedState[ig.codigo];
+
                 html += `
                 <div id="caixa-item-${ig.codigo}"
                      class="check-item ${checked ? 'checked' : ''} bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-3 transition-all duration-200">
@@ -615,14 +628,14 @@
                             ${checked 
                                 ? `<span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Na Caixa</span>
                                    <button id="obs-chevron-${ig.codigo}" onclick="toggleExpandObs(event, '${ig.codigo}')" class="p-1 hover:bg-slate-100 rounded-lg transition-colors flex items-center justify-center shrink-0" title="Expandir/Recolher Observações">
-                                       <i data-lucide="chevron-up" class="w-4 h-4 text-slate-500"></i>
+                                       <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-500"></i>
                                    </button>` 
                                 : `<span class="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Pendente</span>`}
                         </div>
                     </div>
                     
                     <!-- Observações Section -->
-                    <div id="obs-secao-${ig.codigo}" class="${checked ? 'block' : 'hidden'} border-t border-slate-100 pt-3 space-y-3">
+                    <div id="obs-secao-${ig.codigo}" class="${isExpanded ? 'block' : 'hidden'} border-t border-slate-100 pt-3 space-y-3">
                         <div class="flex justify-between items-center">
                             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
                                 <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-slate-400"></i> Observações / Pendências
@@ -688,10 +701,13 @@
 
             if (badgeContainer) {
                 if (novo) {
+                    const obsList = caixaObservacoes[codigo] || [];
+                    const isExpanded = obsList.length > 0;
+                    expandedState[codigo] = isExpanded;
                     badgeContainer.innerHTML = `
                         <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Na Caixa</span>
                         <button id="obs-chevron-${codigo}" onclick="toggleExpandObs(event, '${codigo}')" class="p-1 hover:bg-slate-100 rounded-lg transition-colors flex items-center justify-center shrink-0" title="Expandir/Recolher Observações">
-                            <i data-lucide="chevron-up" class="w-4 h-4 text-slate-500"></i>
+                            <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-500"></i>
                         </button>
                     `;
                 } else {
@@ -702,7 +718,8 @@
             }
 
             if (obsSecao) {
-                if (novo) {
+                const isExpanded = novo && !!expandedState[codigo];
+                if (isExpanded) {
                     obsSecao.classList.remove('hidden');
                     obsSecao.classList.add('block');
                     renderObservacoesIgreja(codigo, mes);
