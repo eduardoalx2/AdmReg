@@ -21,7 +21,7 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Deploy to Firebase Hosting
-        run: firebase deploy --only hosting --project regiao655-admin
+      - name: Deploy to Firebase Hosting and Firestore Rules
+        run: firebase deploy --only hosting,firestore --project regiao655-admin
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

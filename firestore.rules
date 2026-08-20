@@ -92,6 +92,10 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
 
+    match /checklist_observacoes/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
     match /checklist_sgaf/{docId} {
       allow read, write: if isAuthenticated();
     }

@@ -207,7 +207,7 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import {
-            collection, getDocs, doc, setDoc, getDoc, query, where
+            collection, getDocs, doc, setDoc, getDoc, query, where, addDoc, deleteDoc, updateDoc
         } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         // ─── Utils ───────────────────────────────────────────────────────────
@@ -286,6 +286,7 @@
 
         // ─── Dados base ──────────────────────────────────────────────────────
         let masterIgrejas = [];   // [{codigo, nome, display}]
+        let masterPastores = [];  // [pastorData]
         let saldosData = [];      // dados do saldos_virada
 
         async function carregarIgrejas() {
@@ -298,6 +299,15 @@
             });
             lista.sort((a, b) => parseInt(a.codigo) - parseInt(b.codigo));
             masterIgrejas = lista;
+        }
+
+        async function carregarPastores() {
+            const snap = await getDocs(collection(db, "pastores"));
+            const lista = [];
+            snap.forEach(d => {
+                lista.push(d.data());
+            });
+            masterPastores = lista;
         }
 
         async function carregarSaldos() {
@@ -326,6 +336,218 @@
 
         // ─── ABA 1: CAIXA ────────────────────────────────────────────────────
         let caixaChecks = {};   // { igrejaCodigo: true/false }
+        let caixaObservacoes = {}; // { igrejaCodigo: [ { id, texto, dataCriacao, competencia } ] }
+
+        function formatarData(isoString) {
+            if (!isoString) return '';
+            try {
+                const d = new Date(isoString);
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const ano = d.getFullYear();
+                const hora = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                return `${dia}/${mes}/${ano} às ${hora}:${min}`;
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function obterPastorDaIgreja(codigoIgreja) {
+            const ig = masterIgrejas.find(i => i.codigo === codigoIgreja);
+            if (!ig) return null;
+            return masterPastores.find(p =>
+                p.funcao === 'Pastor Titular' &&
+                (Array.isArray(p.igreja) ? p.igreja.includes(ig.nome) : p.igreja === ig.nome)
+            );
+        }
+
+        async function carregarObservacoes() {
+            const mes = document.getElementById('caixaMes').value;
+            caixaObservacoes = {};
+            try {
+                const q = query(collection(db, "checklist_observacoes"), where("competencia", "==", mes));
+                const snap = await getDocs(q);
+                snap.forEach(d => {
+                    const data = d.data();
+                    const cod = data.igrejaCodigo;
+                    if (!caixaObservacoes[cod]) {
+                        caixaObservacoes[cod] = [];
+                    }
+                    caixaObservacoes[cod].push({
+                        id: d.id,
+                        texto: data.texto,
+                        dataCriacao: data.dataCriacao,
+                        competencia: data.competencia
+                    });
+                });
+                
+                for (const cod in caixaObservacoes) {
+                    caixaObservacoes[cod].sort((a, b) => a.dataCriacao.localeCompare(b.dataCriacao));
+                }
+            } catch (e) {
+                console.error("Erro ao carregar observações:", e);
+            }
+        }
+
+        window.renderObservacoesIgreja = function(codigo, mes) {
+            const container = document.getElementById(`obs-lista-${codigo}`);
+            if (!container) return;
+
+            const obsList = caixaObservacoes[codigo] || [];
+            if (obsList.length === 0) {
+                container.innerHTML = `<p class="text-[11px] text-slate-400 italic">Nenhuma observação lançada para este mês.</p>`;
+                return;
+            }
+
+            container.innerHTML = obsList.map(obs => `
+                <div id="obs-item-${obs.id}" class="flex items-start justify-between bg-slate-50 border border-slate-100 rounded-lg p-2.5 gap-2">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs text-slate-700 font-medium whitespace-pre-wrap">${obs.texto}</p>
+                        <p class="text-[9px] text-slate-400 mt-1 font-semibold">${formatarData(obs.dataCriacao)}</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 ml-2">
+                        <button onclick="enviarObservacaoWA('${obs.id}', '${codigo}', '${mes}')" title="Enviar para o Pastor" class="text-emerald-600 hover:bg-emerald-50 p-1.5 rounded-lg transition-colors border border-emerald-100 bg-white shrink-0">
+                            <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="editarObservacaoForm('${obs.id}', '${codigo}', '${mes}')" title="Editar" class="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-lg transition-colors border border-indigo-100 bg-white shrink-0">
+                            <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="excluirObservacao('${obs.id}', '${codigo}', '${mes}')" title="Excluir" class="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition-colors border border-rose-100 bg-white shrink-0">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            if (window.lucide) window.lucide.createIcons();
+        };
+
+        window.adicionarObservacao = async function(codigo, mes) {
+            const input = document.getElementById(`obs-input-${codigo}`);
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            try {
+                const docData = {
+                    igrejaCodigo: codigo,
+                    competencia: mes,
+                    texto: texto,
+                    dataCriacao: new Date().toISOString()
+                };
+
+                const docRef = await addDoc(collection(db, "checklist_observacoes"), docData);
+
+                if (!caixaObservacoes[codigo]) {
+                    caixaObservacoes[codigo] = [];
+                }
+                caixaObservacoes[codigo].push({
+                    id: docRef.id,
+                    ...docData
+                });
+
+                input.value = '';
+                window.renderObservacoesIgreja(codigo, mes);
+                showToast('✓ Observação adicionada', '#16a34a');
+            } catch (e) {
+                showToast('Erro ao salvar observação', '#dc2626');
+                console.error(e);
+            }
+        };
+
+        window.excluirObservacao = async function(id, codigo, mes) {
+            if (!confirm('Deseja realmente excluir esta observação?')) return;
+
+            try {
+                await deleteDoc(doc(db, "checklist_observacoes", id));
+
+                if (caixaObservacoes[codigo]) {
+                    caixaObservacoes[codigo] = caixaObservacoes[codigo].filter(o => o.id !== id);
+                }
+
+                window.renderObservacoesIgreja(codigo, mes);
+                showToast('✓ Observação excluída', '#64748b');
+            } catch (e) {
+                showToast('Erro ao excluir', '#dc2626');
+                console.error(e);
+            }
+        };
+
+        window.editarObservacaoForm = function(id, codigo, mes) {
+            const itemDiv = document.getElementById(`obs-item-${id}`);
+            if (!itemDiv) return;
+
+            const obsList = caixaObservacoes[codigo] || [];
+            const obs = obsList.find(o => o.id === id);
+            if (!obs) return;
+
+            itemDiv.innerHTML = `
+                <div class="flex-1 min-w-0">
+                    <textarea id="obs-edit-input-${id}" class="w-full text-xs text-slate-700 font-medium border border-indigo-200 rounded p-1.5 focus:ring-1 focus:ring-indigo-500 outline-none bg-white" rows="2">${obs.texto}</textarea>
+                </div>
+                <div class="flex flex-col gap-1 ml-2">
+                    <button onclick="salvarObservacao('${id}', '${codigo}', '${mes}')" class="text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded transition-colors uppercase whitespace-nowrap">
+                        Salvar
+                    </button>
+                    <button onclick="window.renderObservacoesIgreja('${codigo}', '${mes}')" class="text-[10px] font-bold text-slate-500 hover:text-slate-700 px-2.5 py-1 rounded transition-colors uppercase whitespace-nowrap border border-slate-200 bg-white">
+                        Cancelar
+                    </button>
+                </div>
+            `;
+        };
+
+        window.salvarObservacao = async function(id, codigo, mes) {
+            const input = document.getElementById(`obs-edit-input-${id}`);
+            if (!input) return;
+            const novoTexto = input.value.trim();
+            if (!novoTexto) return;
+
+            try {
+                await updateDoc(doc(db, "checklist_observacoes", id), {
+                    texto: novoTexto,
+                    dataAtualizacao: new Date().toISOString()
+                });
+
+                if (caixaObservacoes[codigo]) {
+                    const obs = caixaObservacoes[codigo].find(o => o.id === id);
+                    if (obs) {
+                        obs.texto = novoTexto;
+                    }
+                }
+
+                window.renderObservacoesIgreja(codigo, mes);
+                showToast('✓ Observação atualizada', '#16a34a');
+            } catch (e) {
+                showToast('Erro ao atualizar', '#dc2626');
+                console.error(e);
+            }
+        };
+
+        window.enviarObservacaoWA = function(id, codigo, mes) {
+            const obsList = caixaObservacoes[codigo] || [];
+            const obs = obsList.find(o => o.id === id);
+            if (!obs) return;
+
+            const ig = masterIgrejas.find(i => i.codigo === codigo);
+            const nomeIgreja = ig ? ig.nome : `Igreja ${codigo}`;
+            const competenciaLabel = chaveParaLabel(mes);
+
+            const pastor = obterPastorDaIgreja(codigo);
+            const nomePastor = pastor ? pastor.nome : 'Pastor';
+            const telefone = pastor ? pastor.telefone : '';
+
+            const msg = `*Escritório da Região 655*\n_Londrina/PR_\n\nOlá, ${nomePastor}! 😊\n\nReferente ao relatório de competência *${competenciaLabel}* da igreja *${nomeIgreja}*, temos a seguinte observação:\n\n💬 "${obs.texto}"\n\nPor favor, verifique assim que possível. Obrigado!`;
+
+            let num = (telefone || '').replace(/\D/g, '');
+            if (num.length >= 10 && num.length <= 11) num = '55' + num;
+            
+            if (!telefone) {
+                showToast('Aviso: Pastor sem telefone cadastrado!', '#eab308');
+            }
+            
+            const wa = num ? `https://wa.me/${num}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(wa, '_blank');
+        };
 
         async function carregarCaixa() {
             const mes = document.getElementById('caixaMes').value;
@@ -335,6 +557,9 @@
             const docRef = doc(db, "checklist_caixa", mes);
             const snap = await getDoc(docRef);
             caixaChecks = snap.exists() ? (snap.data().checks || {}) : {};
+
+            // Carrega observações deste mês
+            await carregarObservacoes();
 
             renderCaixa(mes);
         }
@@ -354,20 +579,63 @@
                 if (checked) marcados++;
                 html += `
                 <div id="caixa-item-${ig.codigo}"
-                     class="check-item ${checked ? 'checked' : ''} bg-white rounded-xl border border-slate-200 p-3 flex items-center gap-3 cursor-pointer select-none active:scale-[0.99]"
-                     onclick="toggleCaixa('${ig.codigo}', '${mes}')">
-                    <div id="caixa-box-${ig.codigo}" class="check-box ${checked ? 'checked' : ''}">
-                        ${checked ? `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>` : ''}
+                     class="check-item ${checked ? 'checked' : ''} bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-3 transition-all duration-200">
+                    
+                    <!-- Header: Checkbox + Title + Status -->
+                    <div class="flex items-center gap-3 cursor-pointer select-none" onclick="toggleCaixa('${ig.codigo}', '${mes}')">
+                        <div id="caixa-box-${ig.codigo}" class="check-box ${checked ? 'checked' : ''}">
+                            ${checked ? `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>` : ''}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold text-slate-800 truncate">${ig.display}</p>
+                            <p class="text-[10px] text-slate-400 font-medium">Competência: ${label}</p>
+                        </div>
+                        <div id="caixa-badge-${ig.codigo}">
+                            ${checked 
+                                ? `<span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Na Caixa</span>` 
+                                : `<span class="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Pendente</span>`}
+                        </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-slate-800 truncate">${ig.display}</p>
-                        <p class="text-[10px] text-slate-400 font-medium">Competência: ${label}</p>
+                    
+                    <!-- Observações Section -->
+                    <div id="obs-secao-${ig.codigo}" class="${checked ? 'block' : 'hidden'} border-t border-slate-100 pt-3 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-slate-400"></i> Observações / Pendências
+                            </p>
+                        </div>
+                        
+                        <!-- Lista de Observações -->
+                        <div id="obs-lista-${ig.codigo}" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            <!-- Populated dynamically by renderObservacoesIgreja -->
+                        </div>
+                        
+                        <!-- Campo para adicionar nova -->
+                        <div class="flex gap-2 items-center mt-2">
+                            <input type="text" id="obs-input-${ig.codigo}" 
+                                   placeholder="Digite uma observação..." 
+                                   class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:ring-1 focus:ring-indigo-500 outline-none placeholder:text-slate-400"
+                                   onkeydown="if(event.key === 'Enter') adicionarObservacao('${ig.codigo}', '${mes}')">
+                            <button onclick="adicionarObservacao('${ig.codigo}', '${mes}')" 
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                                    title="Adicionar Observação">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
-                    ${checked ? `<span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase">Na Caixa</span>` : `<span class="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase">Pendente</span>`}
                 </div>`;
             });
 
             lista.innerHTML = html;
+
+            // Render observations for checked churches
+            itens.forEach(ig => {
+                const checked = !!caixaChecks[ig.codigo];
+                if (checked) {
+                    renderObservacoesIgreja(ig.codigo, mes);
+                }
+            });
+
             atualizarProgressoCaixa(marcados, total);
             if (window.lucide) window.lucide.createIcons();
         }
@@ -385,6 +653,8 @@
             // Atualiza UI imediatamente
             const item = document.getElementById(`caixa-item-${codigo}`);
             const box = document.getElementById(`caixa-box-${codigo}`);
+            const badgeContainer = document.getElementById(`caixa-badge-${codigo}`);
+            const obsSecao = document.getElementById(`obs-secao-${codigo}`);
 
             item.classList.toggle('checked', novo);
             box.classList.toggle('checked', novo);
@@ -392,19 +662,27 @@
                 ? `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`
                 : '';
 
-            const badge = item.querySelector('span:last-child');
-            if (badge) {
+            if (badgeContainer) {
                 if (novo) {
-                    badge.textContent = 'Na Caixa';
-                    badge.className = 'text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase';
+                    badgeContainer.innerHTML = `<span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Na Caixa</span>`;
                 } else {
-                    badge.textContent = 'Pendente';
-                    badge.className = 'text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase';
+                    badgeContainer.innerHTML = `<span class="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Pendente</span>`;
+                }
+            }
+
+            if (obsSecao) {
+                if (novo) {
+                    obsSecao.classList.remove('hidden');
+                    obsSecao.classList.add('block');
+                    renderObservacoesIgreja(codigo, mes);
+                } else {
+                    obsSecao.classList.remove('block');
+                    obsSecao.classList.add('hidden');
                 }
             }
 
             // Recalcula progresso
-            const itens = [{ codigo: '0655' }, ...masterIgrejas];
+            const itens = masterIgrejas;
             let marcados = itens.filter(ig => !!caixaChecks[ig.codigo]).length;
             atualizarProgressoCaixa(marcados, itens.length);
 
@@ -561,7 +839,7 @@
             document.getElementById('sgafMes').addEventListener('change', carregarSgaf);
 
             try {
-                await Promise.all([carregarIgrejas(), carregarSaldos()]);
+                await Promise.all([carregarIgrejas(), carregarSaldos(), carregarPastores()]);
                 await carregarCaixa();
                 await carregarSgaf();
             } catch (e) {
