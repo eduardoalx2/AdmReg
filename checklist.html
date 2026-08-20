@@ -734,6 +734,8 @@
             let marcados = itens.filter(ig => !!caixaChecks[ig.codigo]).length;
             atualizarProgressoCaixa(marcados, itens.length);
 
+            if (window.lucide) window.lucide.createIcons();
+
             // Salva no Firestore
             try {
                 await setDoc(doc(db, "checklist_caixa", mes), { checks: caixaChecks, updatedAt: new Date().toISOString() });
