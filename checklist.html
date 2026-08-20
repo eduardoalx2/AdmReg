@@ -549,6 +549,27 @@
             window.open(wa, '_blank');
         };
 
+        window.toggleExpandObs = function(event, codigo) {
+            event.stopPropagation();
+            const obsSecao = document.getElementById(`obs-secao-${codigo}`);
+            const chevron = document.getElementById(`obs-chevron-${codigo}`);
+            if (!obsSecao || !chevron) return;
+
+            const isExpanded = !obsSecao.classList.contains('hidden');
+            if (isExpanded) {
+                obsSecao.classList.remove('block');
+                obsSecao.classList.add('hidden');
+                chevron.innerHTML = `<i data-lucide="chevron-down" class="w-4.5 h-4.5 text-slate-500"></i>`;
+            } else {
+                obsSecao.classList.remove('hidden');
+                obsSecao.classList.add('block');
+                chevron.innerHTML = `<i data-lucide="chevron-up" class="w-4.5 h-4.5 text-slate-500"></i>`;
+                const mes = document.getElementById('caixaMes').value;
+                window.renderObservacoesIgreja(codigo, mes);
+            }
+            if (window.lucide) window.lucide.createIcons();
+        };
+
         async function carregarCaixa() {
             const mes = document.getElementById('caixaMes').value;
             document.getElementById('caixaLista').innerHTML = `<div class="flex justify-center py-12"><div class="spinner"></div></div>`;
@@ -590,9 +611,12 @@
                             <p class="text-sm font-bold text-slate-800 truncate">${ig.display}</p>
                             <p class="text-[10px] text-slate-400 font-medium">Competência: ${label}</p>
                         </div>
-                        <div id="caixa-badge-${ig.codigo}">
+                        <div id="caixa-badge-${ig.codigo}" class="flex items-center gap-1.5">
                             ${checked 
-                                ? `<span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Na Caixa</span>` 
+                                ? `<span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Na Caixa</span>
+                                   <button id="obs-chevron-${ig.codigo}" onclick="toggleExpandObs(event, '${ig.codigo}')" class="p-1 hover:bg-slate-100 rounded-lg transition-colors flex items-center justify-center shrink-0" title="Expandir/Recolher Observações">
+                                       <i data-lucide="chevron-up" class="w-4 h-4 text-slate-500"></i>
+                                   </button>` 
                                 : `<span class="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Pendente</span>`}
                         </div>
                     </div>
@@ -664,9 +688,16 @@
 
             if (badgeContainer) {
                 if (novo) {
-                    badgeContainer.innerHTML = `<span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Na Caixa</span>`;
+                    badgeContainer.innerHTML = `
+                        <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Na Caixa</span>
+                        <button id="obs-chevron-${codigo}" onclick="toggleExpandObs(event, '${codigo}')" class="p-1 hover:bg-slate-100 rounded-lg transition-colors flex items-center justify-center shrink-0" title="Expandir/Recolher Observações">
+                            <i data-lucide="chevron-up" class="w-4 h-4 text-slate-500"></i>
+                        </button>
+                    `;
                 } else {
-                    badgeContainer.innerHTML = `<span class="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Pendente</span>`;
+                    badgeContainer.innerHTML = `
+                        <span class="text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full uppercase whitespace-nowrap">Pendente</span>
+                    `;
                 }
             }
 
