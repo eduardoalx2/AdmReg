@@ -49,18 +49,21 @@
                         <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
                     </div>
                 </a>
-                <div class="flex items-center gap-3">
-                    <a href="recibosreg655.html" class="hidden sm:flex text-blue-600 hover:text-blue-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors items-center gap-1 uppercase tracking-wider">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Novo Recibo
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a href="editarrecibos.html" class="text-blue-600 hover:text-blue-700 font-semibold text-[11px] px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="file-edit" class="w-3.5 h-3.5"></i> Gerenciar Recibos
                     </a>
-                    <a href="editarrecibos.html" class="hidden sm:flex text-blue-600 hover:text-blue-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors items-center gap-1 uppercase tracking-wider">
-                        <i data-lucide="table" class="w-4 h-4"></i> Gerenciar
+                    <a href="recibos_detalhados.html" class="text-amber-700 hover:text-amber-800 font-bold text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="search" class="w-3.5 h-3.5"></i> Recibos Detalhados
                     </a>
-                    <button onclick="window.fetchData()" class="p-2 text-slate-500 hover:text-blue-600 transition-colors bg-slate-50 rounded-lg border border-slate-200" title="Sincronizar">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    <a href="recibosreg655.html" class="hidden sm:flex text-blue-600 hover:text-blue-700 font-semibold text-[11px] px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Novo Recibo
+                    </a>
+                    <button onclick="window.fetchData()" class="p-1.5 text-slate-500 hover:text-blue-600 transition-colors bg-slate-50 rounded-lg border border-slate-200" title="Sincronizar">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                     </button>
                     
-                    <div id="lastUpdate" class="text-right hidden md:block mr-2">
+                    <div id="lastUpdate" class="text-right hidden md:block mr-1">
                         <p class="text-[10px] text-slate-400 uppercase font-bold">Status</p>
                         <p class="text-xs font-medium text-blue-600" id="updateTimestamp">Conectando...</p>
                     </div>
