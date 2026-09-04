@@ -666,6 +666,33 @@
             const dataEmissao     = `${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`;
             const igrejaFormatada = `${d.igrejaCodigo} - ${d.igrejaNome}`;
 
+            const aa = String(hoje.getFullYear()).slice(-2);
+            const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+            let nextSeq = 1;
+            try {
+                const snap = await getDocs(collection(db, 'recibos'));
+                snap.forEach(docSnap => {
+                    const itemData = docSnap.data();
+                    const itemCode = itemData.igrejaCodigo || (itemData.igrejaFormatada ? itemData.igrejaFormatada.split(' - ')[0].trim() : '');
+                    if (String(itemCode) === String(d.igrejaCodigo)) {
+                        let itemAA = '', itemMM = '';
+                        if (itemData.dataEmissao && itemData.dataEmissao.includes('/')) {
+                            const parts = itemData.dataEmissao.split('/');
+                            if (parts.length === 3) { itemMM = parts[1].padStart(2, '0'); itemAA = parts[2].slice(-2); }
+                        }
+                        if ((!itemAA || !itemMM) && itemData.referenceDate && itemData.referenceDate.includes('/')) {
+                            const parts = itemData.referenceDate.split('/');
+                            if (parts.length === 2) { itemMM = parts[0].padStart(2, '0'); itemAA = parts[1].slice(-2); }
+                        }
+                        if (itemAA === aa && itemMM === mm) {
+                            nextSeq++;
+                        }
+                    }
+                });
+            } catch (eSeq) { console.warn('Erro ao calcular sequencial:', eSeq); }
+            const seqStr = String(nextSeq).padStart(2, '0');
+            const codigoRecibo = `${d.igrejaCodigo}.${aa}${mm}.${seqStr}`;
+
             try {
                 await updateDoc(doc(db, 'pendencias_manuais', id), {
                     valorPago: novoPago, status: novoStatus, pagamentos, updatedAt: serverTimestamp()
@@ -673,6 +700,7 @@
 
                 // Salva na coleção recibos para aparecer em todos os dashboards
                 await addDoc(collection(db, 'recibos'), {
+                    codigoRecibo,
                     igrejaCodigo:       d.igrejaCodigo,
                     igrejaNome:         d.igrejaNome,
                     igrejaFormatada,
@@ -700,15 +728,15 @@
                 }
                 window.fecharModalPagamento();
                 window.renderizarTabela();
-                window.exibirRecibo(debitosList.find(i => i.id === id), novoPag);
+                window.exibirRecibo(debitosList.find(i => i.id === id), novoPag, codigoRecibo);
             } catch (err) {
                 console.error(err); alert('Erro ao registrar pagamento.');
             }
         };
 
         // ── RECIBO ────────────────────────────────────────────────────
-        window.exibirRecibo = (d, pagamento) => {
-            currentReciboRef = { debito: d, pagamento };
+        window.exibirRecibo = (d, pagamento, codigoRecibo = '') => {
+            currentReciboRef = { debito: d, pagamento, codigoRecibo };
             const novoSaldo = (d.valorTotal || 0) - (d.valorPago || 0);
             const isQuitado = d.status === 'quitado';
             const pagAntes  = (d.valorPago || 0) - pagamento.valor;
@@ -779,7 +807,7 @@
                         </div>
                     </div>
                     <div style="text-align:center;margin-top:20px;font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">
-                        Documento gerado eletronicamente — IEQ Região 655 — ${new Date().toLocaleDateString('pt-BR')}
+                        Documento gerado eletronicamente — IEQ Região 655 — ${new Date().toLocaleDateString('pt-BR')}${codigoRecibo ? ` · RECIBO ${codigoRecibo}` : ''}
                     </div>
                 </div>`;
 

@@ -505,8 +505,6 @@
 
             const counters = {};
             sorted.forEach(r => {
-                if (r.codigoRecibo) return;
-
                 let codIgreja = r.igrejaCodigo;
                 if (!codIgreja && r.igrejaFormatada) {
                     codIgreja = r.igrejaFormatada.split(' - ')[0].trim();
@@ -535,6 +533,18 @@
                 }
 
                 const chave = `${codIgreja}_${aa}${mm}`;
+
+                if (r.codigoRecibo) {
+                    const p = r.codigoRecibo.split('.');
+                    if (p.length === 3) {
+                        const numSeq = parseInt(p[2], 10);
+                        if (!isNaN(numSeq)) {
+                            counters[chave] = Math.max(counters[chave] || 0, numSeq);
+                        }
+                    }
+                    return;
+                }
+
                 counters[chave] = (counters[chave] || 0) + 1;
                 const seq = String(counters[chave]).padStart(2, '0');
                 r.codigoRecibo = `${codIgreja}.${aa}${mm}.${seq}`;

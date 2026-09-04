@@ -134,7 +134,7 @@
                         </div>
                     </div>
                 </div>
-                <div style="position:absolute;bottom:8px;left:0;width:100%;text-align:center;font-size:10px;color:#9ca3af;text-transform:uppercase;">Documento gerado eletronicamente - IEQ REG655</div>
+                <div style="position:absolute;bottom:8px;left:0;width:100%;text-align:center;font-size:10px;color:#9ca3af;text-transform:uppercase;">Documento gerado eletronicamente - IEQ REG655<span id="pdf-codigo-rodape"></span></div>
             </div>
         </div>
     </div>
@@ -564,6 +564,82 @@
             </div>`;
         }
 
+        function calcularCodigosRecibos(lista) {
+            const getTimestamp = (r) => {
+                if (r.createdAt && r.createdAt.seconds) return r.createdAt.seconds * 1000;
+                if (r.dataHoraRegistro) {
+                    const clean = r.dataHoraRegistro.replace(',', '');
+                    const [dPart, tPart] = clean.split(' ');
+                    if (dPart) {
+                        const [d, m, y] = dPart.split('/');
+                        const [hh, mm, ss] = (tPart || '00:00:00').split(':');
+                        if (d && m && y) return new Date(y, m - 1, d, hh || 0, mm || 0, ss || 0).getTime();
+                    }
+                }
+                if (r.dataEmissao) {
+                    const [d, m, y] = r.dataEmissao.split('/');
+                    if (d && m && y) return new Date(y, m - 1, d).getTime();
+                }
+                return 0;
+            };
+
+            const sorted = [...lista].sort((a, b) => {
+                const tA = getTimestamp(a);
+                const tB = getTimestamp(b);
+                if (tA !== tB) return tA - tB;
+                return (a.id || '').localeCompare(b.id || '');
+            });
+
+            const counters = {};
+            sorted.forEach(r => {
+                let codIgreja = r.igrejaCodigo;
+                if (!codIgreja && r.igrejaFormatada) {
+                    codIgreja = r.igrejaFormatada.split(' - ')[0].trim();
+                }
+                if (!codIgreja) codIgreja = 'UNID';
+
+                let aa = '';
+                let mm = '';
+                if (r.dataEmissao && r.dataEmissao.includes('/')) {
+                    const parts = r.dataEmissao.split('/');
+                    if (parts.length === 3) {
+                        mm = parts[1].padStart(2, '0');
+                        aa = parts[2].slice(-2);
+                    }
+                }
+                if ((!aa || !mm) && r.referenceDate && r.referenceDate.includes('/')) {
+                    const parts = r.referenceDate.split('/');
+                    if (parts.length === 2) {
+                        mm = parts[0].padStart(2, '0');
+                        aa = parts[1].slice(-2);
+                    }
+                }
+                if (!aa || !mm) {
+                    aa = '26';
+                    mm = '01';
+                }
+
+                const chave = `${codIgreja}_${aa}${mm}`;
+
+                if (r.codigoRecibo) {
+                    const p = r.codigoRecibo.split('.');
+                    if (p.length === 3) {
+                        const numSeq = parseInt(p[2], 10);
+                        if (!isNaN(numSeq)) {
+                            counters[chave] = Math.max(counters[chave] || 0, numSeq);
+                        }
+                    }
+                    return;
+                }
+
+                counters[chave] = (counters[chave] || 0) + 1;
+                const seq = String(counters[chave]).padStart(2, '0');
+                r.codigoRecibo = `${codIgreja}.${aa}${mm}.${seq}`;
+            });
+
+            return lista;
+        }
+
         async function carregarDadosPastor() {
             if (!igrejaAtiva) {
                 const main = document.getElementById('main-content');
@@ -659,8 +735,11 @@
                 saldosSnap.forEach(d=>{ const data=d.data(); if(matchIg(data)) saldos.push(data); });
                 saldos.sort((a,b)=>(b.periodoChave||'').localeCompare(a.periodoChave||''));
 
-                globalRecibos = [];
-                recibosSnap.forEach(d=>{ const data=d.data(); if(matchIg(data)) globalRecibos.push({id:d.id,...data}); });
+                const todosRecibos = [];
+                recibosSnap.forEach(d => todosRecibos.push({ id: d.id, ...d.data() }));
+                calcularCodigosRecibos(todosRecibos);
+
+                globalRecibos = todosRecibos.filter(r => matchIg(r));
                 const parseEm = s=>{const p=(s||'').split('/');return p.length===3?new Date(+p[2],+p[1]-1,+p[0]).getTime():0;};
                 globalRecibos.sort((a,b)=>parseEm(b.dataEmissao)-parseEm(a.dataEmissao));
 
@@ -767,7 +846,7 @@
             if (reciboRef && (parseFloat(reciboRef.regionalTax)||0)>0) {
                 statusHtml = `<div style="width:56px;height:56px;border-radius:50%;background:rgba(16,185,129,0.15);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:28px;">✅</div>
                     <p style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;color:#34d399;margin-bottom:6px;">Tudo Certo!</p>
-                    <p style="font-size:11px;color:var(--text-muted);">Recibo de <b style="color:var(--text-secondary);">${strMesRef}</b> emitido.</p>`;
+                    <p style="font-size:11px;color:var(--text-muted);">Recibo de <b style="color:var(--text-secondary);">${strMesRef}</b> emitido.${reciboRef.codigoRecibo ? ` <span style="display:inline-block;margin-left:4px;font-family:monospace;font-size:10px;font-weight:800;color:#34d399;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);padding:1px 6px;border-radius:6px;vertical-align:middle;">${esc(reciboRef.codigoRecibo)}</span>` : ''}</p>`;
             } else if (atrasado) {
                 statusHtml = `<div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.15);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:28px;">🚨</div>
                     <p style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;color:#f87171;margin-bottom:6px;">Pendente (Atrasado)</p>
@@ -919,8 +998,11 @@
                     return `<div class="p-row">
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
                             <div>
-                                <div style="font-size:12px;font-weight:800;text-transform:uppercase;color:var(--text-primary);">Ref. ${esc(r.referenceDate||'-')}</div>
-                                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Emitido em: ${esc(r.dataEmissao||'-')}</div>
+                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                    <span style="font-size:12px;font-weight:800;text-transform:uppercase;color:var(--text-primary);">Ref. ${esc(r.referenceDate||'-')}</span>
+                                    ${r.codigoRecibo ? `<span style="font-family:monospace;font-size:10px;font-weight:800;color:#60a5fa;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);padding:1px 6px;border-radius:6px;letter-spacing:0.02em;" title="Número do Recibo">${esc(r.codigoRecibo)}</span>` : ''}
+                                </div>
+                                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Emitido em: ${esc(r.dataEmissao||'-')}${r.codigoRecibo ? ` · <span style="color:var(--text-secondary);font-weight:600;">Recibo ${esc(r.codigoRecibo)}</span>` : ''}</div>
                                 ${rHerdado?`<span style="font-size:8px;font-weight:700;color:#94a3b8;background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.2);padding:1px 6px;border-radius:100px;display:inline-block;margin-top:3px;">Gestão anterior</span>`:''}
                             </div>
                             <div style="text-align:right;">
@@ -1227,6 +1309,10 @@
             } else { outrosEl.style.display = 'none'; }
             document.getElementById('pdf-total').textContent = fmt(r.total);
             document.getElementById('pdf-extenso').textContent = numeroPorExtenso(r.total||0);
+            const elCodRodape = document.getElementById('pdf-codigo-rodape');
+            if (elCodRodape) {
+                elCodRodape.textContent = r.codigoRecibo ? ` · RECIBO ${r.codigoRecibo}` : '';
+            }
         }
 
         function showToast(msg, duration = 3500) {
@@ -1255,7 +1341,8 @@
             preencherPdf(r);
 
             const fn = `${r.igrejaCodigo||'UNID'} - REC REG REF(${(r.referenceDate||'').replace('/','-')}).pdf`;
-            const txt = `*RECIBO DE ENTRADAS - IEQ*\n*Referência:* ${fmtRefExtenso(r.referenceDate)}\n*Total Pago:* ${fmt(r.total)}`;
+            const zapCod = r.codigoRecibo ? `*RECIBO:* ${r.codigoRecibo}\n` : '';
+            const txt = `*RECIBO DE ENTRADAS - IEQ*\n${zapCod}*Referência:* ${fmtRefExtenso(r.referenceDate)}\n*Total Pago:* ${fmt(r.total)}`;
             const zapUrl = `https://wa.me/?text=${encodeURIComponent(txt)}`;
 
             if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
