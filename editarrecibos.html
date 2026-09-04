@@ -100,7 +100,13 @@
 
         <!-- Filtro e Busca -->
         <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nº do Recibo</label>
+                    <input type="text" id="filtro-numero" oninput="aplicarFiltros()"
+                        placeholder="Ex: 3441.2609.01"
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700 uppercase placeholder:normal-case placeholder:font-normal placeholder:text-slate-400">
+                </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Filtrar por Igreja</label>
                     <select id="filtro-igreja" onchange="aplicarFiltros()"
@@ -401,7 +407,7 @@
                     </div>
                     <div
                         style="margin-top:20px;text-align:center;font-size:10px;color:#9ca3af;text-transform:uppercase;">
-                        Documento gerado eletronicamente - IEQ REG655</div>
+                        Documento gerado eletronicamente - IEQ REG655<span id="pdf-codigo-rodape"></span></div>
                 </div>
             </div>
         </div>
@@ -471,6 +477,72 @@
         const tabela = document.getElementById('tabela-recibos');
         const form = document.getElementById('form-recibo');
 
+        function calcularCodigosRecibos(lista) {
+            const getTimestamp = (r) => {
+                if (r.createdAt && r.createdAt.seconds) return r.createdAt.seconds * 1000;
+                if (r.dataHoraRegistro) {
+                    const clean = r.dataHoraRegistro.replace(',', '');
+                    const [dPart, tPart] = clean.split(' ');
+                    if (dPart) {
+                        const [d, m, y] = dPart.split('/');
+                        const [hh, mm, ss] = (tPart || '00:00:00').split(':');
+                        if (d && m && y) return new Date(y, m - 1, d, hh || 0, mm || 0, ss || 0).getTime();
+                    }
+                }
+                if (r.dataEmissao) {
+                    const [d, m, y] = r.dataEmissao.split('/');
+                    if (d && m && y) return new Date(y, m - 1, d).getTime();
+                }
+                return 0;
+            };
+
+            const sorted = [...lista].sort((a, b) => {
+                const tA = getTimestamp(a);
+                const tB = getTimestamp(b);
+                if (tA !== tB) return tA - tB;
+                return (a.id || '').localeCompare(b.id || '');
+            });
+
+            const counters = {};
+            sorted.forEach(r => {
+                if (r.codigoRecibo) return;
+
+                let codIgreja = r.igrejaCodigo;
+                if (!codIgreja && r.igrejaFormatada) {
+                    codIgreja = r.igrejaFormatada.split(' - ')[0].trim();
+                }
+                if (!codIgreja) codIgreja = 'UNID';
+
+                let aa = '';
+                let mm = '';
+                if (r.dataEmissao && r.dataEmissao.includes('/')) {
+                    const parts = r.dataEmissao.split('/');
+                    if (parts.length === 3) {
+                        mm = parts[1].padStart(2, '0');
+                        aa = parts[2].slice(-2);
+                    }
+                }
+                if ((!aa || !mm) && r.referenceDate && r.referenceDate.includes('/')) {
+                    const parts = r.referenceDate.split('/');
+                    if (parts.length === 2) {
+                        mm = parts[0].padStart(2, '0');
+                        aa = parts[1].slice(-2);
+                    }
+                }
+                if (!aa || !mm) {
+                    aa = '26';
+                    mm = '01';
+                }
+
+                const chave = `${codIgreja}_${aa}${mm}`;
+                counters[chave] = (counters[chave] || 0) + 1;
+                const seq = String(counters[chave]).padStart(2, '0');
+                r.codigoRecibo = `${codIgreja}.${aa}${mm}.${seq}`;
+            });
+
+            return lista;
+        }
+
         async function carregarRecibos() {
             try {
                 tabela.innerHTML = Array.from({length:5},()=>`<tr class="animate-pulse"><td><div class="h-3 bg-slate-200 rounded w-16"></div></td><td><div class="h-3 bg-slate-200 rounded w-24"></div></td><td><div class="h-3 bg-slate-200 rounded w-20"></div></td><td><div class="h-3 bg-slate-200 rounded w-12"></div></td><td><div class="h-3 bg-slate-200 rounded w-14"></div></td><td><div class="h-3 bg-slate-200 rounded w-12"></div></td><td><div class="h-3 bg-slate-200 rounded w-14"></div></td><td><div class="h-3 bg-slate-200 rounded w-8 mx-auto"></div></td><td><div class="h-3 bg-slate-200 rounded w-8 mx-auto"></div></td></tr>`).join('');
@@ -489,6 +561,8 @@
                     const emissaoParts = (data.dataEmissao || '').split('/');
                     if (emissaoParts.length === 3) emissoesSet.add(`${emissaoParts[1]}/${emissaoParts[2]}`);
                 });
+
+                calcularCodigosRecibos(recibosList);
 
                 const selectPeriodo = document.getElementById('filtro-periodo');
                 const valorAtual = selectPeriodo.value;
@@ -623,6 +697,10 @@
             }
             document.getElementById('pdf-total').textContent = window.formatMoeda(r.total);
             document.getElementById('pdf-extenso').textContent = numeroPorExtenso(r.total);
+            const elCodRodape = document.getElementById('pdf-codigo-rodape');
+            if (elCodRodape) {
+                elCodRodape.textContent = r.codigoRecibo ? ` · RECIBO ${r.codigoRecibo}` : '';
+            }
             const customLogo = localStorage.getItem('customLogo');
             const customSignature = localStorage.getItem('customSignature');
             document.getElementById('pdf-logo').src = customLogo || 'logo_recibo.png';
@@ -654,6 +732,8 @@
         };
 
         window.limparFiltros = () => {
+            const inputNum = document.getElementById('filtro-numero');
+            if (inputNum) inputNum.value = '';
             document.getElementById('filtro-igreja').value = '';
             document.getElementById('filtro-periodo').value = '';
             document.getElementById('filtro-emissao').value = '';
@@ -662,18 +742,22 @@
         };
 
         function renderizarTabela() {
+            const filtroNumero = (document.getElementById('filtro-numero')?.value || '').trim().toLowerCase().replace(/\./g, '');
             const filtroIgreja = document.getElementById('filtro-igreja').value;
             const filtroPeriodo = document.getElementById('filtro-periodo').value;
             const filtroEmissao = document.getElementById('filtro-emissao').value;
             const filtroOrdem = document.getElementById('filtro-ordem').value;
 
             const filtrados = recibosList.filter(r => {
+                const matchNumero = !filtroNumero || 
+                    (r.codigoRecibo && r.codigoRecibo.toLowerCase().replace(/\./g, '').includes(filtroNumero)) ||
+                    (r.codigoRecibo && r.codigoRecibo.toLowerCase().includes(filtroNumero));
                 const matchIgreja = !filtroIgreja || (r.igrejaFormatada === filtroIgreja);
                 const matchPeriodo = !filtroPeriodo || r.referenceDate === filtroPeriodo;
                 const emissaoParts = (r.dataEmissao || '').split('/');
                 const emissaoMesAno = emissaoParts.length === 3 ? `${emissaoParts[1]}/${emissaoParts[2]}` : '';
                 const matchEmissao = !filtroEmissao || emissaoMesAno === filtroEmissao;
-                return matchIgreja && matchPeriodo && matchEmissao;
+                return matchNumero && matchIgreja && matchPeriodo && matchEmissao;
             });
 
             filtrados.sort((a, b) => {
@@ -725,7 +809,10 @@
 
                 tr.innerHTML = `
                     <td class="nome-style">
-                        ${r.igrejaFormatada}
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span>${r.igrejaFormatada}</span>
+                            ${r.codigoRecibo ? `<span class="inline-flex items-center font-mono text-[9px] font-bold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200" title="Número do Recibo">${r.codigoRecibo}</span>` : ''}
+                        </div>
                         <div class="text-[9px] text-slate-400 font-normal uppercase mt-0.5">Emissão: ${r.dataEmissao || 'S/D'}</div>
                         <div class="text-[8px] text-slate-300 font-normal uppercase mt-0.5" title="Registro no Sistema">Sis: ${dataHoraSys || 'S/D'}</div>
                     </td>
@@ -790,6 +877,7 @@
 
         function textoWhatsappRecibo(r) {
             let texto = `*RECIBO DE ENTRADAS - IEQ*\n`;
+            if (r.codigoRecibo) texto += `*RECIBO:* ${r.codigoRecibo}\n`;
             texto += `---------------------------------------\n`;
             texto += `*Igreja:* ${r.igrejaFormatada || 'Não informada'}\n`;
             texto += `*Referência:* ${formatReferenceExtenso(r.referenceDate)}\n`;

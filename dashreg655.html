@@ -135,7 +135,13 @@
                 <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-filter text-blue-600"></i> Filtros de Análise
                 </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nº do Recibo</label>
+                        <input type="text" id="filterNumero" oninput="window.applyFilters()"
+                            placeholder="Ex: 3441.2609.01"
+                            class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500 uppercase placeholder:normal-case placeholder:font-normal placeholder:text-slate-400">
+                    </div>
                     <div>
                         <label class="text-[11px] font-bold text-slate-400 uppercase">Igreja</label>
                         <select id="filterIgreja" onchange="window.applyFilters()" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
@@ -291,7 +297,7 @@
                     </div>
                     <div
                         style="margin-top:20px;text-align:center;font-size:10px;color:#9ca3af;text-transform:uppercase;">
-                        Documento gerado eletronicamente - IEQ REG655</div>
+                        Documento gerado eletronicamente - IEQ REG655<span id="pdf-codigo-rodape"></span></div>
                 </div>
             </div>
         </div>
@@ -324,15 +330,84 @@
             return (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         };
 
+        function calcularCodigosRecibos(lista) {
+            const getTimestamp = (r) => {
+                if (r.createdAt && r.createdAt.seconds) return r.createdAt.seconds * 1000;
+                if (r.dataHoraRegistro) {
+                    const clean = r.dataHoraRegistro.replace(',', '');
+                    const [dPart, tPart] = clean.split(' ');
+                    if (dPart) {
+                        const [d, m, y] = dPart.split('/');
+                        const [hh, mm, ss] = (tPart || '00:00:00').split(':');
+                        if (d && m && y) return new Date(y, m - 1, d, hh || 0, mm || 0, ss || 0).getTime();
+                    }
+                }
+                if (r.dataEmissao) {
+                    const [d, m, y] = r.dataEmissao.split('/');
+                    if (d && m && y) return new Date(y, m - 1, d).getTime();
+                }
+                return 0;
+            };
+
+            const sorted = [...lista].sort((a, b) => {
+                const tA = getTimestamp(a);
+                const tB = getTimestamp(b);
+                if (tA !== tB) return tA - tB;
+                return (a.id || '').localeCompare(b.id || '');
+            });
+
+            const counters = {};
+            sorted.forEach(r => {
+                if (r.codigoRecibo) return;
+
+                let codIgreja = r.igrejaCodigo;
+                if (!codIgreja && r.igrejaFormatada) {
+                    codIgreja = r.igrejaFormatada.split(' - ')[0].trim();
+                }
+                if (!codIgreja) codIgreja = 'UNID';
+
+                let aa = '';
+                let mm = '';
+                if (r.dataEmissao && r.dataEmissao.includes('/')) {
+                    const parts = r.dataEmissao.split('/');
+                    if (parts.length === 3) {
+                        mm = parts[1].padStart(2, '0');
+                        aa = parts[2].slice(-2);
+                    }
+                }
+                if ((!aa || !mm) && r.referenceDate && r.referenceDate.includes('/')) {
+                    const parts = r.referenceDate.split('/');
+                    if (parts.length === 2) {
+                        mm = parts[0].padStart(2, '0');
+                        aa = parts[1].slice(-2);
+                    }
+                }
+                if (!aa || !mm) {
+                    aa = '26';
+                    mm = '01';
+                }
+
+                const chave = `${codIgreja}_${aa}${mm}`;
+                counters[chave] = (counters[chave] || 0) + 1;
+                const seq = String(counters[chave]).padStart(2, '0');
+                r.codigoRecibo = `${codIgreja}.${aa}${mm}.${seq}`;
+            });
+
+            return lista;
+        }
+
         window.fetchData = async () => {
             document.getElementById('loading').style.display = 'flex';
             try {
                 const querySnapshot = await getDocs(collection(db, "recibos"));
-                window.appDb = [];
-                
+                const rawRecibos = [];
                 querySnapshot.forEach((doc) => {
-                    const r = doc.data();
-                    
+                    rawRecibos.push({ id: doc.id, ...doc.data() });
+                });
+                calcularCodigosRecibos(rawRecibos);
+
+                window.appDb = [];
+                rawRecibos.forEach((r) => {
                     let comp = '';
                     if (r.dataEmissao && r.dataEmissao.length >= 10) {
                         comp = r.dataEmissao.substring(3);
@@ -349,8 +424,9 @@
 
                     if (totalLinha > 0) {
                         window.appDb.push({
-                            id: doc.id,
+                            id: r.id,
                             raw: r,
+                            codigoRecibo: r.codigoRecibo || '',
                             mesFiltro: comp,
                             igreja: r.igrejaFormatada || `${r.igrejaCodigo || 'S/C'} - ${r.igrejaNome || 'Desconhecida'}`,
                             regional: parseFloat(r.regionalTax) || 0,
@@ -407,21 +483,28 @@
         };
 
         window.applyFilters = () => {
+            const filterNumero = (document.getElementById('filterNumero')?.value || '').trim().toLowerCase().replace(/\./g, '');
             const igreja = document.getElementById('filterIgreja').value;
             const mes = document.getElementById('filterMes').value;
 
             window.activeData = window.appDb.filter(d => {
+                const mNumero = !filterNumero || 
+                    (d.codigoRecibo && d.codigoRecibo.toLowerCase().replace(/\./g, '').includes(filterNumero)) ||
+                    (d.codigoRecibo && d.codigoRecibo.toLowerCase().includes(filterNumero));
                 const mIgreja = igreja === 'Todas' || d.igreja === igreja;
                 const mMes = mes === 'Todos' || d.mesFiltro === mes;
-                return mIgreja && mMes;
+                return mNumero && mIgreja && mMes;
             });
 
-            document.getElementById('printReportSubtitle').innerText = `${igreja} | Mês: ${mes}`;
+            const subNumero = filterNumero ? ` | Recibo: ${document.getElementById('filterNumero').value}` : '';
+            document.getElementById('printReportSubtitle').innerText = `${igreja} | Mês: ${mes}${subNumero}`;
 
             window.updateUI();
         };
 
         window.clearFilters = () => {
+            const numEl = document.getElementById('filterNumero');
+            if (numEl) numEl.value = '';
             document.getElementById('filterIgreja').value = 'Todas';
             document.getElementById('filterMes').value = 'Todos';
             document.getElementById('filterOrdem').value = 'recentes';
@@ -535,6 +618,11 @@
             document.getElementById('pdf-total').textContent = window.formatMoeda(r.total);
             document.getElementById('pdf-extenso').textContent = numeroPorExtenso(r.total);
 
+            const elCodRodape = document.getElementById('pdf-codigo-rodape');
+            if (elCodRodape) {
+                elCodRodape.textContent = r.codigoRecibo ? ` · RECIBO ${r.codigoRecibo}` : '';
+            }
+
             const customLogo = localStorage.getItem('customLogo');
             const customSignature = localStorage.getItem('customSignature');
             document.getElementById('pdf-logo').src = customLogo || 'logo_recibo.png';
@@ -585,7 +673,10 @@
                 const row = document.createElement('tr');
                 row.className = "hover:bg-slate-50 transition-colors print:border-b print:border-slate-100";
                 row.innerHTML = `
-                    <td class="px-6 py-4 print:px-2 print:py-1.5 text-[11px] print:text-[10px] font-bold text-slate-700">${item.igreja}</td>
+                    <td class="px-6 py-4 print:px-2 print:py-1.5 text-[11px] print:text-[10px] font-bold text-slate-700">
+                        <div>${item.igreja}</div>
+                        ${item.codigoRecibo ? `<span class="inline-block mt-0.5 font-mono text-[9px] font-bold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 print:border-none print:p-0 print:text-slate-500" title="Número do Recibo">${item.codigoRecibo}</span>` : ''}
+                    </td>
                     <td class="px-6 py-4 print:px-2 print:py-1.5 text-center text-[11px] print:text-[10px] font-semibold text-blue-600 uppercase tracking-tighter">${item.mesFiltro}</td>
                     <td class="px-6 py-4 print:px-2 print:py-1.5 text-right text-xs print:text-[10px] bg-blue-50/20 print:bg-transparent">${toBRL(item.regional)}</td>
                     <td class="px-6 py-4 print:px-2 print:py-1.5 text-right text-xs print:text-[10px]">${toBRL(item.coord)}</td>
