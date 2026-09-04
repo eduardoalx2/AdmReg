@@ -197,7 +197,8 @@
                 { id:'i-saldo',      tipo:'sistema', titulo:'Saldo de Virada',   obs:'Lançador financeiro de virada de mês',    url:'saldodeviradareg655.html', icone:'💰', perm:'saldo_virada',      visivel:true, ordem:0 },
                 { id:'i-gersaldos',  tipo:'sistema', titulo:'Gerenciar Saldos',  obs:'Edição e exclusão de lançamentos',        url:'gerenciar_saldos.html',    icone:'⚙️', perm:'gerenciar_saldos', visivel:true, ordem:1 },
                 { id:'i-recibos',    tipo:'sistema', titulo:'Recibos',           obs:'Emissor de recibos e controle financeiro', url:'recibosreg655.html',       icone:'🧾', perm:'recibos',          visivel:true, ordem:2 },
-                { id:'i-gerrecibos', tipo:'sistema', titulo:'Gerenciar Recibos', obs:'Edição e visualização de recibos',        url:'editarrecibos.html',       icone:'📝', perm:'gerenciar_recibos',visivel:true, ordem:3 }
+                { id:'i-gerrecibos', tipo:'sistema', titulo:'Gerenciar Recibos', obs:'Edição e visualização de recibos',        url:'editarrecibos.html',       icone:'📝', perm:'gerenciar_recibos',visivel:true, ordem:3 },
+                { id:'i-recibos-detalhes', tipo:'sistema', titulo:'Detalhamento de Recibos', obs:'Visão panorâmica e filtro de outros/descrições', url:'recibos_detalhados.html', icone:'🔍', perm:'admin', visivel:true, ordem:4 }
             ]},
             { id:'g-dash', nome:'Dashboards', ordem:3, itens:[
                 { id:'i-dashrecibos', tipo:'sistema', titulo:'Dash Recibos', obs:'Dashboard analítico de arrecadações',    url:'dashreg655.html', icone:'📊', perm:'dash_recibos', visivel:true, ordem:0 },
@@ -273,7 +274,26 @@
             let grupos = DEFAULT_LAYOUT;
             try {
                 const snap = await getDoc(doc(db, 'configuracoes', 'layout'));
-                if (snap.exists() && snap.data().grupos?.length) grupos = snap.data().grupos;
+                if (snap.exists() && snap.data().grupos?.length) {
+                    grupos = snap.data().grupos;
+                    const temDetalhamento = grupos.some(g => (g.itens || []).some(it => it.url === 'recibos_detalhados.html' || it.id === 'i-recibos-detalhes'));
+                    if (!temDetalhamento) {
+                        const gFin = grupos.find(g => g.id === 'g-financeiro') || grupos[0];
+                        if (gFin) {
+                            gFin.itens.push({
+                                id: 'i-recibos-detalhes',
+                                tipo: 'sistema',
+                                titulo: 'Detalhamento de Recibos',
+                                obs: 'Visão panorâmica e filtro de outros/descrições',
+                                url: 'recibos_detalhados.html',
+                                icone: '🔍',
+                                perm: 'admin',
+                                visivel: true,
+                                ordem: gFin.itens.length
+                            });
+                        }
+                    }
+                }
             } catch(e) { console.warn('Layout Firestore indisponível, usando padrão.', e); toastWarning('Carregando layout padrão...'); }
 
             renderAdmin(grupos, userPerms);

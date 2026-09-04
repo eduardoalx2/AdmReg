@@ -241,7 +241,8 @@
                     { id: 'i-gersaldos', tipo: 'sistema', titulo: 'Gerenciar Saldos', obs: 'Edição e exclusão de lançamentos', url: 'gerenciar_saldos.html', icone: '⚙️', perm: 'admin', visivel: true, ordem: 1 },
                     { id: 'i-recibos', tipo: 'sistema', titulo: 'Recibos', obs: 'Emissor de recibos e controle financeiro', url: 'recibosreg655.html', icone: '🧾', perm: 'superintendente', visivel: true, ordem: 2 },
                     { id: 'i-gerrecibos', tipo: 'sistema', titulo: 'Gerenciar Recibos', obs: 'Edição e visualização de recibos', url: 'editarrecibos.html', icone: '📝', perm: 'admin', visivel: true, ordem: 3 },
-                    { id: 'i-dev9018', tipo: 'sistema', titulo: 'Devolução 9018', obs: 'Controle de pagamentos parcelados — Ref. 9018', url: 'devolucao_9018.html', icone: '🏦', perm: 'admin', visivel: true, ordem: 4 }
+                    { id: 'i-recibos-detalhes', tipo: 'sistema', titulo: 'Detalhamento de Recibos', obs: 'Visão panorâmica e filtro de descrições/outros', url: 'recibos_detalhados.html', icone: '🔍', perm: 'admin', visivel: true, ordem: 4 },
+                    { id: 'i-dev9018', tipo: 'sistema', titulo: 'Devolução 9018', obs: 'Controle de pagamentos parcelados — Ref. 9018', url: 'devolucao_9018.html', icone: '🏦', perm: 'admin', visivel: true, ordem: 5 }
                 ]
             },
             {
@@ -591,6 +592,7 @@
             'debitos_manuais.html':        { titulo:'Débitos Manuais',         tipo:'privada',       perms:['admin','secretario','superintendente'] },
             'editar_mini_portal.html':     { titulo:'Editar Mini Portal',      tipo:'privada',       perms:['admin'] },
             'editarrecibos.html':          { titulo:'Editar Recibos',          tipo:'privada',       perms:['admin'] },
+            'recibos_detalhados.html':     { titulo:'Detalhamento de Recibos', tipo:'privada',       perms:['admin','secretario','superintendente'] },
             'editpagmembros.html':         { titulo:'Config. Membros',         tipo:'privada',       perms:['admin'] },
             'editpagpastores.html':        { titulo:'Config. Pastores',        tipo:'privada',       perms:['admin'] },
             'eventosreg655.html':          { titulo:'Gestão de Eventos',       tipo:'privada',       perms:['admin','gestao_eventos','secretario','superintendente'] },
@@ -736,6 +738,24 @@
         window.onLayoutLoaded = function(data) {
             if (data && data.grupos && data.grupos.length > 0) {
                 grupos = data.grupos;
+                // Garante presença de novos itens do sistema caso não estejam no layout salvo
+                const temDetalhamento = grupos.some(g => (g.itens || []).some(it => it.url === 'recibos_detalhados.html' || it.id === 'i-recibos-detalhes'));
+                if (!temDetalhamento) {
+                    const gFin = grupos.find(g => g.id === 'g-financeiro') || grupos[0];
+                    if (gFin) {
+                        gFin.itens.push({
+                            id: 'i-recibos-detalhes',
+                            tipo: 'sistema',
+                            titulo: 'Detalhamento de Recibos',
+                            obs: 'Visão panorâmica e filtro de descrições/outros',
+                            url: 'recibos_detalhados.html',
+                            icone: '🔍',
+                            perm: 'admin',
+                            visivel: true,
+                            ordem: gFin.itens.length
+                        });
+                    }
+                }
             }
             try { localStorage.setItem('layout_cache', JSON.stringify(grupos)); } catch(e) {}
             renderGrupos();

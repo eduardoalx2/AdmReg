@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhamento de Recibos - Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+
+    <!-- Validação de Autenticação e Hierarquia Configurada no Gerenciar Layout -->
+    <script type="module">
+        import { requireAuth } from './js/auth.js';
+        import { db } from './firebase-config.js';
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        const HIERARQUIA = {
+            admin: 100,
+            secretario: 90,
+            superintendente: 80,
+            pastor_titular: 70,
+            coordenador: 60,
+            obreiro: 50,
+            membro: 10
+        };
+
+        const PERM_MIN_LEVEL = {
+            admin: 100, secretario: 90, superintendente: 80, pastor_titular: 70, coordenador: 60, obreiro: 50, membro: 10,
+            gerenciar_recibos: 100, recibos: 80, dash_recibos: 80, saldo_virada: 70, gerenciar_saldos: 100
+        };
+
+        try {
+            const userData = await requireAuth();
+            const userPerms = userData.permissoes || [];
+            const isUserAdmin = userPerms.includes('admin');
+
+            if (!isUserAdmin) {
+                // Obter permissão exigida para esta página conforme definida em gerenciar_layout
+                let permExigida = 'admin'; // Padrão seguro
+                let layoutGrupos = null;
+
+                const cache = localStorage.getItem('layout_cache');
+                if (cache) {
+                    try { layoutGrupos = JSON.parse(cache); } catch(e) {}
+                }
+
+                if (!layoutGrupos) {
+                    try {
+                        const snap = await getDoc(doc(db, 'configuracoes', 'layout'));
+                        if (snap.exists() && snap.data().grupos) {
+                            layoutGrupos = snap.data().grupos;
+                        }
+                    } catch(e) {
+                        console.warn('Erro ao carregar layout do Firestore:', e);
+                    }
+                }
+
+                if (layoutGrupos && Array.isArray(layoutGrupos)) {
+                    for (const g of layoutGrupos) {
+                        const item = (g.itens || []).find(it => it.url && it.url.includes('recibos_detalhados.html'));
+                        if (item) {
+                            permExigida = item.perm || '';
+                            break;
+                        }
+                    }
+                }
+
+                if (permExigida) {
+                    const nivelExigido = PERM_MIN_LEVEL[permExigida] || HIERARQUIA[permExigida] || 100;
+                    const nivelUsuario = Math.max(...userPerms.map(p => HIERARQUIA[p] || 0), 0);
+                    const temPermissaoDireta = userPerms.includes(permExigida);
+
+                    if (!temPermissaoDireta && nivelUsuario < nivelExigido) {
+                        alert('Acesso restrito. Seu perfil não possui permissão para acessar esta página conforme os critérios de hierarquia configurados.');
+                        window.location.replace('index.html');
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Erro na verificação de acesso:', error);
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        .table-custom {
+            font-size: 0.82rem;
+        }
+
+        .table-custom th {
+            padding: 10px 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .table-custom td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+            }
+            .print-table {
+                font-size: 10px !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- CABEÇALHO -->
+    <header class="w-full shadow-sm bg-white border-b no-print">
+        <div class="max-w-7xl mx-auto px-4 py-2">
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <a href="index.html" class="flex items-center gap-2.5">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain"
+                        onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-slate-200 pl-2.5">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a href="editarrecibos.html"
+                        class="text-slate-600 hover:text-blue-600 font-semibold text-[11px] px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors flex items-center gap-1.5 uppercase tracking-wider">
+                        <i data-lucide="file-edit" class="w-3.5 h-3.5"></i> Gerenciar Recibos
+                    </a>
+                    <a href="dashreg655.html"
+                        class="hidden md:flex text-slate-600 hover:text-blue-600 font-semibold text-[11px] px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors items-center gap-1.5 uppercase tracking-wider">
+                        <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Dashboard
+                    </a>
+                    <a href="recibosreg655.html"
+                        class="text-blue-600 hover:text-blue-700 font-bold text-[11px] px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors flex items-center gap-1.5 uppercase tracking-wider">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Novo Recibo
+                    </a>
+                    <a href="index.html"
+                        class="text-[11px] font-bold text-slate-500 hover:text-slate-800 px-2 py-1 rounded flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Início
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-gradient py-3.5 px-4 text-white">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🔍</span>
+                        <h1 class="text-base sm:text-lg font-black tracking-wide uppercase">
+                            Detalhamento de Recibos & Visão Panorâmica
+                        </h1>
+                    </div>
+                    <p class="text-xs text-slate-300 mt-0.5">
+                        Conferência detalhada das descrições do campo <strong>Outros</strong>, valores de arrecadação e filtros avançados.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] bg-slate-800/80 border border-slate-700 px-2.5 py-1 rounded-full text-slate-300 font-semibold uppercase tracking-wider">
+                        IEQ Região 655
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-6 px-4 flex-1 w-full space-y-5">
+
+        <!-- CARDS DE RESUMO (KPIS) -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 no-print">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-3">
+                <div class="w-11 h-11 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+                    <i data-lucide="file-text" class="w-6 h-6"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total em Outros</p>
+                    <p id="kpi-total-outros" class="text-lg sm:text-xl font-black text-amber-600 truncate">R$ 0,00</p>
+                    <p id="kpi-media-outros" class="text-[10px] text-slate-400 truncate">Média: R$ 0,00</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-3">
+                <div class="w-11 h-11 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0">
+                    <i data-lucide="tag" class="w-6 h-6"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Com Lançamento em Outros</p>
+                    <p id="kpi-qtd-outros" class="text-lg sm:text-xl font-black text-blue-600">0</p>
+                    <p class="text-[10px] text-slate-400">Recibos com descrições</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-3">
+                <div class="w-11 h-11 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+                    <i data-lucide="wallet" class="w-6 h-6"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Geral Filtrado</p>
+                    <p id="kpi-total-geral" class="text-lg sm:text-xl font-black text-slate-800 truncate">R$ 0,00</p>
+                    <p class="text-[10px] text-slate-400">Soma total dos recibos</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-3">
+                <div class="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+                    <i data-lucide="layers" class="w-6 h-6"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recibos Exibidos</p>
+                    <p id="kpi-total-recibos" class="text-lg sm:text-xl font-black text-slate-700">0</p>
+                    <p id="kpi-percentual" class="text-[10px] text-slate-400">de 0 no total</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTROS E BUSCA -->
+        <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200 no-print">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
+
+                <!-- Busca Textual Livre na Descrição de Outros / Igreja / Pastor -->
+                <div class="md:col-span-4">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                        🔍 Buscar na Descrição de Outros / Igreja / Pastor
+                    </label>
+                    <div class="relative">
+                        <input id="filtro-busca" type="text" oninput="aplicarFiltros()"
+                            placeholder="Ex: seminário, taxa, ajuda de custo, material..."
+                            class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none text-sm font-semibold text-slate-700">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <button onclick="limparBusca()" id="btn-limpar-busca" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtro por Igreja -->
+                <div class="md:col-span-3">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Igreja</label>
+                    <select id="filtro-igreja" onchange="aplicarFiltros()"
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        <option value="">Todas as Igrejas</option>
+                    </select>
+                </div>
+
+                <!-- Referência -->
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Referência</label>
+                    <select id="filtro-periodo" onchange="aplicarFiltros()"
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        <option value="">Todas as referências</option>
+                    </select>
+                </div>
+
+                <!-- Emissão -->
+                <div class="md:col-span-3">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mês de Emissão</label>
+                    <select id="filtro-emissao" onchange="aplicarFiltros()"
+                        class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700">
+                        <option value="">Todas as emissões</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Linha 2 de Controles: Modo de Exibição, Ordenação e Ações -->
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Exibir:</span>
+
+                    <button id="btn-modo-apenas-outros" onclick="setModoExibicao('apenas_outros')"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border bg-amber-50 border-amber-300 text-amber-800 shadow-sm">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i> Apenas com "Outros" Preenchido
+                    </button>
+
+                    <button id="btn-modo-todos" onclick="setModoExibicao('todos')"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 border bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200">
+                        Todos os Recibos
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Ordenar:</label>
+                        <select id="filtro-ordem" onchange="aplicarFiltros()"
+                            class="p-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700">
+                            <option value="maior_outros">Maior Valor em Outros</option>
+                            <option value="menor_outros">Menor Valor em Outros</option>
+                            <option value="recentes">Mais Recentes</option>
+                            <option value="maior_total">Maior Total Geral</option>
+                            <option value="alfabetica">Igreja (A-Z)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="limparFiltros()"
+                        class="text-[11px] font-bold text-slate-500 hover:text-red-600 px-2 py-1.5 rounded transition-colors flex items-center gap-1">
+                        <i data-lucide="filter-x" class="w-3.5 h-3.5"></i> Limpar
+                    </button>
+
+                    <div class="border-l border-slate-200 pl-2 flex items-center gap-1.5">
+                        <button onclick="exportarCSV()" title="Exportar dados filtrados para Excel/CSV"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Excel (CSV)
+                        </button>
+                        <button onclick="window.print()" title="Imprimir listagem"
+                            class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABELA PANORÂMICA DE RECIBOS -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+            <div class="overflow-x-auto custom-scroll">
+                <table class="w-full text-left border-collapse table-custom">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                            <th class="w-24">Emissão</th>
+                            <th class="min-w-[200px]">Igreja & Pastor</th>
+                            <th class="w-24 text-center">Referência</th>
+                            <th class="min-w-[240px] bg-amber-50/60 text-amber-900 border-x border-amber-200/50">
+                                📝 Descrição do Campo "Outros"
+                            </th>
+                            <th class="w-28 text-right bg-amber-50/60 text-amber-900 font-bold border-r border-amber-200/50">
+                                Valor "Outros"
+                            </th>
+                            <th class="min-w-[220px]">Composição das Taxas</th>
+                            <th class="w-28 text-right">Total Pago</th>
+                            <th class="w-24 text-center no-print">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-recibos" class="divide-y divide-slate-100">
+                        <!-- Skeleton loading inicial -->
+                        <tr class="animate-pulse"><td colspan="8" class="text-center py-10 text-slate-400 font-medium">Carregando dados dos recibos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação / Rodapé da tabela -->
+            <div id="paginacao-container" class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-wrap justify-between items-center gap-2 no-print text-xs text-slate-500">
+                <div id="info-paginacao" class="font-medium">
+                    Mostrando 0 de 0 registros
+                </div>
+                <div id="botoes-paginacao" class="flex items-center gap-1"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL DE VISUALIZAÇÃO DETALHADA DO RECIBO -->
+    <div id="modal-recibo" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="bg-slate-800 px-5 py-4 flex justify-between items-center shrink-0 text-white">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="receipt" class="w-5 h-5 text-amber-400"></i>
+                    <h3 class="font-bold text-sm sm:text-base">Detalhes Completos do Recibo</h3>
+                </div>
+                <button onclick="fecharModal()" class="text-slate-400 hover:text-white transition-colors text-xl leading-none">&times;</button>
+            </div>
+
+            <div id="modal-corpo" class="p-5 overflow-y-auto space-y-4 text-sm">
+                <!-- Preenchido via Javascript -->
+            </div>
+
+            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-between items-center shrink-0">
+                <button onclick="fecharModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 font-semibold text-xs transition-colors">
+                    Fechar
+                </button>
+                <div class="flex items-center gap-2">
+                    <button id="modal-btn-pdf" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors">
+                        <i data-lucide="file-down" class="w-3.5 h-3.5"></i> Baixar PDF Oficial
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Oculto para Geração de PDF Oficial (Compatível com html2pdf) -->
+    <div id="pdf-container-oculto" style="position: absolute; left: -9999px; top: -9999px;">
+        <div id="receipt-content" style="width: 794px; min-height: 1120px; padding: 40px; background: white; font-family: 'Inter', sans-serif; color: #1e293b; box-sizing: border-box;">
+            <div style="border: 2px solid #1e293b; padding: 30px; height: 100%; display: flex; flex-direction: column; position: relative;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 24px; margin-bottom: 30px;">
+                    <img id="pdf-logo" src="logo_recibo.png" style="height: 80px; width: 80px; object-contain: contain;" onerror="this.style.display='none'">
+                    <div>
+                        <h1 style="font-size: 24px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin: 0; line-height: 1.1;">Igreja do Evangelho</h1>
+                        <h1 style="font-size: 28px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 0; line-height: 1.1; letter-spacing: 1px;">Quadrangular</h1>
+                        <div style="border-top: 2px solid #cbd5e1; margin-top: 4px; padding-top: 4px; font-weight: 700; color: #475569; letter-spacing: 2px; font-size: 14px;">REGIÃO 655</div>
+                    </div>
+                </div>
+
+                <h2 style="text-align: center; font-size: 20px; font-weight: 900; text-transform: uppercase; border-bottom: 3px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 24px;">RECIBO</h2>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px; flex: 1;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                        <span style="font-weight: 700; color: #64748b; text-transform: uppercase;">Data de Emissão:</span>
+                        <span id="pdf-data-emissao" style="font-weight: 600;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                        <span style="font-weight: 700; color: #64748b; text-transform: uppercase;">Referência:</span>
+                        <span id="pdf-referencia" style="font-weight: 700; color: #1d4ed8;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                        <span style="font-weight: 700; color: #64748b; text-transform: uppercase;">Igreja:</span>
+                        <span id="pdf-igreja" style="font-weight: 800;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                        <span style="font-weight: 700; color: #64748b; text-transform: uppercase;">Pastor(a):</span>
+                        <span id="pdf-pastor" style="font-weight: 600;"></span>
+                    </div>
+
+                    <div style="margin-top: 15px; border-top: 2px dashed #cbd5e1; padding-top: 15px;"></div>
+
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: #f8fafc;">
+                        <span>Subtotal de Entradas</span>
+                        <strong id="pdf-entradas" style="font-family: monospace;"></strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px;">
+                        <span>Taxa Regional (4%)</span>
+                        <strong id="pdf-regional" style="font-family: monospace;"></strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px; background: #f8fafc;">
+                        <span>Taxa Coordenadoria</span>
+                        <strong id="pdf-coord" style="font-family: monospace;"></strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 6px 8px;">
+                        <span id="pdf-label-seguros">Seguro de Vida</span>
+                        <strong id="pdf-seguros" style="font-family: monospace;"></strong>
+                    </div>
+
+                    <!-- Bloco de Outros no PDF -->
+                    <div id="pdf-outros-container" style="display: flex; justify-content: space-between; padding: 6px 8px; background: #fef3c7;">
+                        <span id="pdf-label-outros" style="font-weight: 700; color: #92400e;">Outros</span>
+                        <strong id="pdf-outros" style="font-family: monospace; color: #92400e;"></strong>
+                    </div>
+
+                    <div style="margin-top: 20px; background: #0f172a; color: white; padding: 16px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 18px;">
+                            <span style="font-weight: 800; text-transform: uppercase;">Total Pago</span>
+                            <span id="pdf-total" style="font-weight: 900; font-family: monospace; font-size: 22px;"></span>
+                        </div>
+                        <div id="pdf-extenso" style="font-size: 11px; color: #94a3b8; margin-top: 6px; border-top: 1px solid #334155; padding-top: 6px; text-align: right; font-style: italic;"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 40px; display: flex; justify-content: flex-end;">
+                    <div style="text-align: center; width: 280px;">
+                        <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+                            <img id="pdf-assinatura" src="assinatura.png" style="max-height: 55px; mix-blend-mode: multiply;" onerror="this.style.display='none'">
+                        </div>
+                        <div style="border-top: 2px solid #1e293b; padding-top: 6px;">
+                            <p style="font-weight: 800; text-transform: uppercase; font-size: 12px; margin: 0;">Pr. Eduardo Silva</p>
+                            <p style="font-size: 10px; color: #64748b; text-transform: uppercase; margin: 0;">Superintendência Região 655</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="position: absolute; bottom: 10px; left: 0; width: 100%; text-align: center; font-size: 9px; color: #94a3b8; text-transform: uppercase;">
+                    Documento gerado eletronicamente - IEQ REG655 - Visão Panorâmica
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS DE LÓGICA E DADOS -->
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // Estado global
+        let todosRecibos = [];
+        let recibosFiltrados = [];
+        let modoExibicao = 'apenas_outros'; // 'apenas_outros' ou 'todos'
+        let paginaAtual = 1;
+        const POR_PAGINA = 25;
+
+        // Formatação monetária
+        window.formatMoeda = (val) => {
+            return (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        };
+
+        window.fecharModal = () => {
+            document.getElementById('modal-recibo').classList.add('hidden');
+        };
+
+        window.limparBusca = () => {
+            document.getElementById('filtro-busca').value = '';
+            document.getElementById('btn-limpar-busca').classList.add('hidden');
+            aplicarFiltros();
+        };
+
+        window.setModoExibicao = (modo) => {
+            modoExibicao = modo;
+            const btnOutros = document.getElementById('btn-modo-apenas-outros');
+            const btnTodos = document.getElementById('btn-modo-todos');
+
+            if (modo === 'apenas_outros') {
+                btnOutros.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border bg-amber-50 border-amber-300 text-amber-800 shadow-sm";
+                btnOutros.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i> Apenas com "Outros" Preenchido';
+                btnTodos.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 border bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200";
+                btnTodos.innerHTML = 'Todos os Recibos';
+            } else {
+                btnTodos.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border bg-blue-50 border-blue-300 text-blue-800 shadow-sm";
+                btnTodos.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i> Todos os Recibos';
+                btnOutros.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 border bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200";
+                btnOutros.innerHTML = 'Apenas com "Outros" Preenchido';
+            }
+            if (window.lucide) lucide.createIcons();
+            aplicarFiltros();
+        };
+
+        window.limparFiltros = () => {
+            document.getElementById('filtro-busca').value = '';
+            document.getElementById('btn-limpar-busca').classList.add('hidden');
+            document.getElementById('filtro-igreja').value = '';
+            document.getElementById('filtro-periodo').value = '';
+            document.getElementById('filtro-emissao').value = '';
+            document.getElementById('filtro-ordem').value = 'maior_outros';
+            setModoExibicao('apenas_outros');
+        };
+
+        // Função de carregar recibos do Firestore
+        async function carregarDados() {
+            const tabela = document.getElementById('tabela-recibos');
+            try {
+                const snapshot = await getDocs(collection(db, "recibos"));
+                todosRecibos = [];
+
+                const igrejasSet = new Set();
+                const periodosSet = new Set();
+                const emissoesSet = new Set();
+
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const otherVal = typeof data.otherValueParsed === 'number' ? data.otherValueParsed : parseFloat(data.otherValueParsed) || 0;
+                    const otherDesc = (data.otherDesc || '').trim();
+
+                    const r = {
+                        id: docSnap.id,
+                        ...data,
+                        otherValueParsed: otherVal,
+                        otherDesc: otherDesc,
+                        total: typeof data.total === 'number' ? data.total : parseFloat(data.total) || 0,
+                        regionalTax: typeof data.regionalTax === 'number' ? data.regionalTax : parseFloat(data.regionalTax) || 0,
+                        coordinatorFeeParsed: typeof data.coordinatorFeeParsed === 'number' ? data.coordinatorFeeParsed : parseFloat(data.coordinatorFeeParsed) || 0,
+                        insuranceTotal: typeof data.insuranceTotal === 'number' ? data.insuranceTotal : parseFloat(data.insuranceTotal) || 0,
+                        temOutros: otherVal > 0 || otherDesc.length > 0
+                    };
+
+                    todosRecibos.push(r);
+                    if (data.igrejaFormatada) igrejasSet.add(data.igrejaFormatada);
+                    if (data.referenceDate) periodosSet.add(data.referenceDate);
+
+                    const emissaoParts = (data.dataEmissao || '').split('/');
+                    if (emissaoParts.length === 3) {
+                        emissoesSet.add(`${emissaoParts[1]}/${emissaoParts[2]}`);
+                    }
+                });
+
+                // Preencher Select de Igrejas
+                const selectIgreja = document.getElementById('filtro-igreja');
+                const igrejasSorted = Array.from(igrejasSet).sort((a, b) => {
+                    const codA = parseInt(a.split(' - ')[0]) || 0;
+                    const codB = parseInt(b.split(' - ')[0]) || 0;
+                    if (codA && codB) return codA - codB;
+                    return a.localeCompare(b);
+                });
+                let htmlIgrejas = '<option value="">Todas as Igrejas</option>';
+                igrejasSorted.forEach(ig => htmlIgrejas += `<option value="${ig}">${ig}</option>`);
+                selectIgreja.innerHTML = htmlIgrejas;
+
+                // Preencher Select de Referências
+                const selectPeriodo = document.getElementById('filtro-periodo');
+                const periodosSorted = Array.from(periodosSet).sort((a, b) => {
+                    const [mA, yA] = a.split('/');
+                    const [mB, yB] = b.split('/');
+                    return new Date(yB, mB - 1) - new Date(yA, mA - 1);
+                });
+                let htmlPeriodos = '<option value="">Todas as referências</option>';
+                periodosSorted.forEach(p => htmlPeriodos += `<option value="${p}">${p}</option>`);
+                selectPeriodo.innerHTML = htmlPeriodos;
+
+                // Preencher Select de Emissão
+                const selectEmissao = document.getElementById('filtro-emissao');
+                const emissoesSorted = Array.from(emissoesSet).sort((a, b) => {
+                    const [mA, yA] = a.split('/');
+                    const [mB, yB] = b.split('/');
+                    return new Date(yB, mB - 1) - new Date(yA, mA - 1);
+                });
+                let htmlEmissoes = '<option value="">Todas as emissões</option>';
+                emissoesSorted.forEach(e => htmlEmissoes += `<option value="${e}">${e}</option>`);
+                selectEmissao.innerHTML = htmlEmissoes;
+
+                // Aplicar filtros iniciais
+                aplicarFiltros();
+
+            } catch (error) {
+                console.error("Erro ao carregar recibos:", error);
+                tabela.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-red-500 font-bold">Erro ao carregar recibos do banco de dados: ${error.message}</td></tr>`;
+            }
+        }
+
+        // Função de filtro e renderização
+        window.aplicarFiltros = () => {
+            const termoBusca = (document.getElementById('filtro-busca').value || '').trim().toLowerCase();
+            const filtroIgreja = document.getElementById('filtro-igreja').value;
+            const filtroPeriodo = document.getElementById('filtro-periodo').value;
+            const filtroEmissao = document.getElementById('filtro-emissao').value;
+            const filtroOrdem = document.getElementById('filtro-ordem').value;
+
+            const btnLimparBusca = document.getElementById('btn-limpar-busca');
+            if (btnLimparBusca) {
+                btnLimparBusca.classList.toggle('hidden', !termoBusca);
+            }
+
+            recibosFiltrados = todosRecibos.filter(r => {
+                // Filtro de modo: apenas outros vs todos
+                if (modoExibicao === 'apenas_outros' && !r.temOutros) {
+                    return false;
+                }
+
+                // Filtro de busca textual (descrição de outros, igreja, pastor, código)
+                if (termoBusca) {
+                    const textoComp = `${r.otherDesc || ''} ${r.igrejaFormatada || ''} ${r.pastor || ''} ${r.referenceDate || ''}`.toLowerCase();
+                    if (!textoComp.includes(termoBusca)) return false;
+                }
+
+                // Filtro Igreja
+                if (filtroIgreja && r.igrejaFormatada !== filtroIgreja) return false;
+
+                // Filtro Período
+                if (filtroPeriodo && r.referenceDate !== filtroPeriodo) return false;
+
+                // Filtro Mês Emissão
+                if (filtroEmissao) {
+                    const parts = (r.dataEmissao || '').split('/');
+                    const mesAno = parts.length === 3 ? `${parts[1]}/${parts[2]}` : '';
+                    if (mesAno !== filtroEmissao) return false;
+                }
+
+                return true;
+            });
+
+            // Ordenação
+            recibosFiltrados.sort((a, b) => {
+                if (filtroOrdem === 'maior_outros') {
+                    return (b.otherValueParsed || 0) - (a.otherValueParsed || 0);
+                } else if (filtroOrdem === 'menor_outros') {
+                    return (a.otherValueParsed || 0) - (b.otherValueParsed || 0);
+                } else if (filtroOrdem === 'recentes') {
+                    const parseData = (s) => {
+                        if (!s) return 0;
+                        const p = s.split('/');
+                        return p.length === 3 ? new Date(p[2], p[1] - 1, p[0]).getTime() : 0;
+                    };
+                    const dA = parseData(a.dataEmissao) || (a.createdAt?.seconds * 1000) || 0;
+                    const dB = parseData(b.dataEmissao) || (b.createdAt?.seconds * 1000) || 0;
+                    return dB - dA;
+                } else if (filtroOrdem === 'maior_total') {
+                    return (b.total || 0) - (a.total || 0);
+                } else if (filtroOrdem === 'alfabetica') {
+                    return (a.igrejaFormatada || '').localeCompare(b.igrejaFormatada || '');
+                }
+                return 0;
+            });
+
+            paginaAtual = 1;
+            atualizarKpis();
+            renderTabela();
+        };
+
+        // Atualização dos cards KPIs
+        function atualizarKpis() {
+            let somaOutros = 0;
+            let qtdComOutros = 0;
+            let somaTotalGeral = 0;
+
+            recibosFiltrados.forEach(r => {
+                somaOutros += (r.otherValueParsed || 0);
+                somaTotalGeral += (r.total || 0);
+                if (r.temOutros) qtdComOutros++;
+            });
+
+            const mediaOutros = qtdComOutros > 0 ? (somaOutros / qtdComOutros) : 0;
+
+            document.getElementById('kpi-total-outros').textContent = window.formatMoeda(somaOutros);
+            document.getElementById('kpi-media-outros').textContent = `Média: ${window.formatMoeda(mediaOutros)}`;
+            document.getElementById('kpi-qtd-outros').textContent = qtdComOutros;
+            document.getElementById('kpi-total-geral').textContent = window.formatMoeda(somaTotalGeral);
+            document.getElementById('kpi-total-recibos').textContent = recibosFiltrados.length;
+            document.getElementById('kpi-percentual').textContent = `de ${todosRecibos.length} no banco`;
+        }
+
+        // Renderização da tabela com paginação
+        function renderTabela() {
+            const tbody = document.getElementById('tabela-recibos');
+            const infoPag = document.getElementById('info-paginacao');
+            const navPag = document.getElementById('botoes-paginacao');
+
+            if (recibosFiltrados.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-12 text-slate-400">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <i data-lucide="inbox" class="w-8 h-8 text-slate-300"></i>
+                                <span class="font-semibold text-sm">Nenhum recibo encontrado com os filtros aplicados.</span>
+                                <button onclick="limparFiltros()" class="text-xs text-blue-600 hover:underline font-bold mt-1">Limpar todos os filtros</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                infoPag.textContent = '0 registros';
+                navPag.innerHTML = '';
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            const totalPaginas = Math.ceil(recibosFiltrados.length / POR_PAGINA);
+            if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+            if (paginaAtual < 1) paginaAtual = 1;
+
+            const inicio = (paginaAtual - 1) * POR_PAGINA;
+            const fim = Math.min(inicio + POR_PAGINA, recibosFiltrados.length);
+            const dadosPagina = recibosFiltrados.slice(inicio, fim);
+
+            infoPag.textContent = `Mostrando ${inicio + 1} a ${fim} de ${recibosFiltrados.length} recibos`;
+
+            // Construir botões de paginação
+            let pagHTML = '';
+            if (totalPaginas > 1) {
+                pagHTML += `<button onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''} class="px-2.5 py-1 rounded border border-slate-200 text-xs font-bold ${paginaAtual === 1 ? 'opacity-40 cursor-not-allowed bg-slate-100' : 'hover:bg-slate-100 text-slate-700'}">◀ Ant</button>`;
+                pagHTML += `<span class="px-2 font-bold text-slate-600">${paginaAtual} / ${totalPaginas}</span>`;
+                pagHTML += `<button onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''} class="px-2.5 py-1 rounded border border-slate-200 text-xs font-bold ${paginaAtual === totalPaginas ? 'opacity-40 cursor-not-allowed bg-slate-100' : 'hover:bg-slate-100 text-slate-700'}">Próx ▶</button>`;
+            }
+            navPag.innerHTML = pagHTML;
+
+            // Renderizar linhas
+            tbody.innerHTML = dadosPagina.map(r => {
+                const temOutros = r.temOutros;
+                const descTexto = r.otherDesc || '';
+                const valorOutros = r.otherValueParsed || 0;
+
+                let descHtml = '';
+                if (temOutros) {
+                    descHtml = `
+                        <div class="p-2 rounded-lg bg-amber-50/90 border border-amber-200 text-amber-950">
+                            <div class="flex items-start gap-1.5">
+                                <i data-lucide="message-square-text" class="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5"></i>
+                                <span class="font-bold text-xs break-words">${descTexto || '<em class="text-amber-700 font-normal">Valor lançado sem descrição</em>'}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    descHtml = `<span class="text-slate-400 text-xs italic">— Nenhum lançamento —</span>`;
+                }
+
+                const badgeOutrosValor = valorOutros > 0 
+                    ? `<span class="font-black text-amber-700 text-sm font-mono">${window.formatMoeda(valorOutros)}</span>`
+                    : `<span class="text-slate-400 text-xs font-mono">R$ 0,00</span>`;
+
+                return `
+                    <tr class="hover:bg-blue-50/40 transition-colors group">
+                        <!-- Emissão -->
+                        <td>
+                            <div class="font-semibold text-slate-700 text-xs">${r.dataEmissao || 'S/D'}</div>
+                            <div class="text-[9px] text-slate-400 mt-0.5" title="Data/Hora de Registro">${(r.dataHoraRegistro || '').split(' ')[1] || ''}</div>
+                        </td>
+
+                        <!-- Igreja & Pastor -->
+                        <td>
+                            <div class="font-bold text-slate-900 text-xs">${r.igrejaFormatada || 'Não informada'}</div>
+                            <div class="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
+                                <i data-lucide="user" class="w-3 h-3 text-slate-400"></i>
+                                ${r.pastor || 'Não informado'}
+                            </div>
+                        </td>
+
+                        <!-- Referência -->
+                        <td class="text-center">
+                            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-50 border border-blue-200 text-blue-700 font-mono">
+                                ${r.referenceDate || '—'}
+                            </span>
+                        </td>
+
+                        <!-- Descrição de Outros -->
+                        <td class="bg-amber-50/20 border-x border-amber-100">
+                            ${descHtml}
+                        </td>
+
+                        <!-- Valor de Outros -->
+                        <td class="text-right bg-amber-50/20 border-r border-amber-100">
+                            ${badgeOutrosValor}
+                        </td>
+
+                        <!-- Composição das Taxas -->
+                        <td>
+                            <div class="text-[11px] text-slate-600 space-y-0.5">
+                                <div><span class="text-slate-400">Reg (4%):</span> <strong class="font-mono text-slate-700">${window.formatMoeda(r.regionalTax)}</strong></div>
+                                <div class="text-[10px] text-slate-500">
+                                    <span>Coord: ${window.formatMoeda(r.coordinatorFeeParsed)}</span> | 
+                                    <span>Seg (${r.insuranceCount || 0}): ${window.formatMoeda(r.insuranceTotal)}</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Total Pago -->
+                        <td class="text-right">
+                            <div class="font-black text-slate-900 text-sm font-mono">${window.formatMoeda(r.total)}</div>
+                            <span class="inline-block px-1.5 py-0.2 rounded text-[8px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-700 mt-0.5">
+                                PAGO
+                            </span>
+                        </td>
+
+                        <!-- Ações -->
+                        <td class="text-center no-print">
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="abrirModalDetalhes('${r.id}')" class="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Ver Detalhes do Recibo">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="gerarPdf('${r.id}')" class="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors" title="Baixar PDF do Recibo">
+                                    <i data-lucide="file-down" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="enviarWhatsApp('${r.id}')" class="p-1 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Enviar WhatsApp">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.mudarPagina = (novaPag) => {
+            paginaAtual = novaPag;
+            renderTabela();
+            window.scrollTo({ top: 200, behavior: 'smooth' });
+        };
+
+        // Modal de Detalhes
+        window.abrirModalDetalhes = (id) => {
+            const r = todosRecibos.find(i => i.id === id);
+            if (!r) return;
+
+            const corpo = document.getElementById('modal-corpo');
+            corpo.innerHTML = `
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Igreja</span>
+                            <p class="font-bold text-slate-800 text-sm">${r.igrejaFormatada || 'Não informada'}</p>
+                            <p class="text-xs text-slate-500">Pastor(a): ${r.pastor || 'Não informado'}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Referência</span>
+                            <p class="font-black text-blue-600 text-sm font-mono">${r.referenceDate || '—'}</p>
+                            <p class="text-[10px] text-slate-400">Emissão: ${r.dataEmissao || 'S/D'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalhamento de Valores -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 text-xs">
+                    <div class="flex justify-between p-2.5 bg-slate-50/50">
+                        <span class="text-slate-600">Subtotal de Entradas:</span>
+                        <strong class="font-mono text-slate-800">${window.formatMoeda(r.incomeValue)}</strong>
+                    </div>
+                    <div class="flex justify-between p-2.5">
+                        <span class="text-slate-600">Taxa Regional (4%):</span>
+                        <strong class="font-mono text-slate-800">${window.formatMoeda(r.regionalTax)}</strong>
+                    </div>
+                    <div class="flex justify-between p-2.5 bg-slate-50/50">
+                        <span class="text-slate-600">Taxa Coordenadoria:</span>
+                        <strong class="font-mono text-slate-800">${window.formatMoeda(r.coordinatorFeeParsed)}</strong>
+                    </div>
+                    <div class="flex justify-between p-2.5">
+                        <span class="text-slate-600">Seguro de Vida (${r.insuranceCount || 0} vidas):</span>
+                        <strong class="font-mono text-slate-800">${window.formatMoeda(r.insuranceTotal)}</strong>
+                    </div>
+
+                    <!-- Bloco destacado de Outros -->
+                    <div class="p-3 bg-amber-50/80 border-y border-amber-200/80">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-amber-900 uppercase text-[11px] flex items-center gap-1">
+                                <i data-lucide="tag" class="w-3.5 h-3.5 text-amber-700"></i> Lançamento em Outros:
+                            </span>
+                            <strong class="font-mono text-amber-800 text-sm font-black">${window.formatMoeda(r.otherValueParsed)}</strong>
+                        </div>
+                        <div class="text-xs text-amber-950 bg-white/80 p-2.5 rounded-lg border border-amber-200 mt-1.5 font-medium leading-relaxed">
+                            ${r.otherDesc ? r.otherDesc : '<em class="text-slate-400">Nenhuma descrição informada neste lançamento.</em>'}
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 bg-slate-900 text-white">
+                        <span class="font-bold uppercase tracking-wider text-xs">Total do Recibo:</span>
+                        <strong class="font-mono text-base font-black text-emerald-400">${window.formatMoeda(r.total)}</strong>
+                    </div>
+                </div>
+
+                <div class="text-[10px] text-slate-400 text-center">
+                    Registro do Sistema: ${r.dataHoraRegistro || 'Não informado'} | ID: ${r.id}
+                </div>
+            `;
+
+            document.getElementById('modal-btn-pdf').onclick = () => gerarPdf(r.id);
+            document.getElementById('modal-recibo').classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        };
+
+        // Funções auxiliares para PDF
+        const numeroPorExtenso = (v) => {
+            if (v === 0) return "zero reais";
+            const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+            const dezenas = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+            const dezenasEspeciais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenouve"];
+            const centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+            const converterGrupo = (n) => {
+                if (n === 0) return "";
+                if (n === 100) return "cem";
+                let c = Math.floor(n / 100), d = Math.floor((n % 100) / 10), u = n % 10;
+                let texto = "";
+                if (c > 0) texto += centenas[c];
+                if (d === 1) { if (texto) texto += " e "; texto += dezenasEspeciais[u]; return texto; }
+                if (d > 1) { if (texto) texto += " e "; texto += dezenas[d]; }
+                if (u > 0) { if (texto) texto += " e "; texto += unidades[u]; }
+                return texto;
+            };
+
+            let inteiro = Math.floor(v), centavos = Math.round((v - inteiro) * 100);
+            let extenso = "";
+
+            if (inteiro > 0) {
+                if (inteiro >= 1000) {
+                    let milhar = Math.floor(inteiro / 1000);
+                    inteiro = inteiro % 1000;
+                    if (milhar === 1) extenso += "mil"; else extenso += converterGrupo(milhar) + " mil";
+                    if (inteiro > 0) { if (inteiro < 100 || (inteiro % 100 === 0)) extenso += " e "; else extenso += " "; }
+                }
+                if (inteiro > 0) extenso += converterGrupo(inteiro);
+                extenso += inteiro === 1 ? " real" : " reais";
+            }
+
+            if (centavos > 0) {
+                if (extenso) extenso += " e ";
+                extenso += converterGrupo(centavos);
+                extenso += centavos === 1 ? " centavo" : " centavos";
+            }
+            return extenso.charAt(0).toUpperCase() + extenso.slice(1);
+        };
+
+        const formatReferenceExtenso = (refString) => {
+            if (!refString || refString.length !== 7) return refString;
+            const parts = refString.split('/');
+            if (parts.length !== 2) return refString;
+            const monthIndex = parseInt(parts[0], 10) - 1;
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            if (monthIndex >= 0 && monthIndex < 12) return `${monthNames[monthIndex]}/${parts[1]}`;
+            return refString;
+        };
+
+        // Geração de PDF Oficial
+        window.gerarPdf = (id) => {
+            const r = todosRecibos.find(i => i.id === id);
+            if (!r) return;
+
+            // Preencher template
+            document.getElementById('pdf-data-emissao').textContent = r.dataEmissao || 'S/D';
+            document.getElementById('pdf-referencia').textContent = formatReferenceExtenso(r.referenceDate);
+            document.getElementById('pdf-igreja').textContent = r.igrejaFormatada || 'Não informada';
+            document.getElementById('pdf-pastor').textContent = r.pastor || 'Não informado';
+            document.getElementById('pdf-entradas').textContent = window.formatMoeda(r.incomeValue);
+            document.getElementById('pdf-regional').textContent = window.formatMoeda(r.regionalTax);
+            document.getElementById('pdf-coord').textContent = window.formatMoeda(r.coordinatorFeeParsed);
+            document.getElementById('pdf-label-seguros').textContent = `Seguro de Vida (${r.insuranceCount || 0})`;
+            document.getElementById('pdf-seguros').textContent = window.formatMoeda(r.insuranceTotal);
+
+            const containerOutros = document.getElementById('pdf-outros-container');
+            if (r.otherValueParsed > 0 || r.otherDesc) {
+                document.getElementById('pdf-label-outros').textContent = `Outros (${r.otherDesc || 'Lançamentos Extras'})`;
+                document.getElementById('pdf-outros').textContent = window.formatMoeda(r.otherValueParsed);
+                containerOutros.style.display = 'flex';
+            } else {
+                containerOutros.style.display = 'none';
+            }
+
+            document.getElementById('pdf-total').textContent = window.formatMoeda(r.total);
+            document.getElementById('pdf-extenso').textContent = numeroPorExtenso(r.total);
+
+            const customLogo = localStorage.getItem('customLogo');
+            const customSignature = localStorage.getItem('customSignature');
+            if (customLogo) document.getElementById('pdf-logo').src = customLogo;
+            if (customSignature) document.getElementById('pdf-assinatura').src = customSignature;
+
+            // Nome do arquivo
+            const safeDate = (r.referenceDate || '').replace('/', '-');
+            const safeChurch = (r.igrejaCodigo || 'UNID');
+            const fileName = `${safeChurch} - REC REG REF(${safeDate}) - DETALHADO.pdf`;
+
+            const el = document.getElementById('receipt-content');
+            const opt = {
+                margin: 0,
+                filename: fileName,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(el).save();
+        };
+
+        // Compartilhar WhatsApp
+        window.enviarWhatsApp = (id) => {
+            const r = todosRecibos.find(i => i.id === id);
+            if (!r) return;
+
+            let texto = `*RECIBO DE PAGAMENTO — IEQ REGIÃO 655*\n`;
+            texto += `-----------------------------------------\n`;
+            texto += `*Igreja:* ${r.igrejaFormatada}\n`;
+            texto += `*Pastor:* ${r.pastor || 'Não informado'}\n`;
+            texto += `*Referência:* ${r.referenceDate}\n`;
+            texto += `*Emissão:* ${r.dataEmissao}\n`;
+            texto += `-----------------------------------------\n`;
+            texto += `*Taxa Regional (4%):* ${window.formatMoeda(r.regionalTax)}\n`;
+            if (r.coordinatorFeeParsed > 0) texto += `*Taxa Coord.:* ${window.formatMoeda(r.coordinatorFeeParsed)}\n`;
+            if (r.insuranceTotal > 0) texto += `*Seguros (${r.insuranceCount}):* ${window.formatMoeda(r.insuranceTotal)}\n`;
+            if (r.otherValueParsed > 0 || r.otherDesc) {
+                texto += `*Outros (${r.otherDesc || 'Taxas'}):* ${window.formatMoeda(r.otherValueParsed)}\n`;
+            }
+            texto += `-----------------------------------------\n`;
+            texto += `*TOTAL PAGO:* ${window.formatMoeda(r.total)}\n`;
+            texto += `*Status:* PAGO ✅\n`;
+
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
+        };
+
+        // Exportação CSV com suporte completo a caracteres em português no Excel
+        window.exportarCSV = () => {
+            if (recibosFiltrados.length === 0) {
+                alert('Nenhum dado para exportar com os filtros atuais.');
+                return;
+            }
+
+            const escapeCSV = (val) => {
+                if (val === null || val === undefined) return '""';
+                const str = String(val).replace(/"/g, '""');
+                return `"${str}"`;
+            };
+
+            const cabecalhos = [
+                "Data Emissão",
+                "Referência",
+                "Código Igreja",
+                "Nome Igreja",
+                "Pastor",
+                "Descrição de Outros",
+                "Valor de Outros (R$)",
+                "Taxa Regional 4% (R$)",
+                "Taxa Coordenadoria (R$)",
+                "Total Seguros (R$)",
+                "Total do Recibo (R$)",
+                "Status",
+                "Registro no Sistema",
+                "ID Documento"
+            ];
+
+            const linhas = recibosFiltrados.map(r => {
+                return [
+                    escapeCSV(r.dataEmissao),
+                    escapeCSV(r.referenceDate),
+                    escapeCSV(r.igrejaCodigo || ''),
+                    escapeCSV(r.igrejaNome || r.igrejaFormatada || ''),
+                    escapeCSV(r.pastor || ''),
+                    escapeCSV(r.otherDesc || ''),
+                    escapeCSV((r.otherValueParsed || 0).toFixed(2).replace('.', ',')),
+                    escapeCSV((r.regionalTax || 0).toFixed(2).replace('.', ',')),
+                    escapeCSV((r.coordinatorFeeParsed || 0).toFixed(2).replace('.', ',')),
+                    escapeCSV((r.insuranceTotal || 0).toFixed(2).replace('.', ',')),
+                    escapeCSV((r.total || 0).toFixed(2).replace('.', ',')),
+                    escapeCSV(r.status || 'Pago'),
+                    escapeCSV(r.dataHoraRegistro || ''),
+                    escapeCSV(r.id)
+                ].join(';');
+            });
+
+            const csvContent = '\uFEFF' + [cabecalhos.join(';'), ...linhas].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dataHoje = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `recibos_detalhamento_outros_${dataHoje}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        // Iniciar carregamento
+        carregarDados();
+    </script>
+</body>
+
+</html>
