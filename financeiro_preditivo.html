@@ -1077,6 +1077,7 @@
 
                 const igrejas = [];
                 igrejasSnap.forEach(d => {
+                    const data = d.data();
                     // Descarta completamente a Região Eclesiástica (0655), ela não faz parte do sistema de igrejas
                     const codLimpo = String(data.codigo || '').replace(/\D/g, '');
                     const nomeLimpo = (data.nome || '').toLowerCase();
