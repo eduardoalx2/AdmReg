@@ -893,10 +893,50 @@
         };
 
         const parseNumero = (val) => {
-            if (!val) return 0;
-            if (typeof val === 'number') return val;
-            const parsed = parseFloat(String(val).replace(/\./g, '').replace(',', '.'));
-            return isNaN(parsed) ? 0 : parsed;
+            if (val === null || val === undefined || val === '') return 0;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            const str = String(val).trim();
+            const limpo = str.replace(/[^\d,.-]/g, '');
+            if (limpo.includes(',') && limpo.includes('.')) {
+                if (limpo.indexOf('.') < limpo.indexOf(',')) {
+                    const num = parseFloat(limpo.replace(/\./g, '').replace(',', '.'));
+                    return isNaN(num) ? 0 : num;
+                } else {
+                    const num = parseFloat(limpo.replace(/,/g, ''));
+                    return isNaN(num) ? 0 : num;
+                }
+            }
+            if (limpo.includes(',')) {
+                const num = parseFloat(limpo.replace(',', '.'));
+                return isNaN(num) ? 0 : num;
+            }
+            const num = parseFloat(limpo);
+            return isNaN(num) ? 0 : num;
+        };
+
+        // Extrai com segurança todos os valores operacionais e extraordinários de um recibo
+        const extrairValoresRecibo = (r) => {
+            if (!r) return { regionalTax: 0, coordFee: 0, seguroVida: 0, entradasDeclaradas: 0, outros: 0, total: 0, totalOperacional: 0 };
+            const reg = parseNumero(r.regionalTax ?? r.taxaRegional ?? r.valorRegional);
+            const coord = parseNumero(r.coordinatorFeeParsed ?? r.coordinatorFee ?? r.taxaCoord ?? r.taxaCoordenadoria);
+            const seguro = parseNumero(r.insuranceTotal ?? r.seguroTotal ?? r.valorSeguro ?? r.seguro);
+            let entradas = parseNumero(r.incomeValue ?? r.entradas ?? r.entradasDeclaradas ?? r.entradasTaxadas ?? r.subtotal);
+            const outros = parseNumero(r.otherValueParsed ?? r.outros ?? r.valorOutros);
+            const total = parseNumero(r.total ?? r.totalPayable ?? r.valorTotal);
+
+            if (entradas === 0 && reg > 0) {
+                entradas = reg / 0.04;
+            }
+
+            return {
+                regionalTax: reg,
+                coordFee: coord,
+                seguroVida: seguro,
+                entradasDeclaradas: entradas,
+                outros: outros,
+                total: total,
+                totalOperacional: reg + coord + seguro
+            };
         };
 
         // Converte string de mês "MM/AAAA" para número comparável (AAAAMM)
@@ -1215,26 +1255,36 @@
             window.appState.rawRecibos.forEach(r => {
                 if (!ehMesmaIgreja(codIgreja, nomeIgreja, r.igrejaCodigo, r.igrejaNome, r.igrejaFormatada)) return;
 
-                const ref = normalizarMesAno(r.referenceDate || (r.dataEmissao ? r.dataEmissao.substring(3) : ''));
+                const st = (r.status || '').toLowerCase();
+                if (st.includes('cancel') || st.includes('estorn')) return;
+
+                const mesEmissao = r.dataEmissao && r.dataEmissao.length >= 10 ? normalizarMesAno(r.dataEmissao.substring(3)) : '';
+                const mesRef = normalizarMesAno(r.referenceDate);
+                const ref = mesEmissao || mesRef;
                 if (!ref) return;
+
                 const refNum = mesParaChaveNum(ref);
                 if (refNum >= chaveAlvoNum) return;
 
-                const reg = parseFloat(r.regionalTax) || 0;
-                const coord = parseFloat(r.coordinatorFeeParsed) || 0;
-                const seguro = parseFloat(r.insuranceTotal) || 0;
-                const total = reg + coord + seguro;
-
-                if (total > 0) {
-                    historicoMesesMap.set(ref, {
-                        mes: ref,
-                        mesNum: refNum,
-                        entradas: parseFloat(r.incomeValue) || (reg > 0 ? reg / 0.04 : 0),
-                        regional: reg,
-                        coord: coord > 0 ? coord : 100,
-                        seguro: seguro,
-                        origem: `Recibo nº ${r.codigoRecibo || r.id.substring(0, 8)}`
-                    });
+                const v = extrairValoresRecibo(r);
+                if (v.totalOperacional > 0) {
+                    if (historicoMesesMap.has(ref)) {
+                        const anterior = historicoMesesMap.get(ref);
+                        anterior.entradas += v.entradasDeclaradas;
+                        anterior.regional += v.regionalTax;
+                        anterior.coord += v.coordFee;
+                        anterior.seguro += v.seguroVida;
+                    } else {
+                        historicoMesesMap.set(ref, {
+                            mes: ref,
+                            mesNum: refNum,
+                            entradas: v.entradasDeclaradas,
+                            regional: v.regionalTax,
+                            coord: v.coordFee > 0 ? v.coordFee : 100,
+                            seguro: v.seguroVida,
+                            origem: `Recibo nº ${r.codigoRecibo || (r.id ? r.id.substring(0, 8) : '')}`
+                        });
+                    }
                 }
             });
 
@@ -1249,7 +1299,7 @@
 
                 if (historicoMesesMap.has(ref)) return;
 
-                const entradas = parseFloat(s.entradasTaxadas) || 0;
+                const entradas = parseNumero(s.entradasTaxadas || s.entradas || s.valorEntradas);
                 if (entradas > 0) {
                     const reg = entradas * 0.04;
                     historicoMesesMap.set(ref, {
@@ -1337,13 +1387,23 @@
                 const cod = ig.codigo;
                 const nome = ig.nome;
 
-                const reciboDoMes = window.appState.rawRecibos.find(r => {
+                // Localiza todos os recibos da igreja para este mês
+                // (considera emissão no mês conforme dashreg655 OU competência/referência do mês)
+                const recibosIgrejaMes = window.appState.rawRecibos.filter(r => {
                     if (!ehMesmaIgreja(cod, nome, r.igrejaCodigo, r.igrejaNome, r.igrejaFormatada)) return false;
 
-                    const ref = normalizarMesAno(r.referenceDate || (r.dataEmissao ? r.dataEmissao.substring(3) : ''));
-                    if (ref !== mesSel) return false;
+                    const st = (r.status || '').toLowerCase();
+                    if (st.includes('cancel') || st.includes('estorn')) return false;
 
-                    return (parseFloat(r.regionalTax) || 0) > 0 || r.status === 'Pago';
+                    const mesEmissao = r.dataEmissao && r.dataEmissao.length >= 10 ? normalizarMesAno(r.dataEmissao.substring(3)) : '';
+                    const mesRef = normalizarMesAno(r.referenceDate);
+                    return (mesEmissao === mesSel) || (mesRef === mesSel);
+                });
+
+                // Filtra apenas recibos que possuem arrecadação operacional (Regional, Coord ou Seguro)
+                const recibosOperacionais = recibosIgrejaMes.filter(r => {
+                    const v = extrairValoresRecibo(r);
+                    return v.totalOperacional > 0;
                 });
 
                 const saldoDoMes = window.appState.rawSaldos.find(s => {
@@ -1363,52 +1423,59 @@
                 let totalGeral = 0;
                 let detalheOrigem = "";
                 let dadosHistorico = null;
+                const reciboPrincipal = recibosOperacionais[0] || null;
 
-                if (reciboDoMes) {
+                if (recibosOperacionais.length > 0) {
                     status = "verde";
                     statusLabel = "🟢 Pago";
                     statusCorBadge = "bg-emerald-100 text-emerald-800 border-emerald-200";
-                    entradasDeclaradas = parseFloat(reciboDoMes.incomeValue) || 0;
-                    regionalTax = parseFloat(reciboDoMes.regionalTax) || 0;
-                    coordFee = parseFloat(reciboDoMes.coordinatorFeeParsed) || 0;
-                    seguroVida = parseFloat(reciboDoMes.insuranceTotal) || 0;
+                    
+                    entradasDeclaradas = recibosOperacionais.reduce((acc, r) => acc + extrairValoresRecibo(r).entradasDeclaradas, 0);
+                    regionalTax = recibosOperacionais.reduce((acc, r) => acc + extrairValoresRecibo(r).regionalTax, 0);
+                    coordFee = recibosOperacionais.reduce((acc, r) => acc + extrairValoresRecibo(r).coordFee, 0);
+                    seguroVida = recibosOperacionais.reduce((acc, r) => acc + extrairValoresRecibo(r).seguroVida, 0);
                     totalGeral = regionalTax + coordFee + seguroVida;
-                    detalheOrigem = `Recibo emitido: ${reciboDoMes.codigoRecibo || 'Pendente'}`;
-                } else if (saldoDoMes && (parseFloat(saldoDoMes.entradasTaxadas) || 0) > 0) {
-                    status = "amarelo";
-                    statusLabel = "🟡 Saldo Declarado";
-                    statusCorBadge = "bg-amber-100 text-amber-800 border-amber-200";
-                    entradasDeclaradas = parseFloat(saldoDoMes.entradasTaxadas) || 0;
-                    regionalTax = entradasDeclaradas * 0.04;
-                    coordFee = 100;
-                    seguroVida = (ig.seguros || 0) * window.appState.valorSeguroPadrao;
-                    totalGeral = regionalTax + coordFee + seguroVida;
-                    detalheOrigem = `Lançado no Saldo de Virada (Taxa pendente)`;
-                } else {
-                    dadosHistorico = obterMediaUltimos3MesesValidos(cod, nome, mesSel);
 
-                    if (ehMesFuturo) {
-                        status = "vermelho";
-                        statusLabel = "🔮 Projeção (-10%)";
-                        statusCorBadge = "bg-purple-100 text-purple-800 border-purple-200";
-                        
-                        entradasDeclaradas = dadosHistorico.mediaEntradas * 0.90;
-                        regionalTax = dadosHistorico.mediaRegional * 0.90;
-                        coordFee = dadosHistorico.mediaCoord * 0.90;
-                        seguroVida = dadosHistorico.mediaSeguro * 0.90;
+                    const codigos = recibosOperacionais.map(r => r.codigoRecibo || (r.id ? r.id.substring(0, 6) : '')).filter(Boolean).join(', ');
+                    detalheOrigem = `Recibo emitido: ${codigos || 'Concluído'}`;
+                } else {
+                    const entradasSaldo = saldoDoMes ? parseNumero(saldoDoMes.entradasTaxadas || saldoDoMes.entradas || saldoDoMes.valorEntradas) : 0;
+                    if (saldoDoMes && entradasSaldo > 0) {
+                        status = "amarelo";
+                        statusLabel = "🟡 Saldo Declarado";
+                        statusCorBadge = "bg-amber-100 text-amber-800 border-amber-200";
+                        entradasDeclaradas = entradasSaldo;
+                        regionalTax = entradasDeclaradas * 0.04;
+                        coordFee = 100;
+                        seguroVida = (ig.seguros || 0) * window.appState.valorSeguroPadrao;
                         totalGeral = regionalTax + coordFee + seguroVida;
-                        detalheOrigem = `Projeção: Média de ${dadosHistorico.qtdMesesUsados} meses - 10% de garantia`;
+                        detalheOrigem = `Lançado no Saldo de Virada (Taxa pendente)`;
                     } else {
-                        status = "vermelho";
-                        statusLabel = "🔴 Previsão Média";
-                        statusCorBadge = "bg-rose-100 text-rose-800 border-rose-200";
-                        
-                        entradasDeclaradas = dadosHistorico.mediaEntradas;
-                        regionalTax = dadosHistorico.mediaRegional;
-                        coordFee = dadosHistorico.mediaCoord;
-                        seguroVida = dadosHistorico.mediaSeguro;
-                        totalGeral = regionalTax + coordFee + seguroVida;
-                        detalheOrigem = `Previsão: Média dos últimos ${dadosHistorico.qtdMesesUsados} meses válidos`;
+                        dadosHistorico = obterMediaUltimos3MesesValidos(cod, nome, mesSel);
+
+                        if (ehMesFuturo) {
+                            status = "vermelho";
+                            statusLabel = "🔮 Projeção (-10%)";
+                            statusCorBadge = "bg-purple-100 text-purple-800 border-purple-200";
+                            
+                            entradasDeclaradas = dadosHistorico.mediaEntradas * 0.90;
+                            regionalTax = dadosHistorico.mediaRegional * 0.90;
+                            coordFee = dadosHistorico.mediaCoord * 0.90;
+                            seguroVida = dadosHistorico.mediaSeguro * 0.90;
+                            totalGeral = regionalTax + coordFee + seguroVida;
+                            detalheOrigem = `Projeção: Média de ${dadosHistorico.qtdMesesUsados} meses - 10% de garantia`;
+                        } else {
+                            status = "vermelho";
+                            statusLabel = "🔴 Previsão Média";
+                            statusCorBadge = "bg-rose-100 text-rose-800 border-rose-200";
+                            
+                            entradasDeclaradas = dadosHistorico.mediaEntradas;
+                            regionalTax = dadosHistorico.mediaRegional;
+                            coordFee = dadosHistorico.mediaCoord;
+                            seguroVida = dadosHistorico.mediaSeguro;
+                            totalGeral = regionalTax + coordFee + seguroVida;
+                            detalheOrigem = `Previsão: Média dos últimos ${dadosHistorico.qtdMesesUsados} meses válidos`;
+                        }
                     }
                 }
 
@@ -1427,7 +1494,7 @@
                     totalGeral: totalGeral,
                     detalheOrigem: detalheOrigem,
                     dadosHistorico: dadosHistorico,
-                    reciboDoMes: reciboDoMes,
+                    reciboDoMes: reciboPrincipal,
                     saldoDoMes: saldoDoMes
                 });
             });
@@ -1462,11 +1529,16 @@
 
             // 4. Fundo Outros
             const recibosComOutros = window.appState.rawRecibos.filter(r => {
-                const ref = normalizarMesAno(r.referenceDate || (r.dataEmissao ? r.dataEmissao.substring(3) : ''));
-                if (ref !== mesSel) return false;
-                return (parseFloat(r.otherValueParsed) || 0) > 0;
+                const st = (r.status || '').toLowerCase();
+                if (st.includes('cancel') || st.includes('estorn')) return false;
+
+                const mesEmissao = r.dataEmissao && r.dataEmissao.length >= 10 ? normalizarMesAno(r.dataEmissao.substring(3)) : '';
+                const mesRef = normalizarMesAno(r.referenceDate);
+                if (mesEmissao !== mesSel && mesRef !== mesSel) return false;
+
+                return extrairValoresRecibo(r).outros > 0;
             });
-            const totalEntradasOutros = recibosComOutros.reduce((sum, r) => sum + (parseFloat(r.otherValueParsed) || 0), 0);
+            const totalEntradasOutros = recibosComOutros.reduce((sum, r) => sum + extrairValoresRecibo(r).outros, 0);
 
             const saidasOutrosMes = window.appState.rawSaidasOutros.filter(s => {
                 const ref = normalizarMesAno(s.mesReferencia || (s.data ? s.data.substring(0, 7) : ''));
