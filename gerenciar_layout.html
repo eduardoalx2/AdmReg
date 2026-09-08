@@ -242,7 +242,8 @@
                     { id: 'i-recibos', tipo: 'sistema', titulo: 'Recibos', obs: 'Emissor de recibos e controle financeiro', url: 'recibosreg655.html', icone: '🧾', perm: 'superintendente', visivel: true, ordem: 2 },
                     { id: 'i-gerrecibos', tipo: 'sistema', titulo: 'Gerenciar Recibos', obs: 'Edição e visualização de recibos', url: 'editarrecibos.html', icone: '📝', perm: 'admin', visivel: true, ordem: 3 },
                     { id: 'i-recibos-detalhes', tipo: 'sistema', titulo: 'Detalhamento de Recibos', obs: 'Visão panorâmica e filtro de descrições/outros', url: 'recibos_detalhados.html', icone: '🔍', perm: 'admin', visivel: true, ordem: 4 },
-                    { id: 'i-dev9018', tipo: 'sistema', titulo: 'Devolução 9018', obs: 'Controle de pagamentos parcelados — Ref. 9018', url: 'devolucao_9018.html', icone: '🏦', perm: 'admin', visivel: true, ordem: 5 }
+                    { id: 'i-dev9018', tipo: 'sistema', titulo: 'Devolução 9018', obs: 'Controle de pagamentos parcelados — Ref. 9018', url: 'devolucao_9018.html', icone: '🏦', perm: 'admin', visivel: true, ordem: 5 },
+                    { id: 'i-fin-preditivo', tipo: 'sistema', titulo: 'Financeiro Preditivo', obs: 'Análise preditiva de fluxo, médias e projeção', url: 'financeiro_preditivo.html', icone: '🔮', perm: 'admin', visivel: true, ordem: 6 }
                 ]
             },
             {
@@ -609,6 +610,7 @@
             's_igrejas.html':              { titulo:'Igrejas',                 tipo:'privada',       perms:['admin','secretario','superintendente'] },
             's_pastores.html':             { titulo:'Pastores',                tipo:'privada',       perms:['admin','pastores','secretario','superintendente'] },
             'visualizar_como.html':        { titulo:'Visualizar Como',         tipo:'privada',       perms:['admin'] },
+            'financeiro_preditivo.html':   { titulo:'Financeiro Preditivo',    tipo:'privada',       perms:['admin','secretario','superintendente'] },
         };
 
         const PERM_LEVEL = { admin:100, secretario:90, superintendente:80, pastor_titular:70, coordenador:60, obreiro:50, membro:10 };
@@ -750,6 +752,23 @@
                             obs: 'Visão panorâmica e filtro de descrições/outros',
                             url: 'recibos_detalhados.html',
                             icone: '🔍',
+                            perm: 'admin',
+                            visivel: true,
+                            ordem: gFin.itens.length
+                        });
+                    }
+                }
+                const temPreditivo = grupos.some(g => (g.itens || []).some(it => it.url === 'financeiro_preditivo.html' || it.id === 'i-fin-preditivo'));
+                if (!temPreditivo) {
+                    const gFin = grupos.find(g => g.id === 'g-financeiro') || grupos[0];
+                    if (gFin) {
+                        gFin.itens.push({
+                            id: 'i-fin-preditivo',
+                            tipo: 'sistema',
+                            titulo: 'Financeiro Preditivo',
+                            obs: 'Análise preditiva de fluxo, médias e projeção',
+                            url: 'financeiro_preditivo.html',
+                            icone: '🔮',
                             perm: 'admin',
                             visivel: true,
                             ordem: gFin.itens.length

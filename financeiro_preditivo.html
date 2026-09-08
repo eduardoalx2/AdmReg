@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro Preditivo — Região 655</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <script type="module">
+        import { requireAuth } from './js/auth.js';
+        try { await requireAuth(); } catch (e) {}
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .header-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .tab-btn-active {
+            background-color: #1e293b;
+            color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .tab-btn-inactive {
+            background-color: transparent;
+            color: #64748b;
+        }
+        .tab-btn-inactive:hover {
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.92); display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; font-size: 11px; }
+            .shadow-sm, .shadow-lg, .shadow-md { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- OVERLAY DE CARREGAMENTO -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4"></div>
+            <p class="text-slate-700 font-bold text-sm tracking-wide">Calculando Análise Preditiva...</p>
+            <p class="text-slate-400 text-xs mt-1" id="loadingStep">Sincronizando histórico e recibos...</p>
+        </div>
+    </div>
+
+    <!-- CABEÇALHO SUPERIOR -->
+    <header class="w-full shadow-sm bg-white border-b sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain" onerror="this.src='https://via.placeholder.com/32?text=IEQ'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a href="dashreg655.html" class="text-blue-600 hover:text-blue-700 font-semibold text-[11px] px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Dash Recibos
+                    </a>
+                    <a href="recibosreg655.html" class="hidden sm:flex text-slate-600 hover:text-blue-600 font-semibold text-[11px] px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="receipt" class="w-3.5 h-3.5"></i> Recibos
+                    </a>
+                    <button onclick="window.fetchData()" class="p-1.5 text-slate-500 hover:text-blue-600 transition-colors bg-slate-50 rounded-lg border border-slate-200" title="Atualizar dados">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <a href="index.html" class="text-[10px] font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider">
+                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Painel
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- BARRA DO TÍTULO E SELETOR DE MÊS -->
+        <div class="header-gradient py-3 px-4 text-white">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-500/20 border border-indigo-400/30 p-2 rounded-xl text-indigo-300">
+                        <i data-lucide="trending-up" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-base sm:text-lg font-black tracking-wide uppercase">Financeiro Preditivo</h1>
+                            <span id="badgeTipoMes" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                                Mês Atual
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-300">Fluxo de Caixa, Previsibilidade de Arrecadação e Despesas</p>
+                    </div>
+                </div>
+
+                <!-- CONTROLE DE NAVEGAÇÃO DE MÊS -->
+                <div class="flex items-center gap-2 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700/60 self-start md:self-auto shadow-inner">
+                    <button onclick="window.navegarMes(-1)" class="p-1.5 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors" title="Mês Anterior">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    </button>
+                    
+                    <div class="flex items-center gap-2 px-2">
+                        <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
+                        <select id="selectMesReferencia" onchange="window.trocarMesSelecionado(this.value)" class="bg-transparent text-white font-bold text-xs sm:text-sm outline-none cursor-pointer">
+                            <!-- Preenchido via JavaScript -->
+                        </select>
+                    </div>
+
+                    <button onclick="window.navegarMes(1)" class="p-1.5 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors" title="Próximo Mês">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+
+                    <button onclick="window.irParaMesAtual()" class="ml-1 text-[10px] font-extrabold bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg uppercase tracking-wider transition-colors shadow-sm" title="Ir para o mês vigente">
+                        Hoje
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- CABEÇALHO PARA IMPRESSÃO -->
+        <div class="hidden print-only mb-6 border-b-2 border-slate-800 pb-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <img src="logo.png" alt="Logo IEQ" class="h-12 object-contain">
+                    <div>
+                        <h1 class="text-xl font-black uppercase text-slate-900">Relatório Financeiro Preditivo</h1>
+                        <p class="text-xs font-bold text-slate-600" id="printSubtitle">Mês de Referência: --/----</p>
+                    </div>
+                </div>
+                <div class="text-right text-[10px] font-bold text-slate-500 uppercase">
+                    IEQ Região 655<br>Londrina / PR
+                </div>
+            </div>
+        </div>
+
+        <!-- AVISO DE MARGEM DE SEGURANÇA (EM MESES FUTUROS) -->
+        <div id="bannerMargemGarantia" class="hidden bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-l-4 border-amber-500 p-4 rounded-xl text-xs text-amber-900 flex items-start gap-3 shadow-sm">
+            <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+            <div>
+                <span class="font-extrabold uppercase tracking-wide">Modo Projeção Futura Ativo:</span>
+                <span class="text-amber-800">
+                    Como ainda não há lançamentos consolidados para este mês, os valores das igrejas são projetados com base na <strong>média dos últimos 3 meses válidos</strong> com uma <strong>margem de garantia de -10%</strong>. Despesas recorrentes ativas já foram computadas.
+                </span>
+            </div>
+        </div>
+
+        <!-- KPIS PRINCIPAIS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- KPI 1: Arrecadação Operacional Prevista -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Arrecadação Operacional</span>
+                    <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                        <i data-lucide="wallet" class="w-4 h-4"></i>
+                    </span>
+                </div>
+                <h3 id="kpiArrecadacaoTotal" class="text-2xl font-black text-slate-900 mt-2">R$ 0,00</h3>
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <span class="text-slate-500" id="kpiArrecadacaoSub">Realizado + Previsão</span>
+                    <span id="kpiRealizadoPerc" class="font-bold text-emerald-600">0% pago</span>
+                </div>
+            </div>
+
+            <!-- KPI 2: Despesas Operacionais Totais -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Despesas Previstas</span>
+                    <span class="p-1.5 rounded-lg bg-rose-50 text-rose-600">
+                        <i data-lucide="arrow-down-right" class="w-4 h-4"></i>
+                    </span>
+                </div>
+                <h3 id="kpiDespesasTotal" class="text-2xl font-black text-rose-600 mt-2">R$ 0,00</h3>
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                    <span id="kpiDespesasRecorrentes">Recorrentes: R$ 0,00</span>
+                    <span id="kpiDespesasEsporadicas">Esporádicas: R$ 0,00</span>
+                </div>
+            </div>
+
+            <!-- KPI 3: Resultado Líquido Projetado -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden" id="cardResultadoLiquido">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Resultado Líquido</span>
+                    <span class="p-1.5 rounded-lg bg-blue-50 text-blue-600" id="badgeIconResultado">
+                        <i data-lucide="scale" class="w-4 h-4"></i>
+                    </span>
+                </div>
+                <h3 id="kpiResultadoLiquido" class="text-2xl font-black text-slate-900 mt-2">R$ 0,00</h3>
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <span class="text-slate-500">Entradas - Despesas</span>
+                    <span id="kpiStatusResultado" class="font-bold text-slate-700">Equilibrado</span>
+                </div>
+            </div>
+
+            <!-- KPI 4: Fundo "Outros" (Isolado) -->
+            <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-sm relative overflow-hidden border border-slate-800">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                        <i data-lucide="archive" class="w-3 h-3"></i> Fundo "Outros" (Isolado)
+                    </span>
+                    <button onclick="window.mudarAba('outros')" class="text-[9px] font-bold text-slate-300 hover:text-white uppercase tracking-wider transition-colors">
+                        Ver detalhes →
+                    </button>
+                </div>
+                <h3 id="kpiOutrosSaldoLiquido" class="text-2xl font-black text-white mt-2">R$ 0,00</h3>
+                <div class="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                    <span id="kpiOutrosEntradas">Entradas: R$ 0,00</span>
+                    <span id="kpiOutrosSaidas">Saídas: R$ 0,00</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COMPOSIÇÃO DAS TAXAS & RESUMO DE STATUS DAS IGREJAS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            
+            <!-- Composição das Entradas -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-blue-600"></i> Composição das Taxas Operacionais do Mês
+                    </h3>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">(Sem misturar "Outros")</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Taxa Regional (4%)</p>
+                        <p class="text-base font-extrabold text-slate-800 mt-0.5" id="compTaxaRegional">R$ 0,00</p>
+                        <p class="text-[10px] text-slate-400 mt-1" id="percCompTaxaReg">0% da receita</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Taxa Coordenadoria</p>
+                        <p class="text-base font-extrabold text-slate-800 mt-0.5" id="compTaxaCoord">R$ 0,00</p>
+                        <p class="text-[10px] text-slate-400 mt-1" id="percCompTaxaCoord">0% da receita</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Seguro de Vida</p>
+                        <p class="text-base font-extrabold text-slate-800 mt-0.5" id="compSeguroVida">R$ 0,00</p>
+                        <p class="text-[10px] text-slate-400 mt-1" id="percCompSeguro">0% da receita</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumo dos Status das Igrejas -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2 mb-3">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> Status das Igrejas no Mês
+                    </h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-emerald-50/70 border border-emerald-200/60">
+                            <span class="flex items-center gap-2 text-xs font-bold text-emerald-800">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 🟢 Pagas no Recibo
+                            </span>
+                            <span class="text-xs font-black text-emerald-900" id="countStatusVerde">0 igrejas</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-amber-50/70 border border-amber-200/60">
+                            <span class="flex items-center gap-2 text-xs font-bold text-amber-800">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 🟡 Saldo Virada Lançado
+                            </span>
+                            <span class="text-xs font-black text-amber-900" id="countStatusAmarelo">0 igrejas</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-rose-50/70 border border-rose-200/60">
+                            <span class="flex items-center gap-2 text-xs font-bold text-rose-800">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> 🔴 Previsão Média Histórica
+                            </span>
+                            <span class="text-xs font-black text-rose-900" id="countStatusVermelho">0 igrejas</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- BARRA DE NAVEGAÇÃO DE ABAS E AÇÕES -->
+        <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-1.5 flex flex-col sm:flex-row items-center justify-between gap-3 no-print">
+            
+            <div class="flex flex-wrap gap-1 w-full sm:w-auto">
+                <button id="tabBtn-igrejas" onclick="window.mudarAba('igrejas')" class="tab-btn-active py-2 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2">
+                    <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Igrejas & Entradas
+                </button>
+                <button id="tabBtn-despesas" onclick="window.mudarAba('despesas')" class="tab-btn-inactive py-2 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2">
+                    <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Despesas
+                </button>
+                <button id="tabBtn-esporadicas" onclick="window.mudarAba('esporadicas')" class="tab-btn-inactive py-2 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Entradas Esporádicas
+                </button>
+                <button id="tabBtn-outros" onclick="window.mudarAba('outros')" class="tab-btn-inactive py-2 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2">
+                    <i data-lucide="box" class="w-3.5 h-3.5"></i> Fundo Outros
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button onclick="window.abrirModalDespesa()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5 uppercase tracking-wider">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nova Despesa
+                </button>
+                <button onclick="window.abrirModalEntradaEsporadica()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5 uppercase tracking-wider">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Entrada Avulsa
+                </button>
+                <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-xl transition-colors border border-slate-200" title="Imprimir Relatório">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ABA 1: IGREJAS & ARRECADAÇÃO OPERACIONAL                        -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div id="tabContent-igrejas" class="space-y-4">
+            
+            <!-- Barra de Filtros da Tabela -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 no-print">
+                <div class="relative w-full md:w-80">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="filtroBuscaIgreja" oninput="window.filtrarTabelaIgrejas()" placeholder="Buscar por igreja, código ou pastor..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-1 md:pb-0">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filtrar:</span>
+                    <button onclick="window.filtrarStatusIgreja('todos')" id="btnFiltroStatus-todos" class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-slate-900 text-white transition-all">Todos</button>
+                    <button onclick="window.filtrarStatusIgreja('verde')" id="btnFiltroStatus-verde" class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-all">🟢 Pagos</button>
+                    <button onclick="window.filtrarStatusIgreja('amarelo')" id="btnFiltroStatus-amarelo" class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 hover:bg-amber-200 transition-all">🟡 Saldos Lançados</button>
+                    <button onclick="window.filtrarStatusIgreja('vermelho')" id="btnFiltroStatus-vermelho" class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 hover:bg-rose-200 transition-all">🔴 Previsão Média</button>
+                </div>
+            </div>
+
+            <!-- Tabela Principal de Igrejas -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50/70">
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3">Igreja & Pastor Titular</th>
+                                <th class="px-4 py-3 text-right">Entradas Declaradas</th>
+                                <th class="px-4 py-3 text-right">Taxa Reg. (4%)</th>
+                                <th class="px-4 py-3 text-right">Taxa Coord.</th>
+                                <th class="px-4 py-3 text-right">Seguro Vida</th>
+                                <th class="px-4 py-3 text-right">Total Previsto/Pago</th>
+                                <th class="px-4 py-3 text-center">Base de Cálculo / Histórico</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaCorpoIgrejas" class="text-xs divide-y divide-slate-100 font-medium">
+                            <tr>
+                                <td colspan="8" class="text-center py-12 text-slate-400 font-bold uppercase tracking-wider">
+                                    Carregando dados das igrejas...
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-slate-50 font-black text-xs border-t-2 border-slate-200">
+                            <tr>
+                                <td colspan="2" class="px-4 py-3 text-slate-900 uppercase">Totais da Operação:</td>
+                                <td id="tfootEntradasDeclaradas" class="px-4 py-3 text-right text-slate-600">R$ 0,00</td>
+                                <td id="tfootTaxaRegional" class="px-4 py-3 text-right text-blue-700">R$ 0,00</td>
+                                <td id="tfootTaxaCoord" class="px-4 py-3 text-right text-indigo-700">R$ 0,00</td>
+                                <td id="tfootSeguroVida" class="px-4 py-3 text-right text-purple-700">R$ 0,00</td>
+                                <td id="tfootTotalGeral" class="px-4 py-3 text-right text-slate-900 text-sm">R$ 0,00</td>
+                                <td class="px-4 py-3 text-center text-[10px] text-slate-400 uppercase">Consolidado</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ABA 2: DESPESAS OPERACIONAIS (RECORRENTES E ESPORÁDICAS)         -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div id="tabContent-despesas" class="hidden space-y-4">
+            
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <i data-lucide="receipt" class="w-4 h-4 text-rose-500"></i> Despesas Cadastradas para o Período
+                    </h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        Despesas <strong>recorrentes</strong> repetem em todos os meses. Despesas <strong>esporádicas</strong> pertencem apenas a este mês.
+                    </p>
+                </div>
+                <button onclick="window.abrirModalDespesa()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 uppercase tracking-wider">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar Despesa
+                </button>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50/70">
+                                <th class="px-4 py-3">Tipo</th>
+                                <th class="px-4 py-3">Descrição da Despesa</th>
+                                <th class="px-4 py-3">Categoria</th>
+                                <th class="px-4 py-3 text-center">Vencimento</th>
+                                <th class="px-4 py-3 text-right">Valor</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3 text-center no-print">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaCorpoDespesas" class="text-xs divide-y divide-slate-100 font-medium">
+                            <tr>
+                                <td colspan="7" class="text-center py-10 text-slate-400 font-bold uppercase tracking-wider">
+                                    Nenhuma despesa cadastrada para este mês.
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-slate-50 font-black text-xs border-t border-slate-200">
+                            <tr>
+                                <td colspan="4" class="px-4 py-3 text-slate-900 uppercase">Total das Despesas do Mês:</td>
+                                <td id="tfootTotalDespesas" class="px-4 py-3 text-right text-rose-600 text-sm">R$ 0,00</td>
+                                <td colspan="2" class="px-4 py-3"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ABA 3: ENTRADAS ESPORÁDICAS                                     -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div id="tabContent-esporadicas" class="hidden space-y-4">
+            
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <i data-lucide="badge-percent" class="w-4 h-4 text-emerald-500"></i> Entradas Extraordinárias e Esporádicas
+                    </h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        Lançamentos de receitas avulsas (doações, rendimentos, acertos) que complementam a arrecadação deste mês.
+                    </p>
+                </div>
+                <button onclick="window.abrirModalEntradaEsporadica()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 uppercase tracking-wider">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Lançar Entrada Avulsa
+                </button>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-slate-50/70">
+                                <th class="px-4 py-3">Descrição da Entrada</th>
+                                <th class="px-4 py-3">Categoria / Finalidade</th>
+                                <th class="px-4 py-3 text-center">Data / Mês</th>
+                                <th class="px-4 py-3 text-right">Valor</th>
+                                <th class="px-4 py-3 text-center no-print">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaCorpoEsporadicas" class="text-xs divide-y divide-slate-100 font-medium">
+                            <tr>
+                                <td colspan="5" class="text-center py-10 text-slate-400 font-bold uppercase tracking-wider">
+                                    Nenhuma entrada esporádica lançada para este mês.
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-slate-50 font-black text-xs border-t border-slate-200">
+                            <tr>
+                                <td colspan="3" class="px-4 py-3 text-slate-900 uppercase">Total de Entradas Esporádicas:</td>
+                                <td id="tfootTotalEsporadicas" class="px-4 py-3 text-right text-emerald-600 text-sm">R$ 0,00</td>
+                                <td class="px-4 py-3 no-print"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ABA 4: GESTÃO SEPARADA DO FUNDO "OUTROS"                        -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div id="tabContent-outros" class="hidden space-y-6">
+            
+            <!-- Banner de Alerta e Esclarecimento -->
+            <div class="bg-slate-900 text-slate-200 p-5 rounded-2xl border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="space-y-1">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i> Gestão Isolada de Fundo com Destinação Específica
+                    </span>
+                    <h2 class="text-base font-black text-white">Controle de Entradas e Saídas do Item "Outros"</h2>
+                    <p class="text-xs text-slate-400 max-w-2xl">
+                        Os valores lançados no campo "Outros" dos recibos possuem finalidades exclusivas e <strong>não são misturados com o fluxo de caixa operacional regular</strong> da Região. Aqui você acompanha as entradas do mês e os pagamentos/saídas efetuados com esse fundo.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.abrirModalSaidaOutros()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 uppercase tracking-wider">
+                        <i data-lucide="arrow-down-circle" class="w-4 h-4"></i> Lançar Saída de Outros
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resumo Financeiro do Fundo Outros -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Entradas de Outros (Recibos)</span>
+                    <h4 id="resumoOutrosEntradas" class="text-xl font-black text-emerald-600 mt-1">R$ 0,00</h4>
+                    <p class="text-[10px] text-slate-400 mt-1" id="resumoOutrosQtdEntradas">0 recibos com outros</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Saídas Pagas deste Fundo</span>
+                    <h4 id="resumoOutrosSaidas" class="text-xl font-black text-rose-600 mt-1">R$ 0,00</h4>
+                    <p class="text-[10px] text-slate-400 mt-1" id="resumoOutrosQtdSaidas">0 saídas registradas</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Saldo Líquido do Fundo (Mês)</span>
+                    <h4 id="resumoOutrosSaldo" class="text-xl font-black text-slate-900 mt-1">R$ 0,00</h4>
+                    <p class="text-[10px] text-slate-400 mt-1">Entradas - Saídas no período</p>
+                </div>
+            </div>
+
+            <!-- Tabelas de Entradas e Saídas do Fundo -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Entradas de Outros (Puxadas dos Recibos) -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                            <i data-lucide="arrow-down-left" class="w-4 h-4 text-emerald-600"></i> Entradas de "Outros" nos Recibos
+                        </h3>
+                        <span class="text-[10px] font-extrabold text-slate-400 uppercase" id="badgeTotalRecibosOutros">0 itens</span>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar max-h-96">
+                        <table class="w-full text-left text-xs whitespace-nowrap">
+                            <thead class="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2.5">Igreja</th>
+                                    <th class="px-4 py-2.5">Descrição / Finalidade</th>
+                                    <th class="px-4 py-2.5 text-right">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaEntradasOutros" class="divide-y divide-slate-100">
+                                <tr><td colspan="3" class="text-center py-8 text-slate-400">Nenhuma entrada de outros no mês.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Saídas / Despesas do Fundo Outros -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                            <i data-lucide="arrow-up-right" class="w-4 h-4 text-rose-600"></i> Saídas e Destinações de "Outros"
+                        </h3>
+                        <button onclick="window.abrirModalSaidaOutros()" class="text-[10px] font-bold text-rose-600 hover:text-rose-700 uppercase tracking-wider">
+                            + Lançar Saída
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar max-h-96">
+                        <table class="w-full text-left text-xs whitespace-nowrap">
+                            <thead class="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2.5">Descrição</th>
+                                    <th class="px-4 py-2.5">Data</th>
+                                    <th class="px-4 py-2.5 text-right">Valor</th>
+                                    <th class="px-4 py-2.5 text-center no-print">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaSaidasOutros" class="divide-y divide-slate-100">
+                                <tr><td colspan="4" class="text-center py-8 text-slate-400">Nenhuma saída de outros registrada.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- RODAPÉ -->
+    <footer class="py-4 text-center text-slate-400 text-[10px] bg-white border-t border-slate-200 mt-10 no-print">
+        &copy; 2026 Região 655 — Londrina/PR · Gestão Financeira Preditiva
+    </footer>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- MODAIS DE INTERAÇÃO                                             -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+
+    <!-- MODAL 1: CADASTRAR / EDITAR DESPESA -->
+    <div id="modalDespesa" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onclick="if(event.target===this)window.fecharModalDespesa()">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-scale-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="text-sm font-black uppercase tracking-wide text-slate-800" id="modalDespesaTitulo">
+                    Cadastrar Despesa
+                </h3>
+                <button onclick="window.fecharModalDespesa()" class="text-slate-400 hover:text-slate-600 rounded-full p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="formDespesa" onsubmit="window.salvarDespesa(event)" class="p-6 space-y-4">
+                <input type="hidden" id="despesaId" value="">
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Descrição da Despesa *</label>
+                    <input type="text" id="despesaDescricao" required placeholder="Ex: Aluguel da Sede, Energia Elétrica, etc." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-rose-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Valor (R$) *</label>
+                        <input type="number" step="0.01" min="0.01" id="despesaValor" required placeholder="0,00" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-rose-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Categoria</label>
+                        <select id="despesaCategoria" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-rose-500">
+                            <option value="Administrativo">Administrativo</option>
+                            <option value="Instalações & Contas">Instalações & Contas</option>
+                            <option value="Honorários & Serviços">Honorários & Serviços</option>
+                            <option value="Eventos & Reuniões">Eventos & Reuniões</option>
+                            <option value="Repasses CED/CND">Repasses CED/CND</option>
+                            <option value="Outras Despesas">Outras Despesas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- TIPO DE DESPESA: ESPORÁDICA OU RECORRENTE -->
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase">Frequência da Despesa *</label>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-blue-400">
+                            <input type="radio" name="despesaTipo" value="recorrente" checked onchange="window.toggleTipoDespesa(this.value)" class="text-rose-600 focus:ring-rose-500">
+                            <span class="text-xs font-bold text-slate-700">🔄 Recorrente</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer hover:border-blue-400">
+                            <input type="radio" name="despesaTipo" value="esporadica" onchange="window.toggleTipoDespesa(this.value)" class="text-rose-600 focus:ring-rose-500">
+                            <span class="text-xs font-bold text-slate-700">⚡ Esporádica</span>
+                        </label>
+                    </div>
+
+                    <!-- Campos dinâmicos conforme o tipo -->
+                    <div id="campoRecorrente" class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Dia do Vencimento Mensal</label>
+                        <input type="number" min="1" max="31" id="despesaDiaVencimento" value="10" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold">
+                        <p class="text-[9px] text-slate-400">Repete automaticamente em todos os meses futuros.</p>
+                    </div>
+
+                    <div id="campoEsporadica" class="space-y-1 hidden">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Mês de Aplicação</label>
+                        <input type="text" id="despesaMesRef" placeholder="MM/AAAA" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold">
+                        <p class="text-[9px] text-slate-400">Aplica-se apenas ao mês especificado.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Observações adicionais</label>
+                    <textarea id="despesaObs" rows="2" placeholder="Opcional..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="window.fecharModalDespesa()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl uppercase tracking-wider">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnSalvarDespesa" class="px-5 py-2 text-xs font-black text-white bg-rose-600 hover:bg-rose-700 rounded-xl uppercase tracking-wider shadow-md">
+                        Salvar Despesa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: CADASTRAR ENTRADA ESPORÁDICA -->
+    <div id="modalEntradaEsporadica" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onclick="if(event.target===this)window.fecharModalEntradaEsporadica()">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-scale-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="text-sm font-black uppercase tracking-wide text-slate-800">
+                    Lançar Entrada Avulsa / Esporádica
+                </h3>
+                <button onclick="window.fecharModalEntradaEsporadica()" class="text-slate-400 hover:text-slate-600 rounded-full p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="formEntradaEsporadica" onsubmit="window.salvarEntradaEsporadica(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Descrição da Entrada *</label>
+                    <input type="text" id="entradaDescricao" required placeholder="Ex: Doação de Parceiro, Rendimento de Aplicação, etc." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Valor (R$) *</label>
+                        <input type="number" step="0.01" min="0.01" id="entradaValor" required placeholder="0,00" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Categoria</label>
+                        <select id="entradaCategoria" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="Doação">Doação</option>
+                            <option value="Rendimento">Rendimento</option>
+                            <option value="Reembolso">Reembolso</option>
+                            <option value="Evento Avulso">Evento Avulso</option>
+                            <option value="Outros Ingressos">Outros Ingressos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Mês de Referência</label>
+                        <input type="text" id="entradaMesRef" readonly class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Data Específica</label>
+                        <input type="date" id="entradaData" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Observações</label>
+                    <textarea id="entradaObs" rows="2" placeholder="Opcional..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="window.fecharModalEntradaEsporadica()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl uppercase tracking-wider">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnSalvarEntrada" class="px-5 py-2 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl uppercase tracking-wider shadow-md">
+                        Salvar Entrada
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: CADASTRAR SAÍDA DO FUNDO "OUTROS" -->
+    <div id="modalSaidaOutros" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onclick="if(event.target===this)window.fecharModalSaidaOutros()">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-scale-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-900 text-white">
+                <h3 class="text-sm font-black uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="archive" class="w-4 h-4 text-amber-400"></i> Registrar Saída de "Outros"
+                </h3>
+                <button onclick="window.fecharModalSaidaOutros()" class="text-slate-400 hover:text-white rounded-full p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="formSaidaOutros" onsubmit="window.salvarSaidaOutros(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Destinação / Descrição da Saída *</label>
+                    <input type="text" id="saidaOutrosDescricao" required placeholder="Ex: Repasse de Oferta Missionária Especial, Compra específica, etc." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Valor da Saída (R$) *</label>
+                        <input type="number" step="0.01" min="0.01" id="saidaOutrosValor" required placeholder="0,00" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Data do Pagamento</label>
+                        <input type="date" id="saidaOutrosData" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Comprovante / Recibo / Obs</label>
+                    <input type="text" id="saidaOutrosComprovante" placeholder="Nº do comprovante ou detalhes..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="window.fecharModalSaidaOutros()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl uppercase tracking-wider">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnSalvarSaidaOutros" class="px-5 py-2 text-xs font-black text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl uppercase tracking-wider shadow-md">
+                        Registrar Saída
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: DETALHES DO HISTÓRICO DA IGREJA (ÚLTIMOS 3 MESES USADOS) -->
+    <div id="modalHistoricoIgreja" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onclick="if(event.target===this)window.fecharModalHistorico()">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-scale-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Base de Projeção Preditiva</p>
+                    <h3 class="text-sm font-black text-slate-900" id="histModalIgrejaNome">--</h3>
+                </div>
+                <button onclick="window.fecharModalHistorico()" class="text-slate-400 hover:text-slate-600 rounded-full p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                <div class="bg-blue-50/70 border border-blue-200/60 p-3.5 rounded-2xl text-xs text-blue-900" id="histModalResumoTexto">
+                    <!-- Resumo da regra aplicada -->
+                </div>
+
+                <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <i data-lucide="history" class="w-3.5 h-3.5 text-blue-600"></i> Últimos 3 Meses com Lançamentos Válidos Encontrados:
+                </h4>
+
+                <div id="histModalListaMeses" class="space-y-2">
+                    <!-- Cards de cada um dos 3 meses -->
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <div class="flex justify-between items-center text-xs font-bold text-slate-600 mb-1">
+                        <span>Média Aritmética Apurada:</span>
+                        <span id="histModalMediaApurada" class="text-slate-900 font-extrabold text-sm">R$ 0,00</span>
+                    </div>
+                    <div id="histModalLinhaMargem" class="flex justify-between items-center text-xs font-bold text-amber-700 pt-2 border-t border-slate-200">
+                        <span>Margem de Garantia (-10% para meses futuros):</span>
+                        <span id="histModalValorComMargem" class="font-black text-sm">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
+                <button onclick="window.fecharModalHistorico()" class="px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 rounded-xl uppercase tracking-wider">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- LOGICA JAVASCRIPT / FIREBASE                                    -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { 
+            collection, getDocs, addDoc, updateDoc, deleteDoc, doc, 
+            serverTimestamp, query, where, orderBy, getDoc 
+        } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // Estado Global da Aplicação
+        window.appState = {
+            rawIgrejas: [],
+            rawPastores: [],
+            rawRecibos: [],
+            rawSaldos: [],
+            rawDespesas: [],
+            rawEsporadicas: [],
+            rawSaidasOutros: [],
+            valorSeguroPadrao: 45,
+            taxaCoordPadrao: 100,
+
+            // Mês selecionado no formato "MM/AAAA"
+            mesSelecionado: "",
+            mesAtualReal: "",
+
+            // Dados processados do mês atual
+            processamentoIgrejas: [],
+            filtroStatusIgreja: "todos",
+            termoBuscaIgreja: "",
+            abaAtiva: "igrejas"
+        };
+
+        const formatMoeda = (val) => {
+            return (parseFloat(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        };
+
+        const parseNumero = (val) => {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            const parsed = parseFloat(String(val).replace(/\./g, '').replace(',', '.'));
+            return isNaN(parsed) ? 0 : parsed;
+        };
+
+        // Converte string de mês "MM/AAAA" para número comparável (AAAAMM)
+        const mesParaChaveNum = (mesStr) => {
+            if (!mesStr || !mesStr.includes('/')) return 0;
+            const [m, y] = mesStr.split('/');
+            return parseInt(y, 10) * 100 + parseInt(m, 10);
+        };
+
+        // Extrai "MM/AAAA" de períodos como "DEZ/2025 > JAN/2026" ou "2026-09"
+        const normalizarMesAno = (str) => {
+            if (!str) return "";
+            if (/^\d{2}\/\d{4}$/.test(str)) return str;
+            if (/^\d{4}-\d{2}$/.test(str)) {
+                const [y, m] = str.split('-');
+                return `${m}/${y}`;
+            }
+            const match = str.match(/(\d{2})\/(\d{4})/);
+            if (match) return `${match[1]}/${match[2]}`;
+
+            // Mapeia nomes abreviados de mês
+            const mapMes = {
+                'JAN': '01', 'FEV': '02', 'MAR': '03', 'ABR': '04',
+                'MAI': '05', 'JUN': '06', 'JUL': '07', 'AGO': '08',
+                'SET': '09', 'OUT': '10', 'NOV': '11', 'DEZ': '12'
+            };
+            const parts = str.toUpperCase().split(/➔|>|\//);
+            for (let p of parts) {
+                p = p.trim();
+                for (let k in mapMes) {
+                    if (p.includes(k)) {
+                        const mYear = p.match(/\d{2,4}/);
+                        if (mYear) {
+                            let y = mYear[0];
+                            if (y.length === 2) y = "20" + y;
+                            return `${mapMes[k]}/${y}`;
+                        }
+                    }
+                }
+            }
+            return "";
+        };
+
+        // Inicialização de Datas
+        const initDatas = () => {
+            const now = new Date();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const yyyy = now.getFullYear();
+            window.appState.mesAtualReal = `${mm}/${yyyy}`;
+            if (!window.appState.mesSelecionado) {
+                window.appState.mesSelecionado = window.appState.mesAtualReal;
+            }
+            popularSeletorMeses();
+        };
+
+        const popularSeletorMeses = () => {
+            const sel = document.getElementById('selectMesReferencia');
+            if (!sel) return;
+            sel.innerHTML = '';
+
+            const now = new Date();
+            const currY = now.getFullYear();
+            const currM = now.getMonth();
+
+            // Gerar 6 meses anteriores até 6 meses posteriores
+            const listaMeses = [];
+            for (let offset = -6; offset <= 6; offset++) {
+                const d = new Date(currY, currM + offset, 1);
+                const mStr = String(d.getMonth() + 1).padStart(2, '0');
+                const yStr = d.getFullYear();
+                listaMeses.push(`${mStr}/${yStr}`);
+            }
+
+            listaMeses.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                if (m === window.appState.mesAtualReal) {
+                    opt.textContent = `${m} (Atual)`;
+                }
+                if (m === window.appState.mesSelecionado) {
+                    opt.selected = true;
+                }
+                sel.appendChild(opt);
+            });
+        };
+
+        window.navegarMes = (delta) => {
+            const [m, y] = window.appState.mesSelecionado.split('/').map(Number);
+            const d = new Date(y, (m - 1) + delta, 1);
+            const novoMes = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+            window.trocarMesSelecionado(novoMes);
+        };
+
+        window.irParaMesAtual = () => {
+            window.trocarMesSelecionado(window.appState.mesAtualReal);
+        };
+
+        window.trocarMesSelecionado = (novoMes) => {
+            window.appState.mesSelecionado = novoMes;
+            popularSeletorMeses();
+            recalcularTudo();
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // CARREGAMENTO DOS DADOS DO FIREBASE
+        // ════════════════════════════════════════════════════════════════
+        window.fetchData = async () => {
+            const overlay = document.getElementById('loadingOverlay');
+            const stepLabel = document.getElementById('loadingStep');
+            if (overlay) overlay.style.display = 'flex';
+
+            try {
+                if (stepLabel) stepLabel.innerText = "Buscando configurações e igrejas...";
+                
+                // Configurações (ex: valor seguro)
+                try {
+                    const cfgSnap = await getDoc(doc(db, "configuracoes", "painel_pastores"));
+                    if (cfgSnap.exists() && cfgSnap.data().valorSeguro) {
+                        window.appState.valorSeguroPadrao = parseFloat(cfgSnap.data().valorSeguro) || 45;
+                    }
+                } catch(e) { console.warn("Configurações não carregadas, usando seguro padrão 45", e); }
+
+                // 1. Igrejas e Pastores
+                const [igrejasSnap, pastoresSnap] = await Promise.all([
+                    getDocs(collection(db, "igrejas")),
+                    getDocs(collection(db, "pastores"))
+                ]);
+
+                const pastores = [];
+                pastoresSnap.forEach(d => pastores.push(d.data()));
+                window.appState.rawPastores = pastores;
+
+                const igrejas = [];
+                igrejasSnap.forEach(d => {
+                    const data = d.data();
+                    if (data.tipo === 'Região Eclesiástica' || data.tipo === 'Sede Regional') return;
+                    
+                    const titular = pastores.find(p => {
+                        const pIgs = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                        return pIgs.includes(data.nome) && p.funcao === 'Pastor Titular';
+                    });
+
+                    igrejas.push({
+                        id: d.id,
+                        codigo: String(data.codigo || '').padStart(4, '0'),
+                        codigoNum: parseInt(data.codigo, 10) || 9999,
+                        nome: data.nome || 'Igreja Sem Nome',
+                        pastor: titular ? titular.nome : 'Sem Pastor Titular',
+                        seguros: parseInt(data.seguros, 10) || 0
+                    });
+                });
+                igrejas.sort((a, b) => a.codigoNum - b.codigoNum);
+                window.appState.rawIgrejas = igrejas;
+
+                // 2. Recibos e Saldos de Virada
+                if (stepLabel) stepLabel.innerText = "Buscando histórico de recibos e saldos...";
+                const [recibosSnap, saldosSnap] = await Promise.all([
+                    getDocs(collection(db, "recibos")),
+                    getDocs(collection(db, "saldos_virada"))
+                ]);
+
+                const recibos = [];
+                recibosSnap.forEach(d => {
+                    recibos.push({ id: d.id, ...d.data() });
+                });
+                window.appState.rawRecibos = recibos;
+
+                const saldos = [];
+                saldosSnap.forEach(d => {
+                    saldos.push({ id: d.id, ...d.data() });
+                });
+                window.appState.rawSaldos = saldos;
+
+                // 3. Despesas Preditivas, Entradas Esporádicas e Saídas Outros
+                if (stepLabel) stepLabel.innerText = "Carregando despesas e fundo outros...";
+                await Promise.all([
+                    carregarColecaoDespesas(),
+                    carregarColecaoEsporadicas(),
+                    carregarColecaoSaidasOutros()
+                ]);
+
+                recalcularTudo();
+
+            } catch (err) {
+                console.error("Erro geral ao carregar dados:", err);
+                alert("Erro ao carregar dados do Firebase. Verifique o console para detalhes.");
+            } finally {
+                if (overlay) overlay.style.display = 'none';
+            }
+        };
+
+        const carregarColecaoDespesas = async () => {
+            try {
+                const snap = await getDocs(collection(db, "despesas_preditivas"));
+                const list = [];
+                snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+                window.appState.rawDespesas = list;
+            } catch (e) {
+                console.warn("Coleção despesas_preditivas vazia ou inicial", e);
+                window.appState.rawDespesas = [];
+            }
+        };
+
+        const carregarColecaoEsporadicas = async () => {
+            try {
+                const snap = await getDocs(collection(db, "entradas_esporadicas"));
+                const list = [];
+                snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+                window.appState.rawEsporadicas = list;
+            } catch (e) {
+                console.warn("Coleção entradas_esporadicas vazia ou inicial", e);
+                window.appState.rawEsporadicas = [];
+            }
+        };
+
+        const carregarColecaoSaidasOutros = async () => {
+            try {
+                const snap = await getDocs(collection(db, "saidas_outros"));
+                const list = [];
+                snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+                window.appState.rawSaidasOutros = list;
+            } catch (e) {
+                console.warn("Coleção saidas_outros vazia ou inicial", e);
+                window.appState.rawSaidasOutros = [];
+            }
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // ALGORITMO PREDITIVO: MÉDIA DOS ÚLTIMOS 3 MESES VÁLIDOS
+        // ════════════════════════════════════════════════════════════════
+        const obterMediaUltimos3MesesValidos = (codIgreja, nomeIgreja, mesAlvoStr) => {
+            const chaveAlvoNum = mesParaChaveNum(mesAlvoStr);
+            const historicoMesesMap = new Map();
+
+            // 1. Vasculhar Recibos
+            window.appState.rawRecibos.forEach(r => {
+                const rCod = String(r.igrejaCodigo || (r.igrejaFormatada ? r.igrejaFormatada.split(' - ')[0].trim() : '')).padStart(4, '0');
+                const rNome = r.igrejaNome || '';
+                if (rCod !== codIgreja && rNome !== nomeIgreja) return;
+
+                const ref = normalizarMesAno(r.referenceDate || (r.dataEmissao ? r.dataEmissao.substring(3) : ''));
+                if (!ref) return;
+                const refNum = mesParaChaveNum(ref);
+                if (refNum >= chaveAlvoNum) return;
+
+                const reg = parseFloat(r.regionalTax) || 0;
+                const coord = parseFloat(r.coordinatorFeeParsed) || 0;
+                const seguro = parseFloat(r.insuranceTotal) || 0;
+                const total = reg + coord + seguro;
+
+                if (total > 0) {
+                    historicoMesesMap.set(ref, {
+                        mes: ref,
+                        mesNum: refNum,
+                        entradas: parseFloat(r.incomeValue) || (reg > 0 ? reg / 0.04 : 0),
+                        regional: reg,
+                        coord: coord > 0 ? coord : 100,
+                        seguro: seguro,
+                        origem: `Recibo nº ${r.codigoRecibo || r.id.substring(0, 8)}`
+                    });
+                }
+            });
+
+            // 2. Vasculhar Saldos de Virada
+            window.appState.rawSaldos.forEach(s => {
+                const sCod = String(s.igrejaCodigo || (s.igrejaFormatada ? s.igrejaFormatada.split(' - ')[0].trim() : '')).padStart(4, '0');
+                const sNome = s.igrejaNome || '';
+                if (sCod !== codIgreja && sNome !== nomeIgreja) return;
+
+                const ref = normalizarMesAno(s.mesReferencia || s.periodo || s.periodoChave);
+                if (!ref) return;
+                const refNum = mesParaChaveNum(ref);
+                if (refNum >= chaveAlvoNum) return;
+
+                if (historicoMesesMap.has(ref)) return;
+
+                const entradas = parseFloat(s.entradasTaxadas) || 0;
+                if (entradas > 0) {
+                    const reg = entradas * 0.04;
+                    historicoMesesMap.set(ref, {
+                        mes: ref,
+                        mesNum: refNum,
+                        entradas: entradas,
+                        regional: reg,
+                        coord: 100,
+                        seguro: (window.appState.rawIgrejas.find(i => i.codigo === codIgreja)?.seguros || 0) * window.appState.valorSeguroPadrao,
+                        origem: `Saldo Virada (${s.periodo || ref})`
+                    });
+                }
+            });
+
+            const mesesValidosOrdenados = Array.from(historicoMesesMap.values())
+                .sort((a, b) => b.mesNum - a.mesNum);
+
+            const ultimos3 = mesesValidosOrdenados.slice(0, 3);
+
+            if (ultimos3.length === 0) {
+                const ig = window.appState.rawIgrejas.find(i => i.codigo === codIgreja);
+                const segTotal = (ig?.seguros || 0) * window.appState.valorSeguroPadrao;
+                return {
+                    temHistorico: false,
+                    qtdMesesUsados: 0,
+                    mesesUsados: [],
+                    mediaEntradas: 0,
+                    mediaRegional: 0,
+                    mediaCoord: 100,
+                    mediaSeguro: segTotal,
+                    mediaTotal: 100 + segTotal
+                };
+            }
+
+            const somaEntradas = ultimos3.reduce((acc, it) => acc + it.entradas, 0);
+            const somaRegional = ultimos3.reduce((acc, it) => acc + it.regional, 0);
+            const somaCoord = ultimos3.reduce((acc, it) => acc + it.coord, 0);
+            const somaSeguro = ultimos3.reduce((acc, it) => acc + it.seguro, 0);
+
+            const n = ultimos3.length;
+            return {
+                temHistorico: true,
+                qtdMesesUsados: n,
+                mesesUsados: ultimos3,
+                mediaEntradas: somaEntradas / n,
+                mediaRegional: somaRegional / n,
+                mediaCoord: somaCoord / n,
+                mediaSeguro: somaSeguro / n,
+                mediaTotal: (somaRegional + somaCoord + somaSeguro) / n
+            };
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // RECALCULAR TODO O PAINEL PARA O MÊS SELECIONADO
+        // ════════════════════════════════════════════════════════════════
+        const recalcularTudo = () => {
+            const mesSel = window.appState.mesSelecionado;
+            const mesAtual = window.appState.mesAtualReal;
+            const ehMesAtual = mesSel === mesAtual;
+            const ehMesFuturo = mesParaChaveNum(mesSel) > mesParaChaveNum(mesAtual);
+
+            const badgeTipo = document.getElementById('badgeTipoMes');
+            const bannerMargem = document.getElementById('bannerMargemGarantia');
+            const printSub = document.getElementById('printSubtitle');
+            if (printSub) printSub.innerText = `Mês de Referência: ${mesSel}`;
+
+            if (ehMesAtual) {
+                badgeTipo.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30";
+                badgeTipo.innerText = "Mês Atual (Tempo Real)";
+                if (bannerMargem) bannerMargem.classList.add('hidden');
+            } else if (ehMesFuturo) {
+                badgeTipo.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/30";
+                badgeTipo.innerText = "Projeção Futura (-10%)";
+                if (bannerMargem) bannerMargem.classList.remove('hidden');
+            } else {
+                badgeTipo.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-slate-500/20 text-slate-300 border border-slate-400/30";
+                badgeTipo.innerText = "Histórico Passado";
+                if (bannerMargem) bannerMargem.classList.add('hidden');
+            }
+
+            // 1. Processamento das Igrejas
+            const processamento = [];
+
+            window.appState.rawIgrejas.forEach(ig => {
+                const cod = ig.codigo;
+                const nome = ig.nome;
+
+                const reciboDoMes = window.appState.rawRecibos.find(r => {
+                    const rCod = String(r.igrejaCodigo || (r.igrejaFormatada ? r.igrejaFormatada.split(' - ')[0].trim() : '')).padStart(4, '0');
+                    const rNome = r.igrejaNome || '';
+                    if (rCod !== cod && rNome !== nome) return false;
+
+                    const ref = normalizarMesAno(r.referenceDate || (r.dataEmissao ? r.dataEmissao.substring(3) : ''));
+                    if (ref !== mesSel) return false;
+
+                    return (parseFloat(r.regionalTax) || 0) > 0 || r.status === 'Pago';
+                });
+
+                const saldoDoMes = window.appState.rawSaldos.find(s => {
+                    const sCod = String(s.igrejaCodigo || (s.igrejaFormatada ? s.igrejaFormatada.split(' - ')[0].trim() : '')).padStart(4, '0');
+                    const sNome = s.igrejaNome || '';
+                    if (sCod !== cod && sNome !== nome) return false;
+
+                    const ref = normalizarMesAno(s.mesReferencia || s.periodo || s.periodoChave);
+                    return ref === mesSel;
+                });
+
+                let status = "vermelho";
+                let statusLabel = "🔴 Previsão Média";
+                let statusCorBadge = "bg-rose-100 text-rose-800 border-rose-200";
+                let entradasDeclaradas = 0;
+                let regionalTax = 0;
+                let coordFee = 0;
+                let seguroVida = 0;
+                let totalGeral = 0;
+                let detalheOrigem = "";
+                let dadosHistorico = null;
+
+                if (reciboDoMes) {
+                    status = "verde";
+                    statusLabel = "🟢 Pago";
+                    statusCorBadge = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                    entradasDeclaradas = parseFloat(reciboDoMes.incomeValue) || 0;
+                    regionalTax = parseFloat(reciboDoMes.regionalTax) || 0;
+                    coordFee = parseFloat(reciboDoMes.coordinatorFeeParsed) || 0;
+                    seguroVida = parseFloat(reciboDoMes.insuranceTotal) || 0;
+                    totalGeral = regionalTax + coordFee + seguroVida;
+                    detalheOrigem = `Recibo emitido: ${reciboDoMes.codigoRecibo || 'Pendente'}`;
+                } else if (saldoDoMes && (parseFloat(saldoDoMes.entradasTaxadas) || 0) > 0) {
+                    status = "amarelo";
+                    statusLabel = "🟡 Saldo Declarado";
+                    statusCorBadge = "bg-amber-100 text-amber-800 border-amber-200";
+                    entradasDeclaradas = parseFloat(saldoDoMes.entradasTaxadas) || 0;
+                    regionalTax = entradasDeclaradas * 0.04;
+                    coordFee = 100;
+                    seguroVida = (ig.seguros || 0) * window.appState.valorSeguroPadrao;
+                    totalGeral = regionalTax + coordFee + seguroVida;
+                    detalheOrigem = `Lançado no Saldo de Virada (Taxa pendente)`;
+                } else {
+                    dadosHistorico = obterMediaUltimos3MesesValidos(cod, nome, mesSel);
+
+                    if (ehMesFuturo) {
+                        status = "vermelho";
+                        statusLabel = "🔮 Projeção (-10%)";
+                        statusCorBadge = "bg-purple-100 text-purple-800 border-purple-200";
+                        
+                        entradasDeclaradas = dadosHistorico.mediaEntradas * 0.90;
+                        regionalTax = dadosHistorico.mediaRegional * 0.90;
+                        coordFee = dadosHistorico.mediaCoord * 0.90;
+                        seguroVida = dadosHistorico.mediaSeguro * 0.90;
+                        totalGeral = regionalTax + coordFee + seguroVida;
+                        detalheOrigem = `Projeção: Média de ${dadosHistorico.qtdMesesUsados} meses - 10% de garantia`;
+                    } else {
+                        status = "vermelho";
+                        statusLabel = "🔴 Previsão Média";
+                        statusCorBadge = "bg-rose-100 text-rose-800 border-rose-200";
+                        
+                        entradasDeclaradas = dadosHistorico.mediaEntradas;
+                        regionalTax = dadosHistorico.mediaRegional;
+                        coordFee = dadosHistorico.mediaCoord;
+                        seguroVida = dadosHistorico.mediaSeguro;
+                        totalGeral = regionalTax + coordFee + seguroVida;
+                        detalheOrigem = `Previsão: Média dos últimos ${dadosHistorico.qtdMesesUsados} meses válidos`;
+                    }
+                }
+
+                processamento.push({
+                    codigo: cod,
+                    nome: nome,
+                    pastor: ig.pastor,
+                    segurosQtd: ig.seguros || 0,
+                    status: status,
+                    statusLabel: statusLabel,
+                    statusCorBadge: statusCorBadge,
+                    entradasDeclaradas: entradasDeclaradas,
+                    regionalTax: regionalTax,
+                    coordFee: coordFee,
+                    seguroVida: seguroVida,
+                    totalGeral: totalGeral,
+                    detalheOrigem: detalheOrigem,
+                    dadosHistorico: dadosHistorico,
+                    reciboDoMes: reciboDoMes,
+                    saldoDoMes: saldoDoMes
+                });
+            });
+
+            window.appState.processamentoIgrejas = processamento;
+
+            // 2. Despesas
+            const despesasMes = window.appState.rawDespesas.filter(d => {
+                if (d.tipo === 'recorrente') {
+                    return d.ativo !== false;
+                }
+                const ref = normalizarMesAno(d.mesReferencia);
+                return ref === mesSel;
+            });
+
+            const totalDespesasRecorrentes = despesasMes
+                .filter(d => d.tipo === 'recorrente')
+                .reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+            
+            const totalDespesasEsporadicas = despesasMes
+                .filter(d => d.tipo !== 'recorrente')
+                .reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+
+            const totalDespesasGeral = totalDespesasRecorrentes + totalDespesasEsporadicas;
+
+            // 3. Entradas Esporádicas
+            const esporadicasMes = window.appState.rawEsporadicas.filter(e => {
+                const ref = normalizarMesAno(e.mesReferencia || (e.data ? e.data.substring(0, 7) : ''));
+                return ref === mesSel;
+            });
+            const totalEntradasEsporadicas = esporadicasMes.reduce((sum, e) => sum + (parseFloat(e.valor) || 0), 0);
+
+            // 4. Fundo Outros
+            const recibosComOutros = window.appState.rawRecibos.filter(r => {
+                const ref = normalizarMesAno(r.referenceDate || (r.dataEmissao ? r.dataEmissao.substring(3) : ''));
+                if (ref !== mesSel) return false;
+                return (parseFloat(r.otherValueParsed) || 0) > 0;
+            });
+            const totalEntradasOutros = recibosComOutros.reduce((sum, r) => sum + (parseFloat(r.otherValueParsed) || 0), 0);
+
+            const saidasOutrosMes = window.appState.rawSaidasOutros.filter(s => {
+                const ref = normalizarMesAno(s.mesReferencia || (s.data ? s.data.substring(0, 7) : ''));
+                return ref === mesSel;
+            });
+            const totalSaidasOutros = saidasOutrosMes.reduce((sum, s) => sum + (parseFloat(s.valor) || 0), 0);
+            const saldoLiquidoOutros = totalEntradasOutros - totalSaidasOutros;
+
+            // 5. Totais
+            const totalRegional = processamento.reduce((sum, i) => sum + i.regionalTax, 0);
+            const totalCoord = processamento.reduce((sum, i) => sum + i.coordFee, 0);
+            const totalSeguro = processamento.reduce((sum, i) => sum + i.seguroVida, 0);
+            const totalArrecadacaoIgrejas = totalRegional + totalCoord + totalSeguro;
+
+            const arrecadacaoOperacionalTotal = totalArrecadacaoIgrejas + totalEntradasEsporadicas;
+            const resultadoLiquido = arrecadacaoOperacionalTotal - totalDespesasGeral;
+
+            const totalRealizadoPago = processamento
+                .filter(i => i.status === 'verde')
+                .reduce((sum, i) => sum + i.totalGeral, 0);
+
+            const countVerde = processamento.filter(i => i.status === 'verde').length;
+            const countAmarelo = processamento.filter(i => i.status === 'amarelo').length;
+            const countVermelho = processamento.filter(i => i.status === 'vermelho').length;
+
+            // 6. Atualizar UI
+            document.getElementById('kpiArrecadacaoTotal').innerText = formatMoeda(arrecadacaoOperacionalTotal);
+            document.getElementById('kpiDespesasTotal').innerText = formatMoeda(totalDespesasGeral);
+            document.getElementById('kpiDespesasRecorrentes').innerText = `Recorrentes: ${formatMoeda(totalDespesasRecorrentes)}`;
+            document.getElementById('kpiDespesasEsporadicas').innerText = `Esporádicas: ${formatMoeda(totalDespesasEsporadicas)}`;
+
+            const percPago = arrecadacaoOperacionalTotal > 0 ? Math.round((totalRealizadoPago / arrecadacaoOperacionalTotal) * 100) : 0;
+            document.getElementById('kpiRealizadoPerc').innerText = `${percPago}% realizado`;
+
+            const kpiResEl = document.getElementById('kpiResultadoLiquido');
+            const kpiStatusRes = document.getElementById('kpiStatusResultado');
+            kpiResEl.innerText = formatMoeda(resultadoLiquido);
+            if (resultadoLiquido >= 0) {
+                kpiResEl.className = "text-2xl font-black text-emerald-600 mt-2";
+                kpiStatusRes.className = "font-bold text-emerald-600";
+                kpiStatusRes.innerText = "Superávit Projetado";
+            } else {
+                kpiResEl.className = "text-2xl font-black text-rose-600 mt-2";
+                kpiStatusRes.className = "font-bold text-rose-600";
+                kpiStatusRes.innerText = "Déficit Projetado";
+            }
+
+            document.getElementById('kpiOutrosSaldoLiquido').innerText = formatMoeda(saldoLiquidoOutros);
+            document.getElementById('kpiOutrosEntradas').innerText = `Entradas: ${formatMoeda(totalEntradasOutros)}`;
+            document.getElementById('kpiOutrosSaidas').innerText = `Saídas: ${formatMoeda(totalSaidasOutros)}`;
+
+            document.getElementById('compTaxaRegional').innerText = formatMoeda(totalRegional);
+            document.getElementById('compTaxaCoord').innerText = formatMoeda(totalCoord);
+            document.getElementById('compSeguroVida').innerText = formatMoeda(totalSeguro);
+
+            const baseTotalComp = totalArrecadacaoIgrejas || 1;
+            document.getElementById('percCompTaxaReg').innerText = `${Math.round((totalRegional / baseTotalComp) * 100)}% das taxas`;
+            document.getElementById('percCompTaxaCoord').innerText = `${Math.round((totalCoord / baseTotalComp) * 100)}% das taxas`;
+            document.getElementById('percCompSeguro').innerText = `${Math.round((totalSeguro / baseTotalComp) * 100)}% das taxas`;
+
+            document.getElementById('countStatusVerde').innerText = `${countVerde} igrejas`;
+            document.getElementById('countStatusAmarelo').innerText = `${countAmarelo} igrejas`;
+            document.getElementById('countStatusVermelho').innerText = `${countVermelho} igrejas`;
+
+            renderTabelaIgrejas();
+            renderTabelaDespesas(despesasMes, totalDespesasGeral);
+            renderTabelaEsporadicas(esporadicasMes, totalEntradasEsporadicas);
+            renderTabelaOutros(recibosComOutros, saidasOutrosMes, totalEntradasOutros, totalSaidasOutros, saldoLiquidoOutros);
+
+            lucide.createIcons();
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // RENDERIZAÇÃO DA TABELA DE IGREJAS
+        // ════════════════════════════════════════════════════════════════
+        window.filtrarStatusIgreja = (status) => {
+            window.appState.filtroStatusIgreja = status;
+            
+            ['todos', 'verde', 'amarelo', 'vermelho'].forEach(s => {
+                const btn = document.getElementById(`btnFiltroStatus-${s}`);
+                if (btn) {
+                    if (s === status) {
+                        btn.className = "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-slate-900 text-white transition-all shadow-sm";
+                    } else {
+                        btn.className = "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+                    }
+                }
+            });
+
+            renderTabelaIgrejas();
+        };
+
+        window.filtrarTabelaIgrejas = () => {
+            window.appState.termoBuscaIgreja = (document.getElementById('filtroBuscaIgreja')?.value || '').toLowerCase().trim();
+            renderTabelaIgrejas();
+        };
+
+        const renderTabelaIgrejas = () => {
+            const tbody = document.getElementById('tabelaCorpoIgrejas');
+            if (!tbody) return;
+
+            const lista = window.appState.processamentoIgrejas;
+            const filtroSt = window.appState.filtroStatusIgreja;
+            const busca = window.appState.termoBuscaIgreja;
+
+            const filtradas = lista.filter(i => {
+                if (filtroSt !== 'todos' && i.status !== filtroSt) return false;
+                if (busca) {
+                    const matchCod = i.codigo.toLowerCase().includes(busca);
+                    const matchNome = i.nome.toLowerCase().includes(busca);
+                    const matchPastor = i.pastor.toLowerCase().includes(busca);
+                    if (!matchCod && !matchNome && !matchPastor) return false;
+                }
+                return true;
+            });
+
+            if (filtradas.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-12 text-slate-400 font-bold uppercase tracking-wider">
+                            Nenhuma igreja encontrada para os filtros selecionados.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            let somaEntradas = 0, somaReg = 0, somaCoord = 0, somaSeg = 0, somaTotal = 0;
+
+            tbody.innerHTML = filtradas.map(i => {
+                somaEntradas += i.entradasDeclaradas;
+                somaReg += i.regionalTax;
+                somaCoord += i.coordFee;
+                somaSeg += i.seguroVida;
+                somaTotal += i.totalGeral;
+
+                let btnHistoricoHtml = "";
+                if (i.status === 'verde') {
+                    btnHistoricoHtml = `<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">Recibo Concluído</span>`;
+                } else if (i.status === 'amarelo') {
+                    btnHistoricoHtml = `<span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">Saldo Declarado</span>`;
+                } else {
+                    btnHistoricoHtml = `
+                        <button onclick="window.abrirModalHistorico('${i.codigo}')" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200 transition-colors inline-flex items-center gap-1">
+                            <i data-lucide="history" class="w-3 h-3"></i> Ver 3 Meses
+                        </button>`;
+                }
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-4 py-3 text-center">
+                            <span class="inline-block text-[10px] font-black px-2.5 py-1 rounded-full border uppercase tracking-wider ${i.statusCorBadge}">
+                                ${i.statusLabel}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="font-extrabold text-slate-900">${i.codigo} - ${i.nome}</div>
+                            <div class="text-[10px] text-slate-500 font-medium">${i.pastor}</div>
+                        </td>
+                        <td class="px-4 py-3 text-right font-semibold text-slate-600">
+                            ${formatMoeda(i.entradasDeclaradas)}
+                        </td>
+                        <td class="px-4 py-3 text-right font-bold text-blue-600">
+                            ${formatMoeda(i.regionalTax)}
+                        </td>
+                        <td class="px-4 py-3 text-right font-bold text-indigo-600">
+                            ${formatMoeda(i.coordFee)}
+                        </td>
+                        <td class="px-4 py-3 text-right font-bold text-purple-600">
+                            <div>${formatMoeda(i.seguroVida)}</div>
+                            <div class="text-[9px] text-slate-400">(${i.segurosQtd} apólices)</div>
+                        </td>
+                        <td class="px-4 py-3 text-right font-black text-slate-900 text-sm">
+                            ${formatMoeda(i.totalGeral)}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            ${btnHistoricoHtml}
+                        </td>
+                    </tr>`;
+            }).join('');
+
+            document.getElementById('tfootEntradasDeclaradas').innerText = formatMoeda(somaEntradas);
+            document.getElementById('tfootTaxaRegional').innerText = formatMoeda(somaReg);
+            document.getElementById('tfootTaxaCoord').innerText = formatMoeda(somaCoord);
+            document.getElementById('tfootSeguroVida').innerText = formatMoeda(somaSeg);
+            document.getElementById('tfootTotalGeral').innerText = formatMoeda(somaTotal);
+
+            lucide.createIcons();
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // RENDERIZAÇÃO DA TABELA DE DESPESAS
+        // ════════════════════════════════════════════════════════════════
+        const renderTabelaDespesas = (despesas, total) => {
+            const tbody = document.getElementById('tabelaCorpoDespesas');
+            if (!tbody) return;
+
+            document.getElementById('tfootTotalDespesas').innerText = formatMoeda(total);
+
+            if (despesas.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-12 text-slate-400 font-bold uppercase tracking-wider">
+                            Nenhuma despesa cadastrada para este mês.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = despesas.map(d => {
+                const ehRecorrente = d.tipo === 'recorrente';
+                const badgeTipo = ehRecorrente
+                    ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase">🔄 Recorrente</span>`
+                    : `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 uppercase">⚡ Esporádica</span>`;
+
+                const vencimentoTexto = ehRecorrente 
+                    ? `Todo dia ${d.diaVencimento || 10}`
+                    : (d.mesReferencia || 'Este mês');
+
+                const statusBadge = (d.ativo !== false)
+                    ? `<span class="text-[10px] font-bold text-emerald-600 flex items-center justify-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Ativa</span>`
+                    : `<span class="text-[10px] font-bold text-slate-400 flex items-center justify-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Inativa</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-4 py-3">${badgeTipo}</td>
+                        <td class="px-4 py-3">
+                            <div class="font-bold text-slate-900">${d.descricao || 'Sem descrição'}</div>
+                            ${d.observacoes ? `<div class="text-[10px] text-slate-400">${d.observacoes}</div>` : ''}
+                        </td>
+                        <td class="px-4 py-3 text-slate-600 font-semibold">${d.categoria || 'Geral'}</td>
+                        <td class="px-4 py-3 text-center text-slate-600 font-medium">${vencimentoTexto}</td>
+                        <td class="px-4 py-3 text-right font-black text-rose-600 text-sm">${formatMoeda(d.valor)}</td>
+                        <td class="px-4 py-3 text-center">${statusBadge}</td>
+                        <td class="px-4 py-3 text-center no-print">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="window.editarDespesa('${d.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="window.excluirDespesa('${d.id}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>`;
+            }).join('');
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // RENDERIZAÇÃO DA TABELA DE ENTRADAS ESPORÁDICAS
+        // ════════════════════════════════════════════════════════════════
+        const renderTabelaEsporadicas = (esporadicas, total) => {
+            const tbody = document.getElementById('tabelaCorpoEsporadicas');
+            if (!tbody) return;
+
+            document.getElementById('tfootTotalEsporadicas').innerText = formatMoeda(total);
+
+            if (esporadicas.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-12 text-slate-400 font-bold uppercase tracking-wider">
+                            Nenhuma entrada extraordinária lançada para este mês.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = esporadicas.map(e => {
+                const dataFmt = e.data ? e.data.split('-').reverse().join('/') : (e.mesReferencia || '--');
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="font-bold text-slate-900">${e.descricao || 'Entrada Avulsa'}</div>
+                            ${e.observacoes ? `<div class="text-[10px] text-slate-400">${e.observacoes}</div>` : ''}
+                        </td>
+                        <td class="px-4 py-3 text-slate-600 font-semibold">${e.categoria || 'Doação/Rendimento'}</td>
+                        <td class="px-4 py-3 text-center text-slate-600 font-medium">${dataFmt}</td>
+                        <td class="px-4 py-3 text-right font-black text-emerald-600 text-sm">${formatMoeda(e.valor)}</td>
+                        <td class="px-4 py-3 text-center no-print">
+                            <button onclick="window.excluirEntradaEsporadica('${e.id}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Excluir">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            }).join('');
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // RENDERIZAÇÃO DO FUNDO "OUTROS"
+        // ════════════════════════════════════════════════════════════════
+        const renderTabelaOutros = (recibosOutros, saidasOutros, totEnt, totSai, saldo) => {
+            document.getElementById('resumoOutrosEntradas').innerText = formatMoeda(totEnt);
+            document.getElementById('resumoOutrosSaidas').innerText = formatMoeda(totSai);
+            document.getElementById('resumoOutrosSaldo').innerText = formatMoeda(saldo);
+            document.getElementById('resumoOutrosQtdEntradas').innerText = `${recibosOutros.length} recibos com outros`;
+            document.getElementById('resumoOutrosQtdSaidas').innerText = `${saidasOutros.length} saídas registradas`;
+            document.getElementById('badgeTotalRecibosOutros').innerText = `${recibosOutros.length} recibos`;
+
+            const tEnt = document.getElementById('tabelaEntradasOutros');
+            if (tEnt) {
+                if (recibosOutros.length === 0) {
+                    tEnt.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-slate-400">Nenhuma entrada de outros no mês.</td></tr>`;
+                } else {
+                    tEnt.innerHTML = recibosOutros.map(r => `
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-2.5 font-bold text-slate-800">
+                                ${r.igrejaCodigo || 'UNID'} - ${r.igrejaNome || 'Igreja'}
+                            </td>
+                            <td class="px-4 py-2.5 text-slate-600">
+                                ${r.otherDesc || 'Sem descrição específica'}
+                                <div class="text-[9px] text-slate-400">Recibo: ${r.codigoRecibo || r.id.substring(0,8)}</div>
+                            </td>
+                            <td class="px-4 py-2.5 text-right font-black text-emerald-600">
+                                ${formatMoeda(r.otherValueParsed)}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+
+            const tSai = document.getElementById('tabelaSaidasOutros');
+            if (tSai) {
+                if (saidasOutros.length === 0) {
+                    tSai.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400">Nenhuma saída de outros registrada.</td></tr>`;
+                } else {
+                    tSai.innerHTML = saidasOutros.map(s => `
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-2.5 font-bold text-slate-800">
+                                ${s.descricao}
+                                ${s.comprovante ? `<div class="text-[9px] text-slate-400">Ref: ${s.comprovante}</div>` : ''}
+                            </td>
+                            <td class="px-4 py-2.5 text-slate-600">
+                                ${s.data ? s.data.split('-').reverse().join('/') : '--'}
+                            </td>
+                            <td class="px-4 py-2.5 text-right font-black text-rose-600">
+                                ${formatMoeda(s.valor)}
+                            </td>
+                            <td class="px-4 py-2.5 text-center no-print">
+                                <button onclick="window.excluirSaidaOutros('${s.id}')" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Excluir">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // GESTÃO DE ABAS
+        // ════════════════════════════════════════════════════════════════
+        window.mudarAba = (aba) => {
+            window.appState.abaAtiva = aba;
+
+            const abas = ['igrejas', 'despesas', 'esporadicas', 'outros'];
+            abas.forEach(a => {
+                const btn = document.getElementById(`tabBtn-${a}`);
+                const content = document.getElementById(`tabContent-${a}`);
+                if (btn && content) {
+                    if (a === aba) {
+                        btn.className = "tab-btn-active py-2 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2";
+                        content.classList.remove('hidden');
+                    } else {
+                        btn.className = "tab-btn-inactive py-2 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2";
+                        content.classList.add('hidden');
+                    }
+                }
+            });
+
+            lucide.createIcons();
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // MODAL DE HISTÓRICO DOS 3 MESES
+        // ════════════════════════════════════════════════════════════════
+        window.abrirModalHistorico = (codIgreja) => {
+            const igData = window.appState.processamentoIgrejas.find(i => i.codigo === codIgreja);
+            if (!igData || !igData.dadosHistorico) {
+                alert("Histórico não disponível para esta igreja.");
+                return;
+            }
+
+            const h = igData.dadosHistorico;
+            document.getElementById('histModalIgrejaNome').innerText = `${igData.codigo} - ${igData.nome} (${igData.pastor})`;
+            
+            const resumoTexto = document.getElementById('histModalResumoTexto');
+            const ehMesFuturo = mesParaChaveNum(window.appState.mesSelecionado) > mesParaChaveNum(window.appState.mesAtualReal);
+
+            if (h.qtdMesesUsados === 0) {
+                resumoTexto.innerHTML = `⚠️ <strong>Sem histórico prévio localizado nos meses anteriores.</strong> Aplicado piso de segurança: R$ 100,00 (Taxa Coord) + ${igData.segurosQtd} seguros (${formatMoeda(igData.segurosQtd * window.appState.valorSeguroPadrao)}).`;
+            } else {
+                resumoTexto.innerHTML = `ℹ️ A previsão foi calculada a partir dos <strong>${h.qtdMesesUsados} meses com lançamentos válidos</strong> mais recentes anteriores a <strong>${window.appState.mesSelecionado}</strong>, ignorando meses em branco.`;
+            }
+
+            const listaEl = document.getElementById('histModalListaMeses');
+            listaEl.innerHTML = '';
+
+            if (h.mesesUsados && h.mesesUsados.length > 0) {
+                h.mesesUsados.forEach((mItem) => {
+                    listaEl.innerHTML += `
+                        <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">${mItem.mes}</span>
+                                <span class="text-xs font-bold text-slate-700 ml-2">${mItem.origem}</span>
+                                <div class="text-[10px] text-slate-400 mt-1">
+                                    Entradas: ${formatMoeda(mItem.entradas)} | 4%: ${formatMoeda(mItem.regional)} | Coord: ${formatMoeda(mItem.coord)} | Seg: ${formatMoeda(mItem.seguro)}
+                                </div>
+                            </div>
+                            <div class="text-right font-black text-slate-800 text-xs">
+                                ${formatMoeda(mItem.regional + mItem.coord + mItem.seguro)}
+                            </div>
+                        </div>`;
+                });
+            } else {
+                listaEl.innerHTML = `<div class="text-xs text-slate-400 italic py-2">Nenhum mês de histórico encontrado para compor média.</div>`;
+            }
+
+            document.getElementById('histModalMediaApurada').innerText = formatMoeda(h.mediaTotal);
+            
+            const linhaMargem = document.getElementById('histModalLinhaMargem');
+            if (ehMesFuturo) {
+                linhaMargem.classList.remove('hidden');
+                document.getElementById('histModalValorComMargem').innerText = formatMoeda(h.mediaTotal * 0.90);
+            } else {
+                linhaMargem.classList.add('hidden');
+            }
+
+            document.getElementById('modalHistoricoIgreja').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.fecharModalHistorico = () => {
+            document.getElementById('modalHistoricoIgreja').classList.add('hidden');
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // OPERAÇÕES DE DESPESAS (CRUD)
+        // ════════════════════════════════════════════════════════════════
+        window.abrirModalDespesa = () => {
+            document.getElementById('formDespesa').reset();
+            document.getElementById('despesaId').value = "";
+            document.getElementById('modalDespesaTitulo').innerText = "Cadastrar Despesa";
+            document.getElementById('despesaMesRef').value = window.appState.mesSelecionado;
+            window.toggleTipoDespesa('recorrente');
+            document.getElementById('modalDespesa').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.fecharModalDespesa = () => {
+            document.getElementById('modalDespesa').classList.add('hidden');
+        };
+
+        window.toggleTipoDespesa = (tipo) => {
+            const campoRec = document.getElementById('campoRecorrente');
+            const campoEsp = document.getElementById('campoEsporadica');
+            if (tipo === 'recorrente') {
+                campoRec.classList.remove('hidden');
+                campoEsp.classList.add('hidden');
+            } else {
+                campoRec.classList.add('hidden');
+                campoEsp.classList.remove('hidden');
+            }
+        };
+
+        window.salvarDespesa = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSalvarDespesa');
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            const id = document.getElementById('despesaId').value;
+            const descricao = document.getElementById('despesaDescricao').value.trim();
+            const valor = parseFloat(document.getElementById('despesaValor').value) || 0;
+            const categoria = document.getElementById('despesaCategoria').value;
+            const tipo = document.querySelector('input[name="despesaTipo"]:checked').value;
+            const diaVencimento = parseInt(document.getElementById('despesaDiaVencimento').value, 10) || 10;
+            const mesRef = normalizarMesAno(document.getElementById('despesaMesRef').value) || window.appState.mesSelecionado;
+            const obs = document.getElementById('despesaObs').value.trim();
+
+            const payload = {
+                descricao,
+                valor,
+                categoria,
+                tipo,
+                diaVencimento,
+                mesReferencia: mesRef,
+                observacoes: obs,
+                ativo: true,
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, "despesas_preditivas", id), payload);
+                } else {
+                    payload.createdAt = serverTimestamp();
+                    await addDoc(collection(db, "despesas_preditivas"), payload);
+                }
+
+                window.fecharModalDespesa();
+                await carregarColecaoDespesas();
+                recalcularTudo();
+            } catch (err) {
+                console.error("Erro ao salvar despesa:", err);
+                alert("Erro ao salvar despesa. Tente novamente.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Salvar Despesa";
+            }
+        };
+
+        window.editarDespesa = (id) => {
+            const despesa = window.appState.rawDespesas.find(d => d.id === id);
+            if (!despesa) return;
+
+            document.getElementById('despesaId').value = despesa.id;
+            document.getElementById('modalDespesaTitulo').innerText = "Editar Despesa";
+            document.getElementById('despesaDescricao').value = despesa.descricao || '';
+            document.getElementById('despesaValor').value = despesa.valor || '';
+            document.getElementById('despesaCategoria').value = despesa.categoria || 'Administrativo';
+            
+            const radios = document.querySelectorAll('input[name="despesaTipo"]');
+            radios.forEach(r => {
+                if (r.value === despesa.tipo) r.checked = true;
+            });
+            window.toggleTipoDespesa(despesa.tipo || 'recorrente');
+
+            document.getElementById('despesaDiaVencimento').value = despesa.diaVencimento || 10;
+            document.getElementById('despesaMesRef').value = despesa.mesReferencia || window.appState.mesSelecionado;
+            document.getElementById('despesaObs').value = despesa.observacoes || '';
+
+            document.getElementById('modalDespesa').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.excluirDespesa = async (id) => {
+            if (!confirm("Deseja realmente excluir esta despesa?")) return;
+            try {
+                await deleteDoc(doc(db, "despesas_preditivas", id));
+                await carregarColecaoDespesas();
+                recalcularTudo();
+            } catch (err) {
+                console.error("Erro ao excluir despesa:", err);
+                alert("Erro ao excluir.");
+            }
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // OPERAÇÕES DE ENTRADAS ESPORÁDICAS (CRUD)
+        // ════════════════════════════════════════════════════════════════
+        window.abrirModalEntradaEsporadica = () => {
+            document.getElementById('formEntradaEsporadica').reset();
+            document.getElementById('entradaMesRef').value = window.appState.mesSelecionado;
+            document.getElementById('entradaData').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modalEntradaEsporadica').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.fecharModalEntradaEsporadica = () => {
+            document.getElementById('modalEntradaEsporadica').classList.add('hidden');
+        };
+
+        window.salvarEntradaEsporadica = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSalvarEntrada');
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            const descricao = document.getElementById('entradaDescricao').value.trim();
+            const valor = parseFloat(document.getElementById('entradaValor').value) || 0;
+            const categoria = document.getElementById('entradaCategoria').value;
+            const mesRef = window.appState.mesSelecionado;
+            const data = document.getElementById('entradaData').value;
+            const obs = document.getElementById('entradaObs').value.trim();
+
+            const payload = {
+                descricao,
+                valor,
+                categoria,
+                mesReferencia: mesRef,
+                data: data,
+                observacoes: obs,
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                await addDoc(collection(db, "entradas_esporadicas"), payload);
+                window.fecharModalEntradaEsporadica();
+                await carregarColecaoEsporadicas();
+                recalcularTudo();
+            } catch (err) {
+                console.error("Erro ao salvar entrada avulsa:", err);
+                alert("Erro ao salvar entrada.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Salvar Entrada";
+            }
+        };
+
+        window.excluirEntradaEsporadica = async (id) => {
+            if (!confirm("Deseja excluir este lançamento de entrada esporádica?")) return;
+            try {
+                await deleteDoc(doc(db, "entradas_esporadicas", id));
+                await carregarColecaoEsporadicas();
+                recalcularTudo();
+            } catch (err) {
+                console.error("Erro ao excluir entrada esporádica:", err);
+                alert("Erro ao excluir.");
+            }
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // OPERAÇÕES DO FUNDO OUTROS (SAÍDAS)
+        // ════════════════════════════════════════════════════════════════
+        window.abrirModalSaidaOutros = () => {
+            document.getElementById('formSaidaOutros').reset();
+            document.getElementById('saidaOutrosData').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modalSaidaOutros').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.fecharModalSaidaOutros = () => {
+            document.getElementById('modalSaidaOutros').classList.add('hidden');
+        };
+
+        window.salvarSaidaOutros = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSalvarSaidaOutros');
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            const descricao = document.getElementById('saidaOutrosDescricao').value.trim();
+            const valor = parseFloat(document.getElementById('saidaOutrosValor').value) || 0;
+            const data = document.getElementById('saidaOutrosData').value;
+            const comprovante = document.getElementById('saidaOutrosComprovante').value.trim();
+
+            const payload = {
+                descricao,
+                valor,
+                data,
+                mesReferencia: window.appState.mesSelecionado,
+                comprovante,
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                await addDoc(collection(db, "saidas_outros"), payload);
+                window.fecharModalSaidaOutros();
+                await carregarColecaoSaidasOutros();
+                recalcularTudo();
+            } catch (err) {
+                console.error("Erro ao salvar saída de outros:", err);
+                alert("Erro ao salvar saída.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Registrar Saída";
+            }
+        };
+
+        window.excluirSaidaOutros = async (id) => {
+            if (!confirm("Deseja excluir este registro de saída do fundo Outros?")) return;
+            try {
+                await deleteDoc(doc(db, "saidas_outros", id));
+                await carregarColecaoSaidasOutros();
+                recalcularTudo();
+            } catch (err) {
+                console.error("Erro ao excluir saída de outros:", err);
+                alert("Erro ao excluir.");
+            }
+        };
+
+        // ════════════════════════════════════════════════════════════════
+        // INICIALIZAÇÃO
+        // ════════════════════════════════════════════════════════════════
+        window.addEventListener('DOMContentLoaded', () => {
+            initDatas();
+            window.fetchData();
+        });
+    </script>
+</body>
+</html>
