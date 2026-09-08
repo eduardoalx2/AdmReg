@@ -931,6 +931,34 @@
             return "";
         };
 
+        // Função robusta de comparação de igrejas (trata 0252 vs 252 e IEQ Central)
+        const ehMesmaIgreja = (codA, nomeA, codB, nomeB, fmtB) => {
+            const cleanA = codA ? String(codA).replace(/\D/g, '') : '';
+            const numA = cleanA ? parseInt(cleanA, 10) : NaN;
+
+            let cleanB = codB ? String(codB).replace(/\D/g, '') : '';
+            if (!cleanB && fmtB) {
+                const part = fmtB.split(' - ')[0];
+                cleanB = part ? String(part).replace(/\D/g, '') : '';
+            }
+            const numB = cleanB ? parseInt(cleanB, 10) : NaN;
+
+            if (!isNaN(numA) && !isNaN(numB) && numA === numB) return true;
+
+            const sA = !isNaN(numA) ? String(numA).padStart(4, '0') : '';
+            const sB = !isNaN(numB) ? String(numB).padStart(4, '0') : '';
+            if (sA && sB && sA === sB) return true;
+
+            const nA = (nomeA || '').toLowerCase().trim();
+            const nB = (nomeB || (fmtB ? fmtB.split(' - ').slice(1).join(' - ') : '')).toLowerCase().trim();
+            if (nA && nB) {
+                if (nA === nB) return true;
+                if (nA.includes('central') && nB.includes('central')) return true;
+                if (nA.length > 5 && nB.length > 5 && (nA.includes(nB) || nB.includes(nA))) return true;
+            }
+            return false;
+        };
+
         // Inicialização de Datas
         const initDatas = () => {
             const now = new Date();
@@ -1024,22 +1052,46 @@
                 const igrejas = [];
                 igrejasSnap.forEach(d => {
                     const data = d.data();
-                    if (data.tipo === 'Região Eclesiástica' || data.tipo === 'Sede Regional') return;
+                    // Somente descarta se for registro puramente administrativo sem código de igreja (inclui sempre 0252 / Sede Regional)
+                    if (data.tipo === 'Região Eclesiástica' && !data.codigo) return;
                     
-                    const titular = pastores.find(p => {
+                    let titular = pastores.find(p => {
                         const pIgs = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
-                        return pIgs.includes(data.nome) && p.funcao === 'Pastor Titular';
+                        const matchIg = pIgs.some(igName => igName && (igName.toLowerCase().includes(data.nome.toLowerCase()) || data.nome.toLowerCase().includes(igName.toLowerCase())));
+                        return matchIg && (p.funcao === 'Pastor Titular' || p.funcao === 'Superintendente');
                     });
+                    if (!titular) {
+                        titular = pastores.find(p => {
+                            const pIgs = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                            return pIgs.some(igName => igName && (igName.toLowerCase().includes(data.nome.toLowerCase()) || data.nome.toLowerCase().includes(igName.toLowerCase())));
+                        });
+                    }
+                    if (!titular && (data.codigo === '0252' || data.codigo === '252' || data.nome?.toLowerCase().includes('central'))) {
+                        titular = pastores.find(p => p.nome?.toUpperCase().includes('VALDIR'));
+                    }
 
                     igrejas.push({
                         id: d.id,
                         codigo: String(data.codigo || '').padStart(4, '0'),
                         codigoNum: parseInt(data.codigo, 10) || 9999,
                         nome: data.nome || 'Igreja Sem Nome',
-                        pastor: titular ? titular.nome : 'Sem Pastor Titular',
+                        pastor: titular ? titular.nome : (data.codigo === '0252' || data.codigo === '252' ? 'Rev. Valdir Ávila Ramos' : 'Sem Pastor Titular'),
                         seguros: parseInt(data.seguros, 10) || 0
                     });
                 });
+
+                // Garante que a 0252 IEQ Central sempre esteja presente no sistema
+                if (!igrejas.some(i => i.codigo === '0252' || i.codigoNum === 252)) {
+                    const titularValdir = pastores.find(p => p.nome?.toUpperCase().includes('VALDIR'));
+                    igrejas.push({
+                        id: 'ieq_central_0252',
+                        codigo: '0252',
+                        codigoNum: 252,
+                        nome: 'IEQ CENTRAL',
+                        pastor: titularValdir ? titularValdir.nome : 'Rev. Valdir Ávila Ramos',
+                        seguros: 0
+                    });
+                }
                 igrejas.sort((a, b) => a.codigoNum - b.codigoNum);
                 window.appState.rawIgrejas = igrejas;
 
@@ -1125,9 +1177,7 @@
 
             // 1. Vasculhar Recibos
             window.appState.rawRecibos.forEach(r => {
-                const rCod = String(r.igrejaCodigo || (r.igrejaFormatada ? r.igrejaFormatada.split(' - ')[0].trim() : '')).padStart(4, '0');
-                const rNome = r.igrejaNome || '';
-                if (rCod !== codIgreja && rNome !== nomeIgreja) return;
+                if (!ehMesmaIgreja(codIgreja, nomeIgreja, r.igrejaCodigo, r.igrejaNome, r.igrejaFormatada)) return;
 
                 const ref = normalizarMesAno(r.referenceDate || (r.dataEmissao ? r.dataEmissao.substring(3) : ''));
                 if (!ref) return;
@@ -1154,9 +1204,7 @@
 
             // 2. Vasculhar Saldos de Virada
             window.appState.rawSaldos.forEach(s => {
-                const sCod = String(s.igrejaCodigo || (s.igrejaFormatada ? s.igrejaFormatada.split(' - ')[0].trim() : '')).padStart(4, '0');
-                const sNome = s.igrejaNome || '';
-                if (sCod !== codIgreja && sNome !== nomeIgreja) return;
+                if (!ehMesmaIgreja(codIgreja, nomeIgreja, s.igrejaCodigo, s.igrejaNome, s.igrejaFormatada)) return;
 
                 const ref = normalizarMesAno(s.mesReferencia || s.periodo || s.periodoChave);
                 if (!ref) return;
@@ -1254,9 +1302,7 @@
                 const nome = ig.nome;
 
                 const reciboDoMes = window.appState.rawRecibos.find(r => {
-                    const rCod = String(r.igrejaCodigo || (r.igrejaFormatada ? r.igrejaFormatada.split(' - ')[0].trim() : '')).padStart(4, '0');
-                    const rNome = r.igrejaNome || '';
-                    if (rCod !== cod && rNome !== nome) return false;
+                    if (!ehMesmaIgreja(cod, nome, r.igrejaCodigo, r.igrejaNome, r.igrejaFormatada)) return false;
 
                     const ref = normalizarMesAno(r.referenceDate || (r.dataEmissao ? r.dataEmissao.substring(3) : ''));
                     if (ref !== mesSel) return false;
@@ -1265,9 +1311,7 @@
                 });
 
                 const saldoDoMes = window.appState.rawSaldos.find(s => {
-                    const sCod = String(s.igrejaCodigo || (s.igrejaFormatada ? s.igrejaFormatada.split(' - ')[0].trim() : '')).padStart(4, '0');
-                    const sNome = s.igrejaNome || '';
-                    if (sCod !== cod && sNome !== nome) return false;
+                    if (!ehMesmaIgreja(cod, nome, s.igrejaCodigo, s.igrejaNome, s.igrejaFormatada)) return false;
 
                     const ref = normalizarMesAno(s.mesReferencia || s.periodo || s.periodoChave);
                     return ref === mesSel;
