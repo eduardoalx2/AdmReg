@@ -183,8 +183,8 @@
                 </div>
                 <h3 id="kpiArrecadacaoTotal" class="text-2xl font-black text-slate-900 mt-2">R$ 0,00</h3>
                 <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                    <span class="text-slate-500" id="kpiArrecadacaoSub">Realizado + Previsão</span>
-                    <span id="kpiRealizadoPerc" class="font-bold text-emerald-600">0% pago</span>
+                    <span class="text-slate-500" id="kpiArrecadacaoSub">Entrou: <strong id="kpiArrecadacaoRealizada" class="text-emerald-600">R$ 0,00</strong></span>
+                    <span id="kpiRealizadoPerc" class="font-bold text-emerald-600">0% arrecadado</span>
                 </div>
             </div>
 
@@ -197,9 +197,9 @@
                     </span>
                 </div>
                 <h3 id="kpiDespesasTotal" class="text-2xl font-black text-rose-600 mt-2">R$ 0,00</h3>
-                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                    <span id="kpiDespesasRecorrentes">Recorrentes: R$ 0,00</span>
-                    <span id="kpiDespesasEsporadicas">Esporádicas: R$ 0,00</span>
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <span id="kpiDespesasPagas" class="font-bold text-emerald-600">Pagas: R$ 0,00</span>
+                    <span id="kpiDespesasPendentes" class="font-bold text-rose-600">A Pagar: R$ 0,00</span>
                 </div>
             </div>
 
@@ -213,8 +213,8 @@
                 </div>
                 <h3 id="kpiResultadoLiquido" class="text-2xl font-black text-slate-900 mt-2">R$ 0,00</h3>
                 <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                    <span class="text-slate-500">Entradas - Despesas</span>
-                    <span id="kpiStatusResultado" class="font-bold text-slate-700">Equilibrado</span>
+                    <span class="text-slate-500" id="kpiStatusResultado">Equilibrado</span>
+                    <span id="kpiCoberturaResumo" class="font-bold text-blue-600">0% Coberto</span>
                 </div>
             </div>
 
@@ -296,6 +296,79 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- PAINEL EXECUTIVO: FLUXO DE CAIXA E COBERTURA DE DESPESAS DO MÊS -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <i data-lucide="calculator" class="w-4 h-4 text-blue-600"></i> Balanço de Fluxo de Caixa & Cobertura de Despesas
+                    </h3>
+                    <p class="text-[11px] text-slate-400 mt-0.5">
+                        Acompanhamento em tempo real: o que já entrou, o que já foi pago, pendências e cobrimento das contas.
+                    </p>
+                </div>
+                <div id="badgeCoberturaStatus" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border border-slate-200 bg-slate-50 text-slate-700">
+                    <i data-lucide="info" class="w-3.5 h-3.5 text-slate-500"></i>
+                    <span>Calculando cobertura...</span>
+                </div>
+            </div>
+
+            <!-- 4 Cards de Métricas de Fluxo -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- 1: O Que Já Entrou -->
+                <div class="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200/80">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1">
+                        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5 text-emerald-600"></i> O Que Já Entrou
+                    </span>
+                    <h4 id="balancoJaEntrou" class="text-xl font-black text-emerald-700 mt-1">R$ 0,00</h4>
+                    <p id="balancoJaEntrouSub" class="text-[10px] text-emerald-600 mt-1 font-semibold">0 igrejas quitadas + avulsas</p>
+                </div>
+
+                <!-- 2: O Que Já Foi Pago -->
+                <div class="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200/80">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1">
+                        <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i> O Que Já Foi Pago
+                    </span>
+                    <h4 id="balancoJaPago" class="text-xl font-black text-emerald-700 mt-1">R$ 0,00</h4>
+                    <p id="balancoJaPagoSub" class="text-[10px] text-emerald-600 mt-1 font-semibold">0 despesas quitadas</p>
+                </div>
+
+                <!-- 3: O Que Falta Pagar -->
+                <div class="bg-rose-50/70 p-4 rounded-xl border border-rose-200/80">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-rose-800 flex items-center gap-1">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-rose-600"></i> O Que Falta Pagar
+                    </span>
+                    <h4 id="balancoFaltaPagar" class="text-xl font-black text-rose-700 mt-1">R$ 0,00</h4>
+                    <p id="balancoFaltaPagarSub" class="text-[10px] text-rose-600 mt-1 font-semibold">0 despesas pendentes</p>
+                </div>
+
+                <!-- 4: Quanto Falta Entrar / Cobertura -->
+                <div id="cardCoberturaBox" class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <span id="labelCoberturaFalta" class="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Cobertura de Despesas
+                    </span>
+                    <h4 id="balancoFaltaEntrar" class="text-xl font-black text-slate-800 mt-1">R$ 0,00</h4>
+                    <p id="balancoFaltaEntrarSub" class="text-[10px] text-slate-500 mt-1 font-semibold">Falta arrecadar p/ cobrir 100%</p>
+                </div>
+            </div>
+
+            <!-- Barra de Progresso de Cobertura das Despesas -->
+            <div class="space-y-1.5 pt-1">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+                    <span class="font-bold text-slate-600 flex items-center gap-1.5">
+                        <span>Cobertura das Despesas pelo Caixa Realizado:</span>
+                        <span id="balancoPercCoberturaTexto" class="font-black text-blue-600">0%</span>
+                    </span>
+                    <span id="balancoSaldoCaixaRealizado" class="text-[11px] font-bold text-slate-600">
+                        Saldo Líquido em Caixa Hoje: R$ 0,00 (Entrou - Pago)
+                    </span>
+                </div>
+                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                    <div id="barraProgressoCobertura" class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                </div>
+            </div>
         </div>
 
         <!-- BARRA DE NAVEGAÇÃO DE ABAS E AÇÕES -->
@@ -402,18 +475,31 @@
         <!-- ════════════════════════════════════════════════════════════════ -->
         <div id="tabContent-despesas" class="hidden space-y-4">
             
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
                     <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
                         <i data-lucide="receipt" class="w-4 h-4 text-rose-500"></i> Despesas Cadastradas para o Período
                     </h3>
                     <p class="text-[11px] text-slate-500 mt-0.5">
-                        Despesas <strong>recorrentes</strong> repetem em todos os meses. Despesas <strong>esporádicas</strong> pertencem apenas a este mês.
+                        Clique em <strong>[Pagar]</strong> para marcar as despesas quitadas deste mês. Despesas pagas aparecem em <strong>verde</strong>.
                     </p>
                 </div>
-                <button onclick="window.abrirModalDespesa()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 uppercase tracking-wider">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar Despesa
-                </button>
+
+                <!-- Mini Resumo na Aba de Despesas -->
+                <div class="flex flex-wrap items-center gap-2 text-xs font-bold w-full md:w-auto justify-end">
+                    <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700">
+                        Total: <span id="despesasTabTotal" class="font-black text-slate-900">R$ 0,00</span>
+                    </div>
+                    <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
+                        🟢 Pagas: <span id="despesasTabPagas" class="font-black text-emerald-700">R$ 0,00 (0)</span>
+                    </div>
+                    <div class="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800">
+                        ⏳ A Pagar: <span id="despesasTabPendentes" class="font-black text-rose-700">R$ 0,00 (0)</span>
+                    </div>
+                    <button onclick="window.abrirModalDespesa()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5 uppercase tracking-wider">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar Despesa
+                    </button>
+                </div>
             </div>
 
             <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -426,22 +512,24 @@
                                 <th class="px-4 py-3">Categoria</th>
                                 <th class="px-4 py-3 text-center">Vencimento</th>
                                 <th class="px-4 py-3 text-right">Valor</th>
-                                <th class="px-4 py-3 text-center">Status</th>
-                                <th class="px-4 py-3 text-center no-print">Ações</th>
+                                <th class="px-4 py-3 text-center">Situação Pagamento</th>
+                                <th class="px-4 py-3 text-center no-print">Ação</th>
+                                <th class="px-4 py-3 text-center no-print">Opções</th>
                             </tr>
                         </thead>
                         <tbody id="tabelaCorpoDespesas" class="text-xs divide-y divide-slate-100 font-medium">
                             <tr>
-                                <td colspan="7" class="text-center py-10 text-slate-400 font-bold uppercase tracking-wider">
+                                <td colspan="8" class="text-center py-10 text-slate-400 font-bold uppercase tracking-wider">
                                     Nenhuma despesa cadastrada para este mês.
                                 </td>
                             </tr>
                         </tbody>
-                        <tfoot class="bg-slate-50 font-black text-xs border-t border-slate-200">
+                        <tfoot class="bg-slate-50 font-black text-xs border-t-2 border-slate-200">
                             <tr>
-                                <td colspan="4" class="px-4 py-3 text-slate-900 uppercase">Total das Despesas do Mês:</td>
+                                <td colspan="4" class="px-4 py-3 text-slate-900 uppercase">Totais das Despesas do Mês:</td>
                                 <td id="tfootTotalDespesas" class="px-4 py-3 text-right text-rose-600 text-sm">R$ 0,00</td>
-                                <td colspan="2" class="px-4 py-3"></td>
+                                <td id="tfootStatusDespesas" class="px-4 py-3 text-center text-[11px] text-emerald-700">0 Pagas / 0 A Pagar</td>
+                                <td colspan="2" class="px-4 py-3 text-right text-[11px] text-slate-600" id="tfootDespesasSubtotais"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -682,6 +770,20 @@
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Observações adicionais</label>
                     <textarea id="despesaObs" rows="2" placeholder="Opcional..." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none"></textarea>
+                </div>
+
+                <div class="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200">
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" id="despesaPagoMesCheck" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
+                        <div>
+                            <span class="text-xs font-black text-emerald-900 flex items-center gap-1">
+                                🟢 Marcar como PAGA no mês selecionado (<span id="modalDespesaMesLabel">--</span>)
+                            </span>
+                            <p class="text-[10px] text-emerald-700">
+                                Se marcado, constará como quitada no balanço de despesas deste mês.
+                            </p>
+                        </div>
+                    </label>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
@@ -978,6 +1080,19 @@
                 }
             }
             return "";
+        };
+
+        // Identifica se uma despesa (recorrente ou esporádica) foi marcada como paga no mês selecionado
+        const despesaEstaPagaNoMes = (d, mes) => {
+            if (!d || !mes) return false;
+            const mesNorm = normalizarMesAno(mes);
+            if (Array.isArray(d.mesesPagos) && d.mesesPagos.map(normalizarMesAno).includes(mesNorm)) {
+                return true;
+            }
+            if (d.tipo !== 'recorrente' && d.pago === true && normalizarMesAno(d.mesReferencia) === mesNorm) {
+                return true;
+            }
+            return false;
         };
 
         // Função robusta de comparação de igrejas (trata 0252 vs 252 e IEQ Central)
@@ -1571,6 +1686,26 @@
             const countAmarelo = igrejasNoBalanco.filter(i => i.status === 'amarelo').length;
             const countVermelho = igrejasNoBalanco.filter(i => i.status === 'vermelho').length;
 
+            // 5.1 Despesas Pagas no Mês e Pendências
+            const totalDespesasPagas = despesasMes
+                .filter(d => despesaEstaPagaNoMes(d, mesSel))
+                .reduce((sum, d) => sum + (parseFloat(d.valor) || 0), 0);
+
+            const totalDespesasPendentes = Math.max(0, totalDespesasGeral - totalDespesasPagas);
+            const countDespesasPagas = despesasMes.filter(d => despesaEstaPagaNoMes(d, mesSel)).length;
+            const countDespesasPendentes = despesasMes.length - countDespesasPagas;
+
+            // 5.2 Arrecadação Realizada ("o que já entrou")
+            const arrecadacaoRealizadaTotal = totalRealizadoPago + totalEntradasEsporadicas;
+            const arrecadacaoPendenteTotal = Math.max(0, arrecadacaoOperacionalTotal - arrecadacaoRealizadaTotal);
+
+            // 5.3 Cobertura de Despesas e Saldo de Caixa Líquido
+            const diferencaCobertura = totalDespesasGeral - arrecadacaoRealizadaTotal;
+            const percCobertura = totalDespesasGeral > 0 
+                ? Math.min(100, Math.round((arrecadacaoRealizadaTotal / totalDespesasGeral) * 100)) 
+                : 100;
+            const saldoCaixaRealizado = arrecadacaoRealizadaTotal - totalDespesasPagas;
+
             // Atualizar Botão Toolbar IEQ 0252
             const btnTool0252 = document.getElementById('btnToolbar0252');
             if (btnTool0252) {
@@ -1583,14 +1718,25 @@
                 }
             }
 
-            // 6. Atualizar UI
+            // 6. Atualizar UI - Cards de Topo (KPIs)
             document.getElementById('kpiArrecadacaoTotal').innerText = formatMoeda(arrecadacaoOperacionalTotal);
-            document.getElementById('kpiDespesasTotal').innerText = formatMoeda(totalDespesasGeral);
-            document.getElementById('kpiDespesasRecorrentes').innerText = `Recorrentes: ${formatMoeda(totalDespesasRecorrentes)}`;
-            document.getElementById('kpiDespesasEsporadicas').innerText = `Esporádicas: ${formatMoeda(totalDespesasEsporadicas)}`;
+            const kpiArrecRealizadaEl = document.getElementById('kpiArrecadacaoRealizada');
+            if (kpiArrecRealizadaEl) {
+                kpiArrecRealizadaEl.innerText = formatMoeda(arrecadacaoRealizadaTotal);
+            }
 
             const percPago = arrecadacaoOperacionalTotal > 0 ? Math.round((totalRealizadoPago / arrecadacaoOperacionalTotal) * 100) : 0;
-            document.getElementById('kpiRealizadoPerc').innerText = `${percPago}% realizado`;
+            document.getElementById('kpiRealizadoPerc').innerText = `${percPago}% arrecadado`;
+
+            document.getElementById('kpiDespesasTotal').innerText = formatMoeda(totalDespesasGeral);
+            const kpiPagasEl = document.getElementById('kpiDespesasPagas');
+            if (kpiPagasEl) {
+                kpiPagasEl.innerText = `Pagas: ${formatMoeda(totalDespesasPagas)}`;
+            }
+            const kpiPendEl = document.getElementById('kpiDespesasPendentes');
+            if (kpiPendEl) {
+                kpiPendEl.innerText = `A Pagar: ${formatMoeda(totalDespesasPendentes)}`;
+            }
 
             const kpiResEl = document.getElementById('kpiResultadoLiquido');
             const kpiStatusRes = document.getElementById('kpiStatusResultado');
@@ -1605,10 +1751,116 @@
                 kpiStatusRes.innerText = "Déficit Projetado";
             }
 
+            const kpiCobResumo = document.getElementById('kpiCoberturaResumo');
+            if (kpiCobResumo) {
+                if (diferencaCobertura <= 0) {
+                    kpiCobResumo.className = "font-bold text-emerald-600";
+                    kpiCobResumo.innerText = "100% Coberto";
+                } else {
+                    kpiCobResumo.className = "font-bold text-amber-600";
+                    kpiCobResumo.innerText = `${percCobertura}% Coberto`;
+                }
+            }
+
             document.getElementById('kpiOutrosSaldoLiquido').innerText = formatMoeda(saldoLiquidoOutros);
             document.getElementById('kpiOutrosEntradas').innerText = `Entradas: ${formatMoeda(totalEntradasOutros)}`;
             document.getElementById('kpiOutrosSaidas').innerText = `Saídas: ${formatMoeda(totalSaidasOutros)}`;
 
+            // 7. Atualizar Painel Executivo de Fluxo de Caixa e Cobertura
+            const balEntrou = document.getElementById('balancoJaEntrou');
+            const balEntrouSub = document.getElementById('balancoJaEntrouSub');
+            if (balEntrou) balEntrou.innerText = formatMoeda(arrecadacaoRealizadaTotal);
+            if (balEntrouSub) balEntrouSub.innerText = `${countVerde} igrejas quitadas + ${esporadicasMes.length} avulsas`;
+
+            const balPago = document.getElementById('balancoJaPago');
+            const balPagoSub = document.getElementById('balancoJaPagoSub');
+            if (balPago) balPago.innerText = formatMoeda(totalDespesasPagas);
+            if (balPagoSub) balPagoSub.innerText = `${countDespesasPagas} de ${despesasMes.length} quitadas`;
+
+            const balFaltaPagar = document.getElementById('balancoFaltaPagar');
+            const balFaltaPagarSub = document.getElementById('balancoFaltaPagarSub');
+            if (balFaltaPagar) balFaltaPagar.innerText = formatMoeda(totalDespesasPendentes);
+            if (balFaltaPagarSub) balFaltaPagarSub.innerText = `${countDespesasPendentes} pendentes de pagamento`;
+
+            const balFaltaEntrar = document.getElementById('balancoFaltaEntrar');
+            const balFaltaEntrarSub = document.getElementById('balancoFaltaEntrarSub');
+            const cardCobBox = document.getElementById('cardCoberturaBox');
+            const labelCob = document.getElementById('labelCoberturaFalta');
+            const badgeCobStatus = document.getElementById('badgeCoberturaStatus');
+
+            if (diferencaCobertura > 0) {
+                if (balFaltaEntrar) {
+                    balFaltaEntrar.innerText = formatMoeda(diferencaCobertura);
+                    balFaltaEntrar.className = "text-xl font-black text-amber-600 mt-1";
+                }
+                if (balFaltaEntrarSub) {
+                    balFaltaEntrarSub.innerText = "Falta arrecadar p/ cobrir despesas";
+                    balFaltaEntrarSub.className = "text-[10px] text-amber-700 font-semibold mt-1";
+                }
+                if (cardCobBox) {
+                    cardCobBox.className = "bg-amber-50/70 p-4 rounded-xl border border-amber-200/80";
+                }
+                if (labelCob) {
+                    labelCob.className = "text-[10px] font-black uppercase tracking-wider text-amber-800 flex items-center gap-1";
+                    labelCob.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600"></i> Cobertura de Despesas`;
+                }
+                if (badgeCobStatus) {
+                    badgeCobStatus.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border border-amber-200 bg-amber-50 text-amber-800";
+                    badgeCobStatus.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i> <span>Falta entrar ${formatMoeda(diferencaCobertura)} para cobrir as despesas</span>`;
+                }
+            } else {
+                const sobra = Math.abs(diferencaCobertura);
+                if (balFaltaEntrar) {
+                    balFaltaEntrar.innerText = `100% Coberto (+${formatMoeda(sobra)})`;
+                    balFaltaEntrar.className = "text-xl font-black text-emerald-600 mt-1";
+                }
+                if (balFaltaEntrarSub) {
+                    balFaltaEntrarSub.innerText = "Arrecadação realizada cobre despesas";
+                    balFaltaEntrarSub.className = "text-[10px] text-emerald-700 font-semibold mt-1";
+                }
+                if (cardCobBox) {
+                    cardCobBox.className = "bg-emerald-50/70 p-4 rounded-xl border border-emerald-200/80";
+                }
+                if (labelCob) {
+                    labelCob.className = "text-[10px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1";
+                    labelCob.innerHTML = `<i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i> Despesas Cobertas`;
+                }
+                if (badgeCobStatus) {
+                    badgeCobStatus.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border border-emerald-200 bg-emerald-50 text-emerald-800";
+                    badgeCobStatus.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i> <span>Despesas 100% Cobertas pelo Caixa Realizado</span>`;
+                }
+            }
+
+            const balPercCobTxt = document.getElementById('balancoPercCoberturaTexto');
+            if (balPercCobTxt) balPercCobTxt.innerText = `${percCobertura}%`;
+
+            const barraCob = document.getElementById('barraProgressoCobertura');
+            if (barraCob) {
+                barraCob.style.width = `${percCobertura}%`;
+                if (percCobertura >= 100) {
+                    barraCob.className = "h-full bg-emerald-500 rounded-full transition-all duration-500";
+                } else if (percCobertura >= 60) {
+                    barraCob.className = "h-full bg-blue-500 rounded-full transition-all duration-500";
+                } else {
+                    barraCob.className = "h-full bg-amber-500 rounded-full transition-all duration-500";
+                }
+            }
+
+            const balSaldoCaixa = document.getElementById('balancoSaldoCaixaRealizado');
+            if (balSaldoCaixa) {
+                const classeSaldo = saldoCaixaRealizado >= 0 ? "text-emerald-700" : "text-rose-700";
+                balSaldoCaixa.innerHTML = `Saldo Líquido em Caixa Hoje: <strong class="${classeSaldo}">${formatMoeda(saldoCaixaRealizado)}</strong> (Entrou - Pago)`;
+            }
+
+            // 8. Atualizar Mini Resumo na Aba Despesas
+            const despesasTabTotal = document.getElementById('despesasTabTotal');
+            if (despesasTabTotal) despesasTabTotal.innerText = formatMoeda(totalDespesasGeral);
+            const despesasTabPagas = document.getElementById('despesasTabPagas');
+            if (despesasTabPagas) despesasTabPagas.innerText = `${formatMoeda(totalDespesasPagas)} (${countDespesasPagas})`;
+            const despesasTabPendentes = document.getElementById('despesasTabPendentes');
+            if (despesasTabPendentes) despesasTabPendentes.innerText = `${formatMoeda(totalDespesasPendentes)} (${countDespesasPendentes})`;
+
+            // 9. Atualizar Composição das Taxas & Status das Igrejas
             document.getElementById('compTaxaRegional').innerText = formatMoeda(totalRegional);
             document.getElementById('compTaxaCoord').innerText = formatMoeda(totalCoord);
             document.getElementById('compSeguroVida').innerText = formatMoeda(totalSeguro);
@@ -1623,7 +1875,7 @@
             document.getElementById('countStatusVermelho').innerText = `${countVermelho} igrejas`;
 
             renderTabelaIgrejas();
-            renderTabelaDespesas(despesasMes, totalDespesasGeral);
+            renderTabelaDespesas(despesasMes, totalDespesasGeral, totalDespesasPagas, totalDespesasPendentes, countDespesasPagas, countDespesasPendentes);
             renderTabelaEsporadicas(esporadicasMes, totalEntradasEsporadicas);
             renderTabelaOutros(recibosComOutros, saidasOutrosMes, totalEntradasOutros, totalSaidasOutros, saldoLiquidoOutros);
 
@@ -1789,16 +2041,26 @@
         // ════════════════════════════════════════════════════════════════
         // RENDERIZAÇÃO DA TABELA DE DESPESAS
         // ════════════════════════════════════════════════════════════════
-        const renderTabelaDespesas = (despesas, total) => {
+        const renderTabelaDespesas = (despesas, total, totPagas = 0, totPend = 0, cntPagas = 0, cntPend = 0) => {
             const tbody = document.getElementById('tabelaCorpoDespesas');
             if (!tbody) return;
 
+            const mesSel = window.appState.mesSelecionado;
+
             document.getElementById('tfootTotalDespesas').innerText = formatMoeda(total);
+            const tfootStatus = document.getElementById('tfootStatusDespesas');
+            if (tfootStatus) {
+                tfootStatus.innerHTML = `<span class="text-emerald-700 font-bold">${cntPagas} Pagas</span> / <span class="text-rose-700 font-bold">${cntPend} A Pagar</span>`;
+            }
+            const tfootSub = document.getElementById('tfootDespesasSubtotais');
+            if (tfootSub) {
+                tfootSub.innerHTML = `Pagas: <strong class="text-emerald-700">${formatMoeda(totPagas)}</strong> | Pendentes: <strong class="text-rose-700">${formatMoeda(totPend)}</strong>`;
+            }
 
             if (despesas.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="text-center py-12 text-slate-400 font-bold uppercase tracking-wider">
+                        <td colspan="8" class="text-center py-12 text-slate-400 font-bold uppercase tracking-wider">
                             Nenhuma despesa cadastrada para este mês.
                         </td>
                     </tr>`;
@@ -1815,21 +2077,40 @@
                     ? `Todo dia ${d.diaVencimento || 10}`
                     : (d.mesReferencia || 'Este mês');
 
-                const statusBadge = (d.ativo !== false)
-                    ? `<span class="text-[10px] font-bold text-emerald-600 flex items-center justify-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Ativa</span>`
-                    : `<span class="text-[10px] font-bold text-slate-400 flex items-center justify-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Inativa</span>`;
+                const estaPaga = despesaEstaPagaNoMes(d, mesSel);
+
+                const statusBadge = estaPaga
+                    ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 🟢 PAGO
+                       </span>`
+                    : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> ⏳ A PAGAR
+                       </span>`;
+
+                const botaoAcao = estaPaga
+                    ? `<button onclick="window.alternarPagamentoDespesa('${d.id}')" class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white hover:bg-rose-50 hover:text-rose-700 text-slate-600 border border-slate-200 hover:border-rose-200 transition-all flex items-center justify-center gap-1 mx-auto shadow-xs" title="Clique para desmarcar pagamento deste mês">
+                         <i data-lucide="rotate-ccw" class="w-3 h-3 text-slate-400"></i> <span>Desmarcar</span>
+                       </button>`
+                    : `<button onclick="window.alternarPagamentoDespesa('${d.id}')" class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center justify-center gap-1 mx-auto shadow-sm" title="Marcar como paga neste mês">
+                         <i data-lucide="check" class="w-3 h-3"></i> <span>Pagar</span>
+                       </button>`;
+
+                const rowBg = estaPaga 
+                    ? "bg-emerald-50/70 hover:bg-emerald-100/60 border-l-4 border-l-emerald-500 transition-colors" 
+                    : "hover:bg-slate-50/80 border-l-4 border-l-transparent transition-colors";
 
                 return `
-                    <tr class="hover:bg-slate-50/80 transition-colors">
+                    <tr class="${rowBg}">
                         <td class="px-4 py-3">${badgeTipo}</td>
                         <td class="px-4 py-3">
-                            <div class="font-bold text-slate-900">${d.descricao || 'Sem descrição'}</div>
+                            <div class="font-bold text-slate-900 ${estaPaga ? 'text-emerald-950' : ''}">${d.descricao || 'Sem descrição'}</div>
                             ${d.observacoes ? `<div class="text-[10px] text-slate-400">${d.observacoes}</div>` : ''}
                         </td>
                         <td class="px-4 py-3 text-slate-600 font-semibold">${d.categoria || 'Geral'}</td>
                         <td class="px-4 py-3 text-center text-slate-600 font-medium">${vencimentoTexto}</td>
-                        <td class="px-4 py-3 text-right font-black text-rose-600 text-sm">${formatMoeda(d.valor)}</td>
+                        <td class="px-4 py-3 text-right font-black ${estaPaga ? 'text-emerald-700' : 'text-rose-600'} text-sm">${formatMoeda(d.valor)}</td>
                         <td class="px-4 py-3 text-center">${statusBadge}</td>
+                        <td class="px-4 py-3 text-center no-print">${botaoAcao}</td>
                         <td class="px-4 py-3 text-center no-print">
                             <div class="flex items-center justify-center gap-1">
                                 <button onclick="window.editarDespesa('${d.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
@@ -2033,13 +2314,71 @@
         };
 
         // ════════════════════════════════════════════════════════════════
-        // OPERAÇÕES DE DESPESAS (CRUD)
+        // OPERAÇÕES DE DESPESAS (CRUD & PAGAMENTO)
         // ════════════════════════════════════════════════════════════════
+        window.alternarPagamentoDespesa = async (despesaId) => {
+            const mesSel = window.appState.mesSelecionado;
+            if (!mesSel) return;
+
+            const despesa = window.appState.rawDespesas.find(d => d.id === despesaId);
+            if (!despesa) return;
+
+            const estaPaga = despesaEstaPagaNoMes(despesa, mesSel);
+            let mesesPagos = Array.isArray(despesa.mesesPagos) ? [...despesa.mesesPagos] : [];
+            const mesNorm = normalizarMesAno(mesSel);
+
+            if (estaPaga) {
+                mesesPagos = mesesPagos.filter(m => normalizarMesAno(m) !== mesNorm);
+            } else {
+                if (!mesesPagos.map(normalizarMesAno).includes(mesNorm)) {
+                    mesesPagos.push(mesSel);
+                }
+            }
+
+            // Atualização otimista na memória para resposta instantânea
+            despesa.mesesPagos = mesesPagos;
+            if (despesa.tipo !== 'recorrente') {
+                despesa.pago = !estaPaga;
+            }
+            recalcularTudo();
+
+            // Persistência no Firestore
+            try {
+                const docRef = doc(db, "despesas_preditivas", despesaId);
+                const updatePayload = {
+                    mesesPagos: mesesPagos,
+                    updatedAt: serverTimestamp()
+                };
+                if (despesa.tipo !== 'recorrente') {
+                    updatePayload.pago = !estaPaga;
+                }
+                await updateDoc(docRef, updatePayload);
+            } catch (err) {
+                console.error("Erro ao alternar pagamento da despesa:", err);
+                alert("Erro ao salvar status de pagamento. Revertendo...");
+                // Reverte
+                if (estaPaga) {
+                    if (!mesesPagos.map(normalizarMesAno).includes(mesNorm)) mesesPagos.push(mesSel);
+                } else {
+                    mesesPagos = mesesPagos.filter(m => normalizarMesAno(m) !== mesNorm);
+                }
+                despesa.mesesPagos = mesesPagos;
+                if (despesa.tipo !== 'recorrente') {
+                    despesa.pago = estaPaga;
+                }
+                recalcularTudo();
+            }
+        };
+
         window.abrirModalDespesa = () => {
             document.getElementById('formDespesa').reset();
             document.getElementById('despesaId').value = "";
             document.getElementById('modalDespesaTitulo').innerText = "Cadastrar Despesa";
             document.getElementById('despesaMesRef').value = window.appState.mesSelecionado;
+            const mesLabel = document.getElementById('modalDespesaMesLabel');
+            if (mesLabel) mesLabel.innerText = window.appState.mesSelecionado;
+            const chk = document.getElementById('despesaPagoMesCheck');
+            if (chk) chk.checked = false;
             window.toggleTipoDespesa('recorrente');
             document.getElementById('modalDespesa').classList.remove('hidden');
             lucide.createIcons();
@@ -2076,6 +2415,21 @@
             const mesRef = normalizarMesAno(document.getElementById('despesaMesRef').value) || window.appState.mesSelecionado;
             const obs = document.getElementById('despesaObs').value.trim();
 
+            const mesSel = window.appState.mesSelecionado;
+            const mesNorm = normalizarMesAno(mesSel);
+            const chkPago = document.getElementById('despesaPagoMesCheck')?.checked;
+
+            const despesaExistente = id ? window.appState.rawDespesas.find(d => d.id === id) : null;
+            let mesesPagos = despesaExistente && Array.isArray(despesaExistente.mesesPagos) ? [...despesaExistente.mesesPagos] : [];
+
+            if (chkPago) {
+                if (!mesesPagos.map(normalizarMesAno).includes(mesNorm)) {
+                    mesesPagos.push(mesSel);
+                }
+            } else {
+                mesesPagos = mesesPagos.filter(m => normalizarMesAno(m) !== mesNorm);
+            }
+
             const payload = {
                 descricao,
                 valor,
@@ -2085,6 +2439,8 @@
                 mesReferencia: mesRef,
                 observacoes: obs,
                 ativo: true,
+                mesesPagos: mesesPagos,
+                pago: chkPago || false,
                 updatedAt: serverTimestamp()
             };
 
@@ -2127,6 +2483,11 @@
             document.getElementById('despesaDiaVencimento').value = despesa.diaVencimento || 10;
             document.getElementById('despesaMesRef').value = despesa.mesReferencia || window.appState.mesSelecionado;
             document.getElementById('despesaObs').value = despesa.observacoes || '';
+
+            const mesLabel = document.getElementById('modalDespesaMesLabel');
+            if (mesLabel) mesLabel.innerText = window.appState.mesSelecionado;
+            const chk = document.getElementById('despesaPagoMesCheck');
+            if (chk) chk.checked = despesaEstaPagaNoMes(despesa, window.appState.mesSelecionado);
 
             document.getElementById('modalDespesa').classList.remove('hidden');
             lucide.createIcons();
