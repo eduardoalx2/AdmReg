@@ -29,10 +29,11 @@ service cloud.firestore {
         allow read, write: if true;
       }
 
-      // Log de auditoria financeira (imutável: somente leitura e inserção)
+      // Log de auditoria financeira (imutável contra edições, mas permite exclusão ao limpar evento)
       match /logs_financeiros/{logId} {
         allow read, create: if true;
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if true;
       }
     }
 

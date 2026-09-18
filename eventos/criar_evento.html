@@ -404,11 +404,16 @@
       </div>
 
       <!-- BARRA INFERIOR DE BOTÕES -->
-      <div class="flex items-center justify-between pt-4 border-t border-slate-900">
-        <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-wider px-4 py-3">
-          Cancelar
-        </a>
-        <button type="submit" id="btn-salvar-evento" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider flex items-center gap-2">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-900">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-wider px-3 py-2">
+            Cancelar
+          </a>
+          <button type="button" id="btn-excluir-evento" onclick="excluirEventoComHistorico()" class="hidden bg-rose-950/40 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-bold py-2.5 px-4 rounded-xl transition-all uppercase tracking-wider flex items-center gap-1.5 shadow">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Evento
+          </button>
+        </div>
+        <button type="submit" id="btn-salvar-evento" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2">
           <i data-lucide="check" class="w-4 h-4"></i> Salvar e Publicar Evento
         </button>
       </div>
@@ -424,7 +429,7 @@
   <script type="module">
     import { db } from '../firebase-config.js';
     import { 
-      collection, doc, getDoc, getDocs, addDoc, updateDoc, serverTimestamp, query, orderBy 
+      collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy 
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     let coordenadoriasList = [];
@@ -432,6 +437,7 @@
     let igrejasList = [];
     let pastoresConvidadosSelecionados = [];
     let lotesList = [];
+    let eventoAtualParaEdicao = null;
 
     // Definição dos campos possíveis para o formulário de inscrição
     const CAMPOS_DISPONIVEIS = [
@@ -451,12 +457,12 @@
       lucide.createIcons();
       renderizarCamposInscricao();
 
-      // Carrega dados auxiliares do Firestore em paralelo
+      // Carrega pastores e igrejas primeiro para cruzamento de dados de coordenadores
       await Promise.all([
-        carregarCoordenadorias(),
         carregarPastores(),
         carregarIgrejas()
       ]);
+      await carregarCoordenadorias();
 
       // Verifica se está editando evento existente via URL (?id=...)
       const urlParams = new URLSearchParams(window.location.search);
@@ -470,6 +476,40 @@
     }
 
     // ─── CARREGAR DADOS DO FIRESTORE ───────────────────────────────────────────
+    // Resolve dados do coordenador tanto de coordenadorias.html quanto de s_pastores.html
+    function resolverCoordenador(c) {
+      if (!c) return { nome: 'Não informado', pastorId: null, email: 'Sem e-mail cadastrado', telefone: '' };
+
+      let nome = c.coordenadorNome || c.pastorNome || '';
+      let pastorId = c.coordenadorId || c.pastorId || '';
+      let email = c.email || c.contato || '';
+      let telefone = c.whatsapp || c.telefone || '';
+
+      // Cruza com a lista de pastores carregada do banco
+      let pastor = null;
+      if (pastorId && pastoresList && pastoresList.length) {
+        pastor = pastoresList.find(p => p.id === pastorId);
+      }
+      if (!pastor && nome && pastoresList && pastoresList.length) {
+        const nomeNorm = nome.trim().toLowerCase();
+        pastor = pastoresList.find(p => p.nome && p.nome.trim().toLowerCase() === nomeNorm);
+      }
+
+      if (pastor) {
+        if (!nome) nome = pastor.nome;
+        if (!pastorId) pastorId = pastor.id;
+        if (!email) email = pastor.email || '';
+        if (!telefone) telefone = pastor.telefone || '';
+      }
+
+      return {
+        nome: nome || 'Não definido',
+        pastorId: pastorId || null,
+        email: email || 'Sem e-mail cadastrado',
+        telefone: telefone || ''
+      };
+    }
+
     async function carregarCoordenadorias() {
       try {
         const snap = await getDocs(collection(db, "coordenadorias"));
@@ -482,7 +522,8 @@
         coordenadoriasList.forEach(c => {
           const opt = document.createElement('option');
           opt.value = c.id;
-          opt.textContent = `${c.nome} (Coord: ${c.pastorNome || 'Não definido'})`;
+          const info = resolverCoordenador(c);
+          opt.textContent = `${c.nome} (Coord: ${info.nome})`;
           select.appendChild(opt);
         });
       } catch (e) {
@@ -549,8 +590,9 @@
       const id = document.getElementById('select-coordenadoria').value;
       const coord = coordenadoriasList.find(c => c.id === id);
       if (coord) {
-        document.getElementById('coord-nome-exibicao').textContent = coord.pastorNome || 'Não informado';
-        document.getElementById('coord-email-exibicao').textContent = coord.email || coord.contato || 'Sem e-mail cadastrado';
+        const info = resolverCoordenador(coord);
+        document.getElementById('coord-nome-exibicao').textContent = info.nome;
+        document.getElementById('coord-email-exibicao').textContent = info.email;
       } else {
         document.getElementById('coord-nome-exibicao').textContent = '—';
         document.getElementById('coord-email-exibicao').textContent = '—';
@@ -759,8 +801,10 @@
           return;
         }
         const data = snap.data();
+        eventoAtualParaEdicao = { id, ...data };
         document.getElementById('evento-id').value = id;
         document.getElementById('page-title').innerHTML = `<i data-lucide="edit" class="w-4 h-4 text-amber-400"></i> Editar: ${data.nome}`;
+        document.getElementById('btn-excluir-evento').classList.remove('hidden');
 
         // Aba Geral
         document.getElementById('evento-nome').value = data.nome || '';
@@ -863,12 +907,13 @@
         if (tipo === 'coordenadoria') {
           const coordId = document.getElementById('select-coordenadoria').value;
           const coordObj = coordenadoriasList.find(c => c.id === coordId);
+          const info = coordObj ? resolverCoordenador(coordObj) : {};
           coordData = {
             coordenadoriaId: coordId || null,
             coordenadoriaNome: coordObj ? coordObj.nome : null,
-            coordenadorPastorId: coordObj ? coordObj.pastorId : null,
-            coordenadorNome: coordObj ? coordObj.pastorNome : null,
-            coordenadorEmail: coordObj ? (coordObj.email || coordObj.contato || null) : null,
+            coordenadorPastorId: info.pastorId || null,
+            coordenadorNome: info.nome || null,
+            coordenadorEmail: (info.email && info.email !== 'Sem e-mail cadastrado') ? info.email : null,
             coordenadorAcessoFinanceiro: document.getElementById('coord-permite-financeiro').checked
           };
         }
@@ -944,6 +989,64 @@
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
+      }
+    };
+
+    // ─── EXCLUIR EVENTO COM LIMPEZA DE BANCO DE DADOS ──────────────────────────
+    window.excluirEventoComHistorico = async function() {
+      const eventoNome = eventoAtualParaEdicao ? eventoAtualParaEdicao.nome : 'este evento';
+      const eventoId = document.getElementById('evento-id').value;
+      if (!eventoId) return;
+
+      if (!confirm(`⚠️ ATENÇÃO: Tem certeza que deseja EXCLUIR DEFINITIVAMENTE o evento "${eventoNome}"?\n\nEsta ação irá apagar do banco de dados:\n- Todas as inscrições cadastradas\n- Todos os registros de check-in\n- Todas as despesas lançadas\n- Todo o histórico de auditoria financeira\n- As configurações deste evento\n\nEssa ação é IRREVERSÍVEL. Deseja prosseguir?`)) {
+        return;
+      }
+
+      const confirmacaoFinal = prompt(`Para confirmar a exclusão e limpeza total do banco de dados, digite EXCLUIR abaixo:`);
+      if (!confirmacaoFinal || confirmacaoFinal.trim().toUpperCase() !== 'EXCLUIR') {
+        alert("Exclusão cancelada.");
+        return;
+      }
+
+      const btn = document.getElementById('btn-excluir-evento');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Limpando banco...</span>`;
+      }
+
+      try {
+        // 1. Limpa subcoleção de inscrições
+        const inscricoesSnap = await getDocs(collection(db, "eventos", eventoId, "inscricoes"));
+        const delInscricoes = [];
+        inscricoesSnap.forEach(d => delInscricoes.push(deleteDoc(doc(db, "eventos", eventoId, "inscricoes", d.id))));
+        await Promise.all(delInscricoes);
+
+        // 2. Limpa subcoleção de despesas
+        const despesasSnap = await getDocs(collection(db, "eventos", eventoId, "despesas"));
+        const delDespesas = [];
+        despesasSnap.forEach(d => delDespesas.push(deleteDoc(doc(db, "eventos", eventoId, "despesas", d.id))));
+        await Promise.all(delDespesas);
+
+        // 3. Limpa subcoleção de logs financeiros
+        const logsSnap = await getDocs(collection(db, "eventos", eventoId, "logs_financeiros"));
+        const delLogs = [];
+        logsSnap.forEach(d => delLogs.push(deleteDoc(doc(db, "eventos", eventoId, "logs_financeiros", d.id))));
+        await Promise.all(delLogs);
+
+        // 4. Exclui o documento principal do evento
+        await deleteDoc(doc(db, "eventos", eventoId));
+
+        alert("✓ Evento e todo o seu histórico no banco de dados foram excluídos com sucesso!");
+        window.location.replace("index.html");
+
+      } catch (err) {
+        console.error("Erro ao excluir evento:", err);
+        alert("Erro ao excluir evento e limpar banco de dados: " + err.message);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
       }
     };
 

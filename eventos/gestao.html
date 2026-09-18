@@ -360,6 +360,21 @@
             Encerrar Evento
           </button>
         </div>
+
+        <!-- Zona de Perigo: Exclusão Definitiva e Limpeza de Histórico -->
+        <div class="p-5 rounded-2xl bg-rose-950/20 border border-rose-500/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="space-y-1">
+            <h4 class="text-xs font-bold text-rose-400 flex items-center gap-1.5 uppercase tracking-wider">
+              <i data-lucide="alert-triangle" class="w-4 h-4"></i> Zona de Perigo: Excluir Evento
+            </h4>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Exclui definitivamente este evento e <strong>limpa todo o histórico do banco de dados</strong> (todas as inscrições, dados de check-in, despesas e logs financeiros serão apagados permanentemente para não poluir o banco).
+            </p>
+          </div>
+          <button onclick="excluirEventoComHistorico()" id="btn-excluir-evento" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-lg shrink-0 flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir Evento
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1034,6 +1049,60 @@
         window.location.reload();
       } catch (e) {
         alert("Erro: " + e.message);
+      }
+    };
+
+    // ─── EXCLUIR EVENTO COM LIMPEZA DE BANCO DE DADOS ──────────────────────────
+    window.excluirEventoComHistorico = async function() {
+      if (!confirm(`⚠️ ATENÇÃO: Tem certeza que deseja EXCLUIR DEFINITIVAMENTE o evento "${eventoAtual.nome}"?\n\nEsta ação irá apagar do banco de dados:\n- Todas as inscrições cadastradas\n- Todos os registros de check-in\n- Todas as despesas lançadas\n- Todo o histórico de auditoria financeira\n- As configurações deste evento\n\nEssa ação é IRREVERSÍVEL. Deseja prosseguir?`)) {
+        return;
+      }
+
+      const confirmacaoFinal = prompt(`Para confirmar a exclusão e limpeza total do banco de dados, digite EXCLUIR abaixo:`);
+      if (!confirmacaoFinal || confirmacaoFinal.trim().toUpperCase() !== 'EXCLUIR') {
+        alert("Exclusão cancelada.");
+        return;
+      }
+
+      const btn = document.getElementById('btn-excluir-evento');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Limpando banco...</span>`;
+      }
+
+      try {
+        // 1. Limpa subcoleção de inscrições
+        const inscricoesSnap = await getDocs(collection(db, "eventos", eventoId, "inscricoes"));
+        const delInscricoes = [];
+        inscricoesSnap.forEach(d => delInscricoes.push(deleteDoc(doc(db, "eventos", eventoId, "inscricoes", d.id))));
+        await Promise.all(delInscricoes);
+
+        // 2. Limpa subcoleção de despesas
+        const despesasSnap = await getDocs(collection(db, "eventos", eventoId, "despesas"));
+        const delDespesas = [];
+        despesasSnap.forEach(d => delDespesas.push(deleteDoc(doc(db, "eventos", eventoId, "despesas", d.id))));
+        await Promise.all(delDespesas);
+
+        // 3. Limpa subcoleção de logs financeiros
+        const logsSnap = await getDocs(collection(db, "eventos", eventoId, "logs_financeiros"));
+        const delLogs = [];
+        logsSnap.forEach(d => delLogs.push(deleteDoc(doc(db, "eventos", eventoId, "logs_financeiros", d.id))));
+        await Promise.all(delLogs);
+
+        // 4. Exclui o documento principal do evento
+        await deleteDoc(doc(db, "eventos", eventoId));
+
+        alert("✓ O evento e todo o seu histórico no banco de dados foram excluídos com sucesso!");
+        window.location.replace("index.html");
+
+      } catch (err) {
+        console.error("Erro ao excluir evento:", err);
+        alert("Erro ao excluir evento e limpar histórico: " + err.message);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
       }
     };
 
