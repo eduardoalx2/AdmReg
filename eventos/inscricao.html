@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inscrição para Evento — Região 655</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@0.300.0"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #090d16;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.08) 0px, transparent 50%);
+    }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.8);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .input-dark {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .input-dark:focus {
+      border-color: rgba(99, 102, 241, 0.7);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between py-6 px-4">
+
+  <main class="w-full max-w-xl mx-auto flex-1 flex flex-col justify-center">
+
+    <!-- CABEÇALHO COM LOGO -->
+    <div class="text-center mb-6">
+      <a href="index.html" class="inline-flex items-center gap-2 mb-3">
+        <img src="../logo.png" alt="Logo IEQ" class="h-9 w-auto object-contain" onerror="this.style.display='none'">
+        <div class="text-left border-l border-slate-800 pl-2">
+          <div class="text-xs font-bold text-white leading-none">Região 655</div>
+          <div class="text-[9px] font-medium text-slate-400 uppercase leading-none mt-0.5">Londrina/PR</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- CARD DO EVENTO -->
+    <div id="card-evento-detalhes" class="glass-card rounded-3xl p-6 sm:p-8 mb-6 border-slate-800/80 shadow-2xl relative overflow-hidden">
+      <div id="loader-evento" class="flex flex-col items-center justify-center py-12 gap-3">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        <p class="text-xs text-slate-400 font-semibold">Carregando informações do evento...</p>
+      </div>
+
+      <div id="conteudo-evento" class="hidden space-y-5">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div id="ev-icone" class="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-3xl shrink-0">
+              🎯
+            </div>
+            <div>
+              <span id="ev-tipo-badge" class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 inline-block mb-1">
+                Regional
+              </span>
+              <h1 id="ev-nome" class="text-xl sm:text-2xl font-extrabold text-white leading-tight">Nome do Evento</h1>
+            </div>
+          </div>
+        </div>
+
+        <p id="ev-descricao" class="text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800/80 pt-3">
+          Descrição do evento...
+        </p>
+
+        <!-- Informações de Data, Horário e Local -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div class="flex items-center gap-2.5 text-xs text-slate-300">
+            <i data-lucide="calendar" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+            <span id="ev-data-texto">Data do Evento</span>
+          </div>
+          <div class="flex items-center gap-2.5 text-xs text-slate-300">
+            <i data-lucide="clock" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+            <span id="ev-hora-texto">19:30</span>
+          </div>
+          <div class="sm:col-span-2 flex items-start gap-2.5 text-xs text-slate-300">
+            <i data-lucide="map-pin" class="w-4 h-4 text-rose-400 shrink-0 mt-0.5"></i>
+            <span id="ev-local-texto">Local do Evento</span>
+          </div>
+        </div>
+
+        <!-- Banner de Preço / Lote Ativo -->
+        <div id="banner-financeiro" class="hidden p-4 rounded-2xl bg-gradient-to-r from-indigo-950/40 to-slate-900 border border-indigo-500/30 flex items-center justify-between">
+          <div>
+            <span id="lote-tag" class="text-[10px] font-black uppercase tracking-wider text-indigo-400 block">Inscrição</span>
+            <h3 id="lote-valor" class="text-xl sm:text-2xl font-black text-emerald-400 mt-0.5">R$ 0,00</h3>
+          </div>
+          <div class="text-right">
+            <span id="lote-prazo" class="text-[10px] text-slate-400 block">Pagamento via PIX</span>
+            <span id="vagas-restantes" class="text-[10px] font-bold text-slate-300">Vagas disponíveis</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FORMULÁRIO DE INSCRIÇÃO -->
+    <div id="secao-formulario" class="hidden glass-card rounded-3xl p-6 sm:p-8 shadow-2xl border-slate-800/80">
+      <h2 class="text-base font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2 border-b border-slate-800 pb-3">
+        <i data-lucide="user-check" class="w-5 h-5 text-emerald-400"></i>
+        Dados da Inscrição
+      </h2>
+
+      <form id="form-inscricao" onsubmit="event.preventDefault(); submeterInscricao();" class="space-y-4">
+        <div id="container-campos-dinamicos" class="space-y-4">
+          <!-- Os campos configurados no evento serão renderizados aqui pelo JS -->
+        </div>
+
+        <div class="pt-4 border-t border-slate-800">
+          <button type="submit" id="btn-confirmar-inscricao" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-xl hover:shadow-emerald-500/20 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+            <span>Concluir Inscrição</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- TELA DE SUCESSO / COMPROVANTE & PIX -->
+    <div id="secao-sucesso" class="hidden glass-card rounded-3xl p-6 sm:p-8 shadow-2xl border-emerald-500/30 text-center space-y-6">
+      
+      <div class="w-16 h-16 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto text-emerald-400">
+        ✓
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-black text-white">Inscrição Confirmada!</h2>
+        <p class="text-xs text-slate-400 mt-1">Seus dados foram registrados com sucesso no sistema da Região 655.</p>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-left text-xs space-y-2">
+        <div class="flex justify-between items-center text-slate-400">
+          <span>Participante:</span>
+          <strong id="rec-nome" class="text-white">Nome</strong>
+        </div>
+        <div class="flex justify-between items-center text-slate-400">
+          <span>Evento:</span>
+          <strong id="rec-evento" class="text-white">Evento</strong>
+        </div>
+        <div class="flex justify-between items-center text-slate-400" id="rec-linha-valor">
+          <span>Valor a Pagar:</span>
+          <strong id="rec-valor" class="text-emerald-400 font-bold text-sm">R$ 0,00</strong>
+        </div>
+        <div class="flex justify-between items-center text-slate-400">
+          <span>Protocolo:</span>
+          <span id="rec-protocolo" class="font-mono text-slate-300 font-bold">#0000</span>
+        </div>
+      </div>
+
+      <!-- ÁREA DE PAGAMENTO PIX (Se o evento tiver cobrança ativa) -->
+      <div id="bloco-pix-sucesso" class="hidden p-5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 text-left space-y-3">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
+            PIX
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Pagamento via PIX</h4>
+            <p class="text-[10px] text-slate-400">Copie a chave abaixo e realize o pagamento no seu banco</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+          <input type="text" id="campo-chave-pix-copiar" readonly class="bg-transparent text-xs font-mono text-emerald-300 flex-1 outline-none font-bold" />
+          <button type="button" onclick="copiarChavePix()" id="btn-copiar-pix" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0">
+            <i data-lucide="copy" class="w-3 h-3"></i> Copiar
+          </button>
+        </div>
+
+        <div class="text-[10px] text-slate-400 space-y-0.5">
+          <p><strong>Favorecido:</strong> <span id="pix-favorecido-texto">IEQ Região 655</span></p>
+          <p class="text-amber-400 font-medium">Guarde o comprovante para apresentar na recepção ou enviar para a liderança.</p>
+        </div>
+      </div>
+
+      <!-- BOTÕES FINAIS -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-2">
+        <button type="button" onclick="compartilharWhatsApp()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all text-xs flex items-center justify-center gap-2 uppercase tracking-wide">
+          <i data-lucide="message-circle" class="w-4 h-4"></i> Enviar Comprovante no WhatsApp
+        </button>
+        <button type="button" onclick="window.location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-3 px-4 rounded-xl transition-all text-xs uppercase tracking-wide">
+          Nova Inscrição
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="text-center py-4 text-[11px] text-slate-500">
+    © 2026 Igreja do Evangelho Quadrangular — Região Eclesiástica 655
+  </footer>
+
+  <script type="module">
+    import { db } from '../firebase-config.js';
+    import { 
+      collection, doc, getDoc, getDocs, addDoc, serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    let eventoAtual = null;
+    let igrejasList = [];
+    let loteAtivo = null;
+    let ultimaInscricao = null;
+
+    // Inicialização
+    async function init() {
+      lucide.createIcons();
+      const params = new URLSearchParams(window.location.search);
+      const eventoId = params.get('id');
+
+      if (!eventoId) {
+        document.getElementById('loader-evento').innerHTML = `
+          <div class="text-rose-400 font-bold text-sm">ID do evento não fornecido.</div>
+          <a href="index.html" class="text-xs text-indigo-400 hover:underline mt-2">Voltar à Central de Eventos</a>
+        `;
+        return;
+      }
+
+      await carregarIgrejas();
+      await carregarEvento(eventoId);
+    }
+
+    async function carregarIgrejas() {
+      try {
+        const snap = await getDocs(collection(db, "igrejas"));
+        igrejasList = [];
+        snap.forEach(d => igrejasList.push({ id: d.id, ...d.data() }));
+        igrejasList.sort((a,b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+      } catch (e) {
+        console.error("Erro ao carregar igrejas:", e);
+      }
+    }
+
+    async function carregarEvento(id) {
+      try {
+        const snap = await getDoc(doc(db, "eventos", id));
+        if (!snap.exists()) {
+          document.getElementById('loader-evento').innerHTML = `
+            <div class="text-rose-400 font-bold text-sm">Evento não encontrado ou indisponível.</div>
+            <a href="index.html" class="text-xs text-indigo-400 hover:underline mt-2">Voltar à Central</a>
+          `;
+          return;
+        }
+
+        eventoAtual = { id: snap.id, ...snap.data() };
+
+        // Preenche detalhes do evento no card
+        document.getElementById('ev-nome').textContent = eventoAtual.nome;
+        document.getElementById('ev-icone').textContent = eventoAtual.icone || '🎯';
+        document.getElementById('ev-tipo-badge').textContent = eventoAtual.tipo === 'coordenadoria' ? (eventoAtual.coordenadoriaNome || 'Coordenadoria') : 'Regional 655';
+        
+        if (eventoAtual.descricao) {
+          document.getElementById('ev-descricao').textContent = eventoAtual.descricao;
+        } else {
+          document.getElementById('ev-descricao').classList.add('hidden');
+        }
+
+        // Formatação das datas
+        let dataStr = formatarData(eventoAtual.dataInicio);
+        if (eventoAtual.dataFim && eventoAtual.dataFim !== eventoAtual.dataInicio) {
+          dataStr += ' até ' + formatarData(eventoAtual.dataFim);
+        }
+        document.getElementById('ev-data-texto').textContent = dataStr;
+        document.getElementById('ev-hora-texto').textContent = (eventoAtual.horaInicio || '19:30') + 'h';
+        document.getElementById('ev-local-texto').textContent = eventoAtual.local || 'IEQ Londrina';
+
+        // Análise Financeira & Lotes
+        configurarFinanceiroBanner();
+
+        // Renderiza campos configurados do formulário
+        renderizarFormularioCampos();
+
+        document.getElementById('loader-evento').classList.add('hidden');
+        document.getElementById('conteudo-evento').classList.remove('hidden');
+        document.getElementById('secao-formulario').classList.remove('hidden');
+        lucide.createIcons();
+
+      } catch (e) {
+        console.error(e);
+        document.getElementById('loader-evento').innerHTML = `
+          <div class="text-rose-400 font-bold text-sm">Erro ao carregar dados do evento.</div>
+        `;
+      }
+    }
+
+    function formatarData(dStr) {
+      if (!dStr) return '';
+      const [ano, mes, dia] = dStr.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function formatBRL(val) {
+      return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Configuração de Lote / Valor do banner
+    function configurarFinanceiroBanner() {
+      const banner = document.getElementById('banner-financeiro');
+      if (!eventoAtual.temControleFinanceiro) {
+        banner.classList.remove('hidden');
+        banner.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+            <span class="text-xs font-bold text-emerald-300 uppercase">Evento Gratuito / Inscrição Livre</span>
+          </div>
+        `;
+        return;
+      }
+
+      banner.classList.remove('hidden');
+
+      if (eventoAtual.modalidadeCobranca === 'por_igreja') {
+        document.getElementById('lote-tag').textContent = 'Cota por Igreja';
+        document.getElementById('lote-valor').textContent = 'Incluso';
+        document.getElementById('lote-prazo').textContent = 'Acerto direto pelo Pastor Titular com a Região';
+        document.getElementById('vagas-restantes').textContent = '';
+        return;
+      }
+
+      // Cobrança Individual
+      if (eventoAtual.temLotes && eventoAtual.lotes && eventoAtual.lotes.length) {
+        const hoje = new Date().toISOString().split('T')[0];
+        // Encontra o lote vigente (dataLimite >= hoje)
+        loteAtivo = eventoAtual.lotes.find(l => !l.dataLimite || l.dataLimite >= hoje) || eventoAtual.lotes[eventoAtual.lotes.length - 1];
+        
+        document.getElementById('lote-tag').textContent = loteAtivo.nome || 'Lote Vigente';
+        document.getElementById('lote-valor').textContent = formatBRL(loteAtivo.valor);
+        document.getElementById('lote-prazo').textContent = loteAtivo.dataLimite ? `Válido até ${formatarData(loteAtivo.dataLimite)}` : 'Vagas limitadas';
+      } else {
+        loteAtivo = { nome: 'Inscrição Individual', valor: eventoAtual.valorUnico || 0 };
+        document.getElementById('lote-tag').textContent = 'Inscrição Individual';
+        document.getElementById('lote-valor').textContent = formatBRL(eventoAtual.valorUnico);
+      }
+    }
+
+    // Renderizar formulário baseado nos campos ativos definidos pelo organizador
+    function renderizarFormularioCampos() {
+      const container = document.getElementById('container-campos-dinamicos');
+      container.innerHTML = '';
+
+      const cfg = eventoAtual.camposInscricao || {};
+
+      // 1. Nome Completo (Sempre presente)
+      container.innerHTML += `
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Nome Completo <span class="text-rose-400">*</span></label>
+          <input type="text" id="campo-nome" required placeholder="Digite seu nome completo" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-bold text-white placeholder-slate-600" />
+        </div>
+      `;
+
+      // 2. Celular / WhatsApp
+      if (cfg.celular && cfg.celular.ativo) {
+        container.innerHTML += `
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Telefone / WhatsApp ${cfg.celular.obrigatorio ? '<span class="text-rose-400">*</span>' : ''}</label>
+            <input type="tel" id="campo-celular" ${cfg.celular.obrigatorio ? 'required' : ''} placeholder="(43) 99999-9999" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold text-white" />
+          </div>
+        `;
+      }
+
+      // 3. CPF
+      if (cfg.cpf && cfg.cpf.ativo) {
+        container.innerHTML += `
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">CPF ${cfg.cpf.obrigatorio ? '<span class="text-rose-400">*</span>' : ''}</label>
+            <input type="text" id="campo-cpf" ${cfg.cpf.obrigatorio ? 'required' : ''} placeholder="000.000.000-00" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold text-white" />
+          </div>
+        `;
+      }
+
+      // 4. E-mail
+      if (cfg.email && cfg.email.ativo) {
+        container.innerHTML += `
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">E-mail ${cfg.email.obrigatorio ? '<span class="text-rose-400">*</span>' : ''}</label>
+            <input type="email" id="campo-email" ${cfg.email.obrigatorio ? 'required' : ''} placeholder="seuemail@exemplo.com" class="w-full input-dark px-4 py-3 rounded-xl text-sm text-white" />
+          </div>
+        `;
+      }
+
+      // 5. Endereço
+      if (cfg.endereco && cfg.endereco.ativo) {
+        container.innerHTML += `
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Endereço Completo ${cfg.endereco.obrigatorio ? '<span class="text-rose-400">*</span>' : ''}</label>
+            <input type="text" id="campo-endereco" ${cfg.endereco.obrigatorio ? 'required' : ''} placeholder="Rua, Número, Bairro, Cidade" class="w-full input-dark px-4 py-3 rounded-xl text-sm text-white" />
+          </div>
+        `;
+      }
+
+      // 6. Igreja / Congregação
+      if (cfg.igreja && cfg.igreja.ativo) {
+        let optionsIgrejas = '<option value="">Selecione sua igreja...</option>';
+        igrejasList.forEach(ig => {
+          optionsIgrejas += `<option value="${ig.nome}">${ig.codigo ? ig.codigo + ' - ' : ''}${ig.nome}</option>`;
+        });
+        optionsIgrejas += '<option value="Outra / Convidado">Outra Denominação / Visitante</option>';
+
+        container.innerHTML += `
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Igreja / Congregação ${cfg.igreja.obrigatorio ? '<span class="text-rose-400">*</span>' : ''}</label>
+            <select id="campo-igreja" ${cfg.igreja.obrigatorio ? 'required' : ''} class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
+              ${optionsIgrejas}
+            </select>
+          </div>
+        `;
+      }
+
+      // 7. Cargo Eclesiástico
+      if (cfg.cargoEclesiastico && cfg.cargoEclesiastico.ativo) {
+        container.innerHTML += `
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Cargo / Função na Igreja ${cfg.cargoEclesiastico.obrigatorio ? '<span class="text-rose-400">*</span>' : ''}</label>
+            <select id="campo-cargo" ${cfg.cargoEclesiastico.obrigatorio ? 'required' : ''} class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
+              <option value="">Selecione...</option>
+              <option value="Pastor Titular">Pastor Titular</option>
+              <option value="Pastor Auxiliar">Pastor Auxiliar</option>
+              <option value="Obreiro(a)">Obreiro(a)</option>
+              <option value="Diácono / Diaconisa">Diácono / Diaconisa</option>
+              <option value="Líder de Departamento">Líder de Departamento</option>
+              <option value="Membro">Membro</option>
+              <option value="Visitante">Visitante</option>
+            </select>
+          </div>
+        `;
+      }
+
+      // 8. Tamanho de Camiseta
+      if (cfg.tamanhoCamiseta && cfg.tamanhoCamiseta.ativo) {
+        container.innerHTML += `
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Tamanho da Camiseta / Uniforme ${cfg.tamanhoCamiseta.obrigatorio ? '<span class="text-rose-400">*</span>' : ''}</label>
+            <select id="campo-camiseta" ${cfg.tamanhoCamiseta.obrigatorio ? 'required' : ''} class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
+              <option value="">Selecione o tamanho...</option>
+              <option value="Infantil 10">Infantil 10</option>
+              <option value="Infantil 12">Infantil 12</option>
+              <option value="P">P (Adulto)</option>
+              <option value="M">M (Adulto)</option>
+              <option value="G">G (Adulto)</option>
+              <option value="GG">GG (Adulto)</option>
+              <option value="XG / EXG">XG / EXG (Adulto)</option>
+            </select>
+          </div>
+        `;
+      }
+
+      // 9. Restrições / Observações
+      if (cfg.restricoes && cfg.restricoes.ativo) {
+        container.innerHTML += `
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Restrições Alimentares / Observações ${cfg.restricoes.obrigatorio ? '<span class="text-rose-400">*</span>' : ''}</label>
+            <textarea id="campo-restricoes" rows="2" ${cfg.restricoes.obrigatorio ? 'required' : ''} placeholder="Ex: Intolerante a lactose, vegetariano, etc." class="w-full input-dark px-4 py-2.5 rounded-xl text-xs"></textarea>
+          </div>
+        `;
+      }
+    }
+
+    // ─── SUBMETER INSCRIÇÃO ────────────────────────────────────────────────────
+    window.submeterInscricao = async function() {
+      const btn = document.getElementById('btn-confirmar-inscricao');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Processando...</span>`;
+
+      try {
+        const nomeEl = document.getElementById('campo-nome');
+        const celularEl = document.getElementById('campo-celular');
+        const cpfEl = document.getElementById('campo-cpf');
+        const emailEl = document.getElementById('campo-email');
+        const enderecoEl = document.getElementById('campo-endereco');
+        const igrejaEl = document.getElementById('campo-igreja');
+        const cargoEl = document.getElementById('campo-cargo');
+        const camisetaEl = document.getElementById('campo-camiseta');
+        const restricoesEl = document.getElementById('campo-restricoes');
+
+        const valorInscricao = (eventoAtual.temControleFinanceiro && eventoAtual.modalidadeCobranca === 'individual') ? (loteAtivo ? loteAtivo.valor : eventoAtual.valorUnico) : 0;
+        const loteNome = (eventoAtual.temControleFinanceiro && eventoAtual.modalidadeCobranca === 'individual' && loteAtivo) ? loteAtivo.nome : null;
+
+        const payload = {
+          eventoId: eventoAtual.id,
+          nome: nomeEl ? nomeEl.value.trim() : '',
+          celular: celularEl ? celularEl.value.trim() : '',
+          cpf: cpfEl ? cpfEl.value.trim() : '',
+          email: emailEl ? emailEl.value.trim() : '',
+          endereco: enderecoEl ? enderecoEl.value.trim() : '',
+          igrejaNome: igrejaEl ? igrejaEl.value : '',
+          cargoEclesiastico: cargoEl ? cargoEl.value : '',
+          tamanhoCamiseta: camisetaEl ? camisetaEl.value : '',
+          restricoes: restricoesEl ? restricoesEl.value.trim() : '',
+          valorInscricao: Number(valorInscricao || 0),
+          loteNome: loteNome || '',
+          statusPagamento: valorInscricao > 0 ? 'pendente' : 'isento',
+          checkinRealizado: false,
+          criadoEm: serverTimestamp()
+        };
+
+        // Grava na subcoleção eventos/{id}/inscricoes
+        const inscricaoRef = await addDoc(collection(db, "eventos", eventoAtual.id, "inscricoes"), payload);
+
+        // Se tiver controle financeiro individual, grava log de auditoria
+        if (eventoAtual.temControleFinanceiro && valorInscricao > 0) {
+          await addDoc(collection(db, "eventos", eventoAtual.id, "logs_financeiros"), {
+            eventoId: eventoAtual.id,
+            dataHora: serverTimestamp(),
+            usuarioNome: payload.nome,
+            usuarioEmail: payload.email || 'portal_publico',
+            tipoAcao: 'nova_inscricao',
+            categoria: 'receita_prevista',
+            descricao: `Inscrição pública realizada: ${payload.nome} (${loteNome || 'Individual'} - ${formatBRL(valorInscricao)}) - Status: Pendente`,
+            valor: Number(valorInscricao),
+            inscricaoId: inscricaoRef.id
+          }).catch(e => console.warn("Log silencioso:", e));
+        }
+
+        ultimaInscricao = { id: inscricaoRef.id, ...payload };
+        exibirSucesso();
+
+      } catch (err) {
+        console.error("Erro ao salvar inscrição:", err);
+        alert("Erro ao enviar inscrição. Por favor, tente novamente: " + err.message);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    function exibirSucesso() {
+      document.getElementById('card-evento-detalhes').classList.add('hidden');
+      document.getElementById('secao-formulario').classList.add('hidden');
+      const telaSucesso = document.getElementById('secao-sucesso');
+      telaSucesso.classList.remove('hidden');
+
+      document.getElementById('rec-nome').textContent = ultimaInscricao.nome;
+      document.getElementById('rec-evento').textContent = eventoAtual.nome;
+      document.getElementById('rec-protocolo').textContent = '#' + ultimaInscricao.id.substring(0, 8).toUpperCase();
+
+      if (ultimaInscricao.valorInscricao > 0) {
+        document.getElementById('rec-valor').textContent = formatBRL(ultimaInscricao.valorInscricao);
+        document.getElementById('bloco-pix-sucesso').classList.remove('hidden');
+        document.getElementById('campo-chave-pix-copiar').value = eventoAtual.chavePix || 'Não informada';
+        document.getElementById('pix-favorecido-texto').textContent = eventoAtual.favorecidoPix || 'IEQ Região 655';
+      } else {
+        document.getElementById('rec-linha-valor').classList.add('hidden');
+        document.getElementById('bloco-pix-sucesso').classList.add('hidden');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    // ─── COPIAR CHAVE PIX ──────────────────────────────────────────────────────
+    window.copiarChavePix = function() {
+      const input = document.getElementById('campo-chave-pix-copiar');
+      input.select();
+      input.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(input.value);
+
+      const btn = document.getElementById('btn-copiar-pix');
+      btn.innerHTML = `✓ Copiado!`;
+      btn.classList.replace('bg-emerald-600', 'bg-emerald-700');
+      setTimeout(() => {
+        btn.innerHTML = `<i data-lucide="copy" class="w-3 h-3"></i> Copiar`;
+        btn.classList.replace('bg-emerald-700', 'bg-emerald-600');
+        lucide.createIcons();
+      }, 3000);
+    };
+
+    // ─── COMPARTILHAR WHATSAPP ─────────────────────────────────────────────────
+    window.compartilharWhatsApp = function() {
+      if (!ultimaInscricao) return;
+      const texto = `*Comprovante de Inscrição — Região 655*\n\n` +
+                    `*Evento:* ${eventoAtual.nome}\n` +
+                    `*Participante:* ${ultimaInscricao.nome}\n` +
+                    (ultimaInscricao.valorInscricao > 0 ? `*Valor:* ${formatBRL(ultimaInscricao.valorInscricao)}\n` : '') +
+                    (eventoAtual.chavePix ? `*Chave PIX:* ${eventoAtual.chavePix}\n` : '') +
+                    `*Protocolo:* #${ultimaInscricao.id.substring(0,8).toUpperCase()}\n\n` +
+                    `_Inscrição realizada pelo Portal da Região 655._`;
+      
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+      window.open(url, '_blank');
+    };
+
+    init();
+  </script>
+</body>
+</html>

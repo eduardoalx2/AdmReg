@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestão do Evento — Região 655</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@0.300.0"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0b0f19;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.05) 0px, transparent 50%);
+    }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .input-dark {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .input-dark:focus {
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between">
+
+  <!-- MODAL DE LOGIN (CASO NÃO ESTEJA AUTENTICADO) -->
+  <div id="modal-login-organizador" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md hidden">
+    <div class="glass-card rounded-3xl p-8 w-full max-w-md border border-slate-800 shadow-2xl">
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-3xl mx-auto mb-3">
+          🔐
+        </div>
+        <h2 class="text-xl font-black text-white">Acesso do Organizador</h2>
+        <p class="text-xs text-slate-400 mt-1">Digite seu e-mail cadastrado e sua senha (os 6 primeiros dígitos do seu CPF)</p>
+      </div>
+
+      <form id="form-login-org" onsubmit="event.preventDefault(); fazerLoginOrganizador();" class="space-y-4">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">E-mail Cadastrado</label>
+          <input type="email" id="login-email" required placeholder="seuemail@exemplo.com" class="w-full input-dark px-4 py-3 rounded-xl text-sm" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Senha (6 Primeiros Dígitos do CPF)</label>
+          <input type="password" id="login-senha" required placeholder="••••••" maxlength="12" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-mono tracking-widest text-center" />
+        </div>
+        <div id="login-erro-msg" class="text-xs text-rose-400 font-semibold text-center hidden">
+          E-mail ou senha inválidos.
+        </div>
+        <button type="submit" id="btn-entrar-org" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg text-xs uppercase tracking-wider">
+          Acessar Painel
+        </button>
+        <div class="text-center pt-2">
+          <a href="index.html" class="text-xs text-slate-500 hover:text-slate-300">Voltar à Central de Congressos</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="w-full border-b border-slate-900 bg-slate-950/60 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors uppercase tracking-wider">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Central
+        </a>
+        <span class="text-slate-700">|</span>
+        <div class="flex items-center gap-2">
+          <span id="ev-icone-header" class="text-lg">🎯</span>
+          <div>
+            <h1 id="ev-nome-header" class="text-sm font-bold text-white leading-tight">Carregando evento...</h1>
+            <span id="usuario-logado-badge" class="text-[10px] text-indigo-400 font-medium block leading-none"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="copiarLinkInscricaoPublica()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-1.5 transition-colors">
+          <i data-lucide="share-2" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span class="hidden sm:inline">Link de Inscrição</span>
+        </button>
+        <button onclick="deslogarOrganizador()" title="Sair da sessão" class="text-slate-400 hover:text-rose-400 p-2 text-xs">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+    <!-- KPI SUMMARY CARDS -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border-slate-800/80">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Inscritos Totais</span>
+        <h3 id="stat-total-inscritos" class="text-xl sm:text-2xl font-black text-white mt-1">0</h3>
+        <p class="text-[10px] text-slate-500 mt-0.5">Cadastros no sistema</p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border-slate-800/80">
+        <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Pagos / Confirmados</span>
+        <h3 id="stat-total-pagos" class="text-xl sm:text-2xl font-black text-emerald-400 mt-1">0</h3>
+        <p class="text-[10px] text-slate-500 mt-0.5">Inscrições quitadas</p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border-slate-800/80">
+        <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">Pendentes</span>
+        <h3 id="stat-total-pendentes" class="text-xl sm:text-2xl font-black text-amber-400 mt-1">0</h3>
+        <p class="text-[10px] text-slate-500 mt-0.5">Aguardando quitação</p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border-slate-800/80">
+        <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">Check-in (Presentes)</span>
+        <h3 id="stat-total-checkin" class="text-xl sm:text-2xl font-black text-indigo-400 mt-1">0</h3>
+        <p class="text-[10px] text-slate-500 mt-0.5">Entradas confirmadas</p>
+      </div>
+    </div>
+
+    <!-- ABAS DO PAINEL -->
+    <div class="flex bg-slate-950/60 p-1.5 rounded-2xl border border-slate-900/80 overflow-x-auto gap-1">
+      <button onclick="trocarAba('inscritos')" id="tab-btn-inscritos" class="tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow flex items-center justify-center gap-2 whitespace-nowrap">
+        <i data-lucide="users" class="w-4 h-4"></i> Inscritos
+      </button>
+      <button onclick="trocarAba('checkin')" id="tab-btn-checkin" class="tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 whitespace-nowrap">
+        <i data-lucide="check-circle" class="w-4 h-4"></i> Check-in / Portaria
+      </button>
+      <button onclick="trocarAba('financeiro')" id="tab-btn-financeiro" class="tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 whitespace-nowrap hidden">
+        <i data-lucide="dollar-sign" class="w-4 h-4"></i> Financeiro
+      </button>
+      <button onclick="trocarAba('auditoria')" id="tab-btn-auditoria" class="tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 whitespace-nowrap hidden">
+        <i data-lucide="file-text" class="w-4 h-4"></i> Log de Auditoria
+      </button>
+      <button onclick="trocarAba('config')" id="tab-btn-config" class="tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 whitespace-nowrap">
+        <i data-lucide="settings" class="w-4 h-4"></i> Opções
+      </button>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- ABA 1: LISTA DE INSCRITOS -->
+    <!-- ======================================================== -->
+    <div id="aba-inscritos" class="tab-pane space-y-4">
+      <div class="glass-card rounded-3xl p-5 border-slate-800/80">
+        
+        <!-- Barra de Filtros & Ações -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4">
+          <div class="flex flex-1 w-full sm:w-auto items-center gap-2">
+            <input type="text" id="busca-inscrito" oninput="filtrarInscritos()" placeholder="Buscar por nome, CPF ou igreja..." class="w-full sm:w-80 input-dark px-3.5 py-2 rounded-xl text-xs" />
+            <select id="filtro-status-pagto" onchange="filtrarInscritos()" class="input-dark px-3 py-2 rounded-xl text-xs cursor-pointer">
+              <option value="todos">Status: Todos</option>
+              <option value="pago">Apenas Pagos</option>
+              <option value="pendente">Apenas Pendentes</option>
+              <option value="isento">Isentos / Gratuitos</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button onclick="exportarCSVInscritos()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar CSV
+            </button>
+            <button onclick="imprimirListaInscritos()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors">
+              <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-950/40 text-slate-400 font-bold border-b border-slate-900 uppercase">
+                <th class="py-3 px-3">Inscrito</th>
+                <th class="py-3 px-3">Igreja / Cargo</th>
+                <th class="py-3 px-3">Contato</th>
+                <th class="py-3 px-3 text-center">Lote / Valor</th>
+                <th class="py-3 px-3 text-center">Pagamento</th>
+                <th class="py-3 px-3 text-center">Check-in</th>
+                <th class="py-3 px-3 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-inscritos-corpo" class="divide-y divide-slate-900/60">
+              <!-- Renderizado via JS -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- ABA 2: CHECK-IN / PORTARIA (MODO RÁPIDO) -->
+    <!-- ======================================================== -->
+    <div id="aba-checkin" class="tab-pane hidden space-y-4">
+      <div class="glass-card rounded-3xl p-6 border-slate-800/80 space-y-4">
+        <div>
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="qr-code" class="w-5 h-5 text-indigo-400"></i>
+            Credenciamento & Recepção
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">Busque o nome ou CPF do participante para confirmar presença na portaria com 1 clique.</p>
+        </div>
+
+        <div class="relative">
+          <input type="text" id="busca-checkin" oninput="filtrarCheckin()" placeholder="Digite o nome ou CPF do congressista..." class="w-full input-dark px-4 py-3 rounded-xl text-sm font-bold placeholder-slate-600" />
+        </div>
+
+        <div id="lista-checkin-cards" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+          <!-- Renderizado via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- ABA 3: MÓDULO FINANCEIRO DO EVENTO -->
+    <!-- ======================================================== -->
+    <div id="aba-financeiro" class="tab-pane hidden space-y-6">
+      
+      <!-- KPIs Financeiros do Evento -->
+      <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+        <div class="glass-card rounded-2xl p-4 border-slate-800/80">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Receita Prevista</span>
+          <h4 id="fin-prevista" class="text-lg font-black text-white mt-1">R$ 0,00</h4>
+        </div>
+        <div class="glass-card rounded-2xl p-4 border-slate-800/80">
+          <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Total Recebido</span>
+          <h4 id="fin-recebido" class="text-lg font-black text-emerald-400 mt-1">R$ 0,00</h4>
+        </div>
+        <div class="glass-card rounded-2xl p-4 border-slate-800/80">
+          <span class="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">Total Despesas</span>
+          <h4 id="fin-despesas" class="text-lg font-black text-rose-400 mt-1">R$ 0,00</h4>
+        </div>
+        <div class="glass-card rounded-2xl p-4 border-slate-800/80">
+          <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">Saldo em Caixa</span>
+          <h4 id="fin-saldo" class="text-lg font-black text-indigo-400 mt-1">R$ 0,00</h4>
+        </div>
+        <div class="glass-card rounded-2xl p-4 border-slate-800/80">
+          <span class="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">A Receber</span>
+          <h4 id="fin-pendente" class="text-lg font-black text-amber-500 mt-1">R$ 0,00</h4>
+        </div>
+      </div>
+
+      <!-- DESPESAS E SAÍDAS -->
+      <div class="glass-card rounded-3xl p-6 border-slate-800/80 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="receipt" class="w-4 h-4 text-rose-400"></i>
+              Despesas e Saídas de Caixa
+            </h3>
+            <p class="text-xs text-slate-400">Notas, recibos, som, alimentação, palestrantes e compras do evento.</p>
+          </div>
+          <button onclick="abrirModalNovaDespesa()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow flex items-center gap-1.5">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nova Despesa
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-950/40 text-slate-400 font-bold border-b border-slate-900 uppercase">
+                <th class="py-2.5 px-3">Descrição</th>
+                <th class="py-2.5 px-3">Fornecedor / Categoria</th>
+                <th class="py-2.5 px-3 text-center">Data</th>
+                <th class="py-2.5 px-3 text-center">Doc / NF</th>
+                <th class="py-2.5 px-3 text-right">Valor (R$)</th>
+                <th class="py-2.5 px-3 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-despesas-corpo" class="divide-y divide-slate-900/60">
+              <!-- Renderizado via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- ABA 4: LOG DE AUDITORIA FINANCEIRA -->
+    <!-- ======================================================== -->
+    <div id="aba-auditoria" class="tab-pane hidden space-y-4">
+      <div class="glass-card rounded-3xl p-6 border-slate-800/80 space-y-4">
+        <div>
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="history" class="w-4 h-4 text-indigo-400"></i>
+            Página de Log e Auditoria Financeira
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">Registro imutável de todas as ações financeiras, baixas de pagamento e despesas lançadas por cada usuário.</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-950/40 text-slate-400 font-bold border-b border-slate-900 uppercase">
+                <th class="py-3 px-3">Data e Hora</th>
+                <th class="py-3 px-3">Usuário Responsável</th>
+                <th class="py-3 px-3">Ação Executada</th>
+                <th class="py-3 px-3 text-right">Valor Impactado</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-logs-corpo" class="divide-y divide-slate-900/60 font-mono text-[11px]">
+              <!-- Renderizado via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- ABA 5: OPÇÕES E DETALHES -->
+    <!-- ======================================================== -->
+    <div id="aba-config" class="tab-pane hidden space-y-4">
+      <div class="glass-card rounded-3xl p-6 border-slate-800/80 space-y-6">
+        <div>
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="settings" class="w-4 h-4 text-indigo-400"></i>
+            Configurações e Atalhos do Evento
+          </h3>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+            <h4 class="text-xs font-bold text-white">Editar Parâmetros do Evento</h4>
+            <p class="text-[11px] text-slate-400">Alterar datas, valores, lotes, chave PIX e campos de inscrição.</p>
+            <a id="link-editar-evento" href="#" class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 pt-1">
+              Abrir Editor do Evento →
+            </a>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+            <h4 class="text-xs font-bold text-white">Link Público para Divulgação</h4>
+            <p class="text-[11px] text-slate-400">Envie no WhatsApp dos membros e liderança da região.</p>
+            <button onclick="copiarLinkInscricaoPublica()" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 pt-1">
+              Copiar Link Direto 📋
+            </button>
+          </div>
+        </div>
+
+        <!-- Status de Conclusão -->
+        <div class="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h4 class="text-xs font-bold text-amber-300">Marcar Evento como Realizado</h4>
+            <p class="text-[11px] text-slate-400">Ao marcar como realizado, o evento cairá automaticamente na seção de histórico da Central de Congressos.</p>
+          </div>
+          <button onclick="marcarEventoRealizado()" id="btn-status-evento" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow shrink-0">
+            Encerrar Evento
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL NOVA DESPESA -->
+  <div id="modal-despesa" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="glass-card rounded-3xl p-6 w-full max-w-md border border-slate-800 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-4 h-4 text-rose-400"></i> Lançar Despesa
+        </h3>
+        <button onclick="fecharModalNovaDespesa()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <form id="form-despesa" onsubmit="event.preventDefault(); salvarNovaDespesa();" class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Descrição do Gasto <span class="text-rose-400">*</span></label>
+          <input type="text" id="desp-descricao" required placeholder="Ex: Aluguel de Som e Iluminação" class="w-full input-dark px-3 py-2 rounded-xl text-xs font-bold" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Valor (R$) <span class="text-rose-400">*</span></label>
+            <input type="number" step="0.01" id="desp-valor" required placeholder="0.00" class="w-full input-dark px-3 py-2 rounded-xl text-xs font-bold text-rose-400" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data da Saída</label>
+            <input type="date" id="desp-data" class="w-full input-dark px-3 py-2 rounded-xl text-xs" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Fornecedor / Beneficiário</label>
+            <input type="text" id="desp-fornecedor" placeholder="Ex: João da Silva ME" class="w-full input-dark px-3 py-2 rounded-xl text-xs" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nº Nota Fiscal / Recibo</label>
+            <input type="text" id="desp-nf" placeholder="Ex: NF-1234" class="w-full input-dark px-3 py-2 rounded-xl text-xs font-mono" />
+          </div>
+        </div>
+
+        <div class="pt-3 flex gap-2">
+          <button type="button" onclick="fecharModalNovaDespesa()" class="flex-1 bg-slate-800 text-slate-400 hover:text-white py-2.5 rounded-xl text-xs font-bold uppercase">Cancelar</button>
+          <button type="submit" id="btn-salvar-desp" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white py-2.5 rounded-xl text-xs font-bold uppercase shadow">Salvar Despesa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="text-center py-4 text-[11px] text-slate-500 border-t border-slate-900/60 bg-slate-950/20">
+    Região 655 — Painel de Gestão e Governança de Eventos
+  </footer>
+
+  <script type="module">
+    import { auth, db } from '../firebase-config.js';
+    import { 
+      collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy 
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+    let eventoId = '';
+    let eventoAtual = null;
+    let usuarioLogado = null; // { email, nome, tipo: 'admin'|'coordenador'|'pastor', temAcessoFin: boolean }
+    let inscritosList = [];
+    let despesasList = [];
+    let logsList = [];
+
+    // ─── INICIALIZAÇÃO E AUTORIZAÇÃO ──────────────────────────────────────────
+    async function init() {
+      lucide.createIcons();
+      const params = new URLSearchParams(window.location.search);
+      eventoId = params.get('id');
+
+      if (!eventoId) {
+        alert("ID do evento não especificado!");
+        window.location.replace('index.html');
+        return;
+      }
+
+      // 1. Carrega dados do evento primeiro
+      const snap = await getDoc(doc(db, "eventos", eventoId));
+      if (!snap.exists()) {
+        alert("Evento não encontrado!");
+        window.location.replace('index.html');
+        return;
+      }
+      eventoAtual = { id: snap.id, ...snap.data() };
+
+      document.getElementById('ev-nome-header').textContent = eventoAtual.nome;
+      document.getElementById('ev-icone-header').textContent = eventoAtual.icone || '🎯';
+      document.getElementById('link-editar-evento').href = `criar_evento.html?id=${eventoId}`;
+      
+      if (eventoAtual.status === 'realizado') {
+        document.getElementById('btn-status-evento').textContent = 'Reabrir Evento (Ativar)';
+        document.getElementById('btn-status-evento').className = 'bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow shrink-0';
+      }
+
+      // 2. Verifica autenticação de sessão
+      verificarSessaoEPermissao();
+    }
+
+    // Verifica se há login Firebase Auth ativo ou sessão local de pastor/coordenador
+    function verificarSessaoEPermissao() {
+      // Verifica primeiro o Firebase Auth
+      onAuthStateChanged(auth, async (user) => {
+        if (user && user.email) {
+          // Gestor master ou secretário via Firebase Auth
+          usuarioLogado = {
+            email: user.email.toLowerCase(),
+            nome: user.displayName || user.email.split('@')[0],
+            tipo: 'admin',
+            temAcessoFin: true
+          };
+          liberarAcessoAoPainel();
+          return;
+        }
+
+        // Se não houver Firebase Auth, verifica sessão de organizador convidado
+        const sessaoSalva = sessionStorage.getItem('evento_organizador_sessao');
+        if (sessaoSalva) {
+          try {
+            const org = JSON.parse(sessaoSalva);
+            if (org && org.eventoId === eventoId) {
+              usuarioLogado = org;
+              liberarAcessoAoPainel();
+              return;
+            }
+          } catch(e) {}
+        }
+
+        // Caso contrário, abre o modal de login
+        document.getElementById('modal-login-organizador').classList.remove('hidden');
+      });
+    }
+
+    // Login do pastor convidado / coordenador com e-mail e os 6 primeiros dígitos do CPF
+    window.fazerLoginOrganizador = async function() {
+      const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
+      const senhaInput = document.getElementById('login-senha').value.trim().replace(/\D/g, ''); // apenas dígitos
+
+      const erroEl = document.getElementById('login-erro-msg');
+      erroEl.classList.add('hidden');
+
+      // 1. Verifica se é o Coordenador do evento
+      if (eventoAtual.tipo === 'coordenadoria' && eventoAtual.coordenadorEmail && eventoAtual.coordenadorEmail.toLowerCase() === emailInput) {
+        // Busca CPF do pastor coordenador para validar os 6 dígitos
+        const pastorSnap = await getDoc(doc(db, "pastores", eventoAtual.coordenadorPastorId)).catch(() => null);
+        let cpf = '';
+        if (pastorSnap && pastorSnap.exists()) {
+          cpf = (pastorSnap.data().cpf || '').replace(/\D/g, '');
+        }
+
+        if (cpf && cpf.startsWith(senhaInput)) {
+          usuarioLogado = {
+            eventoId: eventoId,
+            email: emailInput,
+            nome: eventoAtual.coordenadorNome || 'Coordenador',
+            tipo: 'coordenador',
+            temAcessoFin: !!eventoAtual.coordenadorAcessoFinanceiro
+          };
+          salvarESeguirLogin();
+          return;
+        }
+      }
+
+      // 2. Verifica se é um dos Pastores Convidados
+      if (eventoAtual.pastoresConvidados && eventoAtual.pastoresConvidados.length) {
+        const convidado = eventoAtual.pastoresConvidados.find(p => (p.email || '').toLowerCase() === emailInput);
+        if (convidado) {
+          const cpfDigitos = (convidado.cpf || '').replace(/\D/g, '');
+          if (cpfDigitos && cpfDigitos.startsWith(senhaInput)) {
+            usuarioLogado = {
+              eventoId: eventoId,
+              email: emailInput,
+              nome: convidado.nome,
+              tipo: 'pastor_convidado',
+              temAcessoFin: !!convidado.acessoFinanceiro
+            };
+            salvarESeguirLogin();
+            return;
+          }
+        }
+      }
+
+      erroEl.textContent = 'Acesso não autorizado ou senha incorreta para este evento.';
+      erroEl.classList.remove('hidden');
+    };
+
+    function salvarESeguirLogin() {
+      sessionStorage.setItem('evento_organizador_sessao', JSON.stringify(usuarioLogado));
+      document.getElementById('modal-login-organizador').classList.add('hidden');
+      liberarAcessoAoPainel();
+    }
+
+    window.deslogarOrganizador = function() {
+      sessionStorage.removeItem('evento_organizador_sessao');
+      auth.signOut();
+      window.location.reload();
+    };
+
+    function liberarAcessoAoPainel() {
+      document.getElementById('modal-login-organizador').classList.add('hidden');
+      document.getElementById('usuario-logado-badge').textContent = `Org: ${usuarioLogado.nome}`;
+
+      // Configura visibilidade das abas financeiras
+      const podeVerFinanceiro = eventoAtual.temControleFinanceiro && (usuarioLogado.tipo === 'admin' || usuarioLogado.temAcessoFin);
+
+      if (podeVerFinanceiro) {
+        document.getElementById('tab-btn-financeiro').classList.remove('hidden');
+        document.getElementById('tab-btn-auditoria').classList.remove('hidden');
+      }
+
+      carregarTodosOsDados();
+    }
+
+    // ─── CARREGAR DADOS DO EVENTO ──────────────────────────────────────────────
+    async function carregarTodosOsDados() {
+      await Promise.all([
+        carregarInscritos(),
+        carregarDespesas(),
+        carregarLogs()
+      ]);
+      calcularResumos();
+      lucide.createIcons();
+    }
+
+    // 1. Inscritos
+    async function carregarInscritos() {
+      try {
+        const snap = await getDocs(collection(db, "eventos", eventoId, "inscricoes"));
+        inscritosList = [];
+        snap.forEach(d => inscritosList.push({ id: d.id, ...d.data() }));
+        // Ordena por nome
+        inscritosList.sort((a,b) => (a.nome || '').localeCompare(b.nome || ''));
+        renderizarInscritos(inscritosList);
+        renderizarCheckinCards(inscritosList);
+      } catch (e) {
+        console.error("Erro ao carregar inscritos:", e);
+      }
+    }
+
+    // 2. Despesas
+    async function carregarDespesas() {
+      try {
+        const snap = await getDocs(collection(db, "eventos", eventoId, "despesas"));
+        despesasList = [];
+        snap.forEach(d => despesasList.push({ id: d.id, ...d.data() }));
+        despesasList.sort((a,b) => (b.data || '').localeCompare(a.data || ''));
+        renderizarDespesas();
+      } catch (e) {
+        console.error("Erro ao carregar despesas:", e);
+      }
+    }
+
+    // 3. Logs de Auditoria
+    async function carregarLogs() {
+      try {
+        const snap = await getDocs(collection(db, "eventos", eventoId, "logs_financeiros"));
+        logsList = [];
+        snap.forEach(d => logsList.push({ id: d.id, ...d.data() }));
+        // Ordena por dataHora decrescente
+        logsList.sort((a,b) => {
+          const tA = a.dataHora && a.dataHora.seconds ? a.dataHora.seconds : 0;
+          const tB = b.dataHora && b.dataHora.seconds ? b.dataHora.seconds : 0;
+          return tB - tA;
+        });
+        renderizarLogs();
+      } catch (e) {
+        console.error("Erro ao carregar logs:", e);
+      }
+    }
+
+    // ─── CÁLCULO DE RESUMOS E KPIS ─────────────────────────────────────────────
+    function calcularResumos() {
+      const totalInscritos = inscritosList.length;
+      const totalPagos = inscritosList.filter(i => i.statusPagamento === 'pago').length;
+      const totalPendentes = inscritosList.filter(i => i.statusPagamento === 'pendente').length;
+      const totalCheckin = inscritosList.filter(i => i.checkinRealizado).length;
+
+      document.getElementById('stat-total-inscritos').textContent = totalInscritos;
+      document.getElementById('stat-total-pagos').textContent = totalPagos;
+      document.getElementById('stat-total-pendentes').textContent = totalPendentes;
+      document.getElementById('stat-total-checkin').textContent = totalCheckin;
+
+      // Valores Financeiros
+      const receitaPrevista = inscritosList.reduce((acc, i) => acc + Number(i.valorInscricao || 0), 0);
+      const receitaRecebida = inscritosList.filter(i => i.statusPagamento === 'pago').reduce((acc, i) => acc + Number(i.valorInscricao || 0), 0);
+      const receitaPendente = inscritosList.filter(i => i.statusPagamento === 'pendente').reduce((acc, i) => acc + Number(i.valorInscricao || 0), 0);
+      const totalDespesas = despesasList.reduce((acc, d) => acc + Number(d.valor || 0), 0);
+      const saldoLiquido = receitaRecebida - totalDespesas;
+
+      document.getElementById('fin-prevista').textContent = formatBRL(receitaPrevista);
+      document.getElementById('fin-recebido').textContent = formatBRL(receitaRecebida);
+      document.getElementById('fin-despesas').textContent = formatBRL(totalDespesas);
+      document.getElementById('fin-saldo').textContent = formatBRL(saldoLiquido);
+      document.getElementById('fin-pendente').textContent = formatBRL(receitaPendente);
+    }
+
+    function formatBRL(val) {
+      return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // ─── RENDERIZAR TABELA DE INSCRITOS ────────────────────────────────────────
+    function renderizarInscritos(lista) {
+      const tbody = document.getElementById('tabela-inscritos-corpo');
+      if (!lista.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-500 italic">Nenhum participante encontrado.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = lista.map(i => {
+        const isPago = i.statusPagamento === 'pago';
+        const isCheckin = !!i.checkinRealizado;
+
+        return `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="py-3 px-3">
+              <strong class="text-white block">${i.nome}</strong>
+              <span class="text-[10px] text-slate-500 font-mono">${i.cpf || 'Sem CPF'}</span>
+            </td>
+            <td class="py-3 px-3">
+              <span class="text-slate-300 block font-medium">${i.igrejaNome || '—'}</span>
+              <span class="text-[10px] text-slate-500">${i.cargoEclesiastico || ''}</span>
+            </td>
+            <td class="py-3 px-3">
+              <span class="text-slate-300 font-mono block">${i.celular || '—'}</span>
+              <span class="text-[10px] text-slate-500 truncate max-w-[140px] block">${i.email || ''}</span>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <span class="font-bold text-white block">${formatBRL(i.valorInscricao)}</span>
+              <span class="text-[10px] text-slate-500">${i.loteNome || ''}</span>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isPago ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : i.statusPagamento === 'isento' ? 'bg-slate-800 text-slate-300' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+                ${i.statusPagamento}
+              </span>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <button onclick="toggleCheckin('${i.id}')" class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors ${isCheckin ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}">
+                ${isCheckin ? '✓ Presente' : 'Não'}
+              </button>
+            </td>
+            <td class="py-3 px-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <button onclick="togglePagamento('${i.id}')" title="${isPago ? 'Marcar como Pendente' : 'Confirmar Pagamento'}" class="p-1.5 rounded-lg border ${isPago ? 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10' : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'}">
+                  <i data-lucide="${isPago ? 'rotate-ccw' : 'check'}" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="excluirInscricao('${i.id}')" title="Excluir" class="p-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    window.filtrarInscritos = function() {
+      const termo = document.getElementById('busca-inscrito').value.toLowerCase();
+      const statusFiltro = document.getElementById('filtro-status-pagto').value;
+
+      const filtrados = inscritosList.filter(i => {
+        const bateTexto = (i.nome || '').toLowerCase().includes(termo) ||
+                          (i.cpf || '').includes(termo) ||
+                          (i.igrejaNome || '').toLowerCase().includes(termo);
+        const bateStatus = statusFiltro === 'todos' || i.statusPagamento === statusFiltro;
+        return bateTexto && bateStatus;
+      });
+
+      renderizarInscritos(filtrados);
+    };
+
+    // ─── AÇÕES SOBRE INSCRITOS & LOGS ──────────────────────────────────────────
+    window.togglePagamento = async function(id) {
+      const ins = inscritosList.find(item => item.id === id);
+      if (!ins) return;
+
+      const novoStatus = ins.statusPagamento === 'pago' ? 'pendente' : 'pago';
+      try {
+        await updateDoc(doc(db, "eventos", eventoId, "inscricoes", id), {
+          statusPagamento: novoStatus,
+          dataAtualizacaoPagto: serverTimestamp()
+        });
+
+        // Grava no Log de Auditoria
+        await addDoc(collection(db, "eventos", eventoId, "logs_financeiros"), {
+          eventoId: eventoId,
+          dataHora: serverTimestamp(),
+          usuarioNome: usuarioLogado.nome,
+          usuarioEmail: usuarioLogado.email,
+          tipoAcao: novoStatus === 'pago' ? 'baixa_pagamento' : 'estorno_pagamento',
+          categoria: 'receita',
+          descricao: `${novoStatus === 'pago' ? 'Confirmou recebimento de' : 'Estornou pagamento de'} ${formatBRL(ins.valorInscricao)} do inscrito ${ins.nome}`,
+          valor: Number(ins.valorInscricao || 0),
+          inscricaoId: id
+        });
+
+        ins.statusPagamento = novoStatus;
+        calcularResumos();
+        filtrarInscritos();
+        carregarLogs();
+      } catch (e) {
+        console.error(e);
+        alert("Erro ao alterar status de pagamento: " + e.message);
+      }
+    };
+
+    window.toggleCheckin = async function(id) {
+      const ins = inscritosList.find(item => item.id === id);
+      if (!ins) return;
+
+      const novoCheckin = !ins.checkinRealizado;
+      try {
+        await updateDoc(doc(db, "eventos", eventoId, "inscricoes", id), {
+          checkinRealizado: novoCheckin,
+          dataCheckin: novoCheckin ? serverTimestamp() : null
+        });
+
+        ins.checkinRealizado = novoCheckin;
+        calcularResumos();
+        filtrarInscritos();
+        filtrarCheckin();
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    window.excluirInscricao = async function(id) {
+      const ins = inscritosList.find(item => item.id === id);
+      if (!ins) return;
+
+      if (!confirm(`Deseja realmente excluir a inscrição de "${ins.nome}"?`)) return;
+
+      try {
+        await deleteDoc(doc(db, "eventos", eventoId, "inscricoes", id));
+
+        // Log
+        await addDoc(collection(db, "eventos", eventoId, "logs_financeiros"), {
+          eventoId: eventoId,
+          dataHora: serverTimestamp(),
+          usuarioNome: usuarioLogado.nome,
+          usuarioEmail: usuarioLogado.email,
+          tipoAcao: 'exclusao_inscricao',
+          categoria: 'cadastro',
+          descricao: `Excluiu a inscrição de ${ins.nome} (${formatBRL(ins.valorInscricao)})`,
+          valor: -Number(ins.valorInscricao || 0)
+        });
+
+        inscritosList = inscritosList.filter(item => item.id !== id);
+        calcularResumos();
+        filtrarInscritos();
+        carregarLogs();
+      } catch (e) {
+        console.error(e);
+        alert("Erro ao excluir: " + e.message);
+      }
+    };
+
+    // ─── CHECK-IN RÁPIDO (PORTARIA) ───────────────────────────────────────────
+    function renderizarCheckinCards(lista) {
+      const container = document.getElementById('lista-checkin-cards');
+      if (!lista.length) {
+        container.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">Nenhum participante encontrado.</p>`;
+        return;
+      }
+
+      container.innerHTML = lista.map(i => `
+        <div class="flex items-center justify-between p-3.5 rounded-2xl border ${i.checkinRealizado ? 'bg-indigo-950/20 border-indigo-500/30' : 'bg-slate-900/60 border-slate-800'}">
+          <div>
+            <h4 class="text-xs font-bold text-white">${i.nome}</h4>
+            <span class="text-[10px] text-slate-400 block">${i.igrejaNome || '—'} · CPF: ${i.cpf || 'Não informado'}</span>
+            <span class="text-[9px] font-semibold ${i.statusPagamento === 'pago' ? 'text-emerald-400' : 'text-amber-400'}">${i.statusPagamento.toUpperCase()}</span>
+          </div>
+          <button onclick="toggleCheckin('${i.id}')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all shadow ${i.checkinRealizado ? 'bg-emerald-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}">
+            ${i.checkinRealizado ? '✓ Presente' : 'Confirmar Presença'}
+          </button>
+        </div>
+      `).join('');
+    }
+
+    window.filtrarCheckin = function() {
+      const termo = document.getElementById('busca-checkin').value.toLowerCase();
+      const filtrados = inscritosList.filter(i => 
+        (i.nome || '').toLowerCase().includes(termo) || (i.cpf || '').includes(termo)
+      );
+      renderizarCheckinCards(filtrados);
+    };
+
+    // ─── DESPESAS & SAÍDAS ────────────────────────────────────────────────────
+    function renderizarDespesas() {
+      const tbody = document.getElementById('tabela-despesas-corpo');
+      if (!despesasList.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500 italic">Nenhuma despesa lançada para este evento.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = despesasList.map(d => `
+        <tr class="hover:bg-slate-900/40 transition-colors">
+          <td class="py-2.5 px-3 font-bold text-white">${d.descricao}</td>
+          <td class="py-2.5 px-3 text-slate-400">${d.fornecedor || '—'}</td>
+          <td class="py-2.5 px-3 text-center text-slate-400">${d.data || '—'}</td>
+          <td class="py-2.5 px-3 text-center font-mono text-slate-300">${d.notaFiscal || '—'}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-rose-400">${formatBRL(d.valor)}</td>
+          <td class="py-2.5 px-3 text-right">
+            <button onclick="excluirDespesa('${d.id}')" class="text-rose-400 hover:text-rose-300 p-1" title="Excluir despesa">✕</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    window.abrirModalNovaDespesa = function() {
+      document.getElementById('form-despesa').reset();
+      document.getElementById('desp-data').value = new Date().toISOString().split('T')[0];
+      document.getElementById('modal-despesa').classList.remove('hidden');
+    };
+
+    window.fecharModalNovaDespesa = function() {
+      document.getElementById('modal-despesa').classList.add('hidden');
+    };
+
+    window.salvarNovaDespesa = async function() {
+      const desc = document.getElementById('desp-descricao').value.trim();
+      const valor = Number(document.getElementById('desp-valor').value);
+      const data = document.getElementById('desp-data').value;
+      const fornecedor = document.getElementById('desp-fornecedor').value.trim();
+      const nf = document.getElementById('desp-nf').value.trim();
+
+      if (!desc || valor <= 0) {
+        alert("Preencha descrição e valor válido.");
+        return;
+      }
+
+      try {
+        const payload = {
+          eventoId,
+          descricao: desc,
+          valor,
+          data,
+          fornecedor,
+          notaFiscal: nf,
+          criadoPor: usuarioLogado.nome,
+          criadoEm: serverTimestamp()
+        };
+
+        const docRef = await addDoc(collection(db, "eventos", eventoId, "despesas"), payload);
+
+        // Grava no Log de Auditoria
+        await addDoc(collection(db, "eventos", eventoId, "logs_financeiros"), {
+          eventoId,
+          dataHora: serverTimestamp(),
+          usuarioNome: usuarioLogado.nome,
+          usuarioEmail: usuarioLogado.email,
+          tipoAcao: 'lancar_despesa',
+          categoria: 'despesa',
+          descricao: `Lançou despesa: "${desc}" (${formatBRL(valor)}) - NF/Doc: ${nf || 'Nenhum'}`,
+          valor: -valor,
+          despesaId: docRef.id
+        });
+
+        fecharModalNovaDespesa();
+        carregarDespesas();
+        carregarLogs();
+        calcularResumos();
+      } catch (e) {
+        console.error(e);
+        alert("Erro ao salvar despesa: " + e.message);
+      }
+    };
+
+    window.excluirDespesa = async function(id) {
+      const d = despesasList.find(item => item.id === id);
+      if (!d) return;
+      if (!confirm(`Excluir despesa "${d.descricao}"?`)) return;
+
+      try {
+        await deleteDoc(doc(db, "eventos", eventoId, "despesas", id));
+
+        // Log
+        await addDoc(collection(db, "eventos", eventoId, "logs_financeiros"), {
+          eventoId,
+          dataHora: serverTimestamp(),
+          usuarioNome: usuarioLogado.nome,
+          usuarioEmail: usuarioLogado.email,
+          tipoAcao: 'exclusao_despesa',
+          categoria: 'despesa',
+          descricao: `Excluiu a despesa: "${d.descricao}" (${formatBRL(d.valor)})`,
+          valor: Number(d.valor || 0)
+        });
+
+        despesasList = despesasList.filter(item => item.id !== id);
+        carregarDespesas();
+        carregarLogs();
+        calcularResumos();
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    // ─── AUDITORIA & LOGS ─────────────────────────────────────────────────────
+    function renderizarLogs() {
+      const tbody = document.getElementById('tabela-logs-corpo');
+      if (!logsList.length) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-500 italic">Nenhum registro de log registrado.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = logsList.map(l => {
+        let dataHoraStr = '—';
+        if (l.dataHora && l.dataHora.seconds) {
+          const dt = new Date(l.dataHora.seconds * 1000);
+          dataHoraStr = dt.toLocaleString('pt-BR');
+        }
+
+        let badgeCor = 'text-indigo-400';
+        if (l.tipoAcao && l.tipoAcao.includes('baixa')) badgeCor = 'text-emerald-400';
+        if (l.tipoAcao && l.tipoAcao.includes('despesa')) badgeCor = 'text-rose-400';
+        if (l.tipoAcao && l.tipoAcao.includes('estorno')) badgeCor = 'text-amber-400';
+
+        return `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="py-2.5 px-3 text-slate-400">${dataHoraStr}</td>
+            <td class="py-2.5 px-3">
+              <span class="text-white font-bold block">${l.usuarioNome || '—'}</span>
+              <span class="text-[9px] text-slate-500 font-sans">${l.usuarioEmail || ''}</span>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="font-bold ${badgeCor} uppercase tracking-wider text-[10px] block">${l.tipoAcao || ''}</span>
+              <span class="text-slate-300 font-sans text-xs">${l.descricao || ''}</span>
+            </td>
+            <td class="py-2.5 px-3 text-right font-bold ${l.valor >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+              ${l.valor ? formatBRL(l.valor) : '—'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ─── ABAS ──────────────────────────────────────────────────────────────────
+    window.trocarAba = function(aba) {
+      ['inscritos', 'checkin', 'financeiro', 'auditoria', 'config'].forEach(tab => {
+        const pane = document.getElementById(`aba-${tab}`);
+        const btn = document.getElementById(`tab-btn-${tab}`);
+        if (!pane || !btn) return;
+
+        if (tab === aba) {
+          pane.classList.remove('hidden');
+          btn.className = "tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow flex items-center justify-center gap-2 whitespace-nowrap";
+        } else {
+          pane.classList.add('hidden');
+          btn.className = "tab-btn flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 whitespace-nowrap";
+        }
+      });
+      lucide.createIcons();
+    };
+
+    // ─── UTILITÁRIOS ──────────────────────────────────────────────────────────
+    window.copiarLinkInscricaoPublica = function() {
+      const url = `${window.location.origin}/eventos/inscricao.html?id=${eventoId}`;
+      navigator.clipboard.writeText(url);
+      alert('✓ Link de inscrição copiado para a área de transferência:\n' + url);
+    };
+
+    window.marcarEventoRealizado = async function() {
+      const novoStatus = eventoAtual.status === 'realizado' ? 'ativo' : 'realizado';
+      if (!confirm(`Deseja alterar o status do evento para "${novoStatus.toUpperCase()}"?`)) return;
+
+      try {
+        await updateDoc(doc(db, "eventos", eventoId), { status: novoStatus });
+        eventoAtual.status = novoStatus;
+        alert(`✓ Evento marcado como ${novoStatus.toUpperCase()}!`);
+        window.location.reload();
+      } catch (e) {
+        alert("Erro: " + e.message);
+      }
+    };
+
+    window.exportarCSVInscritos = function() {
+      if (!inscritosList.length) return alert("Nenhum inscrito para exportar.");
+      let csv = "Nome,CPF,Celular,Email,Igreja,Cargo,Valor,Lote,StatusPagamento,Checkin\n";
+      inscritosList.forEach(i => {
+        csv += `"${i.nome || ''}","${i.cpf || ''}","${i.celular || ''}","${i.email || ''}","${i.igrejaNome || ''}","${i.cargoEclesiastico || ''}",${i.valorInscricao || 0},"${i.loteNome || ''}","${i.statusPagamento || ''}","${i.checkinRealizado ? 'Sim' : 'Não'}"\n`;
+      });
+      const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `inscritos_${eventoAtual.nome.replace(/\s+/g, '_')}.csv`;
+      a.click();
+    };
+
+    window.imprimirListaInscritos = function() {
+      window.print();
+    };
+
+    init();
+  </script>
+</body>
+</html>

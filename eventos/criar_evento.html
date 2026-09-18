@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Criar / Editar Evento — Região 655</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@0.300.0"></script>
+  <script type="module">
+    import { requireAuth, hasAnyPermission } from '../js/auth.js';
+    try {
+      const user = await requireAuth();
+      if (!hasAnyPermission(['admin', 'secretario', 'superintendente', 'gestao_eventos'])) {
+        window.location.replace('index.html');
+      }
+    } catch (e) {
+      window.location.replace('../login.html');
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0b0f19;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.05) 0px, transparent 50%);
+    }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .input-dark {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .input-dark:focus {
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #6366f1;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #4f46e5;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between">
+
+  <!-- HEADER COMPACTO -->
+  <header class="w-full border-b border-slate-900 bg-slate-950/60 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors uppercase tracking-wider">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Voltar ao Hub
+        </a>
+        <span class="text-slate-700">|</span>
+        <h1 id="page-title" class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="calendar-plus" class="w-4 h-4 text-indigo-400"></i>
+          Novo Evento Regional
+        </h1>
+      </div>
+      <button type="button" onclick="salvarEvento()" id="btn-salvar-topo" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/20 flex items-center gap-1.5">
+        <i data-lucide="save" class="w-4 h-4"></i> Salvar Evento
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+
+    <!-- ABAS DO FORMULÁRIO -->
+    <div class="flex bg-slate-950/60 p-1.5 rounded-2xl border border-slate-900/80 overflow-x-auto gap-1">
+      <button type="button" onclick="trocarAba('geral')" id="tab-btn-geral" class="tab-btn flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow flex items-center justify-center gap-2 whitespace-nowrap">
+        <i data-lucide="info" class="w-4 h-4"></i> 1. Informações Básicas
+      </button>
+      <button type="button" onclick="trocarAba('responsaveis')" id="tab-btn-responsaveis" class="tab-btn flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 whitespace-nowrap">
+        <i data-lucide="users" class="w-4 h-4"></i> 2. Responsáveis & Acesso
+      </button>
+      <button type="button" onclick="trocarAba('financeiro')" id="tab-btn-financeiro" class="tab-btn flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 whitespace-nowrap">
+        <i data-lucide="dollar-sign" class="w-4 h-4"></i> 3. Financeiro & Cobrança
+      </button>
+      <button type="button" onclick="trocarAba('inscricao')" id="tab-btn-inscricao" class="tab-btn flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 whitespace-nowrap">
+        <i data-lucide="form-input" class="w-4 h-4"></i> 4. Formulário de Inscrição
+      </button>
+    </div>
+
+    <form id="form-evento" onsubmit="event.preventDefault(); salvarEvento();">
+      <input type="hidden" id="evento-id" value="" />
+
+      <!-- ======================================================== -->
+      <!-- ABA 1: INFORMAÇÕES BÁSICAS -->
+      <!-- ======================================================== -->
+      <div id="aba-geral" class="tab-pane space-y-6">
+        <div class="glass-card rounded-3xl p-6 md:p-8 space-y-6">
+          
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nome do Evento <span class="text-rose-500">*</span></label>
+            <input type="text" id="evento-nome" required placeholder="Ex: Congresso Regional de Homens 2026" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-bold text-white placeholder-slate-600" />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tipo de Evento <span class="text-rose-500">*</span></label>
+              <select id="evento-tipo" onchange="alternarTipoEvento()" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
+                <option value="coordenadoria">Coordenadoria Regional</option>
+                <option value="regional">Evento Regional (IEQ Londrina)</option>
+                <option value="outro">Outro / Especial</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Status do Evento</label>
+              <select id="evento-status" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
+                <option value="ativo">Ativo (Inscrições Abertas)</option>
+                <option value="planejamento">Planejamento (Rascunho / Oculto)</option>
+                <option value="realizado">Realizado (Histórico / Concluído)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ícone / Emoji</label>
+              <input type="text" id="evento-icone" placeholder="Ex: 🦅, 🌸, 🔥, 🕊️, 🎯" maxlength="4" value="🎯" class="w-full input-dark px-4 py-3 rounded-xl text-sm text-center font-bold" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Data de Início <span class="text-rose-500">*</span></label>
+              <input type="date" id="evento-data-inicio" required class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Data de Término</label>
+              <input type="date" id="evento-data-fim" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold" />
+              <p class="text-[10px] text-slate-500 mt-1">Deixe em branco se for evento de 1 dia só.</p>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Horário de Início</label>
+              <input type="time" id="evento-hora" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold" value="19:30" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Local do Evento <span class="text-rose-500">*</span></label>
+            <input type="text" id="evento-local" required placeholder="Ex: IEQ Templo Central — Rua Pará, 123, Centro - Londrina/PR" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-medium" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descrição / Tema do Evento</label>
+            <textarea id="evento-descricao" rows="3" placeholder="Tema, versículo-chave, orientações para os congressistas..." class="w-full input-dark px-4 py-3 rounded-xl text-sm"></textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 2: RESPONSÁVEIS & ACESSO -->
+      <!-- ======================================================== -->
+      <div id="aba-responsaveis" class="tab-pane hidden space-y-6">
+        <div class="glass-card rounded-3xl p-6 md:p-8 space-y-6">
+
+          <!-- BLOCO SE FOR COORDENADORIA -->
+          <div id="secao-coordenadoria" class="space-y-4">
+            <div class="flex items-center gap-2 border-b border-slate-800 pb-3">
+              <i data-lucide="award" class="w-5 h-5 text-indigo-400"></i>
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">Vincular Coordenadoria Regional</h3>
+            </div>
+            <p class="text-xs text-slate-400">Selecione a coordenadoria responsável. O coordenador cadastrado será importado automaticamente como co-responsável do evento.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Coordenadoria</label>
+                <select id="select-coordenadoria" onchange="aoSelecionarCoordenadoria()" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer">
+                  <option value="">Carregando coordenadorias...</option>
+                </select>
+              </div>
+
+              <div id="card-coordenador-info" class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <span class="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Coordenador Vinculado:</span>
+                  <h4 id="coord-nome-exibicao" class="text-sm font-bold text-indigo-300 mt-1">—</h4>
+                  <p id="coord-email-exibicao" class="text-xs text-slate-400 mt-0.5">—</p>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                  <span class="text-xs text-slate-300 font-medium">Acesso ao Módulo Financeiro:</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="coord-permite-financeiro" class="sr-only peer" checked />
+                    <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOCO SE FOR REGIONAL OU OUTRO: PASTORES CONVIDADOS -->
+          <div id="secao-pastores-convidados" class="hidden space-y-4">
+            <div class="flex items-center gap-2 border-b border-slate-800 pb-3">
+              <i data-lucide="user-check" class="w-5 h-5 text-purple-400"></i>
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">Pastores Convidados (Co-organizadores)</h3>
+            </div>
+            <p class="text-xs text-slate-400">Selecione pastores da região para ajudar na organização deste evento. Eles poderão acessar o painel do evento com e-mail e os 6 primeiros dígitos do CPF.</p>
+
+            <div class="space-y-3">
+              <div class="relative">
+                <input type="text" id="busca-pastores" oninput="filtrarListaPastores()" placeholder="Buscar pastor por nome..." class="w-full input-dark px-4 py-2.5 rounded-xl text-xs" />
+              </div>
+              <div id="container-lista-pastores" class="max-h-56 overflow-y-auto space-y-2 p-2 bg-slate-950/60 rounded-xl border border-slate-900">
+                <!-- rendered by js -->
+              </div>
+            </div>
+
+            <!-- Pastores Selecionados -->
+            <div class="mt-4">
+              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Pastores com Acesso Concedido (<span id="count-pastores-selecionados">0</span>):</h4>
+              <div id="lista-pastores-selecionados" class="space-y-2">
+                <p class="text-xs text-slate-500 italic">Nenhum pastor convidado adicionado.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- AVISO DE GOVERNANÇA -->
+          <div class="p-4 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-xs text-indigo-300 flex items-start gap-3">
+            <i data-lucide="shield" class="w-5 h-5 shrink-0 text-indigo-400 mt-0.5"></i>
+            <div>
+              <strong>Acesso Garantido:</strong> O Gestor Master e o Secretário Regional possuem acesso total automático a todos os eventos e relatórios financeiros criados no sistema.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 3: FINANCEIRO & COBRANÇA -->
+      <!-- ======================================================== -->
+      <div id="aba-financeiro" class="tab-pane hidden space-y-6">
+        <div class="glass-card rounded-3xl p-6 md:p-8 space-y-6">
+
+          <!-- Toggle Ativar Controle Financeiro -->
+          <div class="flex items-center justify-between p-4 bg-slate-900/60 rounded-2xl border border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="badge-dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+                Ativar Controle Financeiro para este Evento
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Se desativado, o evento será gratuito e não gerará relatórios de receitas/despesas.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="evento-tem-financeiro" onchange="alternarModuloFinanceiro()" class="sr-only peer" checked />
+              <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+
+          <div id="painel-config-financeira" class="space-y-6">
+
+            <!-- Chave PIX Específica -->
+            <div class="p-5 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 space-y-4">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black text-sm">
+                  PIX
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-white uppercase tracking-wider">Chave PIX Oficial deste Evento</h4>
+                  <p class="text-[10px] text-slate-400">Esta chave será exibida na tela de inscrição com botão de copiar</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-emerald-400 uppercase mb-1">Chave PIX (E-mail, CNPJ, Telefone ou Aleatória)</label>
+                  <input type="text" id="evento-chave-pix" placeholder="Ex: eventos@ieqlondrina.com.br" class="w-full input-dark px-3 py-2.5 rounded-xl text-sm font-bold text-white" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-emerald-400 uppercase mb-1">Nome do Favorecido / Banco</label>
+                  <input type="text" id="evento-favorecido-pix" placeholder="Ex: IEQ Região 655 — Banco Cora" class="w-full input-dark px-3 py-2.5 rounded-xl text-sm font-medium" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Modalidade de Cobrança -->
+            <div>
+              <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Modalidade de Cobrança</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 cursor-pointer flex items-start gap-3 hover:border-indigo-500/50 transition-colors">
+                  <input type="radio" name="modalidade-cobranca" value="individual" checked onchange="alternarModalidadeCobranca()" class="mt-1 text-indigo-600 focus:ring-indigo-500" />
+                  <div>
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wide">Inscrição Individual</h5>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Cada participante faz sua inscrição e o acerto é controlado individualmente.</p>
+                  </div>
+                </label>
+
+                <label class="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 cursor-pointer flex items-start gap-3 hover:border-indigo-500/50 transition-colors">
+                  <input type="radio" name="modalidade-cobranca" value="por_igreja" onchange="alternarModalidadeCobranca()" class="mt-1 text-indigo-600 focus:ring-indigo-500" />
+                  <div>
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wide">Cota / Pagamento por Igreja</h5>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Cada igreja tem um valor fixado e o pastor titular acerta direto com o escritório regional.</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- OPÇÃO A: COBRANÇA INDIVIDUAL (Lotes ou Valor Único) -->
+            <div id="bloco-individual" class="space-y-5 p-5 bg-slate-900/40 rounded-2xl border border-slate-800">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-xs font-bold text-white uppercase tracking-wider">Cobrança por Lotes de Inscrição?</h4>
+                  <p class="text-[10px] text-slate-400">Ative se os valores mudam conforme a data de inscrição (Lote 1, Lote 2, etc.)</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="toggle-lotes" onchange="alternarLotes()" class="sr-only peer" />
+                  <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              <!-- Se SEM LOTES (Valor Único) -->
+              <div id="bloco-valor-unico" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Valor da Inscrição (R$)</label>
+                  <input type="number" step="0.01" id="evento-valor-unico" placeholder="Ex: 150.00" class="w-full input-dark px-3 py-2.5 rounded-xl text-sm font-bold text-emerald-400" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Limite Total de Vagas</label>
+                  <input type="number" id="evento-limite-vagas" placeholder="0 = Sem limite" class="w-full input-dark px-3 py-2.5 rounded-xl text-sm font-semibold" />
+                </div>
+              </div>
+
+              <!-- Se COM LOTES -->
+              <div id="bloco-lotes" class="hidden space-y-3">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Tabela de Lotes</span>
+                  <button type="button" onclick="adicionarLote()" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Adicionar Lote
+                  </button>
+                </div>
+                <div id="container-lotes" class="space-y-2">
+                  <!-- Linhas de lote renderizadas via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- OPÇÃO B: COBRANÇA POR IGREJA -->
+            <div id="bloco-por-igreja" class="hidden space-y-4 p-5 bg-slate-900/40 rounded-2xl border border-slate-800">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <div>
+                  <h4 class="text-xs font-bold text-white uppercase tracking-wider">Valores de Cota por Igreja</h4>
+                  <p class="text-[10px] text-slate-400">Configure o valor que cada congregação deve pagar pelo evento.</p>
+                </div>
+                <!-- Aplicador em massa de valor padrão -->
+                <div class="flex items-center gap-2">
+                  <input type="number" step="0.01" id="input-valor-padrao-igreja" placeholder="Ex: 300,00" class="input-dark px-3 py-1.5 rounded-lg text-xs w-28" />
+                  <button type="button" onclick="aplicarValorPadraoTodasIgrejas()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 whitespace-nowrap">
+                    Aplicar a Todas
+                  </button>
+                </div>
+              </div>
+
+              <div class="max-h-72 overflow-y-auto space-y-2 p-2 bg-slate-950/60 rounded-xl border border-slate-900">
+                <table class="w-full text-left text-xs">
+                  <thead class="text-slate-400 uppercase border-b border-slate-800 sticky top-0 bg-slate-950">
+                    <tr>
+                      <th class="py-2 px-3">Cód.</th>
+                      <th class="py-2 px-3">Igreja</th>
+                      <th class="py-2 px-3 text-right">Valor da Cota (R$)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabela-valores-igrejas" class="divide-y divide-slate-900">
+                    <!-- renderizado via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 4: FORMULÁRIO DE INSCRIÇÃO CUSTOMIZÁVEL -->
+      <!-- ======================================================== -->
+      <div id="aba-inscricao" class="tab-pane hidden space-y-6">
+        <div class="glass-card rounded-3xl p-6 md:p-8 space-y-6">
+          <div>
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
+              Campos Solicitados na Inscrição
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Marque quais campos devem aparecer na página pública de inscrição e quais são de preenchimento obrigatório.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="container-campos-inscricao">
+            <!-- Renderizado dinamicamente via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- BARRA INFERIOR DE BOTÕES -->
+      <div class="flex items-center justify-between pt-4 border-t border-slate-900">
+        <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-wider px-4 py-3">
+          Cancelar
+        </a>
+        <button type="submit" id="btn-salvar-evento" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="check" class="w-4 h-4"></i> Salvar e Publicar Evento
+        </button>
+      </div>
+
+    </form>
+
+  </main>
+
+  <footer class="w-full border-t border-slate-900/60 bg-slate-950/20 py-4 px-6 text-center text-xs text-slate-500">
+    Região 655 — Sistema Unificado de Gestão de Eventos
+  </footer>
+
+  <script type="module">
+    import { db } from '../firebase-config.js';
+    import { 
+      collection, doc, getDoc, getDocs, addDoc, updateDoc, serverTimestamp, query, orderBy 
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    let coordenadoriasList = [];
+    let pastoresList = [];
+    let igrejasList = [];
+    let pastoresConvidadosSelecionados = [];
+    let lotesList = [];
+
+    // Definição dos campos possíveis para o formulário de inscrição
+    const CAMPOS_DISPONIVEIS = [
+      { id: 'nome', label: 'Nome Completo', fixo: true, ativo: true, obrigatorio: true },
+      { id: 'celular', label: 'Telefone / WhatsApp', fixo: false, ativo: true, obrigatorio: true },
+      { id: 'cpf', label: 'CPF', fixo: false, ativo: true, obrigatorio: false },
+      { id: 'email', label: 'E-mail', fixo: false, ativo: true, obrigatorio: false },
+      { id: 'endereco', label: 'Endereço Completo', fixo: false, ativo: false, obrigatorio: false },
+      { id: 'igreja', label: 'Igreja / Congregação de Origem', fixo: false, ativo: true, obrigatorio: true },
+      { id: 'cargoEclesiastico', label: 'Cargo / Função Ministerial', fixo: false, ativo: true, obrigatorio: false },
+      { id: 'tamanhoCamiseta', label: 'Tamanho de Camiseta / Uniforme', fixo: false, ativo: false, obrigatorio: false },
+      { id: 'restricoes', label: 'Restrições Alimentares / Saúde', fixo: false, ativo: false, obrigatorio: false }
+    ];
+
+    // ─── INICIALIZAÇÃO ──────────────────────────────────────────────────────────
+    async function init() {
+      lucide.createIcons();
+      renderizarCamposInscricao();
+
+      // Carrega dados auxiliares do Firestore em paralelo
+      await Promise.all([
+        carregarCoordenadorias(),
+        carregarPastores(),
+        carregarIgrejas()
+      ]);
+
+      // Verifica se está editando evento existente via URL (?id=...)
+      const urlParams = new URLSearchParams(window.location.search);
+      const eventoId = urlParams.get('id');
+      if (eventoId) {
+        await carregarEventoParaEdicao(eventoId);
+      } else {
+        // Inicializa com 1 lote padrão
+        adicionarLote('1º Lote', 150, '');
+      }
+    }
+
+    // ─── CARREGAR DADOS DO FIRESTORE ───────────────────────────────────────────
+    async function carregarCoordenadorias() {
+      try {
+        const snap = await getDocs(collection(db, "coordenadorias"));
+        coordenadoriasList = [];
+        snap.forEach(d => coordenadoriasList.push({ id: d.id, ...d.data() }));
+        coordenadoriasList.sort((a,b) => (a.nome || '').localeCompare(b.nome || ''));
+
+        const select = document.getElementById('select-coordenadoria');
+        select.innerHTML = '<option value="">Selecione a coordenadoria...</option>';
+        coordenadoriasList.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.nome} (Coord: ${c.pastorNome || 'Não definido'})`;
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        console.error("Erro ao carregar coordenadorias:", e);
+      }
+    }
+
+    async function carregarPastores() {
+      try {
+        const snap = await getDocs(collection(db, "pastores"));
+        pastoresList = [];
+        snap.forEach(d => pastoresList.push({ id: d.id, ...d.data() }));
+        pastoresList.sort((a,b) => (a.nome || '').localeCompare(b.nome || ''));
+        renderizarListaPastoresBusca(pastoresList);
+      } catch (e) {
+        console.error("Erro ao carregar pastores:", e);
+      }
+    }
+
+    async function carregarIgrejas() {
+      try {
+        const snap = await getDocs(collection(db, "igrejas"));
+        igrejasList = [];
+        snap.forEach(d => igrejasList.push({ id: d.id, ...d.data() }));
+        igrejasList.sort((a,b) => parseInt(a.codigo || 0) - parseInt(b.codigo || 0));
+        renderizarTabelaIgrejasValores();
+      } catch (e) {
+        console.error("Erro ao carregar igrejas:", e);
+      }
+    }
+
+    // ─── ABAS ──────────────────────────────────────────────────────────────────
+    window.trocarAba = function(aba) {
+      ['geral', 'responsaveis', 'financeiro', 'inscricao'].forEach(tab => {
+        const pane = document.getElementById(`aba-${tab}`);
+        const btn = document.getElementById(`tab-btn-${tab}`);
+        if (tab === aba) {
+          pane.classList.remove('hidden');
+          btn.className = "tab-btn flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow flex items-center justify-center gap-2 whitespace-nowrap";
+        } else {
+          pane.classList.add('hidden');
+          btn.className = "tab-btn flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 whitespace-nowrap";
+        }
+      });
+      lucide.createIcons();
+    };
+
+    // ─── CONTROLE DE TIPO DE EVENTO ───────────────────────────────────────────
+    window.alternarTipoEvento = function() {
+      const tipo = document.getElementById('evento-tipo').value;
+      const secaoCoord = document.getElementById('secao-coordenadoria');
+      const secaoPastores = document.getElementById('secao-pastores-convidados');
+
+      if (tipo === 'coordenadoria') {
+        secaoCoord.classList.remove('hidden');
+        secaoPastores.classList.add('hidden');
+      } else {
+        secaoCoord.classList.add('hidden');
+        secaoPastores.classList.remove('hidden');
+      }
+    };
+
+    window.aoSelecionarCoordenadoria = function() {
+      const id = document.getElementById('select-coordenadoria').value;
+      const coord = coordenadoriasList.find(c => c.id === id);
+      if (coord) {
+        document.getElementById('coord-nome-exibicao').textContent = coord.pastorNome || 'Não informado';
+        document.getElementById('coord-email-exibicao').textContent = coord.email || coord.contato || 'Sem e-mail cadastrado';
+      } else {
+        document.getElementById('coord-nome-exibicao').textContent = '—';
+        document.getElementById('coord-email-exibicao').textContent = '—';
+      }
+    };
+
+    // ─── PASTORES CONVIDADOS ───────────────────────────────────────────────────
+    function renderizarListaPastoresBusca(lista) {
+      const container = document.getElementById('container-lista-pastores');
+      container.innerHTML = '';
+      if (!lista.length) {
+        container.innerHTML = `<p class="text-xs text-slate-500 py-3 text-center">Nenhum pastor encontrado.</p>`;
+        return;
+      }
+      lista.forEach(p => {
+        const jaSelecionado = pastoresConvidadosSelecionados.some(s => s.pastorId === p.id);
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-between p-2 rounded-lg hover:bg-slate-900 transition-colors text-xs";
+        div.innerHTML = `
+          <div>
+            <strong class="text-white">${p.nome}</strong>
+            <span class="text-[10px] text-slate-400 block">${p.email || 'Sem e-mail'} · CPF: ${p.cpf ? p.cpf.substring(0,6) + '...' : 'Não inf.'}</span>
+          </div>
+          <button type="button" onclick="togglePastorConvidado('${p.id}')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${jaSelecionado ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}">
+            ${jaSelecionado ? 'Remover' : '+ Convidar'}
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    window.filtrarListaPastores = function() {
+      const busca = document.getElementById('busca-pastores').value.toLowerCase();
+      const filtrados = pastoresList.filter(p => (p.nome || '').toLowerCase().includes(busca));
+      renderizarListaPastoresBusca(filtrados);
+    };
+
+    window.togglePastorConvidado = function(pastorId) {
+      const idx = pastoresConvidadosSelecionados.findIndex(p => p.pastorId === pastorId);
+      if (idx >= 0) {
+        pastoresConvidadosSelecionados.splice(idx, 1);
+      } else {
+        const p = pastoresList.find(item => item.id === pastorId);
+        if (p) {
+          pastoresConvidadosSelecionados.push({
+            pastorId: p.id,
+            nome: p.nome,
+            email: p.email || '',
+            cpf: p.cpf || '',
+            acessoFinanceiro: true
+          });
+        }
+      }
+      renderizarPastoresSelecionados();
+      filtrarListaPastores();
+    };
+
+    function renderizarPastoresSelecionados() {
+      const container = document.getElementById('lista-pastores-selecionados');
+      document.getElementById('count-pastores-selecionados').textContent = pastoresConvidadosSelecionados.length;
+      if (!pastoresConvidadosSelecionados.length) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic">Nenhum pastor convidado adicionado.</p>`;
+        return;
+      }
+      container.innerHTML = pastoresConvidadosSelecionados.map((p, idx) => `
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+          <div>
+            <h5 class="font-bold text-white">${p.nome}</h5>
+            <span class="text-[10px] text-slate-400">${p.email || 'Sem e-mail cadastrado'}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-300">
+              <input type="checkbox" ${p.acessoFinanceiro ? 'checked' : ''} onchange="toggleAcessoFinPastor(${idx}, this.checked)" class="rounded text-indigo-600">
+              Acesso Financeiro
+            </label>
+            <button type="button" onclick="togglePastorConvidado('${p.pastorId}')" class="text-rose-400 hover:text-rose-300 p-1">
+              ✕
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.toggleAcessoFinPastor = function(idx, checked) {
+      if (pastoresConvidadosSelecionados[idx]) {
+        pastoresConvidadosSelecionados[idx].acessoFinanceiro = checked;
+      }
+    };
+
+    // ─── FINANCEIRO & LOTES ───────────────────────────────────────────────────
+    window.alternarModuloFinanceiro = function() {
+      const ativo = document.getElementById('evento-tem-financeiro').checked;
+      document.getElementById('painel-config-financeira').classList.toggle('hidden', !ativo);
+    };
+
+    window.alternarModalidadeCobranca = function() {
+      const modalidade = document.querySelector('input[name="modalidade-cobranca"]:checked').value;
+      const blocoInd = document.getElementById('bloco-individual');
+      const blocoIgr = document.getElementById('bloco-por-igreja');
+
+      if (modalidade === 'individual') {
+        blocoInd.classList.remove('hidden');
+        blocoIgr.classList.add('hidden');
+      } else {
+        blocoInd.classList.add('hidden');
+        blocoIgr.classList.remove('hidden');
+      }
+    };
+
+    window.alternarLotes = function() {
+      const comLotes = document.getElementById('toggle-lotes').checked;
+      document.getElementById('bloco-valor-unico').classList.toggle('hidden', comLotes);
+      document.getElementById('bloco-lotes').classList.toggle('hidden', !comLotes);
+    };
+
+    window.adicionarLote = function(nome = '', valor = '', dataLimite = '') {
+      const id = 'lote_' + Date.now() + Math.random().toString(36).substr(2, 4);
+      lotesList.push({ id, nome: nome || `Lote ${lotesList.length + 1}`, valor: valor || 150, dataLimite: dataLimite || '' });
+      renderizarLotes();
+    };
+
+    window.removerLote = function(id) {
+      lotesList = lotesList.filter(l => l.id !== id);
+      renderizarLotes();
+    };
+
+    function renderizarLotes() {
+      const container = document.getElementById('container-lotes');
+      container.innerHTML = lotesList.map((l, i) => `
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 p-2.5 rounded-xl bg-slate-950/80 border border-slate-900 items-center text-xs">
+          <div class="sm:col-span-4">
+            <input type="text" value="${l.nome}" onchange="atualizarLote('${l.id}', 'nome', this.value)" placeholder="Nome do Lote" class="w-full input-dark px-3 py-1.5 rounded-lg text-xs font-bold" />
+          </div>
+          <div class="sm:col-span-3">
+            <input type="number" step="0.01" value="${l.valor}" onchange="atualizarLote('${l.id}', 'valor', this.value)" placeholder="Valor R$" class="w-full input-dark px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-400" />
+          </div>
+          <div class="sm:col-span-4">
+            <input type="date" value="${l.dataLimite}" onchange="atualizarLote('${l.id}', 'dataLimite', this.value)" title="Data Limite deste Lote" class="w-full input-dark px-3 py-1.5 rounded-lg text-xs" />
+          </div>
+          <div class="sm:col-span-1 text-center">
+            <button type="button" onclick="removerLote('${l.id}')" class="text-rose-400 hover:text-rose-300 font-bold p-1">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.atualizarLote = function(id, campo, valor) {
+      const l = lotesList.find(item => item.id === id);
+      if (l) l[campo] = valor;
+    };
+
+    // ─── TABELA DE IGREJAS (VALORES POR CONGREGAÇÃO) ──────────────────────────
+    function renderizarTabelaIgrejasValores(valoresExistentes = {}) {
+      const tbody = document.getElementById('tabela-valores-igrejas');
+      tbody.innerHTML = igrejasList.map(ig => {
+        const val = valoresExistentes[ig.nome] !== undefined ? valoresExistentes[ig.nome] : (ig.valorCota || 0);
+        return `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="py-2 px-3 font-bold text-slate-400">${ig.codigo || '—'}</td>
+            <td class="py-2 px-3 font-semibold text-white">${ig.nome}</td>
+            <td class="py-2 px-3 text-right">
+              <input type="number" step="0.01" data-igreja="${ig.nome}" value="${val}" class="input-cota-igreja input-dark px-2.5 py-1 rounded-lg text-xs w-28 text-right font-bold text-emerald-400" />
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.aplicarValorPadraoTodasIgrejas = function() {
+      const val = document.getElementById('input-valor-padrao-igreja').value;
+      if (!val) return;
+      document.querySelectorAll('.input-cota-igreja').forEach(input => {
+        input.value = val;
+      });
+    };
+
+    // ─── FORMULÁRIO DE INSCRIÇÃO CUSTOMIZÁVEL ──────────────────────────────────
+    function renderizarCamposInscricao() {
+      const container = document.getElementById('container-campos-inscricao');
+      container.innerHTML = CAMPOS_DISPONIVEIS.map(c => `
+        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+          <div>
+            <h5 class="text-xs font-bold text-white">${c.label}</h5>
+            <span class="text-[10px] text-slate-500">${c.fixo ? 'Obrigatório do sistema' : 'Campo configurável'}</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-300">
+              <input type="checkbox" id="campo-ativo-${c.id}" ${c.ativo ? 'checked' : ''} ${c.fixo ? 'disabled' : ''} class="rounded text-indigo-600">
+              Ativo
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer text-xs text-slate-300">
+              <input type="checkbox" id="campo-obrig-${c.id}" ${c.obrigatorio ? 'checked' : ''} ${c.fixo ? 'disabled' : ''} class="rounded text-rose-500">
+              Obrigatório
+            </label>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ─── CARREGAR PARA EDIÇÃO ──────────────────────────────────────────────────
+    async function carregarEventoParaEdicao(id) {
+      try {
+        const snap = await getDoc(doc(db, "eventos", id));
+        if (!snap.exists()) {
+          alert("Evento não encontrado!");
+          return;
+        }
+        const data = snap.data();
+        document.getElementById('evento-id').value = id;
+        document.getElementById('page-title').innerHTML = `<i data-lucide="edit" class="w-4 h-4 text-amber-400"></i> Editar: ${data.nome}`;
+
+        // Aba Geral
+        document.getElementById('evento-nome').value = data.nome || '';
+        document.getElementById('evento-tipo').value = data.tipo || 'coordenadoria';
+        document.getElementById('evento-status').value = data.status || 'ativo';
+        document.getElementById('evento-icone').value = data.icone || '🎯';
+        document.getElementById('evento-data-inicio').value = data.dataInicio || '';
+        document.getElementById('evento-data-fim').value = data.dataFim || '';
+        document.getElementById('evento-hora').value = data.horaInicio || '';
+        document.getElementById('evento-local').value = data.local || '';
+        document.getElementById('evento-descricao').value = data.descricao || '';
+        alternarTipoEvento();
+
+        // Aba Responsáveis
+        if (data.coordenadoriaId) {
+          document.getElementById('select-coordenadoria').value = data.coordenadoriaId;
+          aoSelecionarCoordenadoria();
+          document.getElementById('coord-permite-financeiro').checked = !!data.coordenadorAcessoFinanceiro;
+        }
+        if (data.pastoresConvidados && data.pastoresConvidados.length) {
+          pastoresConvidadosSelecionados = data.pastoresConvidados;
+          renderizarPastoresSelecionados();
+        }
+
+        // Aba Financeiro
+        document.getElementById('evento-tem-financeiro').checked = !!data.temControleFinanceiro;
+        alternarModuloFinanceiro();
+        document.getElementById('evento-chave-pix').value = data.chavePix || '';
+        document.getElementById('evento-favorecido-pix').value = data.favorecidoPix || '';
+
+        const modalidade = data.modalidadeCobranca || 'individual';
+        const radioMod = document.querySelector(`input[name="modalidade-cobranca"][value="${modalidade}"]`);
+        if (radioMod) radioMod.checked = true;
+        alternarModalidadeCobranca();
+
+        document.getElementById('toggle-lotes').checked = !!data.temLotes;
+        alternarLotes();
+        document.getElementById('evento-valor-unico').value = data.valorUnico || '';
+        document.getElementById('evento-limite-vagas').value = data.limiteVagas || '';
+
+        if (data.lotes && data.lotes.length) {
+          lotesList = data.lotes;
+          renderizarLotes();
+        }
+
+        if (data.valoresPorIgreja) {
+          renderizarTabelaIgrejasValores(data.valoresPorIgreja);
+        }
+
+        // Aba Campos
+        if (data.camposInscricao) {
+          CAMPOS_DISPONIVEIS.forEach(c => {
+            if (data.camposInscricao[c.id]) {
+              const atv = document.getElementById(`campo-ativo-${c.id}`);
+              const obg = document.getElementById(`campo-obrig-${c.id}`);
+              if (atv) atv.checked = !!data.camposInscricao[c.id].ativo;
+              if (obg) obg.checked = !!data.camposInscricao[c.id].obrigatorio;
+            }
+          });
+        }
+
+        lucide.createIcons();
+      } catch (e) {
+        console.error("Erro ao carregar dados para edição:", e);
+      }
+    }
+
+    // ─── SALVAR EVENTO NO FIRESTORE ───────────────────────────────────────────
+    window.salvarEvento = async function() {
+      const btn = document.getElementById('btn-salvar-evento');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Salvando...`;
+
+      try {
+        const nome = document.getElementById('evento-nome').value.trim();
+        if (!nome) {
+          alert('Por favor, informe o Nome do Evento.');
+          trocarAba('geral');
+          return;
+        }
+
+        const tipo = document.getElementById('evento-tipo').value;
+        const status = document.getElementById('evento-status').value;
+        const icone = document.getElementById('evento-icone').value.trim() || '🎯';
+        const dataInicio = document.getElementById('evento-data-inicio').value;
+        const dataFim = document.getElementById('evento-data-fim').value;
+        const horaInicio = document.getElementById('evento-hora').value;
+        const local = document.getElementById('evento-local').value.trim();
+        const descricao = document.getElementById('evento-descricao').value.trim();
+
+        if (!dataInicio) {
+          alert('Por favor, informe a Data de Início.');
+          trocarAba('geral');
+          return;
+        }
+
+        // Responsáveis
+        let coordData = {};
+        if (tipo === 'coordenadoria') {
+          const coordId = document.getElementById('select-coordenadoria').value;
+          const coordObj = coordenadoriasList.find(c => c.id === coordId);
+          coordData = {
+            coordenadoriaId: coordId || null,
+            coordenadoriaNome: coordObj ? coordObj.nome : null,
+            coordenadorPastorId: coordObj ? coordObj.pastorId : null,
+            coordenadorNome: coordObj ? coordObj.pastorNome : null,
+            coordenadorEmail: coordObj ? (coordObj.email || coordObj.contato || null) : null,
+            coordenadorAcessoFinanceiro: document.getElementById('coord-permite-financeiro').checked
+          };
+        }
+
+        // Financeiro
+        const temControleFinanceiro = document.getElementById('evento-tem-financeiro').checked;
+        const chavePix = document.getElementById('evento-chave-pix').value.trim();
+        const favorecidoPix = document.getElementById('evento-favorecido-pix').value.trim();
+        const modalidadeCobranca = document.querySelector('input[name="modalidade-cobranca"]:checked').value;
+        const temLotes = document.getElementById('toggle-lotes').checked;
+        const valorUnico = Number(document.getElementById('evento-valor-unico').value) || 0;
+        const limiteVagas = parseInt(document.getElementById('evento-limite-vagas').value) || 0;
+
+        // Monta valores por igreja se for cota
+        const valoresPorIgreja = {};
+        document.querySelectorAll('.input-cota-igreja').forEach(inp => {
+          const igNome = inp.getAttribute('data-igreja');
+          valoresPorIgreja[igNome] = Number(inp.value) || 0;
+        });
+
+        // Configuração dos campos de inscrição
+        const camposInscricao = {};
+        CAMPOS_DISPONIVEIS.forEach(c => {
+          const atv = document.getElementById(`campo-ativo-${c.id}`);
+          const obg = document.getElementById(`campo-obrig-${c.id}`);
+          camposInscricao[c.id] = {
+            ativo: c.fixo ? true : (atv ? atv.checked : false),
+            obrigatorio: c.fixo ? true : (obg ? obg.checked : false)
+          };
+        });
+
+        const eventoPayload = {
+          nome,
+          tipo,
+          status,
+          icone,
+          dataInicio,
+          dataFim: dataFim || null,
+          horaInicio,
+          local,
+          descricao,
+          ...coordData,
+          pastoresConvidados: tipo !== 'coordenadoria' ? pastoresConvidadosSelecionados : [],
+          temControleFinanceiro,
+          chavePix,
+          favorecidoPix,
+          modalidadeCobranca,
+          temLotes,
+          valorUnico,
+          limiteVagas,
+          lotes: temLotes ? lotesList : [],
+          valoresPorIgreja,
+          camposInscricao,
+          atualizadoEm: serverTimestamp()
+        };
+
+        const eventoId = document.getElementById('evento-id').value;
+
+        if (eventoId) {
+          await updateDoc(doc(db, "eventos", eventoId), eventoPayload);
+        } else {
+          eventoPayload.criadoEm = serverTimestamp();
+          const docRef = await addDoc(collection(db, "eventos"), eventoPayload);
+          document.getElementById('evento-id').value = docRef.id;
+        }
+
+        alert('✓ Evento salvo com sucesso!');
+        window.location.href = 'index.html';
+
+      } catch (err) {
+        console.error("Erro ao salvar evento:", err);
+        alert("Erro ao salvar evento: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    };
+
+    // Inicia tudo
+    init();
+  </script>
+</body>
+</html>

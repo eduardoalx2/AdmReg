@@ -17,7 +17,23 @@ service cloud.firestore {
     // Eventos: exibidos em páginas públicas
     match /eventos/{docId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow write: if true;
+
+      // Inscrições do evento (público pode criar, organizadores gerenciam)
+      match /inscricoes/{inscricaoId} {
+        allow read, write: if true;
+      }
+
+      // Despesas do evento
+      match /despesas/{despesaId} {
+        allow read, write: if true;
+      }
+
+      // Log de auditoria financeira (imutável: somente leitura e inserção)
+      match /logs_financeiros/{logId} {
+        allow read, create: if true;
+        allow update, delete: if false;
+      }
     }
 
     // Igrejas: lidas na página pública de presença
@@ -77,7 +93,8 @@ service cloud.firestore {
     }
 
     match /coordenadorias/{docId} {
-      allow read, write: if isAuthenticated();
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
 
     match /avisos/{docId} {
