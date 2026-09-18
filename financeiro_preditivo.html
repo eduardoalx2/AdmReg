@@ -182,9 +182,15 @@
                     </span>
                 </div>
                 <h3 id="kpiArrecadacaoTotal" class="text-2xl font-black text-slate-900 mt-2">R$ 0,00</h3>
-                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                    <span class="text-slate-500" id="kpiArrecadacaoSub">Entrou: <strong id="kpiArrecadacaoRealizada" class="text-emerald-600">R$ 0,00</strong></span>
-                    <span id="kpiRealizadoPerc" class="font-bold text-emerald-600">0% arrecadado</span>
+                <div class="mt-3 pt-3 border-t border-slate-100 space-y-1 text-[11px]">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Entrou: <strong id="kpiArrecadacaoRealizada" class="text-emerald-600 font-bold">R$ 0,00</strong></span>
+                        <span id="kpiRealizadoPerc" class="font-bold text-emerald-600">0% arrecadado</span>
+                    </div>
+                    <div class="flex items-center justify-between text-slate-500">
+                        <span>Falta entrar: <strong id="kpiArrecadacaoFalta" class="text-amber-700 font-bold">R$ 0,00</strong></span>
+                        <span id="kpiArrecadacaoFaltaPerc" class="font-bold text-amber-700">0% restante</span>
+                    </div>
                 </div>
             </div>
 
@@ -197,9 +203,15 @@
                     </span>
                 </div>
                 <h3 id="kpiDespesasTotal" class="text-2xl font-black text-rose-600 mt-2">R$ 0,00</h3>
-                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                    <span id="kpiDespesasPagas" class="font-bold text-emerald-600">Pagas: R$ 0,00</span>
-                    <span id="kpiDespesasPendentes" class="font-bold text-rose-600">A Pagar: R$ 0,00</span>
+                <div class="mt-3 pt-3 border-t border-slate-100 space-y-1 text-[11px]">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Pagas: <strong id="kpiDespesasPagas" class="font-bold text-emerald-600">R$ 0,00</strong></span>
+                        <span id="kpiDespesasPagasPerc" class="font-bold text-emerald-600">0% pago</span>
+                    </div>
+                    <div class="flex items-center justify-between text-slate-500">
+                        <span>A Pagar: <strong id="kpiDespesasPendentes" class="font-bold text-rose-600">R$ 0,00</strong></span>
+                        <span id="kpiDespesasPendentesPerc" class="font-bold text-rose-600">0% a pagar</span>
+                    </div>
                 </div>
             </div>
 
@@ -212,9 +224,15 @@
                     </span>
                 </div>
                 <h3 id="kpiResultadoLiquido" class="text-2xl font-black text-slate-900 mt-2">R$ 0,00</h3>
-                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                    <span class="text-slate-500" id="kpiStatusResultado">Equilibrado</span>
-                    <span id="kpiCoberturaResumo" class="font-bold text-blue-600">0% Coberto</span>
+                <div class="mt-3 pt-3 border-t border-slate-100 space-y-1 text-[11px]">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500">Entradas - Despesas</span>
+                        <span id="kpiStatusResultado" class="font-bold text-slate-700">Equilibrado</span>
+                    </div>
+                    <div class="flex items-center justify-between text-slate-500">
+                        <span>Cobertura de Contas:</span>
+                        <span id="kpiCoberturaResumo" class="font-bold text-blue-600">0% Coberto</span>
+                    </div>
                 </div>
             </div>
 
@@ -229,9 +247,15 @@
                     </button>
                 </div>
                 <h3 id="kpiOutrosSaldoLiquido" class="text-2xl font-black text-white mt-2">R$ 0,00</h3>
-                <div class="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-                    <span id="kpiOutrosEntradas">Entradas: R$ 0,00</span>
-                    <span id="kpiOutrosSaidas">Saídas: R$ 0,00</span>
+                <div class="mt-3 pt-3 border-t border-slate-800 space-y-1 text-[11px] text-slate-400">
+                    <div class="flex items-center justify-between">
+                        <span id="kpiOutrosEntradas">Entradas: R$ 0,00</span>
+                        <span>Fundo Isolado</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span id="kpiOutrosSaidas">Saídas: R$ 0,00</span>
+                        <span>Saldo em Fundo</span>
+                    </div>
                 </div>
             </div>
 
@@ -1725,17 +1749,40 @@
                 kpiArrecRealizadaEl.innerText = formatMoeda(arrecadacaoRealizadaTotal);
             }
 
-            const percPago = arrecadacaoOperacionalTotal > 0 ? Math.round((totalRealizadoPago / arrecadacaoOperacionalTotal) * 100) : 0;
-            document.getElementById('kpiRealizadoPerc').innerText = `${percPago}% arrecadado`;
+            const percArrecadado = arrecadacaoOperacionalTotal > 0 ? Math.min(100, Math.round((arrecadacaoRealizadaTotal / arrecadacaoOperacionalTotal) * 100)) : 0;
+            const percFaltaArrecadar = Math.max(0, 100 - percArrecadado);
+
+            document.getElementById('kpiRealizadoPerc').innerText = `${percArrecadado}% arrecadado`;
+
+            const kpiFaltaEl = document.getElementById('kpiArrecadacaoFalta');
+            if (kpiFaltaEl) {
+                kpiFaltaEl.innerText = formatMoeda(arrecadacaoPendenteTotal);
+            }
+            const kpiFaltaPercEl = document.getElementById('kpiArrecadacaoFaltaPerc');
+            if (kpiFaltaPercEl) {
+                kpiFaltaPercEl.innerText = `${percFaltaArrecadar}% restante`;
+            }
 
             document.getElementById('kpiDespesasTotal').innerText = formatMoeda(totalDespesasGeral);
             const kpiPagasEl = document.getElementById('kpiDespesasPagas');
             if (kpiPagasEl) {
-                kpiPagasEl.innerText = `Pagas: ${formatMoeda(totalDespesasPagas)}`;
+                kpiPagasEl.innerText = formatMoeda(totalDespesasPagas);
             }
             const kpiPendEl = document.getElementById('kpiDespesasPendentes');
             if (kpiPendEl) {
-                kpiPendEl.innerText = `A Pagar: ${formatMoeda(totalDespesasPendentes)}`;
+                kpiPendEl.innerText = formatMoeda(totalDespesasPendentes);
+            }
+
+            const percDespesasPagas = totalDespesasGeral > 0 ? Math.min(100, Math.round((totalDespesasPagas / totalDespesasGeral) * 100)) : 0;
+            const percDespesasPend = Math.max(0, 100 - percDespesasPagas);
+
+            const kpiPagasPercEl = document.getElementById('kpiDespesasPagasPerc');
+            if (kpiPagasPercEl) {
+                kpiPagasPercEl.innerText = `${percDespesasPagas}% pago`;
+            }
+            const kpiPendPercEl = document.getElementById('kpiDespesasPendentesPerc');
+            if (kpiPendPercEl) {
+                kpiPendPercEl.innerText = `${percDespesasPend}% a pagar`;
             }
 
             const kpiResEl = document.getElementById('kpiResultadoLiquido');

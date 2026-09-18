@@ -92,25 +92,36 @@
       <!-- Filter and Loader Section -->
       <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
         <!-- Interactive Filters -->
-        <div class="flex bg-slate-950/60 p-1.5 rounded-2xl border border-slate-900/80">
-          <button onclick="setFiltro('todos')" id="btn-filtro-todos" class="px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-md">
-            Todos os Congressos
-          </button>
-          <button onclick="setFiltro('mulheres')" id="btn-filtro-mulheres" class="px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
-            Mulheres (🌸)
-          </button>
-          <button onclick="setFiltro('diaconato')" id="btn-filtro-diaconato" class="px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
-            Diaconato (🕊️)
-          </button>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex bg-slate-950/60 p-1.5 rounded-2xl border border-slate-900/80">
+            <button onclick="setVisao('ativos')" id="btn-visao-ativos" class="px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-md flex items-center gap-2">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              Eventos em Andamento <span id="badge-qtd-ativos" class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded-full border border-slate-700">0</span>
+            </button>
+            <button onclick="setVisao('historico')" id="btn-visao-historico" class="px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center gap-2">
+              <span class="inline-flex rounded-full h-2 w-2 bg-slate-500"></span>
+              Histórico Arquivado
+            </button>
+          </div>
+
+          <!-- Sub-filtros para quando o histórico for aberto -->
+          <div id="subfiltros-historico" class="hidden flex bg-slate-950/40 p-1 rounded-xl border border-slate-900">
+            <button onclick="setFiltroHistorico('todos')" id="btn-sub-todos" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white">Todos</button>
+            <button onclick="setFiltroHistorico('mulheres')" id="btn-sub-mulheres" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Mulheres (🌸)</button>
+            <button onclick="setFiltroHistorico('diaconato')" id="btn-sub-diaconato" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Diaconato (🕊️)</button>
+          </div>
         </div>
 
         <!-- Reload / Loader Indicator -->
-        <div id="loader-indicator" class="flex items-center gap-2 text-xs font-semibold text-slate-400">
+        <div id="loader-indicator" class="hidden flex items-center gap-2 text-xs font-semibold text-slate-400">
           <svg class="animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          Sincronizando dados...
+          <span id="loader-texto">Sincronizando dados...</span>
         </div>
       </div>
 
@@ -238,18 +249,53 @@
   </div>
 
   <script type="module">
-    // URLs das APIs de cada congresso
-    const API_MULHERES = 'https://script.google.com/macros/s/AKfycbyitQ6E-O0bbnPBeAPFXUvmJ3_t0i2e_OQxeUROS6q8bwGm6CVjn0WgXl8zD8_usfV4gw/exec';
-    const API_DIACONATO = 'https://script.google.com/macros/s/AKfycbypjv_q6hESFoeYjQTxlpYj5Qb6ymOw6h6DoHhoE-CbNeryi5wclLmUrU6binZ7H5l_/exec';
+    // =========================================================================
+    // CONFIGURAÇÃO DE EVENTOS
+    // =========================================================================
 
-    const VALOR_MULHERES = 210;
-    const VALOR_DIACONATO = 150;
+    // 1. Eventos Ativos / Em Andamento
+    // Apenas os eventos listados aqui com status: 'ativo' terão suas APIs consultadas automaticamente.
+    // Atualmente nenhum evento ativo (os eventos anteriores já aconteceram).
+    const EVENTOS_ATIVOS = [
+      /* Exemplo para futuros congressos:
+      {
+        id: 'novo_congresso',
+        nome: 'Congresso 2027',
+        icone: '✨',
+        valorInscricao: 200,
+        apiUrl: 'https://script.google.com/...',
+        status: 'ativo'
+      }
+      */
+    ];
 
-    let dadosMulheres = { igrejas: [], pagamentos: [], despesas: [] };
-    let dadosDiaconato = { igrejas: [], pagamentos: [], despesas: [] };
-    let filtroAtual = 'todos'; // todos | mulheres | diaconato
+    // 2. Histórico de Eventos Realizados (consultados APENAS sob demanda no botão 'Histórico Arquivado')
+    const EVENTOS_HISTORICO = {
+      mulheres: {
+        id: 'mulheres',
+        nome: 'Mulheres 🌸',
+        valorInscricao: 210,
+        api: 'https://script.google.com/macros/s/AKfycbyitQ6E-O0bbnPBeAPFXUvmJ3_t0i2e_OQxeUROS6q8bwGm6CVjn0WgXl8zD8_usfV4gw/exec'
+      },
+      diaconato: {
+        id: 'diaconato',
+        nome: 'Diaconato 🕊️',
+        valorInscricao: 150,
+        api: 'https://script.google.com/macros/s/AKfycbypjv_q6hESFoeYjQTxlpYj5Qb6ymOw6h6DoHhoE-CbNeryi5wclLmUrU6binZ7H5l_/exec'
+      }
+    };
 
-    // Função global de verificação de senha
+    // Estado da Aplicação
+    let visaoAtual = 'ativos'; // 'ativos' | 'historico'
+    let filtroHistoricoAtual = 'todos'; // 'todos' | 'mulheres' | 'diaconato'
+    
+    let dadosAtivos = [];
+    let dadosHistorico = null; // Carregado somente se o usuário solicitar
+
+    // Atualiza badge de contagem de eventos ativos
+    document.getElementById('badge-qtd-ativos').textContent = EVENTOS_ATIVOS.length;
+
+    // Verificação de Senha
     window.verificarSenha = function(e) {
       e.preventDefault();
       const input = document.getElementById('gate-password').value;
@@ -259,7 +305,7 @@
         sessionStorage.setItem('events_fin_auth', 'true');
         document.getElementById('password-gate').classList.add('hidden');
         document.getElementById('dashboard-content').classList.remove('hidden');
-        carregarDados();
+        inicializarPainel();
       } else {
         errorEl.classList.remove('hidden');
         document.getElementById('gate-password').value = '';
@@ -271,7 +317,7 @@
       if (sessionStorage.getItem('events_fin_auth') === 'true') {
         document.getElementById('password-gate').classList.add('hidden');
         document.getElementById('dashboard-content').classList.remove('hidden');
-        carregarDados();
+        inicializarPainel();
       }
     }
 
@@ -289,83 +335,151 @@
       return await response.json();
     }
 
-    // Carregar todas as informações em paralelo
-    async function carregarDados() {
+    // Formatação BRL
+    function formatBRL(value) {
+      return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Inicializar carregamento baseado na visão atual
+    function inicializarPainel() {
+      if (visaoAtual === 'ativos') {
+        carregarEventosAtivos();
+      } else {
+        carregarHistorico();
+      }
+    }
+
+    // =========================================================================
+    // VISÃO 1: EVENTOS EM ANDAMENTO (PADRÃO)
+    // NÃO consulta dados de eventos passados!
+    // =========================================================================
+    async function carregarEventosAtivos() {
       const loader = document.getElementById('loader-indicator');
+
+      // Se não há eventos ativos cadastrados, renderiza instantaneamente estado limpo e zerado
+      if (EVENTOS_ATIVOS.length === 0) {
+        loader.classList.add('hidden');
+        renderizarEventosAtivosLimpo();
+        return;
+      }
+
       loader.classList.remove('hidden');
+      document.getElementById('loader-texto').textContent = 'Consultando eventos em andamento...';
+
+      try {
+        // Busca dados apenas dos eventos ativos configurados
+        // (Preparado para futuros eventos)
+        renderizarEventosAtivosLimpo();
+      } catch (err) {
+        console.error('Erro ao carregar eventos ativos:', err);
+      } finally {
+        loader.classList.add('hidden');
+      }
+    }
+
+    function renderizarEventosAtivosLimpo() {
+      // Zera os Cards de Resumo
+      document.getElementById('stat-prevista').textContent = formatBRL(0);
+      document.getElementById('stat-recebido').textContent = formatBRL(0);
+      document.getElementById('stat-despesas').textContent = formatBRL(0);
+      document.getElementById('stat-saldo').textContent = formatBRL(0);
+      document.getElementById('stat-pendente').textContent = formatBRL(0);
+
+      // Tabela de Receitas
+      document.getElementById('tabela-receitas-badge').textContent = 'Eventos Ativos (0)';
+      document.getElementById('tabela-receitas-corpo').innerHTML = `
+        <tr>
+          <td colspan="6" class="px-6 py-12 text-center text-slate-400 bg-slate-950/20">
+            <div class="flex flex-col items-center justify-center gap-2">
+              <span class="text-2xl">📊</span>
+              <p class="font-bold text-white text-sm">Nenhum evento com movimentação financeira ativa no momento</p>
+              <p class="text-xs text-slate-500 max-w-md">Os eventos anteriores já foram realizados e suas consultas foram desativadas desta visão principal.</p>
+            </div>
+          </td>
+        </tr>
+      `;
+      document.getElementById('total-receitas-vagas').textContent = '0';
+      document.getElementById('total-receitas-devido').textContent = formatBRL(0);
+      document.getElementById('total-receitas-pago').textContent = formatBRL(0);
+      document.getElementById('total-receitas-pendente').textContent = formatBRL(0);
+
+      // Tabela de Despesas
+      document.getElementById('tabela-despesas-badge').textContent = 'Eventos Ativos (0)';
+      document.getElementById('tabela-despesas-corpo').innerHTML = `
+        <tr>
+          <td colspan="5" class="px-6 py-12 text-center text-slate-400 bg-slate-950/20">
+            <div class="flex flex-col items-center justify-center gap-2">
+              <span class="text-2xl">📋</span>
+              <p class="font-bold text-white text-sm">Nenhuma saída ou despesa de evento em andamento</p>
+              <p class="text-xs text-slate-500">As saídas serão registradas conforme novos eventos forem abertos.</p>
+            </div>
+          </td>
+        </tr>
+      `;
+      document.getElementById('total-despesas-valor').textContent = formatBRL(0);
+    }
+
+    // =========================================================================
+    // VISÃO 2: HISTÓRICO ARQUIVADO (CONSULTA SOB DEMANDA)
+    // =========================================================================
+    async function carregarHistorico() {
+      const loader = document.getElementById('loader-indicator');
+      
+      // Se já temos os dados do histórico em memória, renderiza diretamente
+      if (dadosHistorico) {
+        renderizarHistorico();
+        return;
+      }
+
+      loader.classList.remove('hidden');
+      document.getElementById('loader-texto').textContent = 'Carregando histórico arquivado das planilhas...';
 
       try {
         const [
           mulIgrejas, mulPagtos, mulDesp,
           diaIgrejas, diaPagtos, diaDesp
         ] = await Promise.all([
-          fetchAPI(API_MULHERES, 'getIgrejas').catch(err => (console.error(err), [])),
-          fetchAPI(API_MULHERES, 'getPagamentos').catch(err => (console.error(err), [])),
-          fetchAPI(API_MULHERES, 'getDespesas').catch(err => (console.error(err), [])),
-          fetchAPI(API_DIACONATO, 'getIgrejas').catch(err => (console.error(err), [])),
-          fetchAPI(API_DIACONATO, 'getPagamentos').catch(err => (console.error(err), [])),
-          fetchAPI(API_DIACONATO, 'getDespesas').catch(err => (console.error(err), []))
+          fetchAPI(EVENTOS_HISTORICO.mulheres.api, 'getIgrejas').catch(err => (console.error(err), [])),
+          fetchAPI(EVENTOS_HISTORICO.mulheres.api, 'getPagamentos').catch(err => (console.error(err), [])),
+          fetchAPI(EVENTOS_HISTORICO.mulheres.api, 'getDespesas').catch(err => (console.error(err), [])),
+          fetchAPI(EVENTOS_HISTORICO.diaconato.api, 'getIgrejas').catch(err => (console.error(err), [])),
+          fetchAPI(EVENTOS_HISTORICO.diaconato.api, 'getPagamentos').catch(err => (console.error(err), [])),
+          fetchAPI(EVENTOS_HISTORICO.diaconato.api, 'getDespesas').catch(err => (console.error(err), []))
         ]);
 
-        dadosMulheres = { igrejas: mulIgrejas, pagamentos: mulPagtos, despesas: mulDesp };
-        dadosDiaconato = { igrejas: diaIgrejas, pagamentos: diaPagtos, despesas: diaDesp };
+        dadosHistorico = {
+          mulheres: { igrejas: mulIgrejas, pagamentos: mulPagtos, despesas: mulDesp },
+          diaconato: { igrejas: diaIgrejas, pagamentos: diaPagtos, despesas: diaDesp }
+        };
 
-        calcularERenderizar();
+        renderizarHistorico();
       } catch (err) {
-        console.error('Erro ao carregar consolidado:', err);
-        alert('Erro ao conectar com as APIs do Google Sheets. Verifique a internet.');
+        console.error('Erro ao carregar histórico:', err);
+        alert('Erro ao conectar com as planilhas do histórico.');
       } finally {
         loader.classList.add('hidden');
       }
     }
 
-    // Formatação BRL
-    function formatBRL(value) {
-      return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
+    function renderizarHistorico() {
+      if (!dadosHistorico) return;
 
-    // Define filtro e renderiza
-    window.setFiltro = function(novoFiltro) {
-      filtroAtual = novoFiltro;
-
-      // Estilo dos botões
-      const botoes = {
-        todos: document.getElementById('btn-filtro-todos'),
-        mulheres: document.getElementById('btn-filtro-mulheres'),
-        diaconato: document.getElementById('btn-filtro-diaconato')
-      };
-
-      Object.keys(botoes).forEach(k => {
-        if (k === novoFiltro) {
-          botoes[k].className = "px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-md";
-        } else {
-          botoes[k].className = "px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
-        }
-      });
-
-      calcularERenderizar();
-    };
-
-    // Processamento e Renderização
-    function calcularERenderizar() {
-      // 1. Coleta os itens com base no filtro
       let listaReceitas = [];
       let listaDespesas = [];
 
-      // Congresso de Mulheres
-      if (filtroAtual === 'todos' || filtroAtual === 'mulheres') {
-        dadosMulheres.igrejas.forEach(ig => {
+      // Mulheres
+      if (filtroHistoricoAtual === 'todos' || filtroHistoricoAtual === 'mulheres') {
+        const { igrejas, pagamentos, despesas } = dadosHistorico.mulheres;
+        igrejas.forEach(ig => {
           const vagas = Number(ig.qtdVagas || 0);
-          const devido = vagas * VALOR_MULHERES;
-          
-          // Calcula pagamentos correspondentes à igreja
-          const pagosIgreja = dadosMulheres.pagamentos
+          const devido = vagas * EVENTOS_HISTORICO.mulheres.valorInscricao;
+          const pagosIgreja = pagamentos
             .filter(p => p.igrejaId === ig.id && (p.formaPagamento === 'Dinheiro' || p.conferido === 'sim'))
             .reduce((s, p) => s + Number(p.valor || 0), 0);
 
           listaReceitas.push({
             igreja: ig.nome,
-            congresso: 'Mulheres 🌸',
+            congresso: 'Mulheres 🌸 (Encerrado)',
             vagas: vagas,
             devido: devido,
             pago: pagosIgreja,
@@ -373,7 +487,7 @@
           });
         });
 
-        dadosMulheres.despesas.forEach(d => {
+        despesas.forEach(d => {
           listaDespesas.push({
             congresso: 'Mulheres 🌸',
             descricao: d.descricao || 'Despesa sem descrição',
@@ -384,20 +498,19 @@
         });
       }
 
-      // Congresso do Diaconato
-      if (filtroAtual === 'todos' || filtroAtual === 'diaconato') {
-        dadosDiaconato.igrejas.forEach(ig => {
+      // Diaconato
+      if (filtroHistoricoAtual === 'todos' || filtroHistoricoAtual === 'diaconato') {
+        const { igrejas, pagamentos, despesas } = dadosHistorico.diaconato;
+        igrejas.forEach(ig => {
           const vagas = Number(ig.qtdVagas || 0);
-          const devido = vagas * VALOR_DIACONATO;
-
-          // Calcula pagamentos correspondentes à igreja
-          const pagosIgreja = dadosDiaconato.pagamentos
+          const devido = vagas * EVENTOS_HISTORICO.diaconato.valorInscricao;
+          const pagosIgreja = pagamentos
             .filter(p => p.igrejaId === ig.id && (p.formaPagamento === 'Dinheiro' || p.conferido === 'sim'))
             .reduce((s, p) => s + Number(p.valor || 0), 0);
 
           listaReceitas.push({
             igreja: ig.nome,
-            congresso: 'Diaconato 🕊️',
+            congresso: 'Diaconato 🕊️ (Encerrado)',
             vagas: vagas,
             devido: devido,
             pago: pagosIgreja,
@@ -405,7 +518,7 @@
           });
         });
 
-        dadosDiaconato.despesas.forEach(d => {
+        despesas.forEach(d => {
           listaDespesas.push({
             congresso: 'Diaconato 🕊️',
             descricao: d.descricao || 'Despesa sem descrição',
@@ -416,7 +529,7 @@
         });
       }
 
-      // 2. Soma os Totais Gerais
+      // Totais
       const totalVagas = listaReceitas.reduce((s, r) => s + r.vagas, 0);
       const totalDevido = listaReceitas.reduce((s, r) => s + r.devido, 0);
       const totalPago = listaReceitas.reduce((s, r) => s + r.pago, 0);
@@ -424,25 +537,19 @@
       const totalDespesas = listaDespesas.reduce((s, d) => s + d.valor, 0);
       const saldoLiquido = totalPago - totalDespesas;
 
-      // 3. Atualiza os Cards de Resumo
+      // Cards
       document.getElementById('stat-prevista').textContent = formatBRL(totalDevido);
       document.getElementById('stat-recebido').textContent = formatBRL(totalPago);
       document.getElementById('stat-despesas').textContent = formatBRL(totalDespesas);
       document.getElementById('stat-saldo').textContent = formatBRL(saldoLiquido);
       document.getElementById('stat-pendente').textContent = formatBRL(totalPendente);
 
-      // 4. Renderiza Tabela de Receitas
+      // Tabela de Receitas
+      document.getElementById('tabela-receitas-badge').textContent = `Histórico (${filtroHistoricoAtual === 'todos' ? 'Todos' : filtroHistoricoAtual === 'mulheres' ? 'Mulheres' : 'Diaconato'})`;
       const receitasCorpo = document.getElementById('tabela-receitas-corpo');
-      document.getElementById('tabela-receitas-badge').textContent = filtroAtual === 'todos' ? 'Todos os Congressos' : filtroAtual === 'mulheres' ? 'Mulheres' : 'Diaconato';
-      
       if (listaReceitas.length === 0) {
-        receitasCorpo.innerHTML = `
-          <tr>
-            <td colspan="6" class="px-6 py-10 text-center text-slate-400 font-medium bg-slate-950/10">Nenhum registro de receitas carregado.</td>
-          </tr>
-        `;
+        receitasCorpo.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 font-medium bg-slate-950/10">Nenhum registro encontrado.</td></tr>`;
       } else {
-        // Ordena por igreja
         listaReceitas.sort((a,b) => a.igreja.localeCompare(b.igreja));
         receitasCorpo.innerHTML = listaReceitas.map(r => `
           <tr class="hover:bg-slate-900/40 transition-colors">
@@ -465,18 +572,12 @@
       document.getElementById('total-receitas-pago').textContent = formatBRL(totalPago);
       document.getElementById('total-receitas-pendente').textContent = formatBRL(totalPendente);
 
-      // 5. Renderiza Tabela de Despesas
+      // Tabela de Despesas
+      document.getElementById('tabela-despesas-badge').textContent = `Histórico (${filtroHistoricoAtual === 'todos' ? 'Todos' : filtroHistoricoAtual === 'mulheres' ? 'Mulheres' : 'Diaconato'})`;
       const despesasCorpo = document.getElementById('tabela-despesas-corpo');
-      document.getElementById('tabela-despesas-badge').textContent = filtroAtual === 'todos' ? 'Todos os Congressos' : filtroAtual === 'mulheres' ? 'Mulheres' : 'Diaconato';
-
       if (listaDespesas.length === 0) {
-        despesasCorpo.innerHTML = `
-          <tr>
-            <td colspan="5" class="px-6 py-10 text-center text-slate-400 font-medium bg-slate-950/10">Nenhuma despesa ou saída registrada.</td>
-          </tr>
-        `;
+        despesasCorpo.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 font-medium bg-slate-950/10">Nenhuma despesa registrada.</td></tr>`;
       } else {
-        // Ordena por data (mais recente primeiro)
         listaDespesas.sort((a,b) => b.data.localeCompare(a.data));
         despesasCorpo.innerHTML = listaDespesas.map(d => `
           <tr class="hover:bg-slate-900/40 transition-colors">
@@ -496,7 +597,50 @@
       document.getElementById('total-despesas-valor').textContent = formatBRL(totalDespesas);
     }
 
-    // Inicializa
+    // =========================================================================
+    // CONTROLES DE ALTERNÂNCIA DE VISÃO / FILTROS
+    // =========================================================================
+    window.setVisao = function(novaVisao) {
+      visaoAtual = novaVisao;
+
+      const btnAtivos = document.getElementById('btn-visao-ativos');
+      const btnHistorico = document.getElementById('btn-visao-historico');
+      const subfiltros = document.getElementById('subfiltros-historico');
+
+      if (novaVisao === 'ativos') {
+        btnAtivos.className = "px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-md flex items-center gap-2";
+        btnHistorico.className = "px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center gap-2";
+        subfiltros.classList.add('hidden');
+        carregarEventosAtivos();
+      } else {
+        btnAtivos.className = "px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 flex items-center gap-2";
+        btnHistorico.className = "px-5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-800 text-white shadow-md border border-slate-700 flex items-center gap-2";
+        subfiltros.classList.remove('hidden');
+        carregarHistorico();
+      }
+    };
+
+    window.setFiltroHistorico = function(novoFiltro) {
+      filtroHistoricoAtual = novoFiltro;
+
+      const botoes = {
+        todos: document.getElementById('btn-sub-todos'),
+        mulheres: document.getElementById('btn-sub-mulheres'),
+        diaconato: document.getElementById('btn-sub-diaconato')
+      };
+
+      Object.keys(botoes).forEach(k => {
+        if (k === novoFiltro) {
+          botoes[k].className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white";
+        } else {
+          botoes[k].className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white";
+        }
+      });
+
+      renderizarHistorico();
+    };
+
+    // Inicia a aplicação
     init();
   </script>
 </body>

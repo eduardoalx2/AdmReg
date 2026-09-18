@@ -100,66 +100,124 @@
       </p>
     </div>
 
-    <!-- Congresses Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in delay-200 mb-12">
-      
-      <!-- Congresso de Mulheres -->
-      <a href="./congressodemulheres/index.html" class="glass-card rose-glow rounded-3xl p-8 flex flex-col justify-between group">
-        <div>
-          <div class="w-14 h-14 rounded-2xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-300">
-            🌸
-          </div>
-          <h2 class="text-xl font-bold text-white mb-3">Mulheres</h2>
-          <p class="text-sm text-slate-400 leading-relaxed">
-            Painel administrativo do Congresso de Mulheres. Controle de vagas, pagamentos de igrejas e relatórios de inscritas.
-          </p>
-        </div>
-        <div class="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-xs font-semibold text-pink-400 group-hover:text-pink-300 transition-colors uppercase tracking-wider">
-          Acessar Painel
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:translate-x-1">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-          </svg>
-        </div>
-      </a>
+    <!-- SECTION 1: Eventos em Andamento -->
+    <div class="mb-14 animate-fade-in delay-200">
+      <div class="flex items-center gap-2.5 mb-6">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-300">Eventos em Andamento</h2>
+        <span class="text-[10px] font-semibold bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full border border-slate-700">0 Ativos</span>
+      </div>
 
-      <!-- Congresso do Diaconato -->
-      <a href="./congressodiaconato/index.html" class="glass-card indigo-glow rounded-3xl p-8 flex flex-col justify-between group">
-        <div>
-          <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-300">
-            🕊️
-          </div>
-          <h2 class="text-xl font-bold text-white mb-3">Diaconato</h2>
-          <p class="text-sm text-slate-400 leading-relaxed">
-            Gestão do Congresso Estadual do Diaconato. Inscrições de diáconos, controle de recebimentos por igreja e listagens gerais.
-          </p>
+      <!-- Card vazio informativo -->
+      <div class="glass-card rounded-3xl p-8 md:p-10 border-dashed border-slate-800 text-center flex flex-col items-center justify-center">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-3xl mb-4">
+          🗓️
         </div>
-        <div class="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors uppercase tracking-wider">
-          Acessar Painel
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:translate-x-1">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-          </svg>
-        </div>
-      </a>
+        <h3 class="text-base md:text-lg font-bold text-white">Nenhum evento com inscrições abertas no momento</h3>
+        <p class="text-xs md:text-sm text-slate-400 max-w-lg mt-2 leading-relaxed">
+          Os próximos congressos e encontros da Região 655 aparecerão aqui assim que as inscrições forem iniciadas.
+        </p>
+      </div>
+    </div>
 
-      <!-- Congresso de Jovens -->
-      <a href="./jovens/index.html" class="glass-card violet-glow rounded-3xl p-8 flex flex-col justify-between group">
-        <div>
-          <div class="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-300">
-            🔥
-          </div>
-          <h2 class="text-xl font-bold text-white mb-3">Jovens</h2>
-          <p class="text-sm text-slate-400 leading-relaxed">
-            Acompanhamento de metas de jovens por igreja, gerenciamento de líderes de jovens e histórico de contatos/conversas.
-          </p>
+    <!-- SECTION 2: Eventos Realizados -->
+    <div class="animate-fade-in delay-200 mb-12">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex rounded-full h-2.5 w-2.5 bg-slate-600"></span>
+          <h2 class="text-xs font-bold uppercase tracking-widest text-slate-300">Eventos Realizados</h2>
+          <span class="text-[10px] font-semibold bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full border border-slate-700">Histórico</span>
         </div>
-        <div class="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-xs font-semibold text-purple-400 group-hover:text-purple-300 transition-colors uppercase tracking-wider">
-          Acessar Painel
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:translate-x-1">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-          </svg>
-        </div>
-      </a>
+        <p class="text-xs text-slate-500 hidden sm:block">Acesso permanente a relatórios e listas de participantes</p>
+      </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Congresso de Mulheres -->
+        <a href="./congressodemulheres/index.html" class="glass-card rose-glow rounded-3xl p-8 flex flex-col justify-between group">
+          <div>
+            <div class="flex justify-between items-start mb-6">
+              <div class="w-14 h-14 rounded-2xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
+                🌸
+              </div>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Realizado
+              </span>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Mulheres</h2>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Painel administrativo e relatórios do Congresso de Mulheres. Histórico de inscrições confirmadas e recibos.
+            </p>
+          </div>
+          <div class="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-xs font-semibold text-pink-400 group-hover:text-pink-300 transition-colors uppercase tracking-wider">
+            Consultar Relatórios
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:translate-x-1">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </div>
+        </a>
+
+        <!-- Congresso do Diaconato -->
+        <a href="./congressodiaconato/index.html" class="glass-card indigo-glow rounded-3xl p-8 flex flex-col justify-between group">
+          <div>
+            <div class="flex justify-between items-start mb-6">
+              <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
+                🕊️
+              </div>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Realizado
+              </span>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Diaconato</h2>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Gestão e listagens do Congresso Estadual do Diaconato. Histórico de diáconos participantes por igreja.
+            </p>
+          </div>
+          <div class="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors uppercase tracking-wider">
+            Consultar Relatórios
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:translate-x-1">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </div>
+        </a>
+
+        <!-- Congresso de Jovens -->
+        <a href="./jovens/index.html" class="glass-card violet-glow rounded-3xl p-8 flex flex-col justify-between group">
+          <div>
+            <div class="flex justify-between items-start mb-6">
+              <div class="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
+                🔥
+              </div>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Realizado
+              </span>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Jovens</h2>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Painel do Congresso de Jovens. Histórico de metas por congregação, lideranças cadastradas e registros.
+            </p>
+          </div>
+          <div class="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-xs font-semibold text-purple-400 group-hover:text-purple-300 transition-colors uppercase tracking-wider">
+            Consultar Relatórios
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 transition-transform group-hover:translate-x-1">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </div>
+        </a>
+
+      </div>
     </div>
 
   </main>
