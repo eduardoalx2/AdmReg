@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "regiao655-admin",
     "public": ".",
     "ignore": [
       "firebase.json",
