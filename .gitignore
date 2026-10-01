@@ -9,3 +9,6 @@ tatudoai
 
 # Backup local dos dados do app de relatório de viagem (não publicar)
 _backup_rv/
+# Claude IDE
+.claude/
+

@@ -14,6 +14,11 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
+    // Inscrições Dia das Crianças: públicas
+    match /diadascriancas_inscricoes/{docId} {
+      allow read, write: if true;
+    }
+
     // Eventos: exibidos em páginas públicas
     match /eventos/{docId} {
       allow read: if true;
@@ -62,10 +67,10 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
-    // --- PRESENÇAS: escrita pública com validação de campos ---
+    // --- PRESENÇAS: leitura e escrita públicas com validação de campos ---
     // A página presencareg655.html é acessível sem login
     match /presencas/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if request.resource.data.keys().hasAll(['nome', 'igreja', 'eventoId', 'status', 'declaracao'])
                     && request.resource.data.declaracao == 'Sim'
                     && request.resource.data.status in ['Presente', 'Justificado', 'Ausente'];

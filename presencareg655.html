@@ -252,7 +252,7 @@
                 const tags = [];
                 if (p.funcao === 'Pastor Titular') tags.push('TITULAR');
                 if (p.coordenador) tags.push('COORD');
-                const reg = presencasDoEvento.get(p.nome);
+                const reg = presencasDoEvento.get((p.nome || '').trim().toUpperCase());
                 const statusTag = reg ? ` • ${reg.status.toUpperCase()}` : '';
                 opt.textContent = tags.length > 0 ? `${p.nome} (${tags.join(' | ')}${statusTag})` : `${p.nome}${statusTag}`;
                 pastorSelect.appendChild(opt);
@@ -381,7 +381,19 @@
                 const snap = await getDocs(query(collection(db, "presencas"), where("eventoId", "==", eventoId)));
                 snap.forEach(d => {
                     const data = d.data();
-                    presencasDoEvento.set(data.nome, { docId: d.id, status: data.status, motivo: data.motivo || '' });
+                    const n = (data.nome || '').trim().toUpperCase();
+                    if (!presencasDoEvento.has(n)) {
+                        presencasDoEvento.set(n, { docId: d.id, status: data.status, motivo: data.motivo || '', igreja: data.igreja || '', allDocs: [d.id] });
+                    } else {
+                        const existing = presencasDoEvento.get(n);
+                        existing.allDocs.push(d.id);
+                        if (/^\d+\s*-\s*/.test(data.igreja || '') || data.status === 'Presente') {
+                            existing.docId = d.id;
+                            existing.status = data.status;
+                            existing.motivo = data.motivo || '';
+                            existing.igreja = data.igreja || '';
+                        }
+                    }
                 });
             } catch(e) { console.error("Erro ao carregar presenças:", e); }
 
@@ -425,7 +437,7 @@
             const nome = pastorSelect.value;
             if (!nome) return;
 
-            const reg = presencasDoEvento.get(nome);
+            const reg = presencasDoEvento.get(nome.trim().toUpperCase());
             if (reg) {
                 // Se já tinha um registro de 'Ausente' feito pelo admin, força 'Presente' no formulário
                 if (reg.status === 'Ausente') {
@@ -554,9 +566,15 @@
             loadingOverlay.classList.remove('hidden');
 
             try {
-                const regExistente = !isVisitante() ? presencasDoEvento.get(nome) : null;
+                const regExistente = !isVisitante() ? presencasDoEvento.get(nome.trim().toUpperCase()) : null;
                 if (regExistente) {
                     await updateDoc(doc(db, "presencas", regExistente.docId), payload);
+                    // Se existiam duplicados extras para o mesmo pastor, exclui os excedentes
+                    if (regExistente.allDocs && regExistente.allDocs.length > 1) {
+                        for (let i = 1; i < regExistente.allDocs.length; i++) {
+                            try { await deleteDoc(doc(db, "presencas", regExistente.allDocs[i])); } catch(e) {}
+                        }
+                    }
                 } else {
                     payload.createdAt = serverTimestamp();
                     await addDoc(collection(db, "presencas"), payload);

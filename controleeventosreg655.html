@@ -107,9 +107,14 @@
                 <h2 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
                     <i data-lucide="filter" class="w-3.5 h-3.5 text-blue-600"></i> Filtros
                 </h2>
-                <button onclick="window.print()" class="text-[10px] font-bold text-slate-600 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 uppercase tracking-wider shadow-sm border border-slate-200">
+                <div class="flex items-center gap-2">
+                    <button id="btnLimparDuplicados" onclick="window.limparDuplicadosManual()" class="hidden text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 uppercase tracking-wider shadow-sm border border-amber-200" title="Excluir registros duplicados mantendo o que possui o código da igreja">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Limpar Duplicados
+                    </button>
+                    <button onclick="window.print()" class="text-[10px] font-bold text-slate-600 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 uppercase tracking-wider shadow-sm border border-slate-200">
                     <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir Relatório
                 </button>
+                </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
@@ -310,13 +315,14 @@
                 const prSnap = await getDocs(collection(db, "presencas"));
                 const eventosIds = new Set(allEventos.map(e => e.id));
                 const orfaos = [];
+                const rawPresencas = [];
                 
                 prSnap.forEach(d => {
                     const data = d.data();
                     if (data.eventoId && !eventosIds.has(data.eventoId)) {
                         orfaos.push(d.id);
                     } else {
-                        allPresencas.push({id: d.id, ...data});
+                        rawPresencas.push({id: d.id, ...data});
                     }
                 });
 
@@ -324,6 +330,73 @@
                 orfaos.forEach(async (id) => {
                     try { await deleteDoc(doc(db, "presencas", id)); } catch(e) {}
                 });
+
+                // Identifica e trata registros duplicados (mesmo pastor no mesmo evento)
+                // O registro que VALE é o que contém o código da igreja (ex: '3441 - IEQ MARIA CECÍLIA').
+                // Os que têm apenas o nome da igreja e estão duplicados devem ser excluídos.
+                const temCodigoIgreja = (str) => /^\d+\s*-\s*/.test((str || '').trim());
+                const gruposPorChave = new Map();
+                const duplicadosParaExcluir = [];
+
+                rawPresencas.forEach(p => {
+                    const chave = `${p.eventoId}_${(p.nome || '').trim().toUpperCase()}`;
+                    if (!gruposPorChave.has(chave)) {
+                        gruposPorChave.set(chave, [p]);
+                    } else {
+                        gruposPorChave.get(chave).push(p);
+                    }
+                });
+
+                allPresencas = [];
+                for (const [chave, lista] of gruposPorChave.entries()) {
+                    if (lista.length === 1) {
+                        allPresencas.push(lista[0]);
+                    } else {
+                        // Ordena priorizando: 1. Com código da igreja, 2. Presente/Justificado, 3. Declaração Sim
+                        lista.sort((a, b) => {
+                            const codA = temCodigoIgreja(a.igreja) ? 1 : 0;
+                            const codB = temCodigoIgreja(b.igreja) ? 1 : 0;
+                            if (codA !== codB) return codB - codA;
+
+                            const scoreStatus = (s) => (s === 'Presente' ? 3 : (s === 'Justificado' ? 2 : (s === 'Ausente' ? 1 : 0)));
+                            const stA = scoreStatus(a.status);
+                            const stB = scoreStatus(b.status);
+                            if (stA !== stB) return stB - stA;
+
+                            const decA = a.declaracao === 'Sim' ? 1 : 0;
+                            const decB = b.declaracao === 'Sim' ? 1 : 0;
+                            if (decA !== decB) return decB - decA;
+
+                            return 0;
+                        });
+
+                        const valido = lista[0];
+                        allPresencas.push(valido);
+
+                        // Os demais duplicados (especialmente os sem código) serão excluídos
+                        for (let i = 1; i < lista.length; i++) {
+                            duplicadosParaExcluir.push(lista[i]);
+                        }
+                    }
+                }
+
+                // Se admin, remove do Firestore os registros duplicados automaticamente
+                if (isAdmin && duplicadosParaExcluir.length > 0) {
+                    console.log(`[Deduplicação] Removendo ${duplicadosParaExcluir.length} presenças duplicadas...`);
+                    duplicadosParaExcluir.forEach(async (dup) => {
+                        try {
+                            await deleteDoc(doc(db, "presencas", dup.id));
+                            console.log(`[Deduplicação] Excluído doc duplicado: ${dup.id} (${dup.nome} - ${dup.igreja})`);
+                        } catch (err) {
+                            console.error(`[Deduplicação] Erro ao excluir ${dup.id}:`, err);
+                        }
+                    });
+                }
+
+                if (isAdmin) {
+                    const btnLimpar = document.getElementById('btnLimparDuplicados');
+                    if (btnLimpar) btnLimpar.classList.remove('hidden');
+                }
 
                 window.renderTable();
             } catch (error) {
@@ -350,6 +423,13 @@
             if (thAcoes) thAcoes.style.display = isAdmin ? '' : 'none';
 
             let displayList = [];
+            const addedKeys = new Set();
+            const pushDisplay = (item) => {
+                const key = `${item.eventoId}_${(item.nome || '').trim().toUpperCase()}`;
+                if (addedKeys.has(key)) return;
+                addedKeys.add(key);
+                displayList.push(item);
+            };
 
             if (filterEv !== "Todos") {
                 const evento = allEventos.find(ev => ev.id === filterEv);
@@ -371,15 +451,16 @@
                         const pastorInicio = pastor.dataInicioIgreja || '2025-01-01';
                         if (evento.data < pastorInicio) return;
 
-                        const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
+                        const pastorNomeNorm = (pastor.nome || '').trim().toUpperCase();
+                        const presenca = presencasDoEvento.find(p => (p.nome || '').trim().toUpperCase() === pastorNomeNorm);
                         if (presenca) {
                             // Ausente só é válido para eventos Inativos
                             if (presenca.status === 'Ausente' && !eventoInativo) return;
-                            displayList.push({ ...presenca, dataEvento: evento.data });
+                            pushDisplay({ ...presenca, dataEvento: evento.data });
                         } else if (eventoInativo) {
                             // Ausente virtual só gerado se evento estiver Inativo
                             const igrejaInfo = Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : pastor.igreja;
-                            displayList.push({
+                            pushDisplay({
                                 id: `virtual_${pastor.id}_${evento.id}`,
                                 nome: pastor.nome,
                                 igreja: igrejaInfo || '-',
@@ -394,11 +475,9 @@
                     });
 
                     presencasDoEvento.forEach(presenca => {
-                        if (!displayList.some(d => d.id === presenca.id)) {
-                            if (presenca.status === 'Ausente' && !eventoInativo) return;
-                            if (presenca.status === 'Ausente' && !expectedPastores.some(p => p.nome === presenca.nome)) return;
-                            displayList.push({ ...presenca, dataEvento: evento.data });
-                        }
+                        if (presenca.status === 'Ausente' && !eventoInativo) return;
+                        if (presenca.status === 'Ausente' && !expectedPastores.some(p => (p.nome || '').trim().toUpperCase() === (presenca.nome || '').trim().toUpperCase())) return;
+                        pushDisplay({ ...presenca, dataEvento: evento.data });
                     });
                 }
             } else {
@@ -420,15 +499,16 @@
                         const pastorInicio = pastor.dataInicioIgreja || '2025-01-01';
                         if (evento.data < pastorInicio) return;
 
-                        const presenca = presencasDoEvento.find(p => p.nome === pastor.nome);
+                        const pastorNomeNorm = (pastor.nome || '').trim().toUpperCase();
+                        const presenca = presencasDoEvento.find(p => (p.nome || '').trim().toUpperCase() === pastorNomeNorm);
                         if (presenca) {
                             // Ausente só é válido para eventos Inativos
                             if (presenca.status === 'Ausente' && !eventoInativo) return;
-                            displayList.push({ ...presenca, dataEvento: evento.data });
+                            pushDisplay({ ...presenca, dataEvento: evento.data });
                         } else if (eventoInativo) {
                             // Ausente virtual só gerado se evento estiver Inativo
                             const igrejaInfo = Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : pastor.igreja;
-                            displayList.push({
+                            pushDisplay({
                                 id: `virtual_${pastor.id}_${evento.id}`,
                                 nome: pastor.nome,
                                 igreja: igrejaInfo || '-',
@@ -444,11 +524,9 @@
 
                     // Visitantes e pastores não cobertos pelo loop acima (ex: início posterior ao evento)
                     presencasDoEvento.forEach(presenca => {
-                        if (!displayList.some(d => d.id === presenca.id)) {
-                            if (presenca.status === 'Ausente' && !eventoInativo) return;
-                            if (presenca.status === 'Ausente' && !expectedPastores.some(p => p.nome === presenca.nome)) return;
-                            displayList.push({ ...presenca, dataEvento: evento.data });
-                        }
+                        if (presenca.status === 'Ausente' && !eventoInativo) return;
+                        if (presenca.status === 'Ausente' && !expectedPastores.some(p => (p.nome || '').trim().toUpperCase() === (presenca.nome || '').trim().toUpperCase())) return;
+                        pushDisplay({ ...presenca, dataEvento: evento.data });
                     });
                 });
             }
@@ -763,6 +841,71 @@
                 }
             }
         }
+
+        // Limpeza Manual de Registros Duplicados (Admin)
+        window.limparDuplicadosManual = async () => {
+            if (!isAdmin) return;
+            const btn = document.getElementById('btnLimparDuplicados');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Limpando...';
+            if (window.lucide) window.lucide.createIcons();
+
+            try {
+                const snap = await getDocs(collection(db, "presencas"));
+                const todos = [];
+                snap.forEach(d => todos.push({ id: d.id, ...d.data() }));
+
+                const temCodigoIgreja = (str) => /^\d+\s*-\s*/.test((str || '').trim());
+                const grupos = new Map();
+                const paraExcluir = [];
+
+                todos.forEach(p => {
+                    const chave = `${p.eventoId}_${(p.nome || '').trim().toUpperCase()}`;
+                    if (!grupos.has(chave)) grupos.set(chave, [p]);
+                    else grupos.get(chave).push(p);
+                });
+
+                for (const [chave, lista] of grupos.entries()) {
+                    if (lista.length > 1) {
+                        lista.sort((a, b) => {
+                            const codA = temCodigoIgreja(a.igreja) ? 1 : 0;
+                            const codB = temCodigoIgreja(b.igreja) ? 1 : 0;
+                            if (codA !== codB) return codB - codA;
+                            const scoreStatus = (s) => (s === 'Presente' ? 3 : (s === 'Justificado' ? 2 : (s === 'Ausente' ? 1 : 0)));
+                            const stA = scoreStatus(a.status);
+                            const stB = scoreStatus(b.status);
+                            if (stA !== stB) return stB - stA;
+                            return 0;
+                        });
+                        for (let i = 1; i < lista.length; i++) {
+                            paraExcluir.push(lista[i]);
+                        }
+                    }
+                }
+
+                if (paraExcluir.length === 0) {
+                    alert("Nenhum registro duplicado encontrado. O banco de dados já está limpo!");
+                } else {
+                    const deletePromises = paraExcluir.map(dup => deleteDoc(doc(db, "presencas", dup.id)));
+                    await Promise.all(deletePromises);
+
+                    // Atualiza lista local
+                    const idsExcluidos = new Set(paraExcluir.map(d => d.id));
+                    allPresencas = allPresencas.filter(p => !idsExcluidos.has(p.id));
+                    window.renderTable();
+
+                    alert(`Sucesso! ${paraExcluir.length} registro(s) duplicado(s) sem código foram excluídos com sucesso do banco de dados.`);
+                }
+            } catch (e) {
+                console.error("Erro ao limpar duplicados:", e);
+                alert("Erro ao realizar a limpeza de duplicados.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                if (window.lucide) window.lucide.createIcons();
+            }
+        };
 
         window.deletePresenca = async (id) => {
             if (!isAdmin) return;

@@ -1,0 +1,434 @@
+[
+  {
+    "pastor": {
+      "id": "F04bumzJxbumz04oKzQn",
+      "endereco": "RUA CARACAS, 1255",
+      "dataInicioIgreja": "2026-04-01",
+      "igreja": [
+        "IEQ MARIA CECÍLIA"
+      ],
+      "telefone": "43 99100-7802",
+      "email": "prandersonborges@hotmail.com",
+      "categoria": "Ministro(a)",
+      "funcao": "Pastor Titular",
+      "createdAt": null,
+      "prontuario": "23007",
+      "cpf": "261.953.748-73",
+      "coordenador": true,
+      "updatedAt": null,
+      "nome": "ANDERSON BORGES BATISTA"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ MARIA CECÍLIA",
+        "codigo": "3441",
+        "endereco": "AVENIDA GINES PARRA, 266 - CJ. MARIA CECILIA",
+        "tipo": "Igreja Local",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130080541",
+            "obs": "Principal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "xsHhMxOe5PZmzgg8rtky",
+      "cpf": "012.201.772-29",
+      "endereco": "RUA SILVÉRIO PLAGIA, 26",
+      "igreja": [
+        "IEQ CONJ. LUIS DE SÁ"
+      ],
+      "email": "silvaeliassantos9@gmail.com",
+      "createdAt": null,
+      "coordenador": false,
+      "prontuario": "84321",
+      "nome": "ELIAS DA SILVA SANTOS",
+      "updatedAt": null,
+      "funcao": "Pastor Titular",
+      "categoria": "Obreiro(a)",
+      "telefone": "43 99149-0650"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ CONJ. LUIS DE SÁ",
+        "codigo": "60328",
+        "endereco": "RUA LUIS CARLOS DE CASTRO COSTA, 98 - CJ. LUIS DE SÁ",
+        "tipo": "Igreja Local",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130080644",
+            "obs": "Principal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "FAxYqJMbf1jpmzuqVvYt",
+      "categoria": "Aspirante",
+      "nome": "FERNANDO DA SILVA WERNEK",
+      "cpf": "058.621.199-30",
+      "updatedAt": null,
+      "coordenador": true,
+      "endereco": "RUA PASCHOAL GHELARDI, 567",
+      "igreja": [
+        "IEQ SÃO JORGE"
+      ],
+      "email": "fernandoswernek@gmail.com",
+      "prontuario": "64928",
+      "funcao": "Pastor Titular",
+      "createdAt": null,
+      "telefone": "43 99869-8077"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ SÃO JORGE",
+        "codigo": "6018",
+        "endereco": "RUA AMELIA BAPTISTA RABELLO, S/N - PQ. SÃO JORGE",
+        "tipo": "Igreja Local",
+        "contas": []
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "GWeF4ZewtT8uOt4WyfOu",
+      "endereco": "RUA DAVID SANTOS FILHO, 344",
+      "nome": "FLAVIO JOSE DOS SANTOS",
+      "prontuario": "42344",
+      "igreja": [
+        "IEQ PIZA"
+      ],
+      "email": "afhsantos1@gmail.com",
+      "telefone": "43 98825-1728",
+      "coordenador": false,
+      "funcao": "Pastor Titular",
+      "categoria": "Ministro(a)",
+      "dataInicioIgreja": "2025-01-01",
+      "createdAt": null,
+      "cpf": "034.157.149-00",
+      "updatedAt": null
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ PIZA",
+        "codigo": "1328",
+        "endereco": "AVENIDA PARIS, 170 - JD. PIZA",
+        "tipo": "Igreja Local",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130080637",
+            "obs": "Principal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "uTfF8ThPXzaZMbHg5orJ",
+      "prontuario": "15375",
+      "endereco": "RUA DOUTOR RODOLFO RIZZI, 113",
+      "categoria": "Ministro(a)",
+      "igreja": [
+        "IEQ FARID LIBOS"
+      ],
+      "updatedAt": null,
+      "nome": "GEOMAR BALBINO ALVES",
+      "coordenador": false,
+      "email": "geomarbalbino@bol.com.br",
+      "createdAt": null,
+      "funcao": "Pastor Titular",
+      "cpf": "496.204.879-15",
+      "telefone": "43 98414-3916"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ FARID LIBOS",
+        "codigo": "9078",
+        "endereco": "RUA RODOLFO RIZZI, 131 - CJ. FARID LIBOS",
+        "tipo": "Igreja Local",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130080596",
+            "obs": "Principal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "0hNVNHFrxlwMSfjOLToY",
+      "prontuario": "42300",
+      "coordenador": true,
+      "email": "toty.selepenki@gmail.com",
+      "igreja": [
+        "IEQ CARNASCIALLI"
+      ],
+      "telefone": "43 98427-5653",
+      "nome": "JORGE SELEPENKI NETO",
+      "createdAt": null,
+      "updatedAt": null,
+      "endereco": "RUA FRANCISCO MAIOLI, 145",
+      "funcao": "Pastor Titular",
+      "cpf": "016.554.539-98",
+      "categoria": "Ministro(a)"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ CARNASCIALLI",
+        "codigo": "63288",
+        "endereco": "AVENIDA DA LIBERDADE, 930 - JD. CARNASCIALLI",
+        "tipo": "Igreja Local",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130080651",
+            "obs": "Principal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "Uz3eIku2AOf2ZuA7jItQ",
+      "nome": "JOSE NILTON OLIVARES",
+      "cpf": "499.260.129-49",
+      "email": "pastor.niltonolivares@outlook.com",
+      "coordenador": false,
+      "igreja": [
+        "IEQ ALTO DA BOA VISTA"
+      ],
+      "categoria": "Ministro(a)",
+      "endereco": "RUA SOLDADO ENGRÁCIO FRANCISCO DE ANDRADE, 211",
+      "updatedAt": null,
+      "prontuario": "25172",
+      "funcao": "Pastor Titular",
+      "createdAt": null,
+      "telefone": "43 98437-8438"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ ALTO DA BOA VISTA",
+        "codigo": "3744",
+        "endereco": "RUA SALIM SAHAO, 185 - CJ. ALTO DA BOA VISTA",
+        "tipo": "Igreja Local",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130080558",
+            "obs": "Principal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "dApJIuQnG2RAT41YI5c0",
+      "nome": "JUAN CARLOS PINTO DE ALMEIDA",
+      "prontuario": "52012",
+      "cpf": "058.253.634-08",
+      "createdAt": null,
+      "telefone": "81 98464-1514",
+      "igreja": [
+        "IEQ JD. DO LESTE"
+      ],
+      "categoria": "Ministro(a)",
+      "email": "contato.juancarlos@hotmail.com",
+      "updatedAt": null,
+      "coordenador": true,
+      "endereco": "RUA JOSÉ SPOLADORE, 77",
+      "funcao": "Pastor Titular"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ JD. DO LESTE",
+        "codigo": "4394",
+        "endereco": "RUA MARIO BONALUMI, 135 - JD. DO LESTE",
+        "tipo": "Igreja Local",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130080534",
+            "obs": "Principal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "zjQF7ZoNH5VcpBrSqwIF",
+      "igreja": [
+        "IEQ MONACO"
+      ],
+      "updatedAt": null,
+      "categoria": "Aspirante",
+      "telefone": "43 98862-4269",
+      "prontuario": "58026",
+      "email": "rafascoelho80@gmail.com",
+      "endereco": "RUA ÉBANO, 230",
+      "cpf": "416.946.648-99",
+      "funcao": "Pastor Titular",
+      "coordenador": true,
+      "nome": "RAFAEL SOARES COELHO",
+      "createdAt": null
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ MONACO",
+        "codigo": "4016",
+        "endereco": "RUA ARACY SOARES SANTOS, 57 - JD. MONACO",
+        "tipo": "Igreja Local",
+        "contas": []
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "b9Ehn21Ed8cXygJ6BUVQ",
+      "telefone": "43 99926-6379",
+      "coordenador": false,
+      "funcao": "Pastor Titular",
+      "createdAt": null,
+      "email": "pr.rudy_hashimoto@hotmail.com",
+      "igreja": [
+        "IEQ INDUSVILLE"
+      ],
+      "updatedAt": null,
+      "cpf": "038.227.209-92",
+      "endereco": "RUA OSWALDO DE SOUZA CAMPOS, 145",
+      "categoria": "Ministro(a)",
+      "nome": "RUDY HASHIMOTO DE LIMA",
+      "prontuario": "45384"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ INDUSVILLE",
+        "codigo": "3852",
+        "endereco": "RUA OSWALDO DE SOUZA CAMPOS, 50",
+        "tipo": "Igreja Local",
+        "contas": []
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "49FUUT94wgTTQyUg7iul",
+      "coordenador": false,
+      "igreja": [
+        "IEQ COLÚMBIA"
+      ],
+      "endereco": "RUA MANOEL DUARTE BILHÃO, 44",
+      "createdAt": null,
+      "email": "sandra@ieqlondrina.com.br",
+      "telefone": "43 98856-4796",
+      "updatedAt": null,
+      "categoria": "Obreiro(a)",
+      "funcao": "Pastor Titular",
+      "prontuario": "79170",
+      "cpf": "934.713.009-53",
+      "nome": "SANDRA REGINA BATISTA DA SILVA VIEIRA"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ COLÚMBIA",
+        "codigo": "63236",
+        "endereco": "RUA SOITI TARUMA, 333 - JD. COLUMBIA",
+        "tipo": "Igreja Local",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130080668",
+            "obs": "Principal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "4569unfZfcbxjLkLWgLC",
+      "categoria": "Ministro(a)",
+      "endereco": "RUA MANOEL BARBOSA DA FONSECA FILHO, 120",
+      "telefone": "43 999177-6039",
+      "nome": "VALDIR AVILA RAMOS",
+      "igreja": [
+        "IEQ CENTRAL"
+      ],
+      "dataInicioIgreja": "2025-01-01",
+      "prontuario": "15670",
+      "updatedAt": null,
+      "email": "rev.varamos@hotmail.com",
+      "coordenador": false,
+      "funcao": "Pastor Titular",
+      "createdAt": null,
+      "cpf": "776.296.711-72"
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ CENTRAL",
+        "codigo": "0252",
+        "endereco": "TRAVESSA BELO HORIZONTE, 90",
+        "tipo": "Sede Regional",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130066343",
+            "obs": "Principal"
+          },
+          {
+            "agencia": "3708",
+            "conta": "130080606",
+            "obs": "Secundária"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pastor": {
+      "id": "RkKoLsT5oANQroQFjgoE",
+      "igreja": [
+        "IEQ SABARÁ"
+      ],
+      "createdAt": null,
+      "email": "wellingtonsmjrr@gmail.com",
+      "endereco": "RUA BRASÍLIA, 607",
+      "nome": "WELLINGTON SOARES DE MELLO JUNIOR",
+      "prontuario": "86773",
+      "telefone": "43 98476-0878",
+      "cpf": "079.545.729-43",
+      "funcao": "Pastor Titular",
+      "categoria": "Obreiro(a)",
+      "updatedAt": null,
+      "coordenador": false
+    },
+    "igrejas_vinculadas": [
+      {
+        "nome": "IEQ SABARÁ",
+        "codigo": "60205",
+        "endereco": "RUA LOURENÇO DA VEIGA, 358 - JD. SABARÁ",
+        "tipo": "Igreja Local",
+        "contas": [
+          {
+            "agencia": "3708",
+            "conta": "130080620",
+            "obs": "Principal"
+          }
+        ]
+      }
+    ]
+  }
+]

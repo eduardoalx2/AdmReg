@@ -192,9 +192,15 @@
 
         async function prePopularAusencias(eventoId, tipoEvento, dataEvento, publico) {
             try {
-                const pastoresSnap = await getDocs(collection(db, "pastores"));
+                const [pastoresSnap, igrejasSnap] = await Promise.all([
+                    getDocs(collection(db, "pastores")),
+                    getDocs(collection(db, "igrejas"))
+                ]);
                 let lista = [];
                 pastoresSnap.forEach(d => lista.push(d.data()));
+
+                const igrejas = [];
+                igrejasSnap.forEach(d => igrejas.push(d.data()));
 
                 if (publico === 'Titulares') {
                     lista = lista.filter(p => p.funcao === 'Pastor Titular');
@@ -207,11 +213,15 @@
                 const agora = new Date().toLocaleString('pt-BR');
                 const promises = lista.map(p => {
                     const igrejaArr = Array.isArray(p.igreja) ? p.igreja : (p.igreja ? [p.igreja] : []);
+                    const igrejaNome = igrejaArr[0] || '';
+                    const igObj = igrejas.find(i => (i.nome || '').trim().toLowerCase() === igrejaNome.trim().toLowerCase());
+                    const igrejaCompleta = igObj && igObj.codigo ? `${String(igObj.codigo).padStart(4, '0')} - ${igObj.nome}` : igrejaNome;
+
                     return addDoc(collection(db, "presencas"), {
                         nome: p.nome,
-                        igreja: igrejaArr[0] || '',
+                        igreja: igrejaCompleta,
                         eventoId, tipoEvento, dataEvento,
-                        status: 'Ausente', motivo: '', declaracao: '',
+                        status: 'Ausente', motivo: '', declaracao: 'Sim',
                         dataPostagem: agora, obs: '',
                         preRegistrado: true,
                         createdAt: serverTimestamp()
