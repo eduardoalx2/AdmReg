@@ -268,6 +268,7 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { toastSuccess, toastWarning, toastError } from './js/toast.js';
 
         let pastoresList = [];
         let igrejasList = [];
@@ -276,6 +277,70 @@
 
         const tabela = document.getElementById('tabela-pastores');
         const form = document.getElementById('form-pastor');
+
+        // Helpers de Cópia
+        window.copiarNomePastor = async (id, btn) => {
+            const p = pastoresList.find(i => i.id === id);
+            if (!p || !p.nome) {
+                toastWarning('Nome não encontrado.');
+                return;
+            }
+            const nome = p.nome.trim();
+            await copiarTextoGenerico(nome, btn, 'Copy name');
+            toastSuccess(`Nome copiado: ${nome}`);
+        };
+
+        window.copiarCpfPastor = async (id, btn) => {
+            const p = pastoresList.find(i => i.id === id);
+            if (!p || !p.cpf) {
+                toastWarning('CPF não cadastrado para este pastor.');
+                return;
+            }
+            const cpfLimpo = p.cpf.replace(/\D/g, '').trim();
+            if (!cpfLimpo) {
+                toastWarning('CPF não cadastrado para este pastor.');
+                return;
+            }
+            await copiarTextoGenerico(cpfLimpo, btn, 'Copy doc');
+            toastSuccess(`CPF copiado: ${cpfLimpo}`);
+        };
+
+        async function copiarTextoGenerico(texto, btn, originalLabel) {
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(texto);
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = texto;
+                    textarea.style.position = 'fixed';
+                    textarea.style.left = '-999999px';
+                    textarea.style.top = '-999999px';
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    textarea.select();
+                    document.execCommand('copy');
+                    textarea.remove();
+                }
+
+                if (btn) {
+                    const originalHTML = btn.innerHTML;
+                    btn.classList.remove('bg-slate-100', 'text-slate-600', 'border-slate-200', 'hover:bg-blue-50', 'hover:text-blue-700', 'hover:border-blue-300');
+                    btn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-300');
+                    btn.innerHTML = `<i data-lucide="check" class="w-2.5 h-2.5"></i> <span>Copiado!</span>`;
+                    if (window.lucide) lucide.createIcons();
+
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.classList.remove('bg-emerald-100', 'text-emerald-700', 'border-emerald-300');
+                        btn.classList.add('bg-slate-100', 'text-slate-600', 'border-slate-200', 'hover:bg-blue-50', 'hover:text-blue-700', 'hover:border-blue-300');
+                        if (window.lucide) lucide.createIcons();
+                    }, 1500);
+                }
+            } catch (err) {
+                console.error('Erro ao copiar para clipboard:', err);
+                toastError('Não foi possível copiar para a área de transferência.');
+            }
+        }
         
         async function carregarIgrejas() {
             try {
@@ -379,10 +444,20 @@
                 tr.className = "hover:bg-blue-50/50 transition-colors group";
                 tr.innerHTML = `
                     <td class="nome-style">
-                        <div class="flex items-center gap-1 flex-wrap">
-                            ${p.nome}
-                            ${p.funcao === 'Pastor Titular' ? '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[8px] font-bold uppercase">TITULAR</span>' : ''}
-                            ${p.coordenador ? '<span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[8px] font-bold uppercase">COORD.</span>' : ''}
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span>${p.nome}</span>
+                            ${p.funcao === 'Pastor Titular' ? '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[8px] font-bold uppercase tracking-wider">TITULAR</span>' : ''}
+                            ${p.coordenador ? '<span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[8px] font-bold uppercase tracking-wider">COORD.</span>' : ''}
+                            <div class="inline-flex items-center gap-1 ml-1">
+                                <button type="button" onclick="window.copiarNomePastor('${p.id}', this)" class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-slate-600 rounded border border-slate-200 text-[9px] font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs" title="Copiar Nome Completo">
+                                    <i data-lucide="copy" class="w-2.5 h-2.5"></i>
+                                    <span>Copy name</span>
+                                </button>
+                                <button type="button" onclick="window.copiarCpfPastor('${p.id}', this)" class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-slate-600 rounded border border-slate-200 text-[9px] font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs" title="Copiar CPF (somente números)">
+                                    <i data-lucide="file-text" class="w-2.5 h-2.5"></i>
+                                    <span>Copy doc</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="text-[9px] text-slate-500 font-normal uppercase mt-0.5 tracking-wider">${igrejasStr} ${igrejasStr && p.categoria ? '•' : ''} ${p.categoria || ''}</div>
                     </td>
