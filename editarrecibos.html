@@ -465,6 +465,7 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { registrarLog } from './js/logger.js';
 
         let recibosList = [];
         let periodosSet = new Set();
@@ -976,7 +977,18 @@
         window.excluirRecibo = async (id) => {
             if (confirm("Tem certeza que deseja excluir este recibo permanentemente?")) {
                 try {
+                    const reciboExcluido = recibosList.find(r => r.id === id);
                     await deleteDoc(doc(db, "recibos", id));
+                    
+                    if (reciboExcluido) {
+                        await registrarLog({
+                            modulo: 'recibos',
+                            acao: 'EXCLUIR',
+                            resumo: `Excluiu o recibo nº ${reciboExcluido.codigoRecibo || id} de ${reciboExcluido.igrejaNome || reciboExcluido.igrejaFormatada || 'igreja não identificada'} (Ref: ${reciboExcluido.referenceDate || '--'}, Total: ${window.formatMoeda(reciboExcluido.total || 0)})`,
+                            detalhes: reciboExcluido,
+                            docId: id
+                        });
+                    }
                     carregarRecibos();
                 } catch (e) {
                     alert("Erro ao excluir!");
@@ -1026,6 +1038,15 @@
                 };
 
                 await updateDoc(doc(db, "recibos", id), payload);
+
+                const reciboOriginal = recibosList.find(r => r.id === id);
+                await registrarLog({
+                    modulo: 'recibos',
+                    acao: 'EDITAR',
+                    resumo: `Editou o recibo nº ${reciboOriginal?.codigoRecibo || id} de ${reciboOriginal?.igrejaNome || reciboOriginal?.igrejaFormatada || 'igreja'} (Ref: ${payload.referenceDate}, Total: ${window.formatMoeda(payload.total)})`,
+                    detalhes: { payloadAtualizado: payload, reciboAnterior: reciboOriginal },
+                    docId: id
+                });
 
                 window.fecharModal();
                 carregarRecibos();

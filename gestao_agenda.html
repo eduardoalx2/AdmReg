@@ -256,6 +256,7 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { registrarLog } from './js/logger.js';
 
         let agendaList = [];
         let currentTab = 'upcoming';
@@ -413,7 +414,17 @@
         window.excluirEvento = async (id) => {
             if(confirm("Tem certeza que deseja excluir este evento da agenda?")) {
                 try {
+                    const eventoExcluido = agendaList.find(ev => ev.id === id);
                     await deleteDoc(doc(db, "agenda", id));
+                    if (eventoExcluido) {
+                        await registrarLog({
+                            modulo: 'agenda',
+                            acao: 'EXCLUIR',
+                            resumo: `Excluiu o evento da agenda: "${eventoExcluido.evento || 'Evento'}" (${eventoExcluido.data || ''})`,
+                            detalhes: eventoExcluido,
+                            docId: id
+                        });
+                    }
                     carregarAgenda();
                 } catch(e) {
                     alert("Erro ao excluir!");
@@ -445,10 +456,25 @@
                 };
 
                 if(id) {
+                    const eventoAntigo = agendaList.find(ev => ev.id === id);
                     await updateDoc(doc(db, "agenda", id), payload);
+                    await registrarLog({
+                        modulo: 'agenda',
+                        acao: 'EDITAR',
+                        resumo: `Editou evento da agenda: "${payload.evento}" (${payload.data} às ${payload.horario || '--'})`,
+                        detalhes: { payloadAtualizado: payload, eventoAnterior: eventoAntigo },
+                        docId: id
+                    });
                 } else {
                     payload.createdAt = serverTimestamp();
-                    await addDoc(collection(db, "agenda"), payload);
+                    const docRef = await addDoc(collection(db, "agenda"), payload);
+                    await registrarLog({
+                        modulo: 'agenda',
+                        acao: 'CRIAR',
+                        resumo: `Cadastrou novo evento na agenda: "${payload.evento}" (${payload.data} às ${payload.horario || '--'})`,
+                        detalhes: payload,
+                        docId: docRef.id
+                    });
                 }
                 window.fecharModal();
                 carregarAgenda();

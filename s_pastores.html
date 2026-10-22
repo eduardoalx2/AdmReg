@@ -269,6 +269,7 @@
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { toastSuccess, toastWarning, toastError } from './js/toast.js';
+        import { registrarLog } from './js/logger.js';
 
         let pastoresList = [];
         let igrejasList = [];
@@ -507,7 +508,17 @@
         window.excluirPastor = async (id) => {
             if(confirm("Tem certeza que deseja excluir este pastor? Esta ação não pode ser desfeita.")) {
                 try {
+                    const pastorExcluido = pastoresList.find(p => p.id === id);
                     await deleteDoc(doc(db, "pastores", id));
+                    if (pastorExcluido) {
+                        await registrarLog({
+                            modulo: 'pastores',
+                            acao: 'EXCLUIR',
+                            resumo: `Excluiu o cadastro do pastor(a) ${pastorExcluido.nome} (${pastorExcluido.funcao || 'Pastor'})`,
+                            detalhes: pastorExcluido,
+                            docId: id
+                        });
+                    }
                     carregarPastores();
                 } catch(e) {
                     alert("Erro ao excluir!");
@@ -563,7 +574,15 @@
                 };
 
                 if(id) {
+                    const pastorAntigo = pastoresList.find(p => p.id === id);
                     await updateDoc(doc(db, "pastores", id), payload);
+                    await registrarLog({
+                        modulo: 'pastores',
+                        acao: 'EDITAR',
+                        resumo: `Atualizou dados do pastor(a) ${payload.nome} (${payload.funcao} - ${payload.categoria})`,
+                        detalhes: { payloadAtualizado: payload, pastorAnterior: pastorAntigo },
+                        docId: id
+                    });
                     
                     // SINCRONIZAR COM COORDENADORIAS
                     // Atualiza o nome, email e telefone nas coordenadorias caso este pastor seja coordenador
@@ -580,7 +599,14 @@
 
                 } else {
                     payload.createdAt = serverTimestamp();
-                    await addDoc(collection(db, "pastores"), payload);
+                    const docRef = await addDoc(collection(db, "pastores"), payload);
+                    await registrarLog({
+                        modulo: 'pastores',
+                        acao: 'CRIAR',
+                        resumo: `Cadastrou o pastor(a) ${payload.nome} (${payload.funcao} - ${payload.categoria})`,
+                        detalhes: payload,
+                        docId: docRef.id
+                    });
                 }
                 window.fecharModal();
                 carregarPastores();

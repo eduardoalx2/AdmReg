@@ -311,6 +311,7 @@
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy }
             from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { registrarLog } from './js/logger.js';
 
         const fmt  = v => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const fmtD = d => { if (!d) return '—'; const p = d.split('-'); return p.length === 2 ? `${p[1]}/${p[0]}` : p.reverse().join('/'); };
@@ -533,7 +534,17 @@
         window.excluirDebito = async (id) => {
             if (!confirm('Excluir este débito? Esta ação não pode ser desfeita.')) return;
             try {
+                const debitoExcluido = debitosList.find(d => d.id === id);
                 await deleteDoc(doc(db, 'pendencias_manuais', id));
+                if (debitoExcluido) {
+                    await registrarLog({
+                        modulo: 'debitos_manuais',
+                        acao: 'EXCLUIR',
+                        resumo: `Excluiu débito manual de ${debitoExcluido.igrejaNome || 'igreja'} (${fmt(debitoExcluido.valorTotal)}) - ${debitoExcluido.descricao || ''}`,
+                        detalhes: debitoExcluido,
+                        docId: id
+                    });
+                }
                 debitosList = debitosList.filter(d => d.id !== id);
                 window.renderizarTabela();
             } catch (e) { alert('Erro ao excluir.'); console.error(e); }
@@ -572,9 +583,17 @@
 
             try {
                 if (id) {
+                    const debitoOriginal = debitosList.find(d => d.id === id);
                     await updateDoc(doc(db, 'pendencias_manuais', id), payload);
                     const idx = debitosList.findIndex(d => d.id === id);
                     if (idx !== -1) debitosList[idx] = { ...debitosList[idx], ...payload };
+                    await registrarLog({
+                        modulo: 'debitos_manuais',
+                        acao: 'EDITAR',
+                        resumo: `Editou débito manual de ${payload.igrejaNome} (${fmt(payload.valorTotal)}) - ${payload.descricao || ''}`,
+                        detalhes: { payloadAtualizado: payload, debitoAnterior: debitoOriginal },
+                        docId: id
+                    });
                 } else {
                     payload.valorPago  = 0;
                     payload.status     = 'pendente';
@@ -582,6 +601,13 @@
                     payload.createdAt  = serverTimestamp();
                     const ref = await addDoc(collection(db, 'pendencias_manuais'), payload);
                     debitosList.unshift({ id: ref.id, ...payload });
+                    await registrarLog({
+                        modulo: 'debitos_manuais',
+                        acao: 'CRIAR',
+                        resumo: `Lançou novo débito manual para ${payload.igrejaNome} (${fmt(payload.valorTotal)}) - ${payload.descricao || ''}`,
+                        detalhes: payload,
+                        docId: ref.id
+                    });
                 }
                 window.fecharModalDebito();
                 window.renderizarTabela();
@@ -726,6 +752,15 @@
                 if (idx !== -1) {
                     debitosList[idx] = { ...debitosList[idx], valorPago: novoPago, status: novoStatus, pagamentos };
                 }
+
+                await registrarLog({
+                    modulo: 'debitos_manuais',
+                    acao: 'STATUS',
+                    resumo: `Registrou pagamento de débito manual (${fmt(valorPagando)}) para ${d.igrejaNome} - Status atual: ${novoStatus.toUpperCase()} (Recibo: ${codigoRecibo})`,
+                    detalhes: { debitoId: id, pagamento: novoPag, novoTotalPago: novoPago, status: novoStatus, codigoRecibo },
+                    docId: id
+                });
+
                 window.fecharModalPagamento();
                 window.renderizarTabela();
                 window.exibirRecibo(debitosList.find(i => i.id === id), novoPag, codigoRecibo);

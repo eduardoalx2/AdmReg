@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log de Auditoria e Atividades - Região 655</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0284c7 100%);
+        }
+
+        .table-custom th {
+            padding: 10px 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.72rem;
+        }
+
+        .table-custom td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .badge-acao-CRIAR {
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+
+        .badge-acao-EDITAR {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        .badge-acao-EXCLUIR {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .badge-acao-STATUS {
+            background-color: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+
+        .badge-acao-DEFAULT {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+
+        pre.code-json {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.78rem;
+            line-height: 1.45;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 14px;
+            overflow-x: auto;
+            max-height: 420px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- CABEÇALHO -->
+    <header class="w-full shadow-sm bg-white border-b sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-2">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2.5">
+                    <picture>
+                        <source srcset="logo.webp" type="image/webp">
+                        <img src="logo.png" alt="Logo IEQ" class="h-8 w-auto object-contain"
+                            onerror="this.src='icon.png'">
+                    </picture>
+                    <div class="border-l border-slate-200 pl-2.5">
+                        <div class="text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+
+                <div class="flex items-center gap-3">
+                    <span id="userBadge" class="hidden md:inline-flex items-center text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full border border-slate-200">
+                        Carregando...
+                    </span>
+                    <a href="index.html"
+                        class="text-xs font-semibold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 uppercase tracking-wider px-2.5 py-1.5 rounded-md hover:bg-slate-50 transition">
+                        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Painel Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-gradient py-4 px-4 text-white">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="p-1.5 bg-white/10 rounded-lg backdrop-blur">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i>
+                        </span>
+                        <h1 class="text-base md:text-lg font-extrabold tracking-wide uppercase">
+                            Log de Auditoria e Atividades
+                        </h1>
+                    </div>
+                    <p class="text-xs text-slate-300 mt-1">
+                        Rastreabilidade e histórico em tempo real de todas as gravações, alterações e exclusões do sistema
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btnRecarregar" onclick="recarregarLogs()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white text-xs font-semibold rounded-lg border border-white/20 transition shadow-sm">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="iconeRefresh"></i> Atualizar
+                    </button>
+                    <button id="btnExportar" onclick="exportarCSV()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition shadow-sm">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="max-w-7xl mx-auto py-6 px-4 flex-1 w-full">
+
+        <!-- CARDS DE MÉTRICAS -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total de Ações</div>
+                    <div id="metricTotal" class="text-xl font-extrabold text-slate-800 mt-0.5">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i data-lucide="database" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Criações</div>
+                    <div id="metricCriar" class="text-xl font-extrabold text-emerald-700 mt-0.5">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Edições</div>
+                    <div id="metricEditar" class="text-xl font-extrabold text-blue-700 mt-0.5">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i data-lucide="edit-3" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                    <div class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Exclusões</div>
+                    <div id="metricExcluir" class="text-xl font-extrabold text-rose-700 mt-0.5">0</div>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTROS -->
+        <div class="bg-white p-4 rounded-xl shadow-xs border border-slate-200 mb-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+                <!-- Busca textual -->
+                <div class="lg:col-span-4">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                        Buscar na Auditoria
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="filtroBusca" oninput="debounceAplicarFiltros()"
+                            placeholder="Recibo nº, igreja, pastor, usuário ou termo..."
+                            class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none text-xs font-medium text-slate-700 transition">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Módulo -->
+                <div class="lg:col-span-3">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Módulo / Área</label>
+                    <select id="filtroModulo" onchange="aplicarFiltrosEconsultar()"
+                        class="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700">
+                        <option value="">Todos os Módulos</option>
+                        <option value="recibos">📄 Recibos</option>
+                        <option value="saldos">💰 Saldos</option>
+                        <option value="debitos_manuais">💳 Débitos Manuais</option>
+                        <option value="avisos">📢 Avisos</option>
+                        <option value="eventos">🎪 Eventos</option>
+                        <option value="igrejas">⛪ Igrejas</option>
+                        <option value="pastores">👤 Pastores</option>
+                        <option value="agenda">📅 Agenda</option>
+                        <option value="checklist">✅ Checklist</option>
+                        <option value="viagens">🚗 Relatório de Viagem</option>
+                        <option value="usuarios">👥 Usuários / Permissões</option>
+                    </select>
+                </div>
+
+                <!-- Tipo de Ação -->
+                <div class="lg:col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Ação</label>
+                    <select id="filtroAcao" onchange="aplicarFiltrosEconsultar()"
+                        class="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700">
+                        <option value="">Todas as Ações</option>
+                        <option value="CRIAR">➕ CRIAR</option>
+                        <option value="EDITAR">✏️ EDITAR</option>
+                        <option value="EXCLUIR">🗑️ EXCLUIR</option>
+                        <option value="STATUS">🔄 STATUS</option>
+                    </select>
+                </div>
+
+                <!-- Período -->
+                <div class="lg:col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Período</label>
+                    <select id="filtroPeriodo" onchange="aplicarFiltrosLocais()"
+                        class="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700">
+                        <option value="todos">Qualquer Data</option>
+                        <option value="hoje">Hoje</option>
+                        <option value="7dias">Últimos 7 dias</option>
+                        <option value="mes">Este Mês</option>
+                    </select>
+                </div>
+
+                <!-- Limpar -->
+                <div class="lg:col-span-1 flex items-end">
+                    <button onclick="limparFiltros()"
+                        title="Limpar todos os filtros"
+                        class="w-full py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABELA / LISTA DE AUDITORIA -->
+        <div class="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Histórico de Registros (<span id="countFiltrados">0</span>)
+                </span>
+                <span class="text-[11px] text-slate-400 font-medium" id="infoPaginacao">
+                    Ordenado do mais recente para o mais antigo
+                </span>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="p-12 text-center">
+                <div class="inline-block animate-spin text-blue-600 mb-3">
+                    <i data-lucide="loader-2" class="w-8 h-8"></i>
+                </div>
+                <div class="text-xs font-semibold text-slate-600">Carregando auditoria...</div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden p-12 text-center">
+                <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="inbox" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-700">Nenhum registro de atividade encontrado</h3>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    Não foram encontradas ações para os filtros selecionados ou ainda não há logs cadastrados.
+                </p>
+            </div>
+
+            <!-- Tabela -->
+            <div id="tabelaContainer" class="hidden overflow-x-auto">
+                <table class="w-full text-left table-custom">
+                    <thead class="bg-slate-50/80 text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="w-40">Data e Hora</th>
+                            <th class="w-28">Módulo</th>
+                            <th class="w-24">Ação</th>
+                            <th>Resumo da Operação</th>
+                            <th class="w-48">Responsável</th>
+                            <th class="w-24 text-right">Detalhes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaLogsCorpo" class="divide-y divide-slate-100">
+                        <!-- Itens renderizados dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Rodapé / Botão Carregar Mais -->
+            <div id="footerPaginacao" class="p-3 border-t border-slate-100 bg-slate-50/50 flex justify-center items-center">
+                <button id="btnCarregarMais" onclick="carregarProximaPagina()"
+                    class="hidden items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-300 shadow-xs transition">
+                    <i data-lucide="chevrons-down" class="w-4 h-4"></i> Carregar Mais Registros
+                </button>
+                <div id="fimDosRegistros" class="hidden text-xs text-slate-400 font-medium">
+                    Todos os registros carregados
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL DE DETALHES -->
+    <div id="modalDetalhes" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-2xl">
+                <div class="flex items-center gap-2">
+                    <span id="modalAcaoBadge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">CRIAR</span>
+                    <h3 class="text-sm font-bold text-slate-800" id="modalTitulo">Detalhes do Registro</h3>
+                </div>
+                <button onclick="fecharModalDetalhes()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-200/60 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 overflow-y-auto space-y-4 flex-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Data/Hora Servidor</span>
+                        <span id="modalDataHora" class="font-semibold text-slate-800">--</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Módulo</span>
+                        <span id="modalModulo" class="font-semibold text-slate-800 uppercase">--</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Usuário</span>
+                        <span id="modalUsuario" class="font-semibold text-slate-800">--</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">E-mail</span>
+                        <span id="modalEmail" class="font-mono text-slate-600">--</span>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Resumo</span>
+                        <span id="modalResumo" class="font-medium text-slate-800">--</span>
+                    </div>
+                    <div class="sm:col-span-2 flex items-center justify-between" id="containerDocId">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">ID do Documento Afetado</span>
+                            <span id="modalDocId" class="font-mono text-slate-600 text-[11px]">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            Dados Completos (Payload / Snapshot)
+                        </span>
+                        <button onclick="copiarJsonModal()" class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Dados
+                        </button>
+                    </div>
+                    <pre id="modalJson" class="code-json">Nenhum dado adicional registrado.</pre>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 border-t border-slate-100 bg-slate-50 flex justify-end gap-2 rounded-b-2xl">
+                <button onclick="fecharModalDetalhes()"
+                    class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script type="module">
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        import { buscarLogs } from './js/logger.js';
+        import { toastSuccess, toastError, toastInfo } from './js/toast.js';
+        import { esc } from './js/utils.js';
+
+        // Estado local
+        let _usuarioAtual = null;
+        let _todosLogsCarregados = [];
+        let _logsFiltrados = [];
+        let _ultimoDocPaginacao = null;
+        let _temMaisRegistros = true;
+        let _carregando = false;
+        let _logAtivoModal = null;
+        let _debounceTimer = null;
+
+        // Ícones por módulo
+        const ICONES_MODULO = {
+            recibos: 'file-text',
+            saldos: 'wallet',
+            debitos_manuais: 'credit-card',
+            avisos: 'bell',
+            eventos: 'calendar-days',
+            igrejas: 'church',
+            pastores: 'user-check',
+            agenda: 'calendar',
+            checklist: 'check-square',
+            viagens: 'car',
+            usuarios: 'users',
+            geral: 'activity'
+        };
+
+        // Inicialização com controle de acesso
+        async function init() {
+            try {
+                _usuarioAtual = await requireAuth();
+                
+                // Restrito a admin, superintendente e secretario
+                const perms = _usuarioAtual.permissoes || [];
+                const autorizado = perms.includes('admin') || 
+                                   perms.includes('superintendente') || 
+                                   perms.includes('secretario');
+
+                if (!autorizado) {
+                    toastError('Acesso restrito a administradores e secretários.');
+                    setTimeout(() => window.location.replace('index.html'), 1500);
+                    return;
+                }
+
+                // Renderiza crachá do usuário
+                const badgeEl = document.getElementById('userBadge');
+                if (badgeEl) {
+                    badgeEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>${esc(_usuarioAtual.nome || _usuarioAtual.email)}`;
+                }
+
+                await carregarLogsIniciais();
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Erro na inicialização:', err);
+            }
+        }
+
+        // Carrega a primeira leva de logs do Firestore
+        async function carregarLogsIniciais() {
+            if (_carregando) return;
+            _carregando = true;
+            mostrarLoading(true);
+
+            const modulo = document.getElementById('filtroModulo')?.value || '';
+            const acao = document.getElementById('filtroAcao')?.value || '';
+
+            try {
+                const res = await buscarLogs({
+                    modulo,
+                    acao,
+                    limite: 35,
+                    ultimoDoc: null
+                });
+
+                _todosLogsCarregados = res.logs;
+                _ultimoDocPaginacao = res.ultimoDoc;
+                _temMaisRegistros = res.logs.length >= 35;
+
+                aplicarFiltrosLocais();
+            } catch (e) {
+                console.error(e);
+                toastError('Não foi possível carregar os logs de auditoria.');
+                mostrarLoading(false);
+            } finally {
+                _carregando = false;
+                mostrarLoading(false);
+            }
+        }
+
+        // Carrega a próxima página (paginação sob demanda para performance)
+        async function carregarProximaPagina() {
+            if (_carregando || !_ultimoDocPaginacao || !_temMaisRegistros) return;
+            _carregando = true;
+
+            const btn = document.getElementById('btnCarregarMais');
+            if (btn) btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Carregando...';
+
+            const modulo = document.getElementById('filtroModulo')?.value || '';
+            const acao = document.getElementById('filtroAcao')?.value || '';
+
+            try {
+                const res = await buscarLogs({
+                    modulo,
+                    acao,
+                    limite: 35,
+                    ultimoDoc: _ultimoDocPaginacao
+                });
+
+                if (res.logs.length > 0) {
+                    _todosLogsCarregados = [..._todosLogsCarregados, ...res.logs];
+                    _ultimoDocPaginacao = res.ultimoDoc;
+                }
+
+                _temMaisRegistros = res.logs.length >= 35;
+                aplicarFiltrosLocais();
+            } catch (e) {
+                console.error(e);
+                toastError('Erro ao carregar mais registros.');
+            } finally {
+                _carregando = false;
+                if (btn) {
+                    btn.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Carregar Mais Registros';
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        // Aplica filtros locais na memória (Busca textual, Período)
+        function aplicarFiltrosLocais() {
+            const busca = (document.getElementById('filtroBusca')?.value || '').toLowerCase().trim();
+            const periodo = document.getElementById('filtroPeriodo')?.value || 'todos';
+
+            const agora = new Date();
+            const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).getTime();
+            const inicio7Dias = inicioHoje - (7 * 24 * 60 * 60 * 1000);
+            const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).getTime();
+
+            _logsFiltrados = _todosLogsCarregados.filter(item => {
+                // Filtro Período
+                const ts = extrairTimestampMs(item);
+                if (periodo === 'hoje' && ts < inicioHoje) return false;
+                if (periodo === '7dias' && ts < inicio7Dias) return false;
+                if (periodo === 'mes' && ts < inicioMes) return false;
+
+                // Filtro Busca textual
+                if (busca) {
+                    const matchResumo = (item.resumo || '').toLowerCase().includes(busca);
+                    const matchUser = (item.usuarioNome || '').toLowerCase().includes(busca) || 
+                                      (item.usuarioEmail || '').toLowerCase().includes(busca);
+                    const matchDocId = (item.docIdAfetado || '').toLowerCase().includes(busca);
+                    const matchModulo = (item.modulo || '').toLowerCase().includes(busca);
+                    let matchDetalhes = false;
+                    try {
+                        matchDetalhes = JSON.stringify(item.detalhes || {}).toLowerCase().includes(busca);
+                    } catch {}
+
+                    if (!matchResumo && !matchUser && !matchDocId && !matchModulo && !matchDetalhes) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            atualizarMetricas();
+            renderizarTabela();
+        }
+
+        function extrairTimestampMs(item) {
+            if (item.timestamp?.toMillis) return item.timestamp.toMillis();
+            if (item.timestamp?.seconds) return item.timestamp.seconds * 1000;
+            if (item.criadoEmIso) return new Date(item.criadoEmIso).getTime();
+            return 0;
+        }
+
+        function formatarDataHora(item) {
+            const ms = extrairTimestampMs(item);
+            if (!ms) return 'Data não disponível';
+            const d = new Date(ms);
+            const pad = (n) => String(n).padStart(2, '0');
+            const dataStr = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+            
+            // Tempo relativo simples
+            const diffMin = Math.floor((Date.now() - ms) / 60000);
+            let relativo = '';
+            if (diffMin < 1) relativo = 'agora mesmo';
+            else if (diffMin < 60) relativo = `há ${diffMin} min`;
+            else if (diffMin < 1440) relativo = `há ${Math.floor(diffMin / 60)}h`;
+            
+            return { dataStr, relativo };
+        }
+
+        function atualizarMetricas() {
+            const total = _logsFiltrados.length;
+            const criar = _logsFiltrados.filter(l => l.acao === 'CRIAR').length;
+            const editar = _logsFiltrados.filter(l => l.acao === 'EDITAR').length;
+            const excluir = _logsFiltrados.filter(l => l.acao === 'EXCLUIR').length;
+
+            document.getElementById('metricTotal').textContent = total;
+            document.getElementById('metricCriar').textContent = criar;
+            document.getElementById('metricEditar').textContent = editar;
+            document.getElementById('metricExcluir').textContent = excluir;
+            document.getElementById('countFiltrados').textContent = total;
+        }
+
+        function renderizarTabela() {
+            const corpo = document.getElementById('listaLogsCorpo');
+            const container = document.getElementById('tabelaContainer');
+            const empty = document.getElementById('emptyState');
+            const btnMais = document.getElementById('btnCarregarMais');
+            const fimEl = document.getElementById('fimDosRegistros');
+
+            if (_logsFiltrados.length === 0) {
+                container.classList.add('hidden');
+                empty.classList.remove('hidden');
+                btnMais.classList.add('hidden');
+                fimEl.classList.add('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            container.classList.remove('hidden');
+
+            corpo.innerHTML = _logsFiltrados.map((log, index) => {
+                const { dataStr, relativo } = formatarDataHora(log);
+                const acaoBadgeClass = `badge-acao-${log.acao || 'DEFAULT'}`;
+                const icone = ICONES_MODULO[log.modulo] || 'activity';
+
+                return `
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="text-xs">
+                        <div class="font-bold text-slate-800">${esc(dataStr)}</div>
+                        ${relativo ? `<div class="text-[10px] text-slate-400 font-medium">${esc(relativo)}</div>` : ''}
+                    </td>
+                    <td>
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                            <i data-lucide="${icone}" class="w-3 h-3 text-slate-500"></i>
+                            <span class="capitalize">${esc(log.modulo || 'Geral')}</span>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${acaoBadgeClass}">
+                            ${esc(log.acao || 'AÇÃO')}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="text-xs font-semibold text-slate-800 line-clamp-2">${esc(log.resumo || 'Sem descrição')}</div>
+                        ${log.docIdAfetado ? `<span class="text-[10px] text-slate-400 font-mono">ID: ${esc(log.docIdAfetado)}</span>` : ''}
+                    </td>
+                    <td>
+                        <div class="text-xs font-bold text-slate-700">${esc(log.usuarioNome || 'Sistema')}</div>
+                        <div class="text-[10px] font-mono text-slate-400 truncate max-w-[180px]">${esc(log.usuarioEmail || '--')}</div>
+                    </td>
+                    <td class="text-right">
+                        <button onclick="abrirModalDetalhes(${index})"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 rounded-lg text-xs font-semibold border border-slate-200 transition">
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+
+            // Paginação UI
+            if (_temMaisRegistros) {
+                btnMais.classList.remove('hidden');
+                fimEl.classList.add('hidden');
+            } else {
+                btnMais.classList.add('hidden');
+                fimEl.classList.remove('hidden');
+            }
+
+            lucide.createIcons();
+        }
+
+        function mostrarLoading(show) {
+            const loading = document.getElementById('loadingState');
+            const container = document.getElementById('tabelaContainer');
+            const empty = document.getElementById('emptyState');
+            if (show) {
+                loading.classList.remove('hidden');
+                container.classList.add('hidden');
+                empty.classList.add('hidden');
+            } else {
+                loading.classList.add('hidden');
+            }
+        }
+
+        // Abre modal com todos os detalhes
+        window.abrirModalDetalhes = function(index) {
+            const log = _logsFiltrados[index];
+            if (!log) return;
+            _logAtivoModal = log;
+
+            const { dataStr } = formatarDataHora(log);
+
+            document.getElementById('modalAcaoBadge').textContent = log.acao || 'AÇÃO';
+            document.getElementById('modalAcaoBadge').className = `px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider badge-acao-${log.acao || 'DEFAULT'}`;
+            document.getElementById('modalTitulo').textContent = `Registro: ${log.modulo ? log.modulo.toUpperCase() : 'GERAL'}`;
+            document.getElementById('modalDataHora').textContent = dataStr;
+            document.getElementById('modalModulo').textContent = log.modulo || 'Geral';
+            document.getElementById('modalUsuario').textContent = log.usuarioNome || 'Sistema';
+            document.getElementById('modalEmail').textContent = log.usuarioEmail || 'sistema@regiao655';
+            document.getElementById('modalResumo').textContent = log.resumo || 'Sem resumo registrado.';
+            
+            const docIdEl = document.getElementById('modalDocId');
+            if (log.docIdAfetado) {
+                docIdEl.textContent = log.docIdAfetado;
+                document.getElementById('containerDocId').classList.remove('hidden');
+            } else {
+                document.getElementById('containerDocId').classList.add('hidden');
+            }
+
+            // JSON formatado
+            const preJson = document.getElementById('modalJson');
+            if (log.detalhes && Object.keys(log.detalhes).length > 0) {
+                preJson.textContent = JSON.stringify(log.detalhes, null, 2);
+            } else {
+                preJson.textContent = '// Nenhum payload ou dado secundário registrado para esta ação.';
+            }
+
+            document.getElementById('modalDetalhes').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.fecharModalDetalhes = function() {
+            document.getElementById('modalDetalhes').classList.add('hidden');
+            _logAtivoModal = null;
+        };
+
+        window.copiarJsonModal = function() {
+            if (!_logAtivoModal) return;
+            const dados = _logAtivoModal.detalhes || _logAtivoModal;
+            navigator.clipboard.writeText(JSON.stringify(dados, null, 2))
+                .then(() => toastSuccess('Dados copiados para a área de transferência!'))
+                .catch(() => toastError('Não foi possível copiar os dados.'));
+        };
+
+        window.debounceAplicarFiltros = function() {
+            clearTimeout(_debounceTimer);
+            _debounceTimer = setTimeout(() => aplicarFiltrosLocais(), 250);
+        };
+
+        window.aplicarFiltrosEconsultar = function() {
+            carregarLogsIniciais();
+        };
+
+        window.aplicarFiltrosLocais = aplicarFiltrosLocais;
+        window.carregarProximaPagina = carregarProximaPagina;
+
+        window.recarregarLogs = async function() {
+            const icone = document.getElementById('iconeRefresh');
+            if (icone) icone.classList.add('animate-spin');
+            await carregarLogsIniciais();
+            setTimeout(() => {
+                if (icone) icone.classList.remove('animate-spin');
+                toastSuccess('Auditoria atualizada!');
+            }, 400);
+        };
+
+        window.limparFiltros = function() {
+            document.getElementById('filtroBusca').value = '';
+            document.getElementById('filtroModulo').value = '';
+            document.getElementById('filtroAcao').value = '';
+            document.getElementById('filtroPeriodo').value = 'todos';
+            carregarLogsIniciais();
+        };
+
+        // Exportação leve em CSV
+        window.exportarCSV = function() {
+            if (_logsFiltrados.length === 0) {
+                toastInfo('Nenhum registro para exportar no filtro atual.');
+                return;
+            }
+
+            const cabecalhos = ['Data e Hora', 'Modulo', 'Acao', 'Resumo', 'Usuario', 'Email', 'ID Documento'];
+            const linhas = _logsFiltrados.map(l => {
+                const { dataStr } = formatarDataHora(l);
+                return [
+                    `"${dataStr}"`,
+                    `"${l.modulo || ''}"`,
+                    `"${l.acao || ''}"`,
+                    `"${(l.resumo || '').replace(/"/g, '""')}"`,
+                    `"${(l.usuarioNome || '').replace(/"/g, '""')}"`,
+                    `"${l.usuarioEmail || ''}"`,
+                    `"${l.docIdAfetado || ''}"`
+                ].join(';');
+            });
+
+            const csvContent = '\uFEFF' + [cabecalhos.join(';'), ...linhas].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `auditoria_regiao655_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toastSuccess('Relatório CSV exportado com sucesso!');
+        };
+
+        // Inicia quando o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>

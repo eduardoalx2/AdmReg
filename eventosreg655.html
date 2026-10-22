@@ -150,6 +150,7 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { registrarLog } from './js/logger.js';
 
         const publicoCores  = { Todos: 'bg-slate-100 text-slate-600', Titulares: 'bg-blue-100 text-blue-700', Coordenadores: 'bg-purple-100 text-purple-700', TitularesECoordenadores: 'bg-indigo-100 text-indigo-700', PublicoGeral: 'bg-emerald-100 text-emerald-700', EventoAberto: 'bg-rose-100 text-rose-700' };
         const publicoLabels = { Todos: 'Todos', Titulares: 'Somente Titulares', Coordenadores: 'Somente Coordenadores', TitularesECoordenadores: 'Titulares e Coordenadores', PublicoGeral: 'Aberto ao Público', EventoAberto: 'Evento Aberto' };
@@ -394,11 +395,26 @@
             try {
                 if (editingId) {
                     await updateDoc(doc(db, "eventos", editingId), { ...payload, updatedAt: serverTimestamp() });
+                    const eventoAntigo = eventosCache.get(editingId);
+                    await registrarLog({
+                        modulo: 'eventos',
+                        acao: 'EDITAR',
+                        resumo: `Atualizou dados do evento: "${payload.nome}" (${payload.data})`,
+                        detalhes: { payloadAtualizado: payload, eventoAnterior: eventoAntigo },
+                        docId: editingId
+                    });
                     showFeedback("Evento atualizado com sucesso!", "success");
                     window.cancelarEdicao();
                 } else {
                     payload.createdAt = serverTimestamp();
                     const docRef = await addDoc(collection(db, "eventos"), payload);
+                    await registrarLog({
+                        modulo: 'eventos',
+                        acao: 'CRIAR',
+                        resumo: `Cadastrou o evento: "${payload.nome}" (${payload.data} - ${payload.publico})`,
+                        detalhes: payload,
+                        docId: docRef.id
+                    });
                     if (publicoSelecionado === 'EventoAberto') {
                         showFeedback("Evento Aberto cadastrado com sucesso!", "success");
                     } else {
@@ -425,6 +441,14 @@
             const novoStatus = statusAtual === 'Ativo' ? 'Inativo' : 'Ativo';
             try {
                 await updateDoc(doc(db, "eventos", id), { status: novoStatus });
+                const ev = eventosCache.get(id);
+                await registrarLog({
+                    modulo: 'eventos',
+                    acao: 'STATUS',
+                    resumo: `Alterou status do evento "${ev?.nome || id}" para ${novoStatus}`,
+                    detalhes: { eventoId: id, status: novoStatus },
+                    docId: id
+                });
                 carregarEventos();
             } catch (error) {
                 console.error("Erro ao atualizar status:", error);
@@ -435,6 +459,8 @@
         window.excluirEvento = async function(id) {
             if (confirm("Tem certeza que deseja EXCLUIR este evento? ATENÇÃO: Todas as listas de presenças e faltas registradas para este evento também serão APAGADAS permanentemente!")) {
                 try {
+                    const ev = eventosCache.get(id);
+
                     // 1. Apaga presenças normais
                     const presencasSnap = await getDocs(query(collection(db, "presencas"), where("eventoId", "==", id)));
                     const deletePromises = [];
@@ -453,6 +479,14 @@
                     // 3. Apaga o evento em si
                     await deleteDoc(doc(db, "eventos", id));
                     
+                    await registrarLog({
+                        modulo: 'eventos',
+                        acao: 'EXCLUIR',
+                        resumo: `Excluiu o evento "${ev?.nome || id}" (${ev?.data || ''}) e todas as presenças/faltas associadas`,
+                        detalhes: ev || { eventoId: id },
+                        docId: id
+                    });
+
                     if (document.getElementById('editingId').value === id) window.cancelarEdicao();
                     carregarEventos();
                 } catch (error) {

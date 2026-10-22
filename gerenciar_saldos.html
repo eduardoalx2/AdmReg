@@ -342,6 +342,7 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { registrarLog } from './js/logger.js';
 
         let saldosList = [];
         let periodosSet = new Set();
@@ -566,7 +567,19 @@
         window.excluirSaldo = async (id) => {
             if (confirm("Tem certeza que deseja excluir este lançamento permanentemente?")) {
                 try {
+                    const saldoExcluido = saldosList.find(s => s.id === id);
                     await deleteDoc(doc(db, "saldos_virada", id));
+
+                    if (saldoExcluido) {
+                        await registrarLog({
+                            modulo: 'saldos',
+                            acao: 'EXCLUIR',
+                            resumo: `Excluiu lançamento de saldo de ${saldoExcluido.igrejaFormatada || saldoExcluido.igrejaNome || 'igreja'} (${saldoExcluido.periodo || ''})`,
+                            detalhes: saldoExcluido,
+                            docId: id
+                        });
+                    }
+
                     carregarSaldos();
                 } catch (e) {
                     alert("Erro ao excluir!");
@@ -713,6 +726,15 @@
                 };
 
                 await updateDoc(doc(db, "saldos_virada", id), payload);
+
+                const saldoOriginal = saldosList.find(s => s.id === id);
+                await registrarLog({
+                    modulo: 'saldos',
+                    acao: 'EDITAR',
+                    resumo: `Editou lançamento de saldo de ${saldoOriginal?.igrejaFormatada || 'igreja'} (${saldoOriginal?.periodo || ''})`,
+                    detalhes: { payloadAtualizado: payload, saldoAnterior: saldoOriginal },
+                    docId: id
+                });
 
                 window.fecharModal();
                 carregarSaldos();

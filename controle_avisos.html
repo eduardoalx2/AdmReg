@@ -144,6 +144,7 @@
             collection, getDocs, doc, addDoc, updateDoc, deleteDoc,
             serverTimestamp, query, orderBy
         } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { registrarLog } from './js/logger.js';
 
         lucide.createIcons();
 
@@ -391,7 +392,15 @@
 
         window.toggleStatus = async (docId, novoStatus) => {
             try {
+                const aviso = allAvisos.find(a => a.docId === docId);
                 await updateDoc(doc(db, 'avisos', docId), { status: novoStatus });
+                await registrarLog({
+                    modulo: 'avisos',
+                    acao: 'STATUS',
+                    resumo: `Alterou status do aviso para "${novoStatus.toUpperCase()}": "${(aviso?.texto || '').slice(0, 60)}..."`,
+                    detalhes: { avisoId: docId, novoStatus, aviso },
+                    docId
+                });
                 await carregarTudo();
             } catch(e) { alert('Erro: ' + e.message); }
         };
@@ -405,6 +414,13 @@
                 const ciencias = allCiencias.filter(c => c.avisoId === aviso.avisoId);
                 await Promise.all(ciencias.map(c => deleteDoc(doc(db, 'avisos_ciencia', c.docId))));
                 await deleteDoc(doc(db, 'avisos', docId));
+                await registrarLog({
+                    modulo: 'avisos',
+                    acao: 'EXCLUIR',
+                    resumo: `Excluiu o aviso: "${(aviso.texto || '').slice(0, 70)}..."`,
+                    detalhes: aviso,
+                    docId
+                });
                 await carregarTudo();
             } catch(e) { alert('Erro: ' + e.message); }
         };
@@ -481,13 +497,27 @@
                         ? 'aviso_' + Date.now()
                         : avisoAtual.avisoId;
                     await updateDoc(doc(db, 'avisos', docId), { texto, tipo, destinatario, avisoId: novoAvisoId });
+                    await registrarLog({
+                        modulo: 'avisos',
+                        acao: 'EDITAR',
+                        resumo: `Editou aviso [${tipo.toUpperCase()}]: "${texto.slice(0, 70)}..."`,
+                        detalhes: { texto, tipo, destinatario, avisoAnterior: avisoAtual },
+                        docId
+                    });
                 } else {
-                    await addDoc(collection(db, 'avisos'), {
+                    const ref = await addDoc(collection(db, 'avisos'), {
                         texto, tipo, destinatario,
                         status:    'ativo',
                         avisoId:   'aviso_' + Date.now(),
                         criadoEm:  serverTimestamp(),
                         criadoPor: userEmail
+                    });
+                    await registrarLog({
+                        modulo: 'avisos',
+                        acao: 'CRIAR',
+                        resumo: `Criou novo aviso [${tipo.toUpperCase()}] para ${destinatario}: "${texto.slice(0, 70)}..."`,
+                        detalhes: { texto, tipo, destinatario, status: 'ativo' },
+                        docId: ref.id
                     });
                 }
                 fecharModal();

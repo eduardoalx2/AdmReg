@@ -38,13 +38,15 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { registrarLog } from './js/logger.js';
 
         window.firebaseGlobal = {
             db,
             collection,
             getDocs,
             addDoc,
-            serverTimestamp
+            serverTimestamp,
+            registrarLog
         };
     </script>
 
@@ -274,8 +276,19 @@
                 };
 
                 try {
-                    const { db, collection, addDoc, serverTimestamp } = window.firebaseGlobal;
-                    await addDoc(collection(db, "saldos_virada"), { ...payload, createdAt: serverTimestamp() });
+                    const { db, collection, addDoc, serverTimestamp, registrarLog } = window.firebaseGlobal;
+                    const docRef = await addDoc(collection(db, "saldos_virada"), { ...payload, createdAt: serverTimestamp() });
+                    
+                    if (registrarLog) {
+                        await registrarLog({
+                            modulo: 'saldos',
+                            acao: 'CRIAR',
+                            resumo: `Lançou Saldo de Virada para ${payload.igrejaFormatada} (${payload.periodo}) - Entradas: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payload.entradasTaxadas)}, Saldo Total: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payload.saldoTotal)}`,
+                            detalhes: payload,
+                            docId: docRef.id
+                        });
+                    }
+
                     setShowPreview(false);
                     setShowSuccess(true);
                 } catch (e) {

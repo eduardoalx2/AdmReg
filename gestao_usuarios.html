@@ -202,6 +202,7 @@
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { registrarLog } from './js/logger.js';
 
         // App secundário para criar usuários sem deslogar o admin
         const firebaseConfig = {
@@ -403,7 +404,17 @@
         window.excluirUsuario = async (id) => {
             if(confirm("Tem certeza que deseja excluir este usuário? O acesso dele será removido.")) {
                 try {
+                    const u = usuariosList.find(x => x.id === id);
                     await deleteDoc(doc(db, "usuarios", id));
+                    if (u) {
+                        await registrarLog({
+                            modulo: 'usuarios',
+                            acao: 'EXCLUIR',
+                            resumo: `Excluiu o usuário ${u.nome || u.email} (${u.email})`,
+                            detalhes: u,
+                            docId: id
+                        });
+                    }
                     carregarUsuarios();
                 } catch(e) {
                     alert("Erro ao excluir!");
@@ -436,7 +447,15 @@
 
                 if (id) {
                     // Edição: apenas atualiza Firestore
+                    const uAntigo = usuariosList.find(x => x.id === id);
                     await updateDoc(doc(db, "usuarios", id), payload);
+                    await registrarLog({
+                        modulo: 'usuarios',
+                        acao: 'EDITAR',
+                        resumo: `Atualizou usuário ${payload.nome} (${payload.email}) - Nível: ${payload.permissoes.join(', ')}`,
+                        detalhes: { payloadAtualizado: payload, usuarioAnterior: uAntigo },
+                        docId: id
+                    });
                 } else {
                     // Novo usuário: valida senha e cria no Firebase Auth primeiro
                     const senha = document.getElementById('usuario-senha').value;
@@ -457,7 +476,14 @@
 
                     // Salva no Firestore
                     payload.createdAt = serverTimestamp();
-                    await addDoc(collection(db, "usuarios"), payload);
+                    const docRef = await addDoc(collection(db, "usuarios"), payload);
+                    await registrarLog({
+                        modulo: 'usuarios',
+                        acao: 'CRIAR',
+                        resumo: `Cadastrou novo usuário ${payload.nome} (${payload.email}) - Nível: ${payload.permissoes.join(', ')}`,
+                        detalhes: payload,
+                        docId: docRef.id
+                    });
                 }
 
                 window.fecharModal();

@@ -69,7 +69,8 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-        window.firebaseGlobal = { db, collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, query, orderBy, limit, where };
+        import { registrarLog } from './js/logger.js';
+        window.firebaseGlobal = { db, collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, query, orderBy, limit, where, registrarLog };
     </script>
 
     <div id="root"></div>
@@ -481,10 +482,20 @@
                 };
 
                 try {
-                    const { db, collection, addDoc, serverTimestamp } = window.firebaseGlobal;
+                    const { db, collection, addDoc, serverTimestamp, registrarLog } = window.firebaseGlobal;
                     
-                    await addDoc(collection(db, "recibos"), { ...newRecord, createdAt: serverTimestamp() });
+                    const docRef = await addDoc(collection(db, "recibos"), { ...newRecord, createdAt: serverTimestamp() });
                     
+                    if (registrarLog) {
+                        await registrarLog({
+                            modulo: 'recibos',
+                            acao: 'CRIAR',
+                            resumo: `Gerou o recibo nº ${codigoRecibo} para ${churchToSave} (${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPayable)})`,
+                            detalhes: newRecord,
+                            docId: docRef.id
+                        });
+                    }
+
                     // Redireciona diretamente para a tela de gerenciar recibos
                     window.location.href = "editarrecibos.html";
                 } catch (error) {

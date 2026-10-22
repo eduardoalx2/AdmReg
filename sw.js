@@ -2,17 +2,19 @@
  * sw.js — Service Worker do Portal Região 655
  * Estratégia: Cache-First para assets estáticos, Network-First para HTML
  */
-const CACHE_NAME = 'reg655-v17';
+const CACHE_NAME = 'reg655-v18';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
     '/login.html',
+    '/logs_auditoria.html',
     '/styles/main.css',
     '/styles/admin.css',
     '/styles/pastor.css',
     '/styles/components.css',
     '/js/auth.js',
     '/js/utils.js',
+    '/js/logger.js',
     '/js/firebase-helpers.js',
     '/js/toast.js',
     '/firebase-config.js',

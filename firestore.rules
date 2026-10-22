@@ -82,6 +82,13 @@ service cloud.firestore {
 
     // --- COLEÇÕES PRIVADAS (requerem autenticação) ---
 
+    // Logs de Auditoria do Sistema: autenticado pode criar e ler; imutável (sem edição nem exclusão)
+    match /logs_atividades/{docId} {
+      allow read, create: if isAuthenticated();
+      allow update: if false;
+      allow delete: if false;
+    }
+
     match /usuarios/{docId} {
       allow read, write: if isAuthenticated();
     }

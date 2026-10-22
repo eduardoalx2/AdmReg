@@ -35,6 +35,7 @@
       from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { registrarLog } from './js/logger.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyBJJ2Zc6x78VOpRPeEYmb-CDKdRRv6Rg9I",
@@ -55,7 +56,8 @@
       db, auth, googleProvider,
       collection, collectionGroup, doc, addDoc, setDoc, updateDoc, deleteDoc,
       getDocs, onSnapshot, query, where, orderBy, Timestamp, serverTimestamp,
-      signInWithPopup, signOut, onAuthStateChanged
+      signInWithPopup, signOut, onAuthStateChanged,
+      registrarLog
     };
     window.__FB_READY = true;
     window.dispatchEvent(new Event('firebase-ready'));
@@ -280,6 +282,16 @@
             createdAt: fb.Timestamp.now(), updatedAt: fb.Timestamp.now()
           };
           const ref = await fb.addDoc(fb.collection(fb.db, 'reports'), novo);
+          if (fb.registrarLog) {
+            await fb.registrarLog({
+              modulo: 'viagens',
+              acao: 'CRIAR',
+              resumo: `Criou novo relatório de viagem: "${novo.name}"`,
+              detalhes: novo,
+              docId: ref.id,
+              usuario: { email: user.email, nome: user.displayName }
+            });
+          }
           setSelectedId(ref.id); setView('edit');
         } catch (e) { fail(e, 'create'); }
       };
@@ -305,9 +317,20 @@
         if (!selected || !user) return;
         if (selected.locked) return;
         try {
-          await fb.addDoc(fb.collection(fb.db, `reports/${selected.id}/expenses`), {
+          const expData = {
             reportId: selected.id, uid: user.uid, categoryId, receiptNumber: '', value: 0, createdAt: fb.Timestamp.now()
-          });
+          };
+          const refExp = await fb.addDoc(fb.collection(fb.db, `reports/${selected.id}/expenses`), expData);
+          if (fb.registrarLog) {
+            await fb.registrarLog({
+              modulo: 'viagens',
+              acao: 'CRIAR',
+              resumo: `Adicionou despesa (${categoryId}) no relatório "${selected.name}"`,
+              detalhes: expData,
+              docId: refExp.id,
+              usuario: { email: user.email, nome: user.displayName }
+            });
+          }
         } catch (e) { fail(e, 'add expense'); }
       };
       const updateExpense = async (id, data) => {
@@ -317,7 +340,19 @@
       };
       const deleteExpense = async (id) => {
         if (!selected) return;
-        try { await fb.deleteDoc(fb.doc(fb.db, `reports/${selected.id}/expenses`, id)); }
+        try {
+          await fb.deleteDoc(fb.doc(fb.db, `reports/${selected.id}/expenses`, id));
+          if (fb.registrarLog) {
+            await fb.registrarLog({
+              modulo: 'viagens',
+              acao: 'EXCLUIR',
+              resumo: `Excluiu despesa do relatório "${selected.name}"`,
+              detalhes: { reportId: selected.id, expenseId: id },
+              docId: id,
+              usuario: { email: user.email, nome: user.displayName }
+            });
+          }
+        }
         catch (e) { fail(e, 'delete expense'); }
       };
       const deleteReport = async (id) => {
@@ -325,6 +360,16 @@
           const exps = await fb.getDocs(fb.collection(fb.db, `reports/${id}/expenses`));
           await Promise.all(exps.docs.map(d => fb.deleteDoc(d.ref)));
           await fb.deleteDoc(fb.doc(fb.db, 'reports', id));
+          if (fb.registrarLog) {
+            await fb.registrarLog({
+              modulo: 'viagens',
+              acao: 'EXCLUIR',
+              resumo: `Excluiu relatório de viagem ID ${id}`,
+              detalhes: { reportId: id },
+              docId: id,
+              usuario: { email: user?.email, nome: user?.displayName }
+            });
+          }
           if (selectedId === id) { setSelectedId(null); setView('list'); }
           setDelConfirm(null);
         } catch (e) { fail(e, 'delete report'); }

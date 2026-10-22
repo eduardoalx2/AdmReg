@@ -251,6 +251,7 @@
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { registrarLog } from './js/logger.js';
 
         let igrejasList = [];
         let pastoresList = [];
@@ -409,7 +410,17 @@
         window.excluirIgreja = async (id) => {
             if(confirm("Tem certeza que deseja excluir esta igreja? Esta ação não pode ser desfeita.")) {
                 try {
+                    const igrejaExcluida = igrejasList.find(i => i.id === id);
                     await deleteDoc(doc(db, "igrejas", id));
+                    if (igrejaExcluida) {
+                        await registrarLog({
+                            modulo: 'igrejas',
+                            acao: 'EXCLUIR',
+                            resumo: `Excluiu a igreja ${igrejaExcluida.codigo} - ${igrejaExcluida.nome}`,
+                            detalhes: igrejaExcluida,
+                            docId: id
+                        });
+                    }
                     carregarIgrejas();
                 } catch(e) {
                     alert("Erro ao excluir!");
@@ -458,9 +469,24 @@
                 };
 
                 if(id) {
+                    const igrejaAntiga = igrejasList.find(i => i.id === id);
                     await updateDoc(doc(db, "igrejas", id), payload);
+                    await registrarLog({
+                        modulo: 'igrejas',
+                        acao: 'EDITAR',
+                        resumo: `Atualizou os dados da igreja ${payload.codigo} - ${payload.nome}`,
+                        detalhes: { payloadAtualizado: payload, igrejaAnterior: igrejaAntiga },
+                        docId: id
+                    });
                 } else {
-                    await addDoc(collection(db, "igrejas"), payload);
+                    const docRef = await addDoc(collection(db, "igrejas"), payload);
+                    await registrarLog({
+                        modulo: 'igrejas',
+                        acao: 'CRIAR',
+                        resumo: `Cadastrou nova igreja ${payload.codigo} - ${payload.nome} (${payload.tipo})`,
+                        detalhes: payload,
+                        docId: docRef.id
+                    });
                 }
 
                 const oldTitulares = pastoresList.filter(p => {
