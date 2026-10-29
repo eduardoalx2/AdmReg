@@ -148,6 +148,11 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
     }
 
+    // Pedidos da Campanha Projeto de Vida 2027
+    match /pedidos_campanha_2027/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
     // Qualquer outra coleção não listada: requer autenticação
     match /{collection}/{docId} {
       allow read, write: if isAuthenticated();

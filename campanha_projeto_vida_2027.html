@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Projeto de Vida 2027 — Pedido de Kits & Chaves | Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b1324;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        .font-num { font-family: 'Inter', monospace; }
+        .bg-pattern {
+            background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px), radial-gradient(rgba(217, 119, 6, 0.05) 1px, transparent 1px);
+            background-size: 32px 32px;
+            background-position: 0 0, 16px 16px;
+        }
+        .glow-gold {
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.25);
+        }
+        .glow-blue {
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+        }
+        .glass-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card-locked {
+            background: linear-gradient(135deg, rgba(16, 36, 44, 0.85) 0%, rgba(10, 25, 35, 0.95) 100%);
+            border: 1px solid rgba(45, 212, 191, 0.25);
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: #0f172a !important; }
+            .print-area { display: block !important; }
+            .glass-card { background: white !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; box-shadow: none !important; }
+            .text-white { color: #0f172a !important; }
+            .text-slate-300, .text-slate-400 { color: #475569 !important; }
+        }
+    </style>
+</head>
+<body class="bg-pattern antialiased flex flex-col justify-between selection:bg-amber-500 selection:text-white">
+
+    <!-- BARRA SUPERIOR / NAVEGAÇÃO -->
+    <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 no-print">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="p-2 -ml-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all" title="Voltar ao Painel Principal">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <div>
+                    <span class="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+                        <i data-lucide="sparkles" class="w-3 h-3"></i> Campanha Oficial 2027
+                    </span>
+                    <h1 class="text-sm md:text-base font-bold text-white tracking-tight">Projeto de Vida 2027</h1>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a id="btn-admin-link" href="campanha_projeto_vida_admin.html" class="hidden items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg transition-all" title="Painel Regional de Pedidos">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Painel Regional</span>
+                </a>
+                <button onclick="window.print()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors" title="Imprimir Comprovante">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-1">
+
+        <!-- CARD IDENTIFICAÇÃO DA IGREJA & PASTOR -->
+        <section class="glass-card rounded-2xl p-4 md:p-5 mb-6 shadow-xl relative overflow-hidden border-t-2 border-t-sky-500">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-start gap-3.5">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-600 to-blue-500 flex items-center justify-center text-white font-black text-xl shadow-lg shrink-0">
+                        <i data-lucide="church" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 uppercase tracking-wider">Igreja Solicitante</span>
+                            <span id="badge-status-top" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 uppercase tracking-wider">Verificando...</span>
+                        </div>
+                        <h2 id="display-igreja" class="text-base sm:text-lg font-bold text-white mt-0.5">Carregando Igreja...</h2>
+                        <p id="display-pastor" class="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                            <i data-lucide="user" class="w-3.5 h-3.5 text-slate-500"></i> Pastor(a): <span>Carregando...</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Seletor exclusivo para Admin simular ou lançar por outra igreja -->
+                <div id="admin-church-selector-wrap" class="hidden sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-700/50">
+                    <label for="select-admin-igreja" class="block text-[10px] font-bold uppercase text-amber-400 tracking-wider mb-1">
+                        👑 Selecionar Igreja (Admin):
+                    </label>
+                    <select id="select-admin-igreja" class="bg-slate-900 border border-slate-700 text-xs font-semibold text-slate-200 rounded-lg px-3 py-1.5 outline-none focus:border-amber-400 w-full sm:w-60">
+                        <option value="">Carregando congregações...</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- BANNER DE DESTAQUE COM A IMAGEM OFICIAL -->
+        <section class="glass-card rounded-2xl overflow-hidden mb-6 shadow-2xl relative border border-slate-700/60">
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center">
+                <div class="md:col-span-5 bg-slate-950 p-4 flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-800">
+                    <picture>
+                        <source srcset="projeto_vida_2027.png" type="image/png">
+                        <img src="projeto_vida_2027.png" alt="Projeto de Vida 2027" class="max-h-72 w-auto object-contain rounded-xl shadow-lg border border-slate-800/80">
+                    </picture>
+                </div>
+                <div class="md:col-span-7 p-5 sm:p-7 space-y-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20">
+                                🕊️ Região 655 • IEQ
+                            </span>
+                            <span class="text-xs text-slate-400">Avante & Sem Parar</span>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+                            Projeto de Vida 2027
+                        </h2>
+                        <p class="text-sm font-medium text-slate-300 mt-1">
+                            Ano do Crescimento — Garanta os materiais da sua congregação para a campanha de virada de ano.
+                        </p>
+                    </div>
+
+                    <!-- CARD DE PRAZOS IMPORTANTES -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <div class="bg-slate-900/90 border border-amber-500/30 rounded-xl p-3 flex items-start gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+                                <i data-lucide="calendar-clock" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">Prazo Final p/ Pedido</span>
+                                <strong class="text-sm font-extrabold text-white">05 de Novembro</strong>
+                                <span class="text-[10px] text-slate-400 block">Gravação obrigatória</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-3 flex items-start gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+                                <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">Prazo p/ Pagamento</span>
+                                <strong class="text-sm font-extrabold text-white">20 de Novembro</strong>
+                                <span class="text-[10px] text-slate-400 block">Via PIX da Regional</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BANNER DE STATUS DO PEDIDO (SE JÁ GRAVADO) -->
+        <div id="banner-pedido-bloqueado" class="hidden mb-6 p-4 md:p-5 rounded-2xl glass-card-locked border border-emerald-500/40 shadow-xl">
+            <div class="flex items-start sm:items-center justify-between flex-wrap gap-4">
+                <div class="flex items-start sm:items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/40">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black uppercase tracking-wider text-emerald-400">Pedido Gravado e Bloqueado</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">Imutável</span>
+                        </div>
+                        <p class="text-xs text-slate-200 mt-0.5">
+                            Registrado em: <strong id="lbl-data-hora-gravacao" class="text-white font-mono">—</strong>
+                        </p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">
+                            Solicitante: <span id="lbl-pastor-gravacao" class="text-slate-300 font-semibold">—</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button id="btn-reabrir-whatsapp" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-900/30">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>Abrir WhatsApp (+55 43 3356-2718)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORMULÁRIO DE ITENS DO PEDIDO -->
+        <section class="glass-card rounded-2xl p-5 md:p-7 shadow-2xl mb-6 relative">
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-4 mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i data-lucide="shopping-bag" class="w-5 h-5 text-amber-400"></i>
+                        Itens da Campanha
+                    </h3>
+                    <p class="text-xs text-slate-400">Preencha as quantidades desejadas para sua igreja local.</p>
+                </div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tabela Oficial</span>
+            </div>
+
+            <div class="space-y-6">
+                
+                <!-- ITEM 1: KIT ENVELOPE E 2 PEDIDOS -->
+                <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition-all rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0">
+                            ✉️
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 border border-blue-500/30">Item 01</span>
+                                <span class="text-xs font-bold text-amber-400">R$ 1,98 cada</span>
+                            </div>
+                            <h4 class="text-base font-bold text-white mt-1">Kit c/ Envelope e 2 Pedidos de Oração</h4>
+                            <p class="text-xs text-slate-400 mt-0.5 max-w-md">
+                                Inclui o envelope temático da campanha e 2 formulários de pedidos de oração (crescimento ministerial, relacionamentos e comunhão).
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- CONTROLE DE QUANTIDADE ITEM 1 -->
+                    <div class="flex flex-col sm:flex-row items-end sm:items-center gap-4 shrink-0">
+                        <div class="flex items-center bg-slate-950 border border-slate-700 rounded-xl p-1 shadow-inner">
+                            <button type="button" onclick="alterarQtd('kits', -10)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-10 unidades">-10</button>
+                            <button type="button" onclick="alterarQtd('kits', -1)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-1 unidade">-</button>
+                            <input type="number" id="input-qtd-kits" min="0" value="0" class="w-20 bg-transparent text-center font-num text-base font-extrabold text-white outline-none" placeholder="0">
+                            <button type="button" onclick="alterarQtd('kits', 1)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+1 unidade">+</button>
+                            <button type="button" onclick="alterarQtd('kits', 10)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+10 unidades">+10</button>
+                        </div>
+
+                        <div class="text-right min-w-[110px]">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 block">Subtotal</span>
+                            <span id="subtotal-kits" class="font-num text-base font-extrabold text-sky-400">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ITEM 2: CHAVE PARA ANO 2027 -->
+                <div class="bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition-all rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 text-slate-950 flex items-center justify-center font-bold text-xl shadow-md shrink-0">
+                            🗝️
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">Item 02</span>
+                                <span class="text-xs font-bold text-amber-400">R$ 1,80 cada</span>
+                            </div>
+                            <h4 class="text-base font-bold text-white mt-1">Chave para Ano 2027</h4>
+                            <p class="text-xs text-slate-400 mt-0.5 max-w-md">
+                                Chave personalizada 2027 para entrega profética aos membros no culto de encerramento da campanha.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- CONTROLE DE QUANTIDADE ITEM 2 -->
+                    <div class="flex flex-col sm:flex-row items-end sm:items-center gap-4 shrink-0">
+                        <div class="flex items-center bg-slate-950 border border-slate-700 rounded-xl p-1 shadow-inner">
+                            <button type="button" onclick="alterarQtd('chaves', -10)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-10 unidades">-10</button>
+                            <button type="button" onclick="alterarQtd('chaves', -1)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-1 unidade">-</button>
+                            <input type="number" id="input-qtd-chaves" min="0" value="0" class="w-20 bg-transparent text-center font-num text-base font-extrabold text-white outline-none" placeholder="0">
+                            <button type="button" onclick="alterarQtd('chaves', 1)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+1 unidade">+</button>
+                            <button type="button" onclick="alterarQtd('chaves', 10)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+10 unidades">+10</button>
+                        </div>
+
+                        <div class="text-right min-w-[110px]">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 block">Subtotal</span>
+                            <span id="subtotal-chaves" class="font-num text-base font-extrabold text-amber-400">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TOTALIZADOR DO PEDIDO -->
+            <div class="mt-8 pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                    <span class="text-xs uppercase font-extrabold text-slate-400 tracking-wider block">Resumo do Pedido</span>
+                    <p class="text-sm text-slate-300 mt-1">
+                        Total de peças: <strong id="total-pecas" class="text-white font-num font-bold">0</strong> itens selecionados
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div class="text-right">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Valor Total do Pedido</span>
+                        <div id="valor-total-geral" class="text-2xl sm:text-3xl font-black font-num text-emerald-400 tracking-tight">
+                            R$ 0,00
+                        </div>
+                    </div>
+
+                    <button id="btn-confirmar-pedido" type="button" onclick="abrirModalConfirmacao()" class="flex items-center gap-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-sm px-6 py-4 rounded-xl shadow-lg shadow-emerald-950 transition-all transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none">
+                        <i data-lucide="check" class="w-5 h-5"></i>
+                        <span>Confirmar & Gravar</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO DE PAGAMENTO PIX E DADOS BANCÁRIOS -->
+        <section class="glass-card rounded-2xl p-5 md:p-6 mb-8 border border-amber-500/20 shadow-2xl relative overflow-hidden">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div class="space-y-2 max-w-xl">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 px-2.5 py-0.5 rounded border border-amber-500/30">
+                            🔑 Dados para Pagamento
+                        </span>
+                        <span class="text-xs text-slate-400">Até 20 de Novembro</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white">Chave PIX Oficial da Região 655</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Após gravar o pedido, faça o pagamento via PIX e envie o comprovante diretamente para a Secretaria Regional pelo WhatsApp <strong>+55 43 3356-2718</strong>.
+                    </p>
+
+                    <!-- CHAVE PIX BOX COM BOTÃO COPIAR -->
+                    <div class="flex items-center gap-2 pt-2">
+                        <div class="bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 font-mono text-xs sm:text-sm font-bold text-amber-300">
+                            <i data-lucide="key" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                            <span id="txt-chave-pix">eventos@pixieq.com.br</span>
+                        </div>
+                        <button type="button" onclick="copiarChavePix()" id="btn-copiar-pix" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-white px-3.5 py-2.5 rounded-xl transition-all">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                            <span id="lbl-btn-copiar">Copiar Chave</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CONTATO WHATSAPP REGIONAL -->
+                <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-xl text-center sm:text-right shrink-0 w-full md:w-auto">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">Secretaria Regional</span>
+                    <a href="https://wa.me/554333562718" target="_blank" class="inline-flex items-center gap-2 text-emerald-400 font-extrabold text-sm sm:text-base hover:underline mt-1">
+                        <i data-lucide="phone" class="w-4 h-4"></i> +55 43 3356-2718
+                    </a>
+                    <span class="text-[10px] text-slate-400 block mt-1">Londrina / PR • Região 655</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL DE CONFIRMAÇÃO (DUPLA CHECAGEM ANTES DE GRAVAR) -->
+    <div id="modal-confirmacao" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200">
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30">
+                    <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Confirmar Solicitação de Pedido?</h3>
+                <p class="text-xs text-amber-300 font-semibold bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
+                    ⚠️ Atenção: Uma vez confirmado e gravado, o pedido é finalizado e <strong>não poderá mais ser alterado</strong> no sistema.
+                </p>
+            </div>
+
+            <!-- RESUMO DETALHADO DO PEDIDO NO MODAL -->
+            <div class="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-2.5 text-xs">
+                <div class="flex justify-between pb-2 border-b border-slate-800">
+                    <span class="text-slate-400">Igreja:</span>
+                    <strong id="modal-resumo-igreja" class="text-white text-right font-bold">—</strong>
+                </div>
+                <div class="flex justify-between pb-2 border-b border-slate-800">
+                    <span class="text-slate-400">Pastor(a):</span>
+                    <span id="modal-resumo-pastor" class="text-slate-200 font-semibold text-right">—</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Kits (Envelope + 2 Pedidos):</span>
+                    <strong id="modal-resumo-kits" class="text-sky-400 font-num">0 un. (R$ 0,00)</strong>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Chaves 2027:</span>
+                    <strong id="modal-resumo-chaves" class="text-amber-400 font-num">0 un. (R$ 0,00)</strong>
+                </div>
+                <div class="flex justify-between pt-2 border-t border-slate-800 text-sm">
+                    <span class="font-bold text-white">Valor Total a Pagar:</span>
+                    <strong id="modal-resumo-total" class="font-extrabold font-num text-emerald-400 text-base">R$ 0,00</strong>
+                </div>
+            </div>
+
+            <div class="text-[11px] text-slate-400 leading-tight">
+                Ao confirmar, o sistema registrará a data/hora exata do seu pedido e abrirá imediatamente o <strong>WhatsApp (+55 43 3356-2718)</strong> com a mensagem pronta para envio.
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="fecharModalConfirmacao()" class="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-bold transition-colors">
+                    Revisar Quantidades
+                </button>
+                <button id="btn-gravar-final" type="button" onclick="executarGravacaoPedido()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-lg shadow-emerald-900/30 transition-all">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>Sim, Gravar Pedido Definitivo</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE SUCESSO E DISPARO WHATSAPP -->
+    <div id="modal-sucesso" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 text-center animate-in fade-in zoom-in duration-200">
+            <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/40">
+                <i data-lucide="check-circle" class="w-8 h-8"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-xl font-bold text-white">Pedido Gravado com Sucesso!</h3>
+                <p class="text-xs text-slate-300">
+                    Sua solicitação foi registrada no banco de dados e está bloqueada para alterações.
+                </p>
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs text-left space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Total de Peças:</span>
+                    <strong id="sucesso-pecas" class="text-white">0</strong>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Valor Total:</span>
+                    <strong id="sucesso-total" class="text-emerald-400 font-extrabold">R$ 0,00</strong>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Chave PIX:</span>
+                    <span class="text-amber-400 font-mono font-bold">eventos@pixieq.com.br</span>
+                </div>
+            </div>
+
+            <div class="space-y-2 pt-2">
+                <a id="link-direto-whatsapp" href="#" target="_blank" class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-950 transition-all">
+                    <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    <span>Abrir Mensagem no WhatsApp</span>
+                </a>
+                <button type="button" onclick="fecharModalSucesso()" class="w-full py-2.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors">
+                    Permanecer na página
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RODAPÉ -->
+    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500 no-print">
+        <p>Igreja do Evangelho Quadrangular — Região 655 · Londrina/PR</p>
+        <p class="text-[10px] text-slate-600 mt-1">Campanha Projeto de Vida 2027 · Secretaria Regional</p>
+    </footer>
+
+    <!-- LÓGICA / JAVASCRIPT MODULAR -->
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        import { registrarLog } from './js/logger.js';
+        import { showToast, toastSuccess, toastError, toastWarning } from './js/toast.js';
+        import { 
+            collection, 
+            doc, 
+            getDoc, 
+            setDoc, 
+            getDocs, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // PREÇOS OFICIAIS
+        const PRECO_KIT = 1.98;
+        const PRECO_CHAVE = 1.80;
+        const WHATSAPP_NUMERO = "554333562718";
+        const CHAVE_PIX = "eventos@pixieq.com.br";
+
+        // ESTADO GLOBAL
+        let currentUser = null;
+        let igrejaAtual = "";
+        let pastorAtual = "";
+        let pedidoGravado = null;
+        let isAdmin = false;
+
+        // Inicialização
+        async function init() {
+            try {
+                currentUser = await requireAuth();
+                if (!currentUser) return;
+
+                isAdmin = hasAnyPermission(['admin', 'secretario', 'superintendente']);
+                if (isAdmin) {
+                    const btnAdmin = document.getElementById('btn-admin-link');
+                    if (btnAdmin) btnAdmin.classList.remove('hidden');
+                    btnAdmin.classList.add('inline-flex');
+                    document.getElementById('admin-church-selector-wrap').classList.remove('hidden');
+                    await carregarListaIgrejasAdmin();
+                }
+
+                // Definir igreja inicial
+                igrejaAtual = currentUser.igrejaNome || localStorage.getItem('userIgreja') || "";
+                pastorAtual = currentUser.nome || localStorage.getItem('userName') || "Pastor(a) Titular";
+
+                document.getElementById('display-igreja').textContent = igrejaAtual || "Região 655";
+                document.getElementById('display-pastor').innerHTML = `<i data-lucide="user" class="w-3.5 h-3.5 text-slate-500"></i> Pastor(a): <span class="text-slate-300 font-semibold">${pastorAtual}</span>`;
+
+                if (igrejaAtual) {
+                    await verificarPedidoExistente(igrejaAtual);
+                } else if (isAdmin) {
+                    document.getElementById('badge-status-top').textContent = 'Selecione uma Igreja';
+                }
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error("Erro na inicialização:", err);
+            }
+        }
+
+        // Carrega todas as igrejas para o dropdown de admin
+        async function carregarListaIgrejasAdmin() {
+            try {
+                const snap = await getDocs(collection(db, "igrejas"));
+                const select = document.getElementById('select-admin-igreja');
+                select.innerHTML = '<option value="">— Selecione uma congregação —</option>';
+                
+                const lista = [];
+                snap.forEach(d => {
+                    const nome = d.data().nome;
+                    if (nome) lista.push(nome);
+                });
+                lista.sort((a,b) => a.localeCompare(b, 'pt-BR'));
+
+                lista.forEach(nome => {
+                    const opt = document.createElement('option');
+                    opt.value = nome;
+                    opt.textContent = nome;
+                    if (nome === igrejaAtual) opt.selected = true;
+                    select.appendChild(opt);
+                });
+
+                select.addEventListener('change', async (e) => {
+                    if (e.target.value) {
+                        igrejaAtual = e.target.value;
+                        document.getElementById('display-igreja').textContent = igrejaAtual;
+                        await verificarPedidoExistente(igrejaAtual);
+                    }
+                });
+            } catch (e) {
+                console.error("Erro ao carregar igrejas:", e);
+            }
+        }
+
+        // Sanitiza ID para documento Firestore
+        function sanitizarIdDoc(nome) {
+            return (nome || "").trim().toLowerCase().replace(/[\/\s\.\,\#\$\&]+/g, "_");
+        }
+
+        // Verifica se a igreja já possui pedido gravado
+        async function verificarPedidoExistente(nomeIgreja) {
+            const badge = document.getElementById('badge-status-top');
+            badge.textContent = 'Consultando...';
+            badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 uppercase tracking-wider';
+
+            try {
+                const docId = sanitizarIdDoc(nomeIgreja);
+                const docRef = doc(db, "pedidos_campanha_2027", docId);
+                const snap = await getDoc(docRef);
+
+                if (snap.exists()) {
+                    pedidoGravado = snap.data();
+                    aplicarModoBloqueado(pedidoGravado);
+                } else {
+                    pedidoGravado = null;
+                    aplicarModoEdicao();
+                }
+            } catch (e) {
+                console.error("Erro ao consultar pedido:", e);
+                toastError("Erro ao consultar pedido existente.");
+            }
+            lucide.createIcons();
+        }
+
+        // Aplica o modo BLOQUEADO (pedido já feito)
+        function aplicarModoBloqueado(dados) {
+            const badge = document.getElementById('badge-status-top');
+            badge.textContent = 'Pedido Confirmado';
+            badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider';
+
+            // Mostrar banner informativo
+            const banner = document.getElementById('banner-pedido-bloqueado');
+            banner.classList.remove('hidden');
+            document.getElementById('lbl-data-hora-gravacao').textContent = dados.dataHoraRegistro || "Data registrada";
+            document.getElementById('lbl-pastor-gravacao').textContent = dados.pastor || pastorAtual;
+
+            // Preencher inputs e travar
+            const inKits = document.getElementById('input-qtd-kits');
+            const inChaves = document.getElementById('input-qtd-chaves');
+            inKits.value = dados.qtdKits || 0;
+            inChaves.value = dados.qtdChaves || 0;
+            inKits.disabled = true;
+            inChaves.disabled = true;
+            inKits.classList.add('opacity-70', 'cursor-not-allowed');
+            inChaves.classList.add('opacity-70', 'cursor-not-allowed');
+
+            // Desabilitar botões de incremento/decremento
+            document.querySelectorAll('.btn-step').forEach(btn => btn.disabled = true);
+
+            // Desabilitar botão de confirmação
+            const btnConfirmar = document.getElementById('btn-confirmar-pedido');
+            btnConfirmar.disabled = true;
+            btnConfirmar.innerHTML = `<i data-lucide="lock" class="w-5 h-5"></i><span>Pedido Já Gravado</span>`;
+            btnConfirmar.className = 'flex items-center gap-2.5 bg-slate-800 text-slate-400 font-extrabold text-sm px-6 py-4 rounded-xl border border-slate-700 cursor-not-allowed';
+
+            // Configurar botão de reabrir whatsapp
+            const btnWa = document.getElementById('btn-reabrir-whatsapp');
+            btnWa.onclick = () => {
+                abrirWhatsAppComMensagem(dados.qtdKits, dados.qtdChaves, dados.valorTotal, dados.dataHoraRegistro);
+            };
+
+            recalcular();
+        }
+
+        // Aplica o modo EDIÇÃO (novo pedido)
+        function aplicarModoEdicao() {
+            const badge = document.getElementById('badge-status-top');
+            badge.textContent = 'Aguardando Pedido';
+            badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-wider';
+
+            // Esconder banner
+            document.getElementById('banner-pedido-bloqueado').classList.add('hidden');
+
+            // Habilitar inputs
+            const inKits = document.getElementById('input-qtd-kits');
+            const inChaves = document.getElementById('input-qtd-chaves');
+            inKits.value = 0;
+            inChaves.value = 0;
+            inKits.disabled = false;
+            inChaves.disabled = false;
+            inKits.classList.remove('opacity-70', 'cursor-not-allowed');
+            inChaves.classList.remove('opacity-70', 'cursor-not-allowed');
+
+            // Habilitar botões
+            document.querySelectorAll('.btn-step').forEach(btn => btn.disabled = false);
+
+            // Habilitar botão confirmar
+            const btnConfirmar = document.getElementById('btn-confirmar-pedido');
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i><span>Confirmar & Gravar</span>`;
+            btnConfirmar.className = 'flex items-center gap-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-sm px-6 py-4 rounded-xl shadow-lg shadow-emerald-950 transition-all transform active:scale-95';
+
+            recalcular();
+        }
+
+        // Alterar quantidade pelos botões [-] [+]
+        window.alterarQtd = function(tipo, delta) {
+            if (pedidoGravado) return; // bloqueado!
+
+            const input = tipo === 'kits' ? document.getElementById('input-qtd-kits') : document.getElementById('input-qtd-chaves');
+            let atual = parseInt(input.value, 10) || 0;
+            atual = Math.max(0, atual + delta);
+            input.value = atual;
+            recalcular();
+        };
+
+        // Recalcular totais
+        function recalcular() {
+            const qtdKits = parseInt(document.getElementById('input-qtd-kits').value, 10) || 0;
+            const qtdChaves = parseInt(document.getElementById('input-qtd-chaves').value, 10) || 0;
+
+            const subKits = qtdKits * PRECO_KIT;
+            const subChaves = qtdChaves * PRECO_CHAVE;
+            const total = subKits + subChaves;
+            const totalPecas = qtdKits + qtdChaves;
+
+            document.getElementById('subtotal-kits').textContent = formatarMoeda(subKits);
+            document.getElementById('subtotal-chaves').textContent = formatarMoeda(subChaves);
+            document.getElementById('total-pecas').textContent = totalPecas;
+            document.getElementById('valor-total-geral').textContent = formatarMoeda(total);
+
+            return { qtdKits, qtdChaves, subKits, subChaves, total, totalPecas };
+        }
+
+        // Listener nos inputs manuais
+        document.getElementById('input-qtd-kits').addEventListener('input', recalcular);
+        document.getElementById('input-qtd-chaves').addEventListener('input', recalcular);
+
+        function formatarMoeda(val) {
+            return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // ABRIR MODAL DE CONFIRMAÇÃO
+        window.abrirModalConfirmacao = function() {
+            if (pedidoGravado) {
+                toastWarning("Este pedido já foi gravado e está bloqueado.");
+                return;
+            }
+
+            if (!igrejaAtual) {
+                toastError("Selecione ou identifique uma igreja antes de prosseguir.");
+                return;
+            }
+
+            const calc = recalcular();
+            if (calc.totalPecas <= 0) {
+                toastWarning("Informe ao menos 1 Kit ou 1 Chave para registrar o pedido.");
+                return;
+            }
+
+            // Preencher resumo no modal
+            document.getElementById('modal-resumo-igreja').textContent = igrejaAtual;
+            document.getElementById('modal-resumo-pastor').textContent = pastorAtual;
+            document.getElementById('modal-resumo-kits').textContent = `${calc.qtdKits} un. (${formatarMoeda(calc.subKits)})`;
+            document.getElementById('modal-resumo-chaves').textContent = `${calc.qtdChaves} un. (${formatarMoeda(calc.subChaves)})`;
+            document.getElementById('modal-resumo-total').textContent = formatarMoeda(calc.total);
+
+            const modal = document.getElementById('modal-confirmacao');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        };
+
+        window.fecharModalConfirmacao = function() {
+            const modal = document.getElementById('modal-confirmacao');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        // EXECUTAR A GRAVAÇÃO NO FIRESTORE
+        window.executarGravacaoPedido = async function() {
+            const btn = document.getElementById('btn-gravar-final');
+            btn.disabled = true;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> Gravando...`;
+
+            try {
+                const calc = recalcular();
+                const now = new Date();
+                const dataHoraFormatada = now.toLocaleString('pt-BR');
+                const docId = sanitizarIdDoc(igrejaAtual);
+
+                const dadosPedido = {
+                    igreja: igrejaAtual,
+                    pastor: pastorAtual,
+                    email: currentUser.email || "",
+                    qtdKits: calc.qtdKits,
+                    valorKits: calc.subKits,
+                    qtdChaves: calc.qtdChaves,
+                    valorChaves: calc.subChaves,
+                    valorTotal: calc.total,
+                    totalPecas: calc.totalPecas,
+                    dataHoraRegistro: dataHoraFormatada,
+                    timestamp: serverTimestamp(),
+                    status: 'Confirmado',
+                    pago: false,
+                    criadoPor: currentUser.email
+                };
+
+                // Salvar no Firestore
+                await setDoc(doc(db, "pedidos_campanha_2027", docId), dadosPedido);
+
+                // Registrar auditoria
+                await registrarLog({
+                    modulo: 'campanha_2027',
+                    acao: 'CRIAR',
+                    resumo: `Gravou pedido da Campanha 2027 para ${igrejaAtual} (${calc.qtdKits} Kits, ${calc.qtdChaves} Chaves - Total ${formatarMoeda(calc.total)})`,
+                    detalhes: dadosPedido,
+                    docId: docId
+                });
+
+                // Atualizar estado local
+                pedidoGravado = dadosPedido;
+                fecharModalConfirmacao();
+                aplicarModoBloqueado(dadosPedido);
+
+                // Exibir modal de sucesso e configurar WhatsApp
+                abrirModalSucesso(calc, dataHoraFormatada);
+
+                // Abrir automaticamente o WhatsApp
+                abrirWhatsAppComMensagem(calc.qtdKits, calc.qtdChaves, calc.total, dataHoraFormatada);
+
+                toastSuccess("Pedido gravado com sucesso!");
+            } catch (error) {
+                console.error("Erro ao gravar pedido:", error);
+                toastError("Erro ao gravar pedido: " + error.message);
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Sim, Gravar Pedido Definitivo</span>`;
+                lucide.createIcons();
+            }
+        };
+
+        // ABRE WHATSAPP COM MENSAGEM PRÉ-FORMATADA
+        function gerarTextoWhatsApp(qtdKits, qtdChaves, valorTotal, dataHora) {
+            return `🕊️ *PROJETO DE VIDA 2027 — PEDIDO CONFIRMADO*\n` +
+                   `📍 *Igreja:* ${igrejaAtual}\n` +
+                   `👤 *Pastor(a):* ${pastorAtual}\n` +
+                   `📅 *Data/Hora:* ${dataHora}\n\n` +
+                   `📦 *ITENS DO PEDIDO:*\n` +
+                   `• *Kits (Envelope + 2 Pedidos):* ${qtdKits} un. × R$ 1,98 = ${formatarMoeda(qtdKits * PRECO_KIT)}\n` +
+                   `• *Chaves 2027:* ${qtdChaves} un. × R$ 1,80 = ${formatarMoeda(qtdChaves * PRECO_CHAVE)}\n\n` +
+                   `💰 *VALOR TOTAL:* ${formatarMoeda(valorTotal)}\n` +
+                   `🔑 *Chave PIX:* ${CHAVE_PIX}\n` +
+                   `🗓️ *Prazo Pagamento:* até 20 de Novembro\n\n` +
+                   `_Solicitação registrada no Portal AdmReg 655._`;
+        }
+
+        function abrirWhatsAppComMensagem(qtdKits, qtdChaves, valorTotal, dataHora) {
+            const texto = gerarTextoWhatsApp(qtdKits, qtdChaves, valorTotal, dataHora);
+            const url = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(texto)}`;
+            
+            // Configurar no modal também
+            const linkModal = document.getElementById('link-direto-whatsapp');
+            if (linkModal) linkModal.href = url;
+
+            // Tentativa de abertura imediata
+            window.open(url, '_blank');
+        }
+
+        // Modal de sucesso
+        function abrirModalSucesso(calc, dataHora) {
+            document.getElementById('sucesso-pecas').textContent = `${calc.totalPecas} unidades`;
+            document.getElementById('sucesso-total').textContent = formatarMoeda(calc.total);
+            
+            const modal = document.getElementById('modal-sucesso');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        window.fecharModalSucesso = function() {
+            const modal = document.getElementById('modal-sucesso');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        // COPIAR CHAVE PIX
+        window.copiarChavePix = function() {
+            navigator.clipboard.writeText(CHAVE_PIX).then(() => {
+                const lbl = document.getElementById('lbl-btn-copiar');
+                lbl.textContent = 'Copiado!';
+                toastSuccess("Chave PIX copiada para a área de transferência!");
+                setTimeout(() => { lbl.textContent = 'Copiar Chave'; }, 3000);
+            }).catch(() => {
+                toastError("Erro ao copiar chave.");
+            });
+        };
+
+        // Rodar ao carregar
+        init();
+    </script>
+</body>
+</html>
