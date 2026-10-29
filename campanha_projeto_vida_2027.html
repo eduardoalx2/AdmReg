@@ -217,22 +217,34 @@
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 border border-blue-500/30">Item 01</span>
                                 <span class="text-xs font-bold text-amber-400">R$ 1,98 cada</span>
+                                <span class="text-[10px] font-extrabold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">Múltiplos de 50</span>
                             </div>
                             <h4 class="text-base font-bold text-white mt-1">Kit c/ Envelope e 2 Pedidos de Oração</h4>
                             <p class="text-xs text-slate-400 mt-0.5 max-w-md">
-                                Inclui o envelope temático da campanha e 2 formulários de pedidos de oração (crescimento ministerial, relacionamentos e comunhão).
+                                Inclui envelope oficial e 2 formulários de pedidos de oração. Fornecido exclusivamente em pacotes múltiplos de 50 unidades.
                             </p>
+                            
+                            <!-- ATALHOS RÁPIDOS KITS -->
+                            <div class="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                                <span class="text-[10px] text-slate-500 uppercase font-bold">Atalhos:</span>
+                                <button type="button" onclick="setarQtd('kits', 50)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">50</button>
+                                <button type="button" onclick="setarQtd('kits', 100)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">100</button>
+                                <button type="button" onclick="setarQtd('kits', 150)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">150</button>
+                                <button type="button" onclick="setarQtd('kits', 200)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">200</button>
+                                <button type="button" onclick="setarQtd('kits', 300)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">300</button>
+                                <button type="button" onclick="setarQtd('kits', 500)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">500</button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- CONTROLE DE QUANTIDADE ITEM 1 -->
                     <div class="flex flex-col sm:flex-row items-end sm:items-center gap-4 shrink-0">
                         <div class="flex items-center bg-slate-950 border border-slate-700 rounded-xl p-1 shadow-inner">
-                            <button type="button" onclick="alterarQtd('kits', -10)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-10 unidades">-10</button>
-                            <button type="button" onclick="alterarQtd('kits', -1)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-1 unidade">-</button>
-                            <input type="number" id="input-qtd-kits" min="0" value="0" class="w-20 bg-transparent text-center font-num text-base font-extrabold text-white outline-none" placeholder="0">
-                            <button type="button" onclick="alterarQtd('kits', 1)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+1 unidade">+</button>
-                            <button type="button" onclick="alterarQtd('kits', 10)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+10 unidades">+10</button>
+                            <button type="button" onclick="alterarQtd('kits', -100)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-100 unidades">-100</button>
+                            <button type="button" onclick="alterarQtd('kits', -50)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-50 unidades">-50</button>
+                            <input type="number" id="input-qtd-kits" min="0" step="50" value="0" class="w-20 bg-transparent text-center font-num text-base font-extrabold text-white outline-none" placeholder="0">
+                            <button type="button" onclick="alterarQtd('kits', 50)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+50 unidades">+50</button>
+                            <button type="button" onclick="alterarQtd('kits', 100)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+100 unidades">+100</button>
                         </div>
 
                         <div class="text-right min-w-[110px]">
@@ -252,22 +264,34 @@
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">Item 02</span>
                                 <span class="text-xs font-bold text-amber-400">R$ 1,80 cada</span>
+                                <span class="text-[10px] font-extrabold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Múltiplos de 50</span>
                             </div>
                             <h4 class="text-base font-bold text-white mt-1">Chave para Ano 2027</h4>
                             <p class="text-xs text-slate-400 mt-0.5 max-w-md">
-                                Chave personalizada 2027 para entrega profética aos membros no culto de encerramento da campanha.
+                                Chave personalizada 2027 para entrega profética aos membros. Fornecida exclusivamente em pacotes múltiplos de 50 unidades.
                             </p>
+                            
+                            <!-- ATALHOS RÁPIDOS CHAVES -->
+                            <div class="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                                <span class="text-[10px] text-slate-500 uppercase font-bold">Atalhos:</span>
+                                <button type="button" onclick="setarQtd('chaves', 50)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">50</button>
+                                <button type="button" onclick="setarQtd('chaves', 100)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">100</button>
+                                <button type="button" onclick="setarQtd('chaves', 150)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">150</button>
+                                <button type="button" onclick="setarQtd('chaves', 200)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">200</button>
+                                <button type="button" onclick="setarQtd('chaves', 300)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">300</button>
+                                <button type="button" onclick="setarQtd('chaves', 500)" class="btn-step text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition-colors disabled:opacity-30">500</button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- CONTROLE DE QUANTIDADE ITEM 2 -->
                     <div class="flex flex-col sm:flex-row items-end sm:items-center gap-4 shrink-0">
                         <div class="flex items-center bg-slate-950 border border-slate-700 rounded-xl p-1 shadow-inner">
-                            <button type="button" onclick="alterarQtd('chaves', -10)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-10 unidades">-10</button>
-                            <button type="button" onclick="alterarQtd('chaves', -1)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-1 unidade">-</button>
-                            <input type="number" id="input-qtd-chaves" min="0" value="0" class="w-20 bg-transparent text-center font-num text-base font-extrabold text-white outline-none" placeholder="0">
-                            <button type="button" onclick="alterarQtd('chaves', 1)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+1 unidade">+</button>
-                            <button type="button" onclick="alterarQtd('chaves', 10)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+10 unidades">+10</button>
+                            <button type="button" onclick="alterarQtd('chaves', -100)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-100 unidades">-100</button>
+                            <button type="button" onclick="alterarQtd('chaves', -50)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="-50 unidades">-50</button>
+                            <input type="number" id="input-qtd-chaves" min="0" step="50" value="0" class="w-20 bg-transparent text-center font-num text-base font-extrabold text-white outline-none" placeholder="0">
+                            <button type="button" onclick="alterarQtd('chaves', 50)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+50 unidades">+50</button>
+                            <button type="button" onclick="alterarQtd('chaves', 100)" class="btn-step w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="+100 unidades">+100</button>
                         </div>
 
                         <div class="text-right min-w-[110px]">
@@ -641,13 +665,24 @@
             recalcular();
         }
 
-        // Alterar quantidade pelos botões [-] [+]
+        // Definir quantidade diretamente pelos atalhos
+        window.setarQtd = function(tipo, valor) {
+            if (pedidoGravado) return;
+            const input = tipo === 'kits' ? document.getElementById('input-qtd-kits') : document.getElementById('input-qtd-chaves');
+            input.value = valor;
+            recalcular();
+        };
+
+        // Alterar quantidade pelos botões [-] [+] em múltiplos de 50
         window.alterarQtd = function(tipo, delta) {
             if (pedidoGravado) return; // bloqueado!
 
             const input = tipo === 'kits' ? document.getElementById('input-qtd-kits') : document.getElementById('input-qtd-chaves');
             let atual = parseInt(input.value, 10) || 0;
             atual = Math.max(0, atual + delta);
+            if (atual % 50 !== 0) {
+                atual = Math.round(atual / 50) * 50;
+            }
             input.value = atual;
             recalcular();
         };
@@ -670,9 +705,26 @@
             return { qtdKits, qtdChaves, subKits, subChaves, total, totalPecas };
         }
 
-        // Listener nos inputs manuais
-        document.getElementById('input-qtd-kits').addEventListener('input', recalcular);
-        document.getElementById('input-qtd-chaves').addEventListener('input', recalcular);
+        // Validação e arredondamento ao sair do campo (blur)
+        function ajustarParaMultiplo50(input) {
+            if (pedidoGravado) return;
+            let val = parseInt(input.value, 10);
+            if (isNaN(val) || val < 0) val = 0;
+            if (val > 0 && val % 50 !== 0) {
+                const arredondado = Math.round(val / 50) * 50;
+                input.value = arredondado;
+                toastWarning(`A quantidade deve ser em múltiplos de 50. Ajustado para ${arredondado} unidades.`);
+                recalcular();
+            }
+        }
+
+        // Listeners nos inputs manuais
+        const inKitsEl = document.getElementById('input-qtd-kits');
+        const inChavesEl = document.getElementById('input-qtd-chaves');
+        inKitsEl.addEventListener('input', recalcular);
+        inChavesEl.addEventListener('input', recalcular);
+        inKitsEl.addEventListener('blur', () => ajustarParaMultiplo50(inKitsEl));
+        inChavesEl.addEventListener('blur', () => ajustarParaMultiplo50(inChavesEl));
 
         function formatarMoeda(val) {
             return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -692,7 +744,17 @@
 
             const calc = recalcular();
             if (calc.totalPecas <= 0) {
-                toastWarning("Informe ao menos 1 Kit ou 1 Chave para registrar o pedido.");
+                toastWarning("Informe ao menos 50 Kits ou 50 Chaves para registrar o pedido.");
+                return;
+            }
+
+            // Validação estrita de múltiplos de 50
+            if (calc.qtdKits % 50 !== 0) {
+                toastWarning(`A quantidade de Kits (${calc.qtdKits}) deve ser em múltiplos de 50 (ex: 50, 100, 150...).`);
+                return;
+            }
+            if (calc.qtdChaves % 50 !== 0) {
+                toastWarning(`A quantidade de Chaves (${calc.qtdChaves}) deve ser em múltiplos de 50 (ex: 50, 100, 150...).`);
                 return;
             }
 
