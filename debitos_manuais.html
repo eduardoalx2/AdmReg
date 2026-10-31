@@ -307,11 +307,71 @@
         </div>
     </div>
 
+    <!-- Modal de Confirmação de Exclusão -->
+    <div id="modal-confirmar-exclusao"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-slate-800 px-5 py-4 flex justify-between items-center">
+                <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4 text-red-400"></i> Confirmar Exclusão
+                </h2>
+            </div>
+            <div class="p-6 space-y-5">
+                <p id="modal-confirmar-exclusao-msg" class="text-slate-700 text-sm font-medium leading-relaxed">
+                    Tem certeza que deseja excluir este débito permanentemente?
+                </p>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" id="btn-cancelar-exclusao"
+                        class="flex-1 bg-slate-100 text-slate-700 font-bold py-2.5 rounded-lg uppercase text-[11px] hover:bg-slate-200 transition-colors">Cancelar</button>
+                    <button type="button" id="btn-confirmar-exclusao"
+                        class="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-lg uppercase text-[11px] hover:bg-red-700 transition-colors shadow-md">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy }
             from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { registrarLog } from './js/logger.js';
+        import { toastError, toastWarning } from './js/toast.js';
+
+        function confirmarExclusao() {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('modal-confirmar-exclusao');
+                const btnConfirmar = document.getElementById('btn-confirmar-exclusao');
+                const btnCancelar = document.getElementById('btn-cancelar-exclusao');
+
+                if (!modal || !btnConfirmar || !btnCancelar) {
+                    resolve(false);
+                    return;
+                }
+
+                modal.classList.remove('hidden');
+                if (window.lucide) window.lucide.createIcons();
+
+                function finalizar(resultado) {
+                    modal.classList.add('hidden');
+                    btnConfirmar.removeEventListener('click', onConfirmar);
+                    btnCancelar.removeEventListener('click', onCancelar);
+                    modal.removeEventListener('click', onOverlayClick);
+                    document.removeEventListener('keydown', onKeyDown);
+                    resolve(resultado);
+                }
+
+                function onConfirmar() { finalizar(true); }
+                function onCancelar() { finalizar(false); }
+                function onOverlayClick(e) { if (e.target === modal) finalizar(false); }
+                function onKeyDown(e) { if (e.key === 'Escape') finalizar(false); }
+
+                btnConfirmar.addEventListener('click', onConfirmar);
+                btnCancelar.addEventListener('click', onCancelar);
+                modal.addEventListener('click', onOverlayClick);
+                document.addEventListener('keydown', onKeyDown);
+            });
+        }
+        window.confirmarExclusao = confirmarExclusao;
 
         const fmt  = v => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const fmtD = d => { if (!d) return '—'; const p = d.split('-'); return p.length === 2 ? `${p[1]}/${p[0]}` : p.reverse().join('/'); };
@@ -435,7 +495,7 @@
                     <td class="text-right text-xs font-black ${saldo > 0.001 ? 'text-red-600' : 'text-emerald-600'}">${fmt(saldo)}</td>
                     <td class="text-center"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${sCls}">${sLbl}</span></td>
                     <td class="text-center">
-                        <div class="flex items-center justify-center gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                        <div class="flex items-center justify-center gap-2">
                             ${d.status !== 'quitado' ? `<button onclick="window.abrirModalPagamento('${d.id}')" class="text-emerald-500 hover:text-emerald-700" title="Registrar Pagamento"><i data-lucide="check-circle" class="w-4 h-4"></i></button>` : ''}
                             <button onclick="window.editarDebito('${d.id}')" class="text-blue-500 hover:text-blue-700" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>
                             <button onclick="window.excluirDebito('${d.id}')" class="text-red-400 hover:text-red-600" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -484,7 +544,7 @@
 
         window.removerItem = (n) => {
             const lista = document.getElementById('lista-itens');
-            if (lista.children.length <= 1) { alert('Deve haver pelo menos um item.'); return; }
+            if (lista.children.length <= 1) { toastWarning('Deve haver pelo menos um item.'); return; }
             document.getElementById(`item-row-${n}`)?.remove();
             window.calcularTotal();
         };
@@ -532,22 +592,23 @@
         };
 
         window.excluirDebito = async (id) => {
-            if (!confirm('Excluir este débito? Esta ação não pode ser desfeita.')) return;
-            try {
-                const debitoExcluido = debitosList.find(d => d.id === id);
-                await deleteDoc(doc(db, 'pendencias_manuais', id));
-                if (debitoExcluido) {
-                    await registrarLog({
-                        modulo: 'debitos_manuais',
-                        acao: 'EXCLUIR',
-                        resumo: `Excluiu débito manual de ${debitoExcluido.igrejaNome || 'igreja'} (${fmt(debitoExcluido.valorTotal)}) - ${debitoExcluido.descricao || ''}`,
-                        detalhes: debitoExcluido,
-                        docId: id
-                    });
-                }
-                debitosList = debitosList.filter(d => d.id !== id);
-                window.renderizarTabela();
-            } catch (e) { alert('Erro ao excluir.'); console.error(e); }
+            if (await confirmarExclusao()) {
+                try {
+                    const debitoExcluido = debitosList.find(d => d.id === id);
+                    await deleteDoc(doc(db, 'pendencias_manuais', id));
+                    if (debitoExcluido) {
+                        await registrarLog({
+                            modulo: 'debitos_manuais',
+                            acao: 'EXCLUIR',
+                            resumo: `Excluiu débito manual de ${debitoExcluido.igrejaNome || 'igreja'} (${fmt(debitoExcluido.valorTotal)}) - ${debitoExcluido.descricao || ''}`,
+                            detalhes: debitoExcluido,
+                            docId: id
+                        });
+                    }
+                    debitosList = debitosList.filter(d => d.id !== id);
+                    window.renderizarTabela();
+                } catch (e) { toastError('Erro ao excluir.'); console.error(e); }
+            }
         };
 
         document.getElementById('form-debito').addEventListener('submit', async (e) => {
@@ -566,7 +627,7 @@
             })).filter(i => i.descricao);
 
             if (!itens.length) {
-                alert('Adicione pelo menos um item em "Referente à".');
+                toastWarning('Adicione pelo menos um item em "Referente à".');
                 btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Salvar Débito'; lucide.createIcons(); return;
             }
 
@@ -612,7 +673,7 @@
                 window.fecharModalDebito();
                 window.renderizarTabela();
             } catch (err) {
-                console.error(err); alert('Erro ao salvar.');
+                console.error(err); toastError('Erro ao salvar.');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Salvar Débito';
@@ -669,15 +730,15 @@
             if (!d) return;
 
             const valorPagando = parseFloat(document.getElementById('pag-valor').value);
-            if (!valorPagando || valorPagando <= 0) { alert('Informe um valor válido.'); return; }
+            if (!valorPagando || valorPagando <= 0) { toastWarning('Informe um valor válido.'); return; }
 
             const saldo = (d.valorTotal || 0) - (d.valorPago || 0);
             if (valorPagando > saldo + 0.01) {
-                alert(`O valor não pode ser maior que o saldo devedor (${fmt(saldo)}).`); return;
+                toastWarning(`O valor não pode ser maior que o saldo devedor (${fmt(saldo)}).`); return;
             }
 
             const dataPag = document.getElementById('pag-data').value;
-            if (!dataPag) { alert('Informe a data do pagamento.'); return; }
+            if (!dataPag) { toastWarning('Informe a data do pagamento.'); return; }
 
             const obs        = document.getElementById('pag-obs').value.trim();
             const novoPago   = (d.valorPago || 0) + valorPagando;
@@ -765,7 +826,7 @@
                 window.renderizarTabela();
                 window.exibirRecibo(debitosList.find(i => i.id === id), novoPag, codigoRecibo);
             } catch (err) {
-                console.error(err); alert('Erro ao registrar pagamento.');
+                console.error(err); toastError('Erro ao registrar pagamento.');
             }
         };
 
@@ -900,7 +961,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                alert('Não foi possível compartilhar. Tente baixar o PDF e enviar manualmente.');
+                toastError('Não foi possível compartilhar. Tente baixar o PDF e enviar manualmente.');
             }
         };
 
