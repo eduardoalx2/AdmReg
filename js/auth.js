@@ -12,13 +12,95 @@
 
 import { auth, db } from '../firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // Cache local do usuário (apenas para a sessão atual, não persiste entre recargas)
 let _cachedUser = null;
 let _cachedPerms = null;
 let _cachedIgreja = null;
 let _cachedNome = null;
+let _currentPageAllowedByLayout = false;
+
+const HIERARQUIA = {
+    admin: 100,
+    secretario: 90,
+    superintendente: 80,
+    pastor_titular: 70,
+    coordenador: 60,
+    obreiro: 50,
+    membro: 10
+};
+
+const PERM_MIN_LEVEL = {
+    admin: 100, secretario: 90, superintendente: 80, pastor_titular: 70, coordenador: 60, obreiro: 50, membro: 10,
+    pastores: 80, igrejas: 80, saldo_virada: 70, gerenciar_saldos: 90, recibos: 80, gerenciar_recibos: 90,
+    dash_recibos: 80, dash_saldos: 80, agenda: 80, gestao_eventos: 80, presenca: 80, controle_presencas: 80,
+    debitos_manuais: 90, relatorio_pendencias: 90, pendencias: 90, sorteio: 80, coordenadorias: 90,
+    controle_avisos: 70, relatorio_avisos: 70,
+    levantamento_copel: 70, relatorio_copel: 80
+};
+
+async function evaluateCurrentPageLayoutAccess(permissoes) {
+    _currentPageAllowedByLayout = false;
+    try {
+        const currentPage = (window.location.pathname.split('/').pop() || 'index.html').split('?')[0];
+        if (!currentPage || currentPage === 'index.html' || currentPage === 'login.html' || currentPage === 'visualizar_como.html') {
+            return;
+        }
+        if ((permissoes || []).includes('admin')) {
+            _currentPageAllowedByLayout = true;
+            return;
+        }
+
+        let grupos = null;
+        try {
+            const snap = await getDoc(doc(db, 'configuracoes', 'layout'));
+            if (snap.exists() && Array.isArray(snap.data().grupos)) {
+                grupos = snap.data().grupos;
+                try { localStorage.setItem('layout_cache', JSON.stringify(grupos)); } catch (e) {}
+            }
+        } catch (e) {
+            try { grupos = JSON.parse(localStorage.getItem('layout_cache') || 'null'); } catch (err) {}
+        }
+
+        if (!Array.isArray(grupos)) return;
+
+        let itemEncontrado = null;
+        for (const g of grupos) {
+            for (const it of (g.itens || [])) {
+                const file = (it.url || '').split('/').pop().split('?')[0];
+                if (file && file === currentPage) {
+                    itemEncontrado = it;
+                    break;
+                }
+            }
+            if (itemEncontrado) break;
+        }
+
+        if (!itemEncontrado) return;
+
+        const permExigida = itemEncontrado.perm || null;
+        if (!permExigida) {
+            _currentPageAllowedByLayout = true;
+            return;
+        }
+
+        let nivelStr = permissoes[0];
+        if (nivelStr && !HIERARQUIA[nivelStr]) nivelStr = 'secretario';
+        const nivelUsuario = Math.max(
+            HIERARQUIA[nivelStr] || 0,
+            ...permissoes.map(p => HIERARQUIA[p] || 0),
+            0
+        );
+        const nivelExigido = PERM_MIN_LEVEL[permExigida] || HIERARQUIA[permExigida] || 100;
+
+        if (permissoes.includes(permExigida) || nivelUsuario >= nivelExigido) {
+            _currentPageAllowedByLayout = true;
+        }
+    } catch (e) {
+        console.warn('[auth] Não foi possível verificar layout dinâmico:', e);
+    }
+}
 
 /**
  * Aguarda o estado de autenticação do Firebase e retorna o usuário autenticado.
@@ -119,6 +201,8 @@ export async function requireAuth({ requireActive = true } = {}) {
         _cachedIgreja = simIgreja;
         _cachedNome  = simNome;
 
+        await evaluateCurrentPageLayoutAccess(simPerms);
+
         return {
             email,
             nome: simNome,
@@ -138,6 +222,8 @@ export async function requireAuth({ requireActive = true } = {}) {
     _cachedPerms = permissoes;
     _cachedIgreja = igrejaNome;
     _cachedNome = userData.nome || '';
+
+    await evaluateCurrentPageLayoutAccess(permissoes);
 
     // Atualiza localStorage para que o código legado ainda funcione durante a transição
     localStorage.setItem('userEmail', email);
@@ -179,15 +265,21 @@ export function hasPermission(permissao) {
  * @returns {boolean}
  */
 export function hasAnyPermission(permissoes) {
+    if (_currentPageAllowedByLayout) return true;
     return permissoes.some(p => hasPermission(p));
 }
 
 /**
- * Verifica se o usuário é admin.
+ * Verifica se o usuário é admin (ou se a página atual foi liberada para o nível dele no Gerenciar Layout).
  * @returns {boolean}
  */
 export function isAdmin() {
-    return hasPermission('admin');
+    if (hasPermission('admin')) return true;
+    const currentPage = (window.location.pathname.split('/').pop() || 'index.html').split('?')[0];
+    if (currentPage !== 'index.html' && currentPage !== 'visualizar_como.html' && _currentPageAllowedByLayout) {
+        return true;
+    }
+    return false;
 }
 
 /**

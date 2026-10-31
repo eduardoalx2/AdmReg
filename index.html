@@ -371,6 +371,7 @@
                             }
                         });
                     });
+                    try { localStorage.setItem('layout_cache', JSON.stringify(grupos)); } catch(e) {}
                 }
             } catch(e) { console.warn('Layout Firestore indisponível, usando padrão.', e); toastWarning('Carregando layout padrão...'); }
 
@@ -446,7 +447,7 @@
                 admin:100, secretario:90, superintendente:80, pastor_titular:70, coordenador:60, obreiro:50, membro:10,
                 pastores:80, igrejas:80, saldo_virada:70, gerenciar_saldos:90, recibos:80, gerenciar_recibos:90,
                 dash_recibos:80, dash_saldos:80, agenda:80, gestao_eventos:80, presenca:80, controle_presencas:80,
-                debitos_manuais:90, relatorio_pendencias:90, pendencias:90, sorteio:80, coordenadorias:100,
+                debitos_manuais:90, relatorio_pendencias:90, pendencias:90, sorteio:80, coordenadorias:90,
                 controle_avisos:70, relatorio_avisos:70,
                 levantamento_copel:70, relatorio_copel:80
             };
