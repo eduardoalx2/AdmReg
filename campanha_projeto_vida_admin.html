@@ -218,6 +218,82 @@
 
     </main>
 
+    <!-- MODAL DE EDIÇÃO DE PEDIDO (EXCLUSIVO ADMIN E SECRETÁRIO) -->
+    <div id="modal-editar-pedido" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-sky-500/30 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wide">Editar Pedido</h3>
+                        <p id="edit-pedido-igreja" class="text-xs font-semibold text-sky-400">—</p>
+                    </div>
+                </div>
+                <button type="button" onclick="fecharModalEdicao()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pastor(a) Responsável</label>
+                    <input type="text" id="edit-pedido-pastor" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none focus:border-sky-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- KITS -->
+                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400">Kits (R$ 1,98)</span>
+                            <span id="edit-subtotal-kits" class="text-[11px] font-bold text-slate-400 font-num">R$ 0,00</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="ajustarQtdEdicao('kits', -50)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-extrabold transition-colors">-50</button>
+                            <input type="number" id="edit-qtd-kits" min="0" step="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-center text-sm font-black text-white font-num outline-none focus:border-sky-500">
+                            <button type="button" onclick="ajustarQtdEdicao('kits', 50)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-extrabold transition-colors">+50</button>
+                        </div>
+                    </div>
+
+                    <!-- CHAVES -->
+                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Chaves (R$ 1,80)</span>
+                            <span id="edit-subtotal-chaves" class="text-[11px] font-bold text-slate-400 font-num">R$ 0,00</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="ajustarQtdEdicao('chaves', -50)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-extrabold transition-colors">-50</button>
+                            <input type="number" id="edit-qtd-chaves" min="0" step="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-center text-sm font-black text-white font-num outline-none focus:border-amber-500">
+                            <button type="button" onclick="ajustarQtdEdicao('chaves', 50)" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-extrabold transition-colors">+50</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Status de Pagamento</label>
+                        <select id="edit-pedido-pago" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white outline-none focus:border-sky-500">
+                            <option value="false">⏳ PENDENTE</option>
+                            <option value="true">✅ PAGO</option>
+                        </select>
+                    </div>
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-right">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Novo Valor Total</span>
+                        <span id="edit-valor-total" class="text-lg font-black text-emerald-400 font-num">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button type="button" onclick="fecharModalEdicao()" class="px-4 py-2.5 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 hover:bg-slate-800 transition-colors">Cancelar</button>
+                <button type="button" id="btn-salvar-edicao" onclick="salvarEdicaoPedido()" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition-all shadow-lg flex items-center gap-1.5">
+                    <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE DESBLOQUEIO DE PEDIDO (EXCLUSIVO ADMIN) -->
     <div id="modal-desbloqueio" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-amber-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
@@ -268,6 +344,9 @@
         let todasIgrejas = [];
         let idDocParaDesbloquear = null;
         let nomeIgrejaParaDesbloquear = null;
+        let idDocParaEditar = null;
+        let podeEditarPedido = false;
+        let usuarioLogadoEmail = "";
 
         async function init() {
             try {
@@ -279,6 +358,10 @@
                     setTimeout(() => window.location.replace('campanha_projeto_vida_2027.html'), 1500);
                     return;
                 }
+
+                const perms = user.permissoes || [];
+                podeEditarPedido = perms.includes('admin') || perms.includes('secretario');
+                usuarioLogadoEmail = user.email || "";
 
                 await carregarIgrejas();
                 await carregarPedidos();
@@ -415,6 +498,11 @@
                                 <button onclick="window.enviarWhatsAppPedido('${encodeURIComponent(p.igreja)}', '${encodeURIComponent(p.pastor)}', ${p.qtdKits}, ${p.qtdChaves}, ${p.valorTotal}, '${p.dataHoraRegistro}')" class="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors" title="Abrir Mensagem WhatsApp">
                                     <i data-lucide="message-circle" class="w-4 h-4"></i>
                                 </button>
+                                ${podeEditarPedido ? `
+                                <button onclick="window.abrirModalEdicao('${p.id}')" class="p-1.5 text-slate-400 hover:text-sky-400 hover:bg-slate-800 rounded-lg transition-colors" title="Editar Pedido">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                ` : ''}
                                 <button onclick="window.abrirModalDesbloqueio('${p.id}', '${encodeURIComponent(p.igreja)}')" class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors" title="Desbloquear / Excluir Pedido">
                                     <i data-lucide="unlock" class="w-4 h-4"></i>
                                 </button>
@@ -482,6 +570,124 @@
             } catch (e) {
                 console.error("Erro ao alterar pagamento:", e);
                 toastError("Erro ao alterar status de pagamento.");
+            }
+        };
+
+        // Modal de Edição de Pedido (exclusivo Admin e Secretário)
+        function atualizarPreviewEdicao() {
+            const qtdKits = Math.max(0, parseInt(document.getElementById('edit-qtd-kits').value, 10) || 0);
+            const qtdChaves = Math.max(0, parseInt(document.getElementById('edit-qtd-chaves').value, 10) || 0);
+            const subKits = Number((qtdKits * PRECO_KIT).toFixed(2));
+            const subChaves = Number((qtdChaves * PRECO_CHAVE).toFixed(2));
+            const total = Number((subKits + subChaves).toFixed(2));
+
+            document.getElementById('edit-subtotal-kits').textContent = formatarMoeda(subKits);
+            document.getElementById('edit-subtotal-chaves').textContent = formatarMoeda(subChaves);
+            document.getElementById('edit-valor-total').textContent = formatarMoeda(total);
+            return { qtdKits, qtdChaves, subKits, subChaves, total };
+        }
+
+        window.ajustarQtdEdicao = function(tipo, delta) {
+            const input = document.getElementById(tipo === 'kits' ? 'edit-qtd-kits' : 'edit-qtd-chaves');
+            const atual = parseInt(input.value, 10) || 0;
+            input.value = Math.max(0, atual + delta);
+            atualizarPreviewEdicao();
+        };
+
+        document.getElementById('edit-qtd-kits').addEventListener('input', atualizarPreviewEdicao);
+        document.getElementById('edit-qtd-chaves').addEventListener('input', atualizarPreviewEdicao);
+        document.getElementById('modal-editar-pedido').addEventListener('click', (e) => {
+            if (e.target.id === 'modal-editar-pedido') window.fecharModalEdicao();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && idDocParaEditar) window.fecharModalEdicao();
+        });
+
+        window.abrirModalEdicao = function(docId) {
+            if (!podeEditarPedido) {
+                toastError("Apenas o Administrador e o Secretário Regional podem editar pedidos.");
+                return;
+            }
+            const ped = todosPedidos.find(p => p.id === docId);
+            if (!ped) return;
+
+            idDocParaEditar = docId;
+            document.getElementById('edit-pedido-igreja').textContent = ped.igreja || '—';
+            document.getElementById('edit-pedido-pastor').value = ped.pastor || '';
+            document.getElementById('edit-qtd-kits').value = ped.qtdKits || 0;
+            document.getElementById('edit-qtd-chaves').value = ped.qtdChaves || 0;
+            document.getElementById('edit-pedido-pago').value = ped.pago === true ? 'true' : 'false';
+
+            atualizarPreviewEdicao();
+
+            const modal = document.getElementById('modal-editar-pedido');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        };
+
+        window.fecharModalEdicao = function() {
+            idDocParaEditar = null;
+            const modal = document.getElementById('modal-editar-pedido');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.salvarEdicaoPedido = async function() {
+            if (!podeEditarPedido || !idDocParaEditar) return;
+
+            const ped = todosPedidos.find(p => p.id === idDocParaEditar);
+            if (!ped) return;
+
+            const { qtdKits, qtdChaves, subKits, subChaves, total } = atualizarPreviewEdicao();
+            if (qtdKits + qtdChaves <= 0) {
+                toastWarning("Informe uma quantidade maior que zero para Kits ou Chaves.");
+                return;
+            }
+
+            const novoPastor = document.getElementById('edit-pedido-pastor').value.trim() || ped.pastor || '';
+            const novoPago = document.getElementById('edit-pedido-pago').value === 'true';
+
+            const btn = document.getElementById('btn-salvar-edicao');
+            btn.disabled = true;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> Salvando...`;
+
+            try {
+                const payload = {
+                    pastor: novoPastor,
+                    qtdKits,
+                    valorKits: subKits,
+                    qtdChaves,
+                    valorChaves: subChaves,
+                    valorTotal: total,
+                    totalPecas: qtdKits + qtdChaves,
+                    pago: novoPago,
+                    editadoPor: usuarioLogadoEmail,
+                    dataHoraEdicao: new Date().toLocaleString('pt-BR')
+                };
+
+                await updateDoc(doc(db, "pedidos_campanha_2027", idDocParaEditar), payload);
+
+                await registrarLog({
+                    modulo: 'campanha_2027',
+                    acao: 'EDITAR',
+                    resumo: `Editou pedido da igreja ${ped.igreja}: ${qtdKits} Kits, ${qtdChaves} Chaves (${formatarMoeda(total)}) — Status: ${novoPago ? 'PAGO' : 'PENDENTE'}`,
+                    detalhes: { antes: { ...ped }, depois: payload },
+                    docId: idDocParaEditar
+                });
+
+                Object.assign(ped, payload);
+                fecharModalEdicao();
+                atualizarKPIs();
+                renderTabela();
+                toastSuccess("Pedido atualizado com sucesso!");
+            } catch (e) {
+                console.error("Erro ao editar pedido:", e);
+                toastError("Erro ao salvar alterações do pedido.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações`;
+                lucide.createIcons();
             }
         };
 
