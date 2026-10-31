@@ -240,10 +240,63 @@
         </div>
     </div>
 
+    <!-- MODAL CONFIRMAR EXCLUSÃO -->
+    <div id="modal-confirmar-exclusao" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div class="bg-red-600 px-5 py-4 flex justify-between items-center shrink-0">
+                <h2 class="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i> Confirmar Exclusão
+                </h2>
+            </div>
+            <div class="p-6 space-y-5">
+                <p id="modal-exclusao-msg" class="text-sm font-medium text-slate-700 leading-relaxed">
+                    Tem certeza que deseja excluir este evento da agenda?
+                </p>
+                <div class="pt-4 border-t border-slate-100 flex gap-3">
+                    <button type="button" id="btn-cancelar-exclusao" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl uppercase text-[11px] hover:bg-slate-200 transition-colors tracking-widest">Cancelar</button>
+                    <button type="button" id="btn-confirmar-exclusao" class="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl uppercase text-[11px] hover:bg-red-700 transition-colors shadow-lg tracking-widest flex justify-center items-center gap-2">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { db } from './firebase-config.js';
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { registrarLog } from './js/logger.js';
+        import { toastSuccess, toastError } from './js/toast.js';
+
+        function confirmarExclusao(mensagem = "Tem certeza que deseja excluir este evento da agenda?") {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('modal-confirmar-exclusao');
+                const msgEl = document.getElementById('modal-exclusao-msg');
+                const btnCancelar = document.getElementById('btn-cancelar-exclusao');
+                const btnExcluir = document.getElementById('btn-confirmar-exclusao');
+
+                if (msgEl) msgEl.textContent = mensagem;
+                modal.classList.remove('hidden');
+                if (window.lucide) window.lucide.createIcons();
+
+                const fechar = (resultado) => {
+                    modal.classList.add('hidden');
+                    btnCancelar.removeEventListener('click', onCancelar);
+                    btnExcluir.removeEventListener('click', onConfirmar);
+                    modal.removeEventListener('click', onOverlay);
+                    document.removeEventListener('keydown', onKeyDown);
+                    resolve(resultado);
+                };
+
+                const onCancelar = () => fechar(false);
+                const onConfirmar = () => fechar(true);
+                const onOverlay = (e) => { if (e.target === modal) fechar(false); };
+                const onKeyDown = (e) => { if (e.key === 'Escape') fechar(false); };
+
+                btnCancelar.addEventListener('click', onCancelar);
+                btnExcluir.addEventListener('click', onConfirmar);
+                modal.addEventListener('click', onOverlay);
+                document.addEventListener('keydown', onKeyDown);
+            });
+        }
 
         let agendaList = [];
         let currentTab = 'upcoming';
@@ -348,7 +401,7 @@
                     <td><span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider ${tipoCor}">${e.tipo || '-'}</span></td>
                     <td class="text-xs text-slate-600 font-medium truncate max-w-[200px]" title="${e.local || '-'}">${e.local || '-'}</td>
                     <td class="text-center">
-                        <div class="flex items-center justify-center gap-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                        <div class="flex items-center justify-center gap-3">
                             <button onclick="window.enviarEvento('${e.id}')" class="text-green-500 hover:text-green-700 transition-colors" title="Enviar por WhatsApp">
                                 <i data-lucide="send" class="w-4 h-4"></i>
                             </button>
@@ -399,7 +452,7 @@
         };
 
         window.excluirEvento = async (id) => {
-            if(confirm("Tem certeza que deseja excluir este evento da agenda?")) {
+            if(await confirmarExclusao("Tem certeza que deseja excluir este evento da agenda?")) {
                 try {
                     const eventoExcluido = agendaList.find(ev => ev.id === id);
                     await deleteDoc(doc(db, "agenda", id));
@@ -412,9 +465,10 @@
                             docId: id
                         });
                     }
+                    toastSuccess("Evento excluído com sucesso!");
                     carregarAgenda();
                 } catch(e) {
-                    alert("Erro ao excluir!");
+                    toastError("Erro ao excluir!");
                     console.error(e);
                 }
             }
@@ -464,10 +518,11 @@
                     });
                 }
                 window.fecharModal();
+                toastSuccess("Evento salvo com sucesso!");
                 carregarAgenda();
             } catch (error) {
                 console.error("Erro ao salvar:", error);
-                alert("Erro ao salvar o evento.");
+                toastError("Erro ao salvar o evento.");
             } finally {
                 btn.innerHTML = 'Salvar Evento';
                 btn.disabled = false;
