@@ -363,10 +363,10 @@
                             ordem: 1
                         });
                     }
-                    // Garante que Gerenciar Saldos e Gerenciar Recibos estejam acessíveis ao Secretário Regional
+                    // Garante que Gerenciar Saldos, Gerenciar Recibos e Gestão da Agenda estejam acessíveis ao Secretário Regional
                     grupos.forEach(g => {
                         (g.itens || []).forEach(it => {
-                            if ((it.url === 'gerenciar_saldos.html' || it.id === 'i-gersaldos' || it.url === 'editarrecibos.html' || it.id === 'i-gerrecibos') && it.perm === 'admin') {
+                            if ((it.url === 'gerenciar_saldos.html' || it.id === 'i-gersaldos' || it.url === 'editarrecibos.html' || it.id === 'i-gerrecibos' || it.url === 'gestao_agenda.html') && it.perm === 'admin') {
                                 it.perm = 'secretario';
                             }
                         });
