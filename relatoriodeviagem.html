@@ -47,7 +47,8 @@
     };
     const DATABASE_ID = "ai-studio-6e8ee6cf-2e0e-4813-8221-70d1cc511c09";
 
-    const app = initializeApp(firebaseConfig);
+    // App nomeado: evita conflito com o app [DEFAULT] (regiao655-admin) inicializado por ./js/logger.js
+    const app = initializeApp(firebaseConfig, 'relatorio-viagem');
     const db = getFirestore(app, DATABASE_ID);
     const auth = getAuth(app);
     const googleProvider = new GoogleAuthProvider();
