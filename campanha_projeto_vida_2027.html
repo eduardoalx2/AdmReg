@@ -162,6 +162,20 @@
             </div>
         </section>
 
+        <!-- AVISO: PEDIDOS ENCERRADOS -->
+        <div id="banner-pedidos-encerrados" class="hidden mb-6 p-4 md:p-5 rounded-2xl border border-rose-500/40 bg-rose-500/10 shadow-xl">
+            <div class="flex items-start gap-3.5">
+                <div class="w-11 h-11 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/40">
+                    <i data-lucide="lock" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-black uppercase tracking-wider text-rose-400">Pedidos Encerrados</span>
+                    <p class="text-xs text-slate-200 mt-0.5">O prazo para novos pedidos terminou em <strong>05 de Novembro</strong>. Esta página está disponível apenas para consulta.</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Igrejas com pedido gravado: realizar o pagamento até <strong class="text-slate-300">20 de Novembro</strong>.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- BANNER DE STATUS DO PEDIDO (SE JÁ GRAVADO) -->
         <div id="banner-pedido-bloqueado" class="hidden mb-6 p-4 md:p-5 rounded-2xl glass-card-locked border border-emerald-500/40 shadow-xl">
             <div class="flex items-start sm:items-center justify-between flex-wrap gap-4">
@@ -489,6 +503,12 @@
         const WHATSAPP_NUMERO = "554333562718";
         const CHAVE_PIX = "eventos@pixieq.com.br";
 
+        // ENCERRAMENTO DA CAMPANHA
+        // Pedidos novos bloqueados (prazo encerrado em 05/Nov). Para reabrir, altere para false.
+        const PEDIDOS_ENCERRADOS = true;
+        // Após esta data, pastores não acessam mais a página (consulta só leitura até 20/Nov). Admins continuam acessando.
+        const FIM_CONSULTA = new Date('2026-11-21T00:00:00-03:00');
+
         // ESTADO GLOBAL
         let currentUser = null;
         let igrejaAtual = "";
@@ -503,6 +523,17 @@
                 if (!currentUser) return;
 
                 isAdmin = hasAnyPermission(['admin', 'secretario', 'superintendente']);
+
+                // Consulta encerrada para pastores após 20/Nov
+                if (!isAdmin && new Date() >= FIM_CONSULTA) {
+                    toastWarning("A Campanha Projeto de Vida 2027 está encerrada.");
+                    setTimeout(() => window.location.replace('index.html'), 1500);
+                    return;
+                }
+                if (PEDIDOS_ENCERRADOS) {
+                    document.getElementById('banner-pedidos-encerrados').classList.remove('hidden');
+                }
+
                 if (isAdmin) {
                     const btnAdmin = document.getElementById('btn-admin-link');
                     if (btnAdmin) btnAdmin.classList.remove('hidden');
@@ -583,6 +614,9 @@
                 if (snap.exists()) {
                     pedidoGravado = snap.data();
                     aplicarModoBloqueado(pedidoGravado);
+                } else if (PEDIDOS_ENCERRADOS) {
+                    pedidoGravado = null;
+                    aplicarModoEncerrado();
                 } else {
                     pedidoGravado = null;
                     aplicarModoEdicao();
@@ -665,9 +699,36 @@
             recalcular();
         }
 
+        // Aplica o modo ENCERRADO (sem pedido e prazo encerrado) — somente leitura
+        function aplicarModoEncerrado() {
+            const badge = document.getElementById('badge-status-top');
+            badge.textContent = 'Sem Pedido · Encerrado';
+            badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 uppercase tracking-wider';
+
+            document.getElementById('banner-pedido-bloqueado').classList.add('hidden');
+
+            const inKits = document.getElementById('input-qtd-kits');
+            const inChaves = document.getElementById('input-qtd-chaves');
+            inKits.value = 0;
+            inChaves.value = 0;
+            inKits.disabled = true;
+            inChaves.disabled = true;
+            inKits.classList.add('opacity-70', 'cursor-not-allowed');
+            inChaves.classList.add('opacity-70', 'cursor-not-allowed');
+
+            document.querySelectorAll('.btn-step').forEach(btn => btn.disabled = true);
+
+            const btnConfirmar = document.getElementById('btn-confirmar-pedido');
+            btnConfirmar.disabled = true;
+            btnConfirmar.innerHTML = `<i data-lucide="lock" class="w-5 h-5"></i><span>Pedidos Encerrados</span>`;
+            btnConfirmar.className = 'flex items-center gap-2.5 bg-slate-800 text-slate-400 font-extrabold text-sm px-6 py-4 rounded-xl border border-slate-700 cursor-not-allowed';
+
+            recalcular();
+        }
+
         // Definir quantidade diretamente pelos atalhos
         window.setarQtd = function(tipo, valor) {
-            if (pedidoGravado) return;
+            if (pedidoGravado || PEDIDOS_ENCERRADOS) return;
             const input = tipo === 'kits' ? document.getElementById('input-qtd-kits') : document.getElementById('input-qtd-chaves');
             input.value = valor;
             recalcular();
@@ -675,7 +736,7 @@
 
         // Alterar quantidade pelos botões [-] [+] em múltiplos de 50
         window.alterarQtd = function(tipo, delta) {
-            if (pedidoGravado) return; // bloqueado!
+            if (pedidoGravado || PEDIDOS_ENCERRADOS) return; // bloqueado!
 
             const input = tipo === 'kits' ? document.getElementById('input-qtd-kits') : document.getElementById('input-qtd-chaves');
             let atual = parseInt(input.value, 10) || 0;
@@ -732,6 +793,10 @@
 
         // ABRIR MODAL DE CONFIRMAÇÃO
         window.abrirModalConfirmacao = function() {
+            if (PEDIDOS_ENCERRADOS) {
+                toastWarning("O prazo para novos pedidos foi encerrado em 05/Nov.");
+                return;
+            }
             if (pedidoGravado) {
                 toastWarning("Este pedido já foi gravado e está bloqueado.");
                 return;
@@ -779,6 +844,11 @@
 
         // EXECUTAR A GRAVAÇÃO NO FIRESTORE
         window.executarGravacaoPedido = async function() {
+            if (PEDIDOS_ENCERRADOS || pedidoGravado) {
+                toastWarning("O prazo para novos pedidos foi encerrado em 05/Nov.");
+                fecharModalConfirmacao();
+                return;
+            }
             const btn = document.getElementById('btn-gravar-final');
             btn.disabled = true;
             btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div> Gravando...`;

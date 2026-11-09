@@ -342,6 +342,8 @@
 
         let todosPedidos = [];
         let todasIgrejas = [];
+        // Pedidos encerrados (prazo 05/Nov): oculta o botão "Desbloquear". Para reabrir, altere para false.
+        const PEDIDOS_ENCERRADOS = true;
         let idDocParaDesbloquear = null;
         let nomeIgrejaParaDesbloquear = null;
         let idDocParaEditar = null;
@@ -503,9 +505,11 @@
                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
                                 </button>
                                 ` : ''}
+                                ${!PEDIDOS_ENCERRADOS ? `
                                 <button onclick="window.abrirModalDesbloqueio('${p.id}', '${encodeURIComponent(p.igreja)}')" class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors" title="Desbloquear / Excluir Pedido">
                                     <i data-lucide="unlock" class="w-4 h-4"></i>
                                 </button>
+                                ` : ''}
                             </div>
                         </td>
                     </tr>
@@ -693,6 +697,7 @@
 
         // Modal de Desbloqueio
         window.abrirModalDesbloqueio = function(docId, nomeIgrejaEnc) {
+            if (PEDIDOS_ENCERRADOS) return;
             idDocParaDesbloquear = docId;
             nomeIgrejaParaDesbloquear = decodeURIComponent(nomeIgrejaEnc);
             document.getElementById('modal-desbloqueio-igreja').textContent = nomeIgrejaParaDesbloquear;

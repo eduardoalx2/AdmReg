@@ -149,8 +149,11 @@ service cloud.firestore {
     }
 
     // Pedidos da Campanha Projeto de Vida 2027
+    // Pedidos encerrados em 05/Nov: criação de novos pedidos bloqueada.
+    // Leitura, edição (ex.: marcar pago) e exclusão continuam liberadas.
     match /pedidos_campanha_2027/{docId} {
-      allow read, write: if isAuthenticated();
+      allow read, update, delete: if isAuthenticated();
+      allow create: if false;
     }
 
     // Qualquer outra coleção não listada: requer autenticação
