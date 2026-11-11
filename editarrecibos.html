@@ -489,6 +489,7 @@
         import { db } from './firebase-config.js';
         import { collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { registrarLog } from './js/logger.js';
+        import { cancelarNumeroRecibo } from './js/numeracao_recibos.js';
         import { toastError } from './js/toast.js';
 
         function confirmarExclusao() {
@@ -1038,14 +1039,22 @@
             if (await confirmarExclusao()) {
                 try {
                     const reciboExcluido = recibosList.find(r => r.id === id);
+
+                    // 1º) Guarda o número como CANCELADO (não será reutilizado). Se falhar, não exclui.
+                    let numeroCancelado = false;
+                    if (reciboExcluido?.codigoRecibo) {
+                        numeroCancelado = await cancelarNumeroRecibo(db, reciboExcluido, id);
+                    }
+
+                    // 2º) Exclui o recibo
                     await deleteDoc(doc(db, "recibos", id));
                     
                     if (reciboExcluido) {
                         await registrarLog({
                             modulo: 'recibos',
                             acao: 'EXCLUIR',
-                            resumo: `Excluiu o recibo nº ${reciboExcluido.codigoRecibo || id} de ${reciboExcluido.igrejaNome || reciboExcluido.igrejaFormatada || 'igreja não identificada'} (Ref: ${reciboExcluido.referenceDate || '--'}, Total: ${window.formatMoeda(reciboExcluido.total || 0)})`,
-                            detalhes: reciboExcluido,
+                            resumo: `Excluiu o recibo nº ${reciboExcluido.codigoRecibo || id} de ${reciboExcluido.igrejaNome || reciboExcluido.igrejaFormatada || 'igreja não identificada'} (Ref: ${reciboExcluido.referenceDate || '--'}, Total: ${window.formatMoeda(reciboExcluido.total || 0)})${numeroCancelado ? ' — número cancelado, não será reutilizado' : ''}`,
+                            detalhes: { ...reciboExcluido, numeroCancelado },
                             docId: id
                         });
                     }

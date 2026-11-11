@@ -97,6 +97,13 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
 
+    // Números de recibos cancelados (excluídos): registro permanente, nunca reutilizados.
+    // Pode ser lido e criado; não pode ser alterado nem apagado.
+    match /recibos_numeros_cancelados/{docId} {
+      allow read, create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
     match /saldos_virada/{docId} {
       allow read, write: if isAuthenticated();
     }

@@ -335,6 +335,7 @@
         import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy }
             from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { registrarLog } from './js/logger.js';
+        import { calcularProximoCodigoRecibo } from './js/numeracao_recibos.js';
         import { toastError, toastWarning } from './js/toast.js';
 
         function confirmarExclusao() {
@@ -755,30 +756,8 @@
 
             const aa = String(hoje.getFullYear()).slice(-2);
             const mm = String(hoje.getMonth() + 1).padStart(2, '0');
-            let nextSeq = 1;
-            try {
-                const snap = await getDocs(collection(db, 'recibos'));
-                snap.forEach(docSnap => {
-                    const itemData = docSnap.data();
-                    const itemCode = itemData.igrejaCodigo || (itemData.igrejaFormatada ? itemData.igrejaFormatada.split(' - ')[0].trim() : '');
-                    if (String(itemCode) === String(d.igrejaCodigo)) {
-                        let itemAA = '', itemMM = '';
-                        if (itemData.dataEmissao && itemData.dataEmissao.includes('/')) {
-                            const parts = itemData.dataEmissao.split('/');
-                            if (parts.length === 3) { itemMM = parts[1].padStart(2, '0'); itemAA = parts[2].slice(-2); }
-                        }
-                        if ((!itemAA || !itemMM) && itemData.referenceDate && itemData.referenceDate.includes('/')) {
-                            const parts = itemData.referenceDate.split('/');
-                            if (parts.length === 2) { itemMM = parts[0].padStart(2, '0'); itemAA = parts[1].slice(-2); }
-                        }
-                        if (itemAA === aa && itemMM === mm) {
-                            nextSeq++;
-                        }
-                    }
-                });
-            } catch (eSeq) { console.warn('Erro ao calcular sequencial:', eSeq); }
-            const seqStr = String(nextSeq).padStart(2, '0');
-            const codigoRecibo = `${d.igrejaCodigo}.${aa}${mm}.${seqStr}`;
+            // Maior número já usado no mês + 1, incluindo números cancelados — nunca reutiliza
+            const codigoRecibo = await calcularProximoCodigoRecibo(db, d.igrejaCodigo, aa, mm);
 
             try {
                 await updateDoc(doc(db, 'pendencias_manuais', id), {
