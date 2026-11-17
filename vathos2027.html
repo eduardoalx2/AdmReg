@@ -760,6 +760,9 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" id="btn-fazer-minha-propria-inscricao" onclick="iniciarInscricaoProprioResponsavel()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-lg">
+                            <i data-lucide="user-check" class="w-4 h-4"></i> Fazer Minha Própria Inscrição
+                        </button>
                         <button type="button" onclick="abrirEdicaoDadosParticipante()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5">
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Atualizar Dados / Ficha
                         </button>
@@ -1341,15 +1344,33 @@
         function renderizarBarraVinculosResponsavel() {
             const sec = document.getElementById('secao-vinculos-responsavel');
             const cont = document.getElementById('lista-botoes-vinculos');
-            if (fichasVinculadasAoResponsavel.length <= 1 && !fichasVinculadasAoResponsavel.some(f => f.responsavelCpf === cpfSessaoPrincipal && f.cpf !== cpfSessaoPrincipal)) {
+            const btnPropriaHeader = document.getElementById('btn-fazer-minha-propria-inscricao');
+
+            const temPropria = fichasVinculadasAoResponsavel.some(f => f.cpf === cpfSessaoPrincipal);
+            if (btnPropriaHeader) {
+                btnPropriaHeader.classList.toggle('hidden', temPropria || !cpfSessaoPrincipal);
+            }
+
+            if (fichasVinculadasAoResponsavel.length <= 1 && temPropria) {
                 sec.classList.add('hidden');
                 return;
             }
 
             sec.classList.remove('hidden');
             cont.innerHTML = '';
+
+            // Se o responsável ainda não tem a própria inscrição, destaca o botão para ele se inscrever!
+            if (!temPropria && cpfSessaoPrincipal) {
+                const btnProp = document.createElement('button');
+                btnProp.type = 'button';
+                btnProp.className = 'px-3.5 py-2 rounded-xl text-xs font-extrabold transition-colors bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400 shadow-lg flex items-center gap-1.5';
+                btnProp.innerHTML = `➕ Fazer Minha Própria Inscrição (CPF ${formatarCPF(cpfSessaoPrincipal)})`;
+                btnProp.onclick = () => iniciarInscricaoProprioResponsavel();
+                cont.appendChild(btnProp);
+            }
+
             fichasVinculadasAoResponsavel.forEach(f => {
-                const ativo = f.cpf === cpfInscricaoAtiva;
+                const ativo = f.cpf === cpfInscricaoAtiva && !document.getElementById('secao-area-participante').classList.contains('hidden');
                 const ehFilho = f.cpf !== cpfSessaoPrincipal;
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -1358,11 +1379,16 @@
                         ? 'bg-indigo-600 text-white border-indigo-400'
                         : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-indigo-400'
                 }`;
-                btn.innerHTML = `${ehFilho ? '👶 ' : '👤 '}${f.nomeCompleto.split(' ')[0]} (${formatarCPF(f.cpf)})`;
+                btn.innerHTML = `${ehFilho ? '👶 Menor: ' : '👤 Minha Inscrição: '}${f.nomeCompleto.split(' ')[0]} (${formatarCPF(f.cpf)})`;
                 btn.onclick = () => abrirAreaDoParticipante(f.cpf);
                 cont.appendChild(btn);
             });
         }
+
+        window.iniciarInscricaoProprioResponsavel = function() {
+            if (!cpfSessaoPrincipal) return;
+            iniciarNovaInscricaoParaCPF(cpfSessaoPrincipal, false);
+        };
 
         window.acessarPainelGestorComSenha = function() {
             const jaAut = sessionStorage.getItem('vathos2027_gestor_autenticado') === 'sim';
@@ -1401,6 +1427,8 @@
         // =====================================================================
         function iniciarNovaInscricaoParaCPF(cpfAlvo, ehFilhoMenor = false) {
             modoEdicaoFichaExistente = false;
+            inscricaoAtiva = null;
+            fichaSaudeAtiva = null;
             cpfInscricaoAtiva = cpfAlvo;
 
             document.getElementById('secao-entrada-cpf').classList.add('hidden');
@@ -1434,6 +1462,31 @@
                 fCpf.setAttribute('readonly', 'readonly');
                 fCpf.value = formatarCPF(cpfAlvo);
                 document.getElementById('form-cpf-badge').textContent = formatarCPF(cpfAlvo);
+
+                // Se este CPF já constava como responsável de um filho menor, pré-preenche nome, contato, endereço e igreja!
+                const fichaFilho = fichasVinculadasAoResponsavel.find(f => f.responsavelCpf === cpfAlvo);
+                if (fichaFilho) {
+                    if (fichaFilho.responsavel) {
+                        document.getElementById('f-nome-completo').value = fichaFilho.responsavel.nome || '';
+                        document.getElementById('f-whatsapp').value = fichaFilho.responsavel.whatsapp || '';
+                        document.getElementById('f-email').value = fichaFilho.responsavel.email || '';
+                    }
+                    if (fichaFilho.endereco) {
+                        document.getElementById('f-cep').value = fichaFilho.endereco.cep || '';
+                        document.getElementById('f-rua').value = fichaFilho.endereco.rua || '';
+                        document.getElementById('f-numero').value = fichaFilho.endereco.numero || '';
+                        document.getElementById('f-complemento').value = fichaFilho.endereco.complemento || '';
+                        document.getElementById('f-bairro').value = fichaFilho.endereco.bairro || '';
+                        document.getElementById('f-cidade').value = fichaFilho.endereco.cidade || 'Londrina';
+                        document.getElementById('f-uf').value = fichaFilho.endereco.uf || 'PR';
+                    }
+                    if (fichaFilho.igrejaSelect) {
+                        document.getElementById('f-igreja-select').value = fichaFilho.igrejaSelect;
+                        aoMudarIgrejaSelect();
+                        document.getElementById('f-outra-igreja').value = fichaFilho.outraIgrejaNome || '';
+                        document.getElementById('f-lider-referencia').value = fichaFilho.liderReferencia || '';
+                    }
+                }
             }
 
             document.getElementById('txt-btn-salvar-inscricao').textContent = 'Confirmar Inscrição e Pré-Reserva';
