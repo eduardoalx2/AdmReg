@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo — VATHOS 2027</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #070b14;
+            color: #f1f5f9;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .input-dark {
+            background: rgba(9, 13, 22, 0.92);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            color: #f8fafc;
+            outline: none;
+        }
+        .input-dark:focus {
+            border-color: #6366f1;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff; color: #000; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-14">
+
+    <!-- TOP BAR -->
+    <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="text-slate-400 hover:text-white text-xs font-bold flex items-center gap-1">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Painel Regional
+                </a>
+                <div class="border-l border-slate-800 pl-3">
+                    <h1 class="text-sm font-extrabold text-white uppercase tracking-wider">VATHOS 2027 — Gestão Geral & Financeiro</h1>
+                    <p class="text-[11px] text-slate-400">Administração, Conferência de Percentuais, Cuidados/Alimentação e Decisões Pendentes</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="trocarAbaAdmin('configuracoes'); document.getElementById('box-equipe-gestora-vathos')?.scrollIntoView({behavior:'smooth'});" class="text-xs font-bold bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                    <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Equipe Gestora (Permissões)
+                </button>
+                <a href="vathos2027_lideres.html" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl border border-slate-700">
+                    Área de Líderes/Pastores
+                </a>
+                <a href="vathos2027.html" target="_blank" class="text-xs font-bold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded-xl flex items-center gap-1">
+                    Portal Público (CPF) <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
+
+        <!-- KPIs GERAIS -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 no-print">
+            <div class="glass-card rounded-2xl p-4">
+                <span class="text-[10px] font-bold uppercase text-slate-400 block">Total Inscritos</span>
+                <strong class="text-2xl font-black text-white mt-1 block" id="adm-kpi-total">0</strong>
+                <span class="text-[10px] text-slate-500" id="adm-kpi-gratuitos">0 gratuitos (até 4 anos)</span>
+            </div>
+            <div class="glass-card rounded-2xl p-4">
+                <span class="text-[10px] font-bold uppercase text-indigo-300 block">Pré-Reserva / Confirmados</span>
+                <strong class="text-xl font-black text-indigo-300 mt-1 block" id="adm-kpi-confirmados">0 / 0</strong>
+                <span class="text-[10px] text-slate-500">Ativos no evento</span>
+            </div>
+            <div class="glass-card rounded-2xl p-4">
+                <span class="text-[10px] font-bold uppercase text-amber-300 block">Comprovantes Pendentes</span>
+                <strong class="text-2xl font-black text-amber-400 mt-1 block" id="adm-kpi-comp-pendentes">0</strong>
+                <span class="text-[10px] text-slate-500" id="adm-kpi-acertos-pend">0 acertos de líderes</span>
+            </div>
+            <div class="glass-card rounded-2xl p-4">
+                <span class="text-[10px] font-bold uppercase text-emerald-300 block">Recebido Confirmado</span>
+                <strong class="text-xl font-black text-emerald-400 mt-1 block" id="adm-kpi-receita-confirmada">R$ 0,00</strong>
+                <span class="text-[10px] text-slate-500" id="adm-kpi-taxas-cartao">Taxas cartão: R$ 0,00</span>
+            </div>
+            <div class="glass-card rounded-2xl p-4">
+                <span class="text-[10px] font-bold uppercase text-amber-300 block">Aguardando Repasse/Conf.</span>
+                <strong class="text-xl font-black text-amber-300 mt-1 block" id="adm-kpi-receita-pendente">R$ 0,00</strong>
+                <span class="text-[10px] text-slate-500">Pix + Líderes pendentes</span>
+            </div>
+            <div class="glass-card rounded-2xl p-4">
+                <span class="text-[10px] font-bold uppercase text-rose-300 block">Decisões "A Definir"</span>
+                <strong class="text-2xl font-black text-rose-400 mt-1 block" id="adm-kpi-decisoes">23</strong>
+                <span class="text-[10px] text-slate-500">Itens pendentes na Seção 17</span>
+            </div>
+        </div>
+
+        <!-- NAVEGAÇÃO DE ABAS -->
+        <div class="flex flex-wrap gap-2 border-b border-slate-800 pb-3 no-print">
+            <button type="button" onclick="trocarAbaAdmin('inscricoes')" id="adm-tab-inscricoes" class="px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-indigo-600 text-white">
+                1. Inscrições & Situações
+            </button>
+            <button type="button" onclick="trocarAbaAdmin('financeiro')" id="adm-tab-financeiro" class="px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-slate-900 text-slate-400 hover:text-white border border-slate-800">
+                2. Financeiro, Comprovantes & Caixa
+            </button>
+            <button type="button" onclick="trocarAbaAdmin('operacional')" id="adm-tab-operacional" class="px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-slate-900 text-slate-400 hover:text-white border border-slate-800">
+                3. Alimentação, Saúde & Hospedagem
+            </button>
+            <button type="button" onclick="trocarAbaAdmin('configuracoes')" id="adm-tab-configuracoes" class="px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-slate-900 text-amber-300 hover:text-white border border-amber-500/30">
+                4. Configurações & 23 Decisões "A Definir"
+            </button>
+            <button type="button" onclick="trocarAbaAdmin('auditoria')" id="adm-tab-auditoria" class="px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-slate-900 text-slate-400 hover:text-white border border-slate-800">
+                5. Histórico & Auditoria
+            </button>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- ABA 1: INSCRIÇÕES E CONTROLES DE SITUAÇÃO                          -->
+        <!-- ================================================================== -->
+        <section id="sec-adm-inscricoes" class="glass-card rounded-3xl p-6 space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 no-print">
+                <div class="lg:col-span-2">
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Pesquisar (Nome, CPF, Protocolo)</label>
+                    <input type="text" id="f-adm-busca" oninput="renderizarTabelaInscricoesAdmin()" placeholder="Digite nome, CPF ou protocolo..." class="w-full input-dark px-3 py-2 rounded-xl text-xs" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Igreja</label>
+                    <select id="f-adm-igreja" onchange="renderizarTabelaInscricoesAdmin()" class="w-full input-dark px-3 py-2 rounded-xl text-xs">
+                        <option value="">Todas as igrejas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Modalidade</label>
+                    <select id="f-adm-modalidade" onchange="renderizarTabelaInscricoesAdmin()" class="w-full input-dark px-3 py-2 rounded-xl text-xs">
+                        <option value="">Todas</option>
+                        <option value="retiro_completo">Retiro Completo</option>
+                        <option value="day_use_sem_alimentacao">Day Use (Sem Alim.)</option>
+                        <option value="day_use_com_alimentacao">Day Use (Com Alim.)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Faixa Etária</label>
+                    <select id="f-adm-faixa" onchange="renderizarTabelaInscricoesAdmin()" class="w-full input-dark px-3 py-2 rounded-xl text-xs">
+                        <option value="">Todas</option>
+                        <option value="ate_4">Até 4 anos (Gratuito)</option>
+                        <option value="de_5_a_8">De 5 a 8 anos (70%)</option>
+                        <option value="a_partir_9">A partir de 9 anos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Situação / Pendência</label>
+                    <select id="f-adm-situacao" onchange="renderizarTabelaInscricoesAdmin()" class="w-full input-dark px-3 py-2 rounded-xl text-xs">
+                        <option value="">Todas</option>
+                        <option value="pre_inscricao">Pré-inscrição</option>
+                        <option value="confirmada">Vaga Confirmada</option>
+                        <option value="lista_espera">Lista de Espera</option>
+                        <option value="cancelada">Cancelada</option>
+                        <option value="aut_pendente">Autorização Menor Pendente</option>
+                        <option value="cat_pendente">Categoria Especial Pendente (Líder/Equipe/Pastor)</option>
+                        <option value="quitado">Financeiro Quitado / Isento</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 no-print">
+                <span class="text-xs text-slate-400" id="lbl-contagem-filtrada">Exibindo 0 inscrições</span>
+                <div class="flex gap-2">
+                    <button type="button" onclick="exportarCSVInscricoes()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl border border-slate-700">
+                        📥 Exportar CSV
+                    </button>
+                    <button type="button" onclick="window.print()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl border border-slate-700">
+                        🖨️ Imprimir Lista
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-800">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-900 text-[10px] font-extrabold uppercase text-slate-400">
+                        <tr>
+                            <th class="p-3">Participante / CPF</th>
+                            <th class="p-3">Igreja / Categoria</th>
+                            <th class="p-3">Modalidade / Faixa</th>
+                            <th class="p-3">Situações (Aut / Fin)</th>
+                            <th class="p-3">% Quitado & Saldo</th>
+                            <th class="p-3">Participação & Presença</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-adm-inscricoes" class="divide-y divide-slate-800/80"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ================================================================== -->
+        <!-- ABA 2: FINANCEIRO, CONFERÊNCIA DE COMPROVANTES E CAIXA PRESENCIAL  -->
+        <!-- ================================================================== -->
+        <section id="sec-adm-financeiro" class="hidden space-y-6">
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Formulário de Registro de Pagamento Presencial (Pix, Dinheiro ou Cartão com Taxas Separadas) -->
+                <div class="glass-card rounded-3xl p-6 space-y-4 h-fit">
+                    <h2 class="text-base font-extrabold text-white flex items-center gap-2">
+                        <i data-lucide="dollar-sign" class="w-5 h-5 text-emerald-400"></i>
+                        Registrar Recebimento (Escritório Regional)
+                    </h2>
+                    <p class="text-xs text-slate-400">
+                        Lance pagamentos recebidos presencialmente no Escritório Regional (Dinheiro, Cartão de Crédito ou Pix direto).
+                    </p>
+
+                    <form id="form-caixa-presencial" onsubmit="event.preventDefault(); registrarPagamentoEscritorio();" class="space-y-3.5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Participante <span class="text-rose-400">*</span></label>
+                            <select id="cx-cpf-participante" required onchange="aoMudarParticipanteCaixa()" class="w-full input-dark px-3 py-2.5 rounded-xl text-xs font-semibold">
+                                <option value="">Selecione o inscrito...</option>
+                            </select>
+                        </div>
+
+                        <div id="cx-resumo-participante" class="hidden p-3 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-300 space-y-1"></div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Forma <span class="text-rose-400">*</span></label>
+                                <select id="cx-forma" required onchange="aoMudarFormaCaixa()" class="w-full input-dark px-3 py-2.5 rounded-xl text-xs font-bold">
+                                    <option value="dinheiro">Dinheiro (Presencial)</option>
+                                    <option value="cartao">Cartão de Crédito</option>
+                                    <option value="pix">Pix (Conferido)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Data Efetiva <span class="text-rose-400">*</span></label>
+                                <input type="date" id="cx-data" required onchange="atualizarPreviewCaixa()" class="w-full input-dark px-3 py-2.5 rounded-xl text-xs font-semibold" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-emerald-300 uppercase mb-1">Valor Destinado à Inscrição (R$) <span class="text-rose-400">*</span></label>
+                            <input type="number" id="cx-valor-inscricao" step="0.01" min="0.01" required oninput="atualizarPreviewCaixa()" placeholder="Ex: 150.00" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-bold" />
+                        </div>
+
+                        <!-- Bloco exclusivo de Cartão de Crédito (Taxas separadas) -->
+                        <div id="wrap-cx-cartao" class="hidden p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 space-y-2.5">
+                            <div class="text-[11px] font-bold text-amber-300 uppercase">Cartão de Crédito — Controle de Taxas</div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Valor das Taxas (R$)</label>
+                                    <input type="number" id="cx-valor-taxa" step="0.01" min="0" value="0" oninput="atualizarPreviewCaixa()" class="w-full input-dark px-2.5 py-2 rounded-lg text-xs font-bold" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Qtd. Parcelas</label>
+                                    <input type="number" id="cx-parcelas-cartao" min="1" max="12" value="1" class="w-full input-dark px-2.5 py-2 rounded-lg text-xs font-bold" />
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-amber-200 leading-relaxed">
+                                * As taxas do cartão são registradas separadamente e <strong>não aumentam</strong> o percentual quitado da inscrição.
+                            </p>
+                        </div>
+
+                        <div id="cx-preview-calculo" class="hidden p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-xs text-emerald-200 space-y-1"></div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Observação / Nº Recibo ou NSU</label>
+                            <input type="text" id="cx-obs" placeholder="Ex: Recebido na IEQ Central, NSU..." class="w-full input-dark px-3 py-2 rounded-xl text-xs" />
+                        </div>
+
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 px-4 rounded-xl text-xs uppercase tracking-wider shadow-lg">
+                            Confirmar e Lançar Pagamento
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Conferência de Comprovantes Pix + Acertos de Líderes + Histórico -->
+                <div class="lg:col-span-2 space-y-6">
+
+                    <!-- 1. Declarações de Pagamento e Comprovantes Aguardando Conferência -->
+                    <div class="glass-card rounded-3xl p-6 space-y-4 border border-amber-500/30">
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-amber-300 flex items-center justify-between">
+                            <span>Declarações de Pagamento e Comprovantes Aguardando Confirmação</span>
+                            <span id="badge-qtd-comp-pend" class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs">0</span>
+                        </h3>
+                        <div id="lista-conferencia-pix" class="space-y-3"></div>
+                    </div>
+
+                    <!-- 2. Acertos Agrupados de Líderes e Pastores Aguardando Conferência -->
+                    <div class="glass-card rounded-3xl p-6 space-y-4 border border-indigo-500/30">
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center justify-between">
+                            <span>Acertos Agrupados de Líderes/Pastores (Aguardando Conferência do Escritório)</span>
+                            <span id="badge-qtd-acertos-pend" class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs">0</span>
+                        </h3>
+                        <div id="lista-conferencia-acertos" class="space-y-3"></div>
+                    </div>
+
+                    <!-- 3. Histórico Completo de Lançamentos Financeiros (Com Estorno) -->
+                    <div class="glass-card rounded-3xl p-6 space-y-4">
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-300">Histórico Geral de Pagamentos, Taxas e Estornos</h3>
+                        <div id="lista-historico-geral-pagamentos" class="space-y-2.5 max-h-96 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================== -->
+        <!-- ABA 3: ORGANIZAÇÃO OPERACIONAL (ALIMENTAÇÃO, SAÚDE, HOSPEDAGEM)    -->
+        <!-- ================================================================== -->
+        <section id="sec-adm-operacional" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-card rounded-2xl p-5 space-y-2">
+                    <span class="text-xs font-extrabold uppercase text-indigo-300">Contagem por Modalidade</span>
+                    <div id="op-resumo-modalidades" class="text-xs text-slate-300 space-y-1.5 pt-1"></div>
+                </div>
+                <div class="glass-card rounded-2xl p-5 space-y-2">
+                    <span class="text-xs font-extrabold uppercase text-emerald-300">Refeições & Restrições Alimentares</span>
+                    <div id="op-resumo-alimentacao" class="text-xs text-slate-300 space-y-1.5 pt-1"></div>
+                </div>
+                <div class="glass-card rounded-2xl p-5 space-y-2">
+                    <span class="text-xs font-extrabold uppercase text-amber-300">Participantes por Igreja</span>
+                    <div id="op-resumo-igrejas" class="text-xs text-slate-300 space-y-1.5 pt-1 max-h-40 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- Fichas de Saúde e Necessidades de Apoio (Equipe de Cuidados) -->
+            <div class="glass-card rounded-3xl p-6 space-y-4 border border-rose-500/30">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-400">Acesso Restrito — Equipe de Cuidados e Alimentação</span>
+                        <h3 class="text-base font-extrabold text-white">Fichas de Saúde, Medicamentos, Alergias, Restrições e Hospedagem</h3>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-2xl border border-slate-800">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-900 text-[10px] font-extrabold uppercase text-slate-400">
+                            <tr>
+                                <th class="p-3">Participante / Idade</th>
+                                <th class="p-3">Contato de Emergência</th>
+                                <th class="p-3">Medicamentos / Alergias</th>
+                                <th class="p-3">Restrição Alimentar / Apoio</th>
+                                <th class="p-3">Quarto / Alojamento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-adm-saude-hospedagem" class="divide-y divide-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================== -->
+        <!-- ABA 4: CONFIGURAÇÕES E OS 23 ITENS "A DEFINIR" (SEÇÃO 17)          -->
+        <!-- ================================================================== -->
+        <section id="sec-adm-configuracoes" class="hidden space-y-6">
+            <!-- GESTORES AUTORIZADOS DO VATHOS 2027 (CONCEDER MESMOS PODERES) -->
+            <div id="box-equipe-gestora-vathos" class="glass-card rounded-3xl p-6 space-y-4 border border-indigo-500/40">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div>
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-400">Controle de Acesso e Delegação</span>
+                        <h2 class="text-lg font-black text-white mt-0.5">👥 Equipe Gestora do VATHOS 2027 (Mesmos Poderes de Gestão)</h2>
+                        <p class="text-xs text-slate-400">
+                            Selecione abaixo os usuários já cadastrados no sistema que terão <strong>acesso total a este Painel Administrativo do VATHOS 2027</strong> (mesmos poderes que você para gerenciar inscrições, autorizar categorias, confirmar pagamentos e configurar o evento).
+                        </p>
+                    </div>
+                    <input type="text" id="busca-usuarios-gestores" oninput="renderizarListaUsuariosGestores()" placeholder="Buscar usuário por nome ou e-mail..." class="input-dark px-3.5 py-2 rounded-xl text-xs w-full sm:w-64" />
+                </div>
+                <div id="lista-usuarios-gestores-vathos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-1"></div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-6 space-y-6 border border-amber-500/30">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div>
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-300">Parametrização Dinâmica — Sem Hardcode</span>
+                        <h2 class="text-xl font-black text-white mt-0.5">Configurações do Evento & 23 Decisões Pendentes (Seção 17)</h2>
+                        <p class="text-xs text-slate-400">Todos os itens ainda não decididos permanecem sinalizados como “A definir” até que você os preencha e salve abaixo.</p>
+                    </div>
+                    <button type="button" onclick="salvarConfiguracoesVathos()" id="btn-salvar-cfg" class="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-6 py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shrink-0">
+                        💾 Salvar Configurações
+                    </button>
+                </div>
+
+                <!-- Checklist Vivo dos 23 Itens da Seção 17 -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-300">Status das 23 Decisões Pendentes Antes da Publicação</h3>
+                    <div id="grid-23-decisoes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs"></div>
+                </div>
+
+                <!-- Formulário de Parâmetros Configuráveis -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+
+                    <!-- Bloco A: Evento e Local -->
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+                        <h4 class="text-xs font-extrabold uppercase text-indigo-300">1. Local, Horários e Contato Oficial</h4>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Endereço Completo por Escrito do Acampamento (Item 1)</label>
+                            <input type="text" id="cfg-endereco-acampamento" placeholder="A definir — deixe em branco enquanto não confirmado" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">Horário de Chegada (Item 2)</label>
+                                <input type="text" id="cfg-hora-chegada" placeholder="A definir (ex: 19:00)" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">Horário de Encerramento (Item 2)</label>
+                                <input type="text" id="cfg-hora-fim" placeholder="A definir (ex: 13:00)" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Contato Oficial da Organização (Item 3)</label>
+                            <input type="text" id="cfg-contato-org" placeholder="A definir (WhatsApp / E-mail)" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Serviços Incluídos no Retiro Completo (Item 9)</label>
+                            <input type="text" id="cfg-servicos-retiro" placeholder="A definir" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                        </div>
+                    </div>
+
+                    <!-- Bloco B: Pix, Escritório e Regra de Lote Líderes -->
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+                        <h4 class="text-xs font-extrabold uppercase text-emerald-300">2. Chave Pix, Escritório e Regra de Líderes</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">Chave Pix VATHOS 2027 (Item 13)</label>
+                                <input type="text" id="cfg-chave-pix" placeholder="A definir" class="w-full input-dark px-3 py-2 rounded-lg text-xs font-mono" />
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">Favorecido Pix (Item 13)</label>
+                                <input type="text" id="cfg-favorecido-pix" placeholder="A definir" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Horário de Atendimento Escritório Regional — IEQ Central (Item 4)</label>
+                            <input type="text" id="cfg-horario-escritorio" placeholder="A definir" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                            <label class="inline-flex items-center gap-2 text-[11px] text-slate-300 mt-1.5 cursor-pointer">
+                                <input type="checkbox" id="cfg-end-escritorio-confirmado" class="rounded bg-slate-950 border-slate-700" />
+                                <span>Confirmar endereço Travessa Belo Horizonte, 90 — Centro — Londrina/PR</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Critério de Data para Lote nos Pagamentos a Líderes/Pastores (Item 16)</label>
+                            <select id="cfg-regra-data-lider" class="w-full input-dark px-3 py-2 rounded-lg text-xs font-semibold">
+                                <option value="a_definir">A definir (Sugestão provisória: data do pagamento ao líder)</option>
+                                <option value="data_pagamento_lider">Confirmado: Data do pagamento ao líder/pastor</option>
+                                <option value="data_repasse_escritorio">Confirmado: Data do repasse ao escritório</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bloco C: Valores dos Lotes e Day Use -->
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+                        <h4 class="text-xs font-extrabold uppercase text-indigo-300">3. Lotes do Retiro Completo & Day Use</h4>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">Lote 1 (Até 31/01)</label>
+                                <input type="number" step="0.01" id="cfg-lote1-val" class="w-full input-dark px-2.5 py-2 rounded-lg text-xs font-bold" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">Lote 2 (Fevereiro)</label>
+                                <input type="number" step="0.01" id="cfg-lote2-val" class="w-full input-dark px-2.5 py-2 rounded-lg text-xs font-bold" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">Lote 3 (Março)</label>
+                                <input type="number" step="0.01" id="cfg-lote3-val" class="w-full input-dark px-2.5 py-2 rounded-lg text-xs font-bold" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">Day Use Sem Alimentação (R$)</label>
+                                <input type="number" step="0.01" id="cfg-dayuse-sem" class="w-full input-dark px-2.5 py-2 rounded-lg text-xs font-bold" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">Day Use Com Alimentação (R$)</label>
+                                <input type="number" step="0.01" id="cfg-dayuse-com" class="w-full input-dark px-2.5 py-2 rounded-lg text-xs font-bold" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Horários e Regras do Day Use (Item 10)</label>
+                            <input type="text" id="cfg-dayuse-horarios" placeholder="A definir" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Aplicar Desconto Infantil no Day Use? (Item 11)</label>
+                            <select id="cfg-dayuse-infantil" class="w-full input-dark px-3 py-2 rounded-lg text-xs">
+                                <option value="null">A definir (Não aplicar automaticamente)</option>
+                                <option value="true">Sim, aplicar desconto/gratuidade infantil no Day Use</option>
+                                <option value="false">Não, cobrar valor integral no Day Use</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bloco D: Regras Comerciais, Cartão, Promoção e Formulário -->
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+                        <h4 class="text-xs font-extrabold uppercase text-amber-300">4. Regras Comerciais, Cartão e Formulário</h4>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Taxas e Parcelamento no Cartão (Item 14)</label>
+                            <input type="text" id="cfg-cartao-taxas" placeholder="A definir" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Vencimentos e Regras da Promoção de Parcelas Fixas (Item 15)</label>
+                            <input type="text" id="cfg-promo-regras" placeholder="A definir" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 mb-1">Requisitos para Confirmar Vaga (Item 17) e Encerramento (Item 19)</label>
+                            <input type="text" id="cfg-requisitos-vaga" placeholder="A definir" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                        </div>
+                        <div class="flex flex-wrap gap-4 pt-1">
+                            <label class="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="cfg-solicitar-camiseta" class="rounded bg-slate-950 border-slate-700" />
+                                <span>Solicitar Tamanho de Camiseta no formulário</span>
+                            </label>
+                            <label class="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="cfg-email-obrigatorio" class="rounded bg-slate-950 border-slate-700" />
+                                <span>Tornar E-mail obrigatório</span>
+                            </label>
+                            <label class="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="cfg-data-idade-confirmada" class="rounded bg-slate-950 border-slate-700" />
+                                <span>Confirmar data de referência da idade (26/03/2027 — Item 7)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================== -->
+        <!-- ABA 5: LOGS DE AUDITORIA DO EVENTO                                 -->
+        <!-- ================================================================== -->
+        <section id="sec-adm-auditoria" class="hidden glass-card rounded-3xl p-6 space-y-4">
+            <h2 class="text-base font-extrabold text-white">Histórico de Auditoria — VATHOS 2027</h2>
+            <p class="text-xs text-slate-400">Registro imutável de alterações relevantes em inscrições, pagamentos, conferências, autorizações e cancelamentos.</p>
+            <div id="lista-logs-auditoria-vathos" class="space-y-2 max-h-[65vh] overflow-y-auto"></div>
+        </section>
+
+    </main>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import {
+            collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+        import {
+            VATHOS_DEFAULT_CONFIG,
+            DECISOES_PENDENTES_CATALOGO,
+            mergeVathosConfig,
+            formatarCPF,
+            formatarMoeda,
+            formatarPercentual,
+            formatarDataBR,
+            calcularPrecoAplicavel,
+            calcularPercentualDePagamento,
+            consolidarFinanceiroInscricao
+        } from './js/vathos_calc.js';
+
+        let userAuth = null;
+        let configEvento = structuredClone(VATHOS_DEFAULT_CONFIG);
+        let todasInscricoes = [];
+        let todasFichasSaude = {};
+        let todosPagamentos = [];
+        let todosAcertos = [];
+        let todosLogs = [];
+        let todosUsuariosSistema = [];
+
+        const GESTORES_NATIVOS_CPF = {
+            '06637234931': { nome: 'THATIANE MARCONI', email: 'marconithatiane@icloud.com' },
+            '03480561926': { nome: 'AUDREY DANIELLE B. DA SILVA', email: 'audreydbsilva@gmail.com' }
+        };
+
+        async function init() {
+            lucide.createIcons();
+            const snapCfgCheck = await getDoc(doc(db, 'vathos_2027_config', 'geral')).catch(() => null);
+            const cfgData = (snapCfgCheck && snapCfgCheck.exists()) ? snapCfgCheck.data() : {};
+            const emailsGestores = (cfgData.gestoresAutorizadosEmails || ['marconithatiane@icloud.com', 'audreydbsilva@gmail.com', 'eduardoalx@gmail.com']).map(e => e.toLowerCase());
+            const cpfsGestores = (cfgData.gestoresAutorizadosCpfs || ['06637234931', '03480561926']).map(c => String(c).replace(/\D/g, ''));
+
+            // 1. Verifica se há sessão de CPF de Gestora Autorizada (ex: Thatiane ou Audrey entrando via CPF + senha vathos)
+            const cpfSessao = String(sessionStorage.getItem('vathos2027_cpf_sessao') || '').replace(/\D/g, '');
+            if (cpfSessao && (cpfsGestores.includes(cpfSessao) || GESTORES_NATIVOS_CPF[cpfSessao])) {
+                let gestorAut = sessionStorage.getItem('vathos2027_gestor_autenticado') === 'sim';
+                if (!gestorAut) {
+                    const senhaDigitada = prompt('Confirme sua senha de Gestor(a) do VATHOS 2027:');
+                    if (senhaDigitada && senhaDigitada.trim().toLowerCase() === 'vathos') {
+                        sessionStorage.setItem('vathos2027_gestor_autenticado', 'sim');
+                        gestorAut = true;
+                    } else {
+                        alert('Senha de gestão inválida.');
+                        window.location.replace('vathos2027.html');
+                        return;
+                    }
+                }
+                const infoG = GESTORES_NATIVOS_CPF[cpfSessao] || { nome: `Gestor CPF ${formatarCPF(cpfSessao)}`, email: `cpf_${cpfSessao}@vathos2027` };
+                userAuth = {
+                    nome: infoG.nome,
+                    email: infoG.email,
+                    cpf: cpfSessao,
+                    permissoes: ['vathos_admin']
+                };
+                document.getElementById('cx-data').value = new Date().toISOString().split('T')[0];
+                await recarregarTudoAdmin();
+                return;
+            }
+
+            // 2. Caso contrário, tenta autenticação Firebase Auth (ou solicita CPF de Gestor)
+            try {
+                userAuth = await requireAuth();
+                const ehGestorEmail = emailsGestores.includes((userAuth.email || '').toLowerCase());
+
+                if (!hasAnyPermission(['admin', 'secretario', 'superintendente', 'coordenador', 'gestao_eventos', 'vathos_admin']) && !ehGestorEmail) {
+                    window.location.replace('index.html');
+                    return;
+                }
+            } catch (e) {
+                return;
+            }
+
+            document.getElementById('cx-data').value = new Date().toISOString().split('T')[0];
+            await recarregarTudoAdmin();
+        }
+
+        async function recarregarTudoAdmin() {
+            const snapCfg = await getDoc(doc(db, 'vathos_2027_config', 'geral'));
+            if (snapCfg.exists()) configEvento = mergeVathosConfig(snapCfg.data());
+
+            const [snapInsc, snapSaude, snapPag, snapAc, snapLogs, snapUsers] = await Promise.all([
+                getDocs(collection(db, 'vathos_2027_inscricoes')),
+                getDocs(collection(db, 'vathos_2027_fichas_saude')),
+                getDocs(collection(db, 'vathos_2027_pagamentos')),
+                getDocs(collection(db, 'vathos_2027_acertos')),
+                getDocs(collection(db, 'vathos_2027_auditoria')),
+                getDocs(collection(db, 'usuarios'))
+            ]);
+
+            todasInscricoes = [];
+            snapInsc.forEach(d => todasInscricoes.push({ id: d.id, ...d.data() }));
+
+            todasFichasSaude = {};
+            snapSaude.forEach(d => { todasFichasSaude[d.id] = d.data(); });
+
+            todosPagamentos = [];
+            snapPag.forEach(d => todosPagamentos.push({ id: d.id, ...d.data() }));
+
+            todosAcertos = [];
+            snapAc.forEach(d => todosAcertos.push({ id: d.id, ...d.data() }));
+
+            todosLogs = [];
+            snapLogs.forEach(d => todosLogs.push({ id: d.id, ...d.data() }));
+            todosLogs.sort((a, b) => (b.dataHoraISO || '').localeCompare(a.dataHoraISO || ''));
+
+            todosUsuariosSistema = [];
+            snapUsers.forEach(d => todosUsuariosSistema.push({ id: d.id, ...d.data() }));
+            todosUsuariosSistema.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
+            // Consolida cada inscrição
+            todasInscricoes.forEach(i => {
+                const pags = todosPagamentos.filter(p => p.cpfParticipante === i.cpf);
+                i._consolidado = consolidarFinanceiroInscricao({
+                    inscricao: i,
+                    pagamentos: pags,
+                    config: configEvento
+                });
+            });
+
+            popularFiltrosESelects();
+            atualizarKPIsAdmin();
+            renderizarTabelaInscricoesAdmin();
+            renderizarAbaFinanceiroAdmin();
+            renderizarAbaOperacionalAdmin();
+            preencherAbaConfiguracoesAdmin();
+            renderizarListaUsuariosGestores();
+            renderizarLogsAuditoriaAdmin();
+            lucide.createIcons();
+        }
+
+        function popularFiltrosESelects() {
+            const igs = [...new Set(todasInscricoes.map(i => i.igrejaNome).filter(Boolean))].sort();
+            const selIg = document.getElementById('f-adm-igreja');
+            const valAtual = selIg.value;
+            selIg.innerHTML = `<option value="">Todas as igrejas</option>` + igs.map(n => `<option value="${n}">${n}</option>`).join('');
+            selIg.value = valAtual;
+
+            const selCx = document.getElementById('cx-cpf-participante');
+            const valCx = selCx.value;
+            selCx.innerHTML = `<option value="">Selecione o inscrito...</option>` +
+                todasInscricoes
+                    .sort((a, b) => (a.nomeCompleto || '').localeCompare(b.nomeCompleto || ''))
+                    .map(i => `<option value="${i.cpf}">${i.nomeCompleto} (${formatarCPF(i.cpf)}) — Saldo: ${formatarMoeda(i._consolidado.saldoAtualReais)}</option>`)
+                    .join('');
+            selCx.value = valCx;
+        }
+
+        function atualizarKPIsAdmin() {
+            const ativas = todasInscricoes.filter(i => i.statusParticipacao !== 'cancelada');
+            const gratuitos = ativas.filter(i => i.faixaEtariaCodigo === 'ate_4').length;
+            const preRes = ativas.filter(i => i.statusParticipacao === 'pre_inscricao').length;
+            const confs = ativas.filter(i => i.statusParticipacao === 'confirmada').length;
+
+            const compPend = todosPagamentos.filter(p => p.statusConferencia === 'aguardando_conferencia').length;
+            const acertosPend = todosAcertos.filter(a => a.statusAcerto === 'aguardando_repasse').length;
+
+            let receitaConf = 0;
+            let taxasCartao = 0;
+            let receitaPend = 0;
+            todosPagamentos.forEach(p => {
+                if (p.statusConferencia === 'aprovado_escritorio') {
+                    receitaConf += Number(p.valorDestinadoInscricao || 0);
+                    taxasCartao += Number(p.valorTaxaCartao || 0);
+                } else if (p.statusConferencia === 'aguardando_conferencia' || p.statusConferencia === 'recebido_lider') {
+                    receitaPend += Number(p.valorDestinadoInscricao || 0);
+                }
+            });
+
+            document.getElementById('adm-kpi-total').textContent = ativas.length;
+            document.getElementById('adm-kpi-gratuitos').textContent = `${gratuitos} gratuitos (até 4 anos)`;
+            document.getElementById('adm-kpi-confirmados').textContent = `${preRes} pré / ${confs} conf.`;
+            document.getElementById('adm-kpi-comp-pendentes').textContent = compPend;
+            document.getElementById('adm-kpi-acertos-pend').textContent = `${acertosPend} acertos de líderes`;
+            document.getElementById('adm-kpi-receita-confirmada').textContent = formatarMoeda(receitaConf);
+            document.getElementById('adm-kpi-taxas-cartao').textContent = `Taxas cartão: ${formatarMoeda(taxasCartao)}`;
+            document.getElementById('adm-kpi-receita-pendente').textContent = formatarMoeda(receitaPend);
+        }
+
+        // =====================================================================
+        // ABA 1: TABELA DE INSCRIÇÕES E MUDANÇA DE SITUAÇÕES
+        // =====================================================================
+        window.renderizarTabelaInscricoesAdmin = function() {
+            const busca = (document.getElementById('f-adm-busca').value || '').toLowerCase().trim();
+            const ig = document.getElementById('f-adm-igreja').value;
+            const mod = document.getElementById('f-adm-modalidade').value;
+            const faixa = document.getElementById('f-adm-faixa').value;
+            const sit = document.getElementById('f-adm-situacao').value;
+
+            const filtradas = todasInscricoes.filter(i => {
+                if (busca) {
+                    const m = (i.nomeCompleto || '').toLowerCase().includes(busca) ||
+                              (i.cpf || '').includes(busca) ||
+                              (i.protocolo || '').toLowerCase().includes(busca);
+                    if (!m) return false;
+                }
+                if (ig && i.igrejaNome !== ig) return false;
+                if (mod && i.modalidade !== mod) return false;
+                if (faixa && i.faixaEtariaCodigo !== faixa) return false;
+                if (sit) {
+                    if (sit === 'aut_pendente' && !(i.isMenor && i.statusAutorizacao !== 'concluida')) return false;
+                    else if (sit === 'cat_pendente' && !(i.categoriaParticipacao && i.categoriaParticipacao !== 'participante' && i.statusCategoria !== 'aprovada')) return false;
+                    else if (sit === 'quitado' && !(i._consolidado.isento || i._consolidado.percentualConfirmado >= 100)) return false;
+                    else if (['pre_inscricao', 'confirmada', 'lista_espera', 'cancelada'].includes(sit) && i.statusParticipacao !== sit) return false;
+                }
+                return true;
+            });
+
+            document.getElementById('lbl-contagem-filtrada').textContent = `Exibindo ${filtradas.length} de ${todasInscricoes.length} inscrições`;
+            const tbody = document.getElementById('tbody-adm-inscricoes');
+
+            if (filtradas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500 italic">Nenhuma inscrição encontrada com os filtros selecionados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtradas.map(i => {
+                const c = i._consolidado;
+                const cat = i.categoriaParticipacao || 'participante';
+                let blocoAutorizarCategoria = '';
+                if (cat !== 'participante') {
+                    if (i.statusCategoria === 'aprovada') {
+                        blocoAutorizarCategoria = `
+                            <div class="mt-1 flex items-center gap-1.5">
+                                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">✓ ${cat.toUpperCase()} Autorizado (${formatarMoeda(c.loteAtual.precoAplicavel)})</span>
+                                <button type="button" onclick="gerenciarAutorizacaoCategoria('${i.cpf}')" class="text-[10px] text-indigo-300 underline">Alterar</button>
+                            </div>
+                        `;
+                    } else {
+                        blocoAutorizarCategoria = `
+                            <div class="mt-1">
+                                <button type="button" onclick="gerenciarAutorizacaoCategoria('${i.cpf}')" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-extrabold uppercase">
+                                    ⏳ Autorizar ${cat.replace('_', ' ')}
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+                return `
+                    <tr class="hover:bg-slate-900/50">
+                        <td class="p-3">
+                            <div class="font-bold text-white">${i.nomeCompleto}</div>
+                            <div class="text-[11px] font-mono text-slate-400">${formatarCPF(i.cpf)} · #${i.protocolo || ''}</div>
+                            <div class="text-[11px] text-slate-500">${i.whatsapp || ''}</div>
+                        </td>
+                        <td class="p-3">
+                            <div class="font-semibold text-slate-200">${i.igrejaNome || '—'}</div>
+                            <div class="text-[11px] text-slate-400">Líder: ${i.liderReferencia || '—'} · <strong>${cat.toUpperCase()}</strong></div>
+                            ${blocoAutorizarCategoria}
+                        </td>
+                        <td class="p-3">
+                            <div class="font-semibold text-indigo-300">${i.modalidade}</div>
+                            <div class="text-[11px] text-slate-400">${i.idadeCalculada ?? '—'} anos (${i.faixaEtariaCodigo || ''}) · ${i.condicaoPagamento}</div>
+                        </td>
+                        <td class="p-3 text-[11px] space-y-1.5">
+                            ${!i.isMenor
+                                ? `<div class="text-slate-500">Maior de 18 anos (Sem exigência de responsável)</div>`
+                                : (() => {
+                                    const r = i.responsavel || {};
+                                    const respCadastrado = Boolean(r.nome && r.cpf && r.whatsapp);
+                                    const badgeCadResp = respCadastrado
+                                        ? `<div class="p-1.5 rounded bg-emerald-950/40 border border-emerald-500/30 text-emerald-200 leading-tight">
+                                             <span class="font-extrabold text-emerald-400 block">✓ Cad. Responsável Feito:</span>
+                                             <span>${r.nome} (${r.vinculo || 'Resp.'}) · CPF: ${formatarCPF(r.cpf)} · ${r.whatsapp}</span>
+                                           </div>`
+                                        : `<div class="p-1.5 rounded bg-rose-950/40 border border-rose-500/40 text-rose-300 font-bold">
+                                             ⚠️ Cadastro do Responsável Pendente/Incompleto
+                                           </div>`;
+
+                                    const badgeEntregaDoc = i.statusAutorizacao === 'concluida'
+                                        ? `<div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                             <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-extrabold text-[10px]">✓ Autorizado (Docs Entregues)</span>
+                                             <a href="vathos2027_autorizacao.html?cpf=${i.cpf}" target="_blank" class="text-[10px] text-indigo-300 underline no-print">Ver A4</a>
+                                             <button type="button" onclick="confirmarEntregaAutorizacaoImpressa('${i.cpf}', false)" class="text-[10px] text-slate-400 hover:text-rose-400 underline no-print">Desfazer</button>
+                                           </div>`
+                                        : `<div class="space-y-1 pt-0.5">
+                                             <div class="text-amber-300 font-bold text-[10px]">⏳ Autorização: Aguardando Entrega dos Documentos</div>
+                                             <div class="flex flex-wrap items-center gap-1.5 no-print">
+                                               <button type="button" onclick="confirmarEntregaAutorizacaoImpressa('${i.cpf}', true)" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px]">
+                                                 ✓ Confirmar Entrega dos Documentos
+                                               </button>
+                                               <a href="vathos2027_autorizacao.html?cpf=${i.cpf}" target="_blank" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[10px] font-bold">
+                                                 🖨️ Folha A4
+                                               </a>
+                                             </div>
+                                           </div>`;
+                                    return badgeCadResp + badgeEntregaDoc;
+                                })()
+                            }
+                            <div class="pt-1 border-t border-slate-800/80">Fin.: <strong class="text-white">${c.statusFinanceiroSugerido}</strong> · Comp.: <strong class="text-slate-300">${c.statusComprovanteSugerido}</strong></div>
+                        </td>
+                        <td class="p-3">
+                            <div class="font-extrabold text-emerald-400">${formatarPercentual(c.percentualConfirmado)} (${formatarMoeda(c.totalPagoConfirmadoReais)})</div>
+                            <div class="text-[11px] text-slate-300">Saldo: <strong>${formatarMoeda(c.saldoAtualReais)}</strong></div>
+                            ${c.temPagamentoExcedente ? `<span class="text-[10px] text-rose-400 font-bold">⚠️ Excedente: +${formatarPercentual(c.percentualExcedente)}</span>` : ''}
+                        </td>
+                        <td class="p-3 space-y-1.5 no-print">
+                            <select onchange="alterarStatusInscricao('${i.cpf}', 'statusParticipacao', this.value)" class="input-dark px-2 py-1 rounded text-[11px] font-bold w-full">
+                                <option value="pre_inscricao" ${i.statusParticipacao === 'pre_inscricao' ? 'selected' : ''}>Pré-inscrição</option>
+                                <option value="confirmada" ${i.statusParticipacao === 'confirmada' ? 'selected' : ''}>✓ Vaga Confirmada</option>
+                                <option value="lista_espera" ${i.statusParticipacao === 'lista_espera' ? 'selected' : ''}>Lista de Espera</option>
+                                <option value="cancelada" ${i.statusParticipacao === 'cancelada' ? 'selected' : ''}>✕ Cancelada</option>
+                            </select>
+                            <select onchange="alterarStatusInscricao('${i.cpf}', 'statusPresenca', this.value)" class="input-dark px-2 py-1 rounded text-[11px] w-full">
+                                <option value="nao_chegou" ${i.statusPresenca === 'nao_chegou' ? 'selected' : ''}>Presença: Não chegou</option>
+                                <option value="presente" ${i.statusPresenca === 'presente' ? 'selected' : ''}>✓ Presente (Check-in)</option>
+                                <option value="saida_registrada" ${i.statusPresenca === 'saida_registrada' ? 'selected' : ''}>Saída registrada</option>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.gerenciarAutorizacaoCategoria = async function(cpf) {
+            const insc = todasInscricoes.find(x => x.cpf === cpf);
+            if (!insc) return;
+            const cat = (insc.categoriaParticipacao || 'participante').toUpperCase();
+            const valorSugerido = insc.valorPersonalizadoAprovado !== undefined && insc.valorPersonalizadoAprovado !== null
+                ? insc.valorPersonalizadoAprovado
+                : 350;
+
+            const resp = prompt(
+                `Autorização de Categoria: ${cat} para ${insc.nomeCompleto}\n\n` +
+                `• Digite o VALOR DIFERENCIADO (em R$) que será aplicado a esta pessoa após autorizar (ex: 250 ou 0 para isento);\n` +
+                `• Ou digite "PADRAO" para voltar ao valor padrão de Participante sem autorização especial:`,
+                String(valorSugerido)
+            );
+            if (resp === null) return;
+
+            const limpo = resp.trim().toUpperCase();
+            if (limpo === 'PADRAO') {
+                await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), {
+                    statusCategoria: 'pendente_aprovacao',
+                    valorPersonalizadoAprovado: null,
+                    atualizadoEm: serverTimestamp()
+                });
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    cpfParticipante: cpf,
+                    nomeParticipante: insc.nomeCompleto,
+                    acao: 'revogacao_categoria_especial',
+                    autor: `${userAuth.nome} (${userAuth.email})`,
+                    detalhes: `Categoria ${cat} voltou para valor padrão.`,
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+                await recarregarTudoAdmin();
+                return;
+            }
+
+            const numVal = Number(limpo.replace(',', '.'));
+            if (isNaN(numVal) || numVal < 0) {
+                alert('Valor inválido. Informe um número válido (ex: 250).');
+                return;
+            }
+
+            await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), {
+                statusCategoria: 'aprovada',
+                valorPersonalizadoAprovado: numVal,
+                atualizadoEm: serverTimestamp()
+            });
+
+            await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                cpfParticipante: cpf,
+                nomeParticipante: insc.nomeCompleto,
+                acao: 'autorizacao_categoria_especial',
+                autor: `${userAuth.nome} (${userAuth.email})`,
+                detalhes: `Categoria ${cat} autorizada pelo Admin com valor diferenciado de ${formatarMoeda(numVal)}`,
+                dataHora: serverTimestamp(),
+                dataHoraISO: new Date().toISOString()
+            }).catch(() => {});
+
+            await recarregarTudoAdmin();
+            alert(`Categoria ${cat} autorizada para ${insc.nomeCompleto} com valor ${formatarMoeda(numVal)}! Agora esse valor aparecerá na Área do Participante dessa pessoa.`);
+        };
+
+        window.confirmarEntregaAutorizacaoImpressa = async function(cpf, entregue) {
+            const insc = todasInscricoes.find(x => x.cpf === cpf);
+            if (!insc) return;
+            const msg = entregue
+                ? `Confirmar que a equipe recebeu o Termo de Autorização IMPRESSO e ASSINADO + cópia do documento do responsável do(a) menor ${insc.nomeCompleto}?`
+                : `Voltar a autorização de ${insc.nomeCompleto} para o status "Pendente (Impresso)"?`;
+            if (!confirm(msg)) return;
+
+            try {
+                const payloadUpdate = {
+                    statusAutorizacao: entregue ? 'concluida' : 'pendente',
+                    atualizadoEm: serverTimestamp()
+                };
+                if (entregue) {
+                    payloadUpdate.autorizacaoConfirmadaDados = {
+                        confirmadoPorNome: userAuth.nome || userAuth.email,
+                        confirmadoPorCpf: userAuth.cpf || '',
+                        metodo: 'Entrega de documento impresso assinado + cópia do documento conferidos pela equipe',
+                        versaoTermo: configEvento?.termos?.versao || '1.1-formal',
+                        dataHoraISO: new Date().toISOString()
+                    };
+                } else {
+                    payloadUpdate.autorizacaoConfirmadaDados = null;
+                }
+
+                await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), payloadUpdate);
+
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    cpfParticipante: cpf,
+                    nomeParticipante: insc.nomeCompleto,
+                    acao: entregue ? 'confirmacao_entrega_autorizacao_impressa' : 'reversao_autorizacao_impressa',
+                    autor: `${userAuth.nome} (${userAuth.email})`,
+                    detalhes: entregue
+                        ? 'Documento impresso de autorização do menor + cópia de documento recebidos e confirmados pela equipe.'
+                        : 'Status da autorização impressa revertido para pendente.',
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+
+                await recarregarTudoAdmin();
+            } catch (e) {
+                alert('Erro ao atualizar status da autorização: ' + e.message);
+            }
+        };
+
+        window.alterarStatusInscricao = async function(cpf, campo, novoValor) {
+            try {
+                await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), {
+                    [campo]: novoValor,
+                    atualizadoEm: serverTimestamp()
+                });
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    cpfParticipante: cpf,
+                    acao: `alteracao_${campo}`,
+                    autor: `${userAuth.nome} (${userAuth.email})`,
+                    detalhes: `Campo ${campo} alterado para "${novoValor}"`,
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+                await recarregarTudoAdmin();
+            } catch (e) {
+                alert('Erro ao atualizar status: ' + e.message);
+            }
+        };
+
+        window.exportarCSVInscricoes = function() {
+            const headers = ['Protocolo', 'CPF', 'Nome', 'Idade', 'FaixaEtaria', 'Igreja', 'Lider', 'Categoria', 'Modalidade', 'CondicaoPagamento', 'StatusParticipacao', 'StatusAutorizacao', 'PercentualQuitado', 'TotalConfirmado', 'SaldoAtual'];
+            const linhas = todasInscricoes.map(i => [
+                i.protocolo || '',
+                formatarCPF(i.cpf),
+                `"${(i.nomeCompleto || '').replace(/"/g, '""')}"`,
+                i.idadeCalculada ?? '',
+                i.faixaEtariaCodigo || '',
+                `"${(i.igrejaNome || '').replace(/"/g, '""')}"`,
+                `"${(i.liderReferencia || '').replace(/"/g, '""')}"`,
+                i.categoriaParticipacao || '',
+                i.modalidade || '',
+                i.condicaoPagamento || '',
+                i.statusParticipacao || '',
+                i.statusAutorizacao || '',
+                i._consolidado?.percentualConfirmado ?? 0,
+                i._consolidado?.totalPagoConfirmadoReais ?? 0,
+                i._consolidado?.saldoAtualReais ?? 0
+            ].join(';'));
+
+            const blob = new Blob(['\uFEFF' + headers.join(';') + '\n' + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `inscricoes_vathos2027_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        };
+
+        // =====================================================================
+        // ABA 2: FINANCEIRO, CAIXA PRESENCIAL, CONFERÊNCIA PIX E ACERTOS LÍDERES
+        // =====================================================================
+        window.aoMudarParticipanteCaixa = function() {
+            const cpf = document.getElementById('cx-cpf-participante').value;
+            const box = document.getElementById('cx-resumo-participante');
+            if (!cpf) {
+                box.classList.add('hidden');
+                return;
+            }
+            const insc = todasInscricoes.find(i => i.cpf === cpf);
+            if (!insc) return;
+            const c = insc._consolidado;
+            box.classList.remove('hidden');
+            box.innerHTML = `
+                <div><strong>${insc.nomeCompleto}</strong> · ${insc.modalidade}</div>
+                <div>Quitado confirmado: <strong class="text-emerald-400">${formatarPercentual(c.percentualConfirmado)}</strong> · Restante: <strong>${formatarPercentual(c.percentualRestante)}</strong></div>
+                <div>Saldo atual no ${c.loteAtual.loteNome}: <strong class="text-white">${formatarMoeda(c.saldoAtualReais)}</strong></div>
+            `;
+            atualizarPreviewCaixa();
+        };
+
+        window.aoMudarFormaCaixa = function() {
+            const forma = document.getElementById('cx-forma').value;
+            document.getElementById('wrap-cx-cartao').classList.toggle('hidden', forma !== 'cartao');
+            if (forma !== 'cartao') document.getElementById('cx-valor-taxa').value = 0;
+            atualizarPreviewCaixa();
+        };
+
+        window.atualizarPreviewCaixa = function() {
+            const cpf = document.getElementById('cx-cpf-participante').value;
+            const valInsc = Number(document.getElementById('cx-valor-inscricao').value || 0);
+            const valTaxa = Number(document.getElementById('cx-valor-taxa').value || 0);
+            const dataEf = document.getElementById('cx-data').value || new Date().toISOString().split('T')[0];
+            const box = document.getElementById('cx-preview-calculo');
+
+            if (!cpf || valInsc <= 0) {
+                box.classList.add('hidden');
+                return;
+            }
+            const insc = todasInscricoes.find(i => i.cpf === cpf);
+            if (!insc) return;
+
+            const infoLote = calcularPrecoAplicavel({
+                modalidade: insc.modalidade,
+                condicaoPagamento: insc.condicaoPagamento,
+                idade: insc.idadeCalculada,
+                diasDayUseQtd: Array.isArray(insc.diasDayUse) ? insc.diasDayUse.length : 1,
+                dataReferenciaPrecoISO: dataEf,
+                categoriaParticipacao: insc.categoriaParticipacao || 'participante',
+                statusCategoria: insc.statusCategoria || 'padrao',
+                valorPersonalizadoAprovado: insc.valorPersonalizadoAprovado ?? null,
+                config: configEvento
+            });
+
+            const calc = calcularPercentualDePagamento({
+                valorDestinadoInscricao: valInsc,
+                precoAplicavelNoLote: infoLote.precoAplicavel
+            });
+
+            const totalCobrar = valInsc + valTaxa;
+            box.classList.remove('hidden');
+            box.innerHTML = `
+                <div>Base (${infoLote.loteNome}): <strong>${formatarMoeda(infoLote.precoAplicavel)}</strong></div>
+                <div>Percentual quitado por este lançamento: <strong class="text-emerald-300">${formatarPercentual(calc.percentualQuitado)}</strong></div>
+                <div class="pt-1 border-t border-emerald-500/30 font-extrabold text-white">Total a cobrar do participante: ${formatarMoeda(totalCobrar)} ${valTaxa > 0 ? `(Inscrição ${formatarMoeda(valInsc)} + Taxa ${formatarMoeda(valTaxa)})` : ''}</div>
+            `;
+        };
+
+        window.registrarPagamentoEscritorio = async function() {
+            const cpf = document.getElementById('cx-cpf-participante').value;
+            const forma = document.getElementById('cx-forma').value;
+            const dataEf = document.getElementById('cx-data').value;
+            const valInsc = Number(document.getElementById('cx-valor-inscricao').value || 0);
+            const valTaxa = forma === 'cartao' ? Number(document.getElementById('cx-valor-taxa').value || 0) : 0;
+            const parcelasCartao = forma === 'cartao' ? Number(document.getElementById('cx-parcelas-cartao').value || 1) : 1;
+            const obs = document.getElementById('cx-obs').value.trim();
+
+            const insc = todasInscricoes.find(i => i.cpf === cpf);
+            if (!insc || valInsc <= 0) return;
+
+            const infoLote = calcularPrecoAplicavel({
+                modalidade: insc.modalidade,
+                condicaoPagamento: insc.condicaoPagamento,
+                idade: insc.idadeCalculada,
+                diasDayUseQtd: Array.isArray(insc.diasDayUse) ? insc.diasDayUse.length : 1,
+                dataReferenciaPrecoISO: dataEf,
+                categoriaParticipacao: insc.categoriaParticipacao || 'participante',
+                statusCategoria: insc.statusCategoria || 'padrao',
+                valorPersonalizadoAprovado: insc.valorPersonalizadoAprovado ?? null,
+                config: configEvento
+            });
+
+            const calc = calcularPercentualDePagamento({
+                valorDestinadoInscricao: valInsc,
+                precoAplicavelNoLote: infoLote.precoAplicavel
+            });
+
+            await addDoc(collection(db, 'vathos_2027_pagamentos'), {
+                cpfParticipante: insc.cpf,
+                nomeParticipante: insc.nomeCompleto,
+                igrejaNome: insc.igrejaNome || '',
+                forma,
+                parcelasCartao,
+                valorTotalCobrado: valInsc + valTaxa,
+                valorDestinadoInscricao: valInsc,
+                valorTaxaCartao: valTaxa,
+                dataEfetivaPagamento: dataEf,
+                loteIdNaData: infoLote.loteId,
+                loteNomeNaData: infoLote.loteNome,
+                precoBaseLoteNaData: infoLote.precoAplicavel,
+                percentualQuitado: calc.percentualQuitado,
+                percentualQuitadoExato: calc.percentualQuitadoExato,
+                observacao: obs,
+                statusConferencia: 'aprovado_escritorio',
+                conferidoPor: `${userAuth.nome} (${userAuth.email})`,
+                registradoPor: `${userAuth.nome} (${userAuth.email})`,
+                criadoEm: serverTimestamp(),
+                criadoEmISO: new Date().toISOString()
+            });
+
+            await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                cpfParticipante: insc.cpf,
+                nomeParticipante: insc.nomeCompleto,
+                acao: 'pagamento_presencial_escritorio',
+                autor: `${userAuth.nome} (${userAuth.email})`,
+                detalhes: `Forma: ${forma.toUpperCase()} | Valor Inscrição: ${formatarMoeda(valInsc)} | Taxa Cartão: ${formatarMoeda(valTaxa)} | Quitado: ${formatarPercentual(calc.percentualQuitado)}`,
+                dataHora: serverTimestamp(),
+                dataHoraISO: new Date().toISOString()
+            }).catch(() => {});
+
+            document.getElementById('cx-valor-inscricao').value = '';
+            document.getElementById('cx-valor-taxa').value = '0';
+            document.getElementById('cx-obs').value = '';
+            document.getElementById('cx-preview-calculo').classList.add('hidden');
+
+            await recarregarTudoAdmin();
+            alert('Pagamento presencial registrado e confirmado!');
+        };
+
+        function renderizarAbaFinanceiroAdmin() {
+            // 1. Comprovantes Pix aguardando conferência
+            const pendPix = todosPagamentos.filter(p => p.statusConferencia === 'aguardando_conferencia');
+            document.getElementById('badge-qtd-comp-pend').textContent = pendPix.length;
+            const contPix = document.getElementById('lista-conferencia-pix');
+
+            if (pendPix.length === 0) {
+                contPix.innerHTML = `<p class="text-xs text-slate-500 italic py-3 text-center">Nenhuma declaração de pagamento ou comprovante aguardando confirmação no momento.</p>`;
+            } else {
+                contPix.innerHTML = pendPix.map(p => `
+                    <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="space-y-1 text-xs">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="font-bold text-white">${p.nomeParticipante}</span>
+                                <span class="font-mono text-slate-400">(${formatarCPF(p.cpfParticipante)})</span>
+                                <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-extrabold uppercase">Forma: ${(p.forma || 'pix').toUpperCase()}</span>
+                                ${p.comprovanteDataUrl
+                                    ? `<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">Com Comprovante</span>`
+                                    : `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">Declaração sem Anexo</span>`}
+                            </div>
+                            <div class="text-slate-300">
+                                Valor declarado: <strong class="text-emerald-400">${formatarMoeda(p.valorDestinadoInscricao)}</strong>
+                                (${formatarPercentual(p.percentualQuitado)} no ${p.loteNomeNaData || 'Lote'}) · Data do Pagamento: <strong>${formatarDataBR(p.dataEfetivaPagamento)}</strong>
+                            </div>
+                            ${p.observacao ? `<div class="text-[11px] text-slate-400">Detalhes: ${p.observacao}</div>` : ''}
+                            ${p.comprovanteDataUrl ? `<a href="${p.comprovanteDataUrl}" target="_blank" download="comprovante_${p.cpfParticipante}.jpg" class="inline-block text-indigo-400 font-bold underline mt-1">📎 Abrir Anexo do Comprovante ↗</a>` : ''}
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button type="button" onclick="conferirPagamentoPix('${p.id}', true)" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl">
+                                ✓ Confirmar Pagamento
+                            </button>
+                            <button type="button" onclick="conferirPagamentoPix('${p.id}', false)" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 text-xs font-bold px-3.5 py-2 rounded-xl">
+                                ✕ Recusar
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 2. Acertos de líderes aguardando conferência
+            const pendAc = todosAcertos.filter(a => a.statusAcerto === 'aguardando_repasse');
+            document.getElementById('badge-qtd-acertos-pend').textContent = pendAc.length;
+            const contAc = document.getElementById('lista-conferencia-acertos');
+
+            if (pendAc.length === 0) {
+                contAc.innerHTML = `<p class="text-xs text-slate-500 italic py-3 text-center">Nenhum acerto agrupado de líder/pastor pendente de conferência.</p>`;
+            } else {
+                contAc.innerHTML = pendAc.map(ac => `
+                    <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <div class="text-xs font-extrabold text-white">${ac.igrejaNome} — Líder/Pastor: ${ac.liderNome}</div>
+                                <div class="text-[11px] text-slate-400">Data do repasse: ${formatarDataBR(ac.dataRepasseEscritorio)} · ${(ac.participantesBeneficiados || []).length} participantes beneficiados</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <strong class="text-base font-black text-emerald-400">${formatarMoeda(ac.valorTotalAcerto)}</strong>
+                                <button type="button" onclick="aprovarAcertoAgrupado('${ac.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl">
+                                    ✓ Confirmar Recebimento do Repasse
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 3. Histórico geral
+            const contHist = document.getElementById('lista-historico-geral-pagamentos');
+            if (todosPagamentos.length === 0) {
+                contHist.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">Nenhum lançamento registrado.</p>`;
+            } else {
+                contHist.innerHTML = todosPagamentos.map(p => `
+                    <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div>
+                            <strong class="text-white">${p.nomeParticipante || formatarCPF(p.cpfParticipante)}</strong>
+                            <span class="text-slate-400"> · ${formatarMoeda(p.valorDestinadoInscricao)} (${formatarPercentual(p.percentualQuitado)}) · ${(p.forma || '').toUpperCase()} · ${formatarDataBR(p.dataEfetivaPagamento)}</span>
+                            ${p.valorTaxaCartao > 0 ? `<span class="text-amber-300"> (+ Taxa Cartão ${formatarMoeda(p.valorTaxaCartao)})</span>` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold uppercase text-slate-300">${p.statusConferencia}</span>
+                            ${p.statusConferencia !== 'estornado' ? `<button type="button" onclick="estornarPagamento('${p.id}')" class="text-[10px] text-rose-400 hover:underline font-bold">Estornar</button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        window.conferirPagamentoPix = async function(pagId, aprovar) {
+            const pag = todosPagamentos.find(p => p.id === pagId);
+            if (!pag) return;
+
+            let motivoRecusa = '';
+            if (!aprovar) {
+                motivoRecusa = prompt('Informe o motivo da recusa do comprovante:') || '';
+                if (!motivoRecusa.trim()) return;
+            }
+
+            await updateDoc(doc(db, 'vathos_2027_pagamentos', pagId), {
+                statusConferencia: aprovar ? 'aprovado_escritorio' : 'recusado',
+                motivoRecusa: aprovar ? '' : motivoRecusa.trim(),
+                conferidoPor: `${userAuth.nome} (${userAuth.email})`,
+                conferidoEmISO: new Date().toISOString()
+            });
+
+            await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                cpfParticipante: pag.cpfParticipante,
+                nomeParticipante: pag.nomeParticipante || '',
+                acao: aprovar ? 'aprovacao_comprovante_pix' : 'recusa_comprovante_pix',
+                autor: `${userAuth.nome} (${userAuth.email})`,
+                detalhes: `${aprovar ? 'Aprovado' : 'Recusado (' + motivoRecusa + ')'} · Valor: ${formatarMoeda(pag.valorDestinadoInscricao)} (${formatarPercentual(pag.percentualQuitado)})`,
+                dataHora: serverTimestamp(),
+                dataHoraISO: new Date().toISOString()
+            }).catch(() => {});
+
+            await recarregarTudoAdmin();
+        };
+
+        window.aprovarAcertoAgrupado = async function(acertoId) {
+            const ac = todosAcertos.find(a => a.id === acertoId);
+            if (!ac) return;
+            if (!confirm(`Confirmar o recebimento do repasse de ${formatarMoeda(ac.valorTotalAcerto)} da igreja ${ac.igrejaNome} (Resp: ${ac.liderNome})?`)) return;
+
+            await updateDoc(doc(db, 'vathos_2027_acertos', acertoId), {
+                statusAcerto: 'conferido',
+                conferidoPor: `${userAuth.nome} (${userAuth.email})`,
+                conferidoEmISO: new Date().toISOString()
+            });
+
+            const pagsDoAcerto = todosPagamentos.filter(p => p.acertoId === acertoId);
+            for (const p of pagsDoAcerto) {
+                await updateDoc(doc(db, 'vathos_2027_pagamentos', p.id), {
+                    statusConferencia: 'aprovado_escritorio',
+                    conferidoPor: `${userAuth.nome} (${userAuth.email})`,
+                    conferidoEmISO: new Date().toISOString()
+                });
+                await updateDoc(doc(db, 'vathos_2027_inscricoes', p.cpfParticipante), {
+                    statusAcertoLider: 'conferido',
+                    atualizadoEm: serverTimestamp()
+                });
+            }
+
+            await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                cpfParticipante: 'ACERTO_AGRUPADO',
+                nomeParticipante: ac.igrejaNome,
+                acao: 'conferencia_acerto_lider_escritorio',
+                autor: `${userAuth.nome} (${userAuth.email})`,
+                detalhes: `Acerto agrupado #${acertoId.slice(0, 6)} conferido e aprovado (${formatarMoeda(ac.valorTotalAcerto)})`,
+                dataHora: serverTimestamp(),
+                dataHoraISO: new Date().toISOString()
+            }).catch(() => {});
+
+            await recarregarTudoAdmin();
+            alert('Repasse conferido com sucesso! Os percentuais dos participantes foram confirmados.');
+        };
+
+        window.estornarPagamento = async function(pagId) {
+            const motivo = prompt('Informe o motivo do estorno/correção deste lançamento:');
+            if (!motivo) return;
+            const pag = todosPagamentos.find(p => p.id === pagId);
+            if (!pag) return;
+
+            await updateDoc(doc(db, 'vathos_2027_pagamentos', pagId), {
+                statusConferencia: 'estornado',
+                motivoEstorno: motivo.trim(),
+                estornadoPor: `${userAuth.nome} (${userAuth.email})`,
+                estornadoEmISO: new Date().toISOString()
+            });
+
+            await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                cpfParticipante: pag.cpfParticipante,
+                nomeParticipante: pag.nomeParticipante || '',
+                acao: 'estorno_pagamento',
+                autor: `${userAuth.nome} (${userAuth.email})`,
+                detalhes: `Estorno de ${formatarMoeda(pag.valorDestinadoInscricao)} · Motivo: ${motivo.trim()}`,
+                dataHora: serverTimestamp(),
+                dataHoraISO: new Date().toISOString()
+            }).catch(() => {});
+
+            await recarregarTudoAdmin();
+        };
+
+        // =====================================================================
+        // ABA 3: OPERACIONAL, ALIMENTAÇÃO, SAÚDE E HOSPEDAGEM
+        // =====================================================================
+        function renderizarAbaOperacionalAdmin() {
+            const ativas = todasInscricoes.filter(i => i.statusParticipacao !== 'cancelada');
+
+            const qtdRetiro = ativas.filter(i => i.modalidade === 'retiro_completo').length;
+            const qtdDaySem = ativas.filter(i => i.modalidade === 'day_use_sem_alimentacao').length;
+            const qtdDayCom = ativas.filter(i => i.modalidade === 'day_use_com_alimentacao').length;
+            const qtdCriancasAte4 = ativas.filter(i => i.faixaEtariaCodigo === 'ate_4').length;
+
+            document.getElementById('op-resumo-modalidades').innerHTML = `
+                <div class="flex justify-between"><span>Retiro Completo (Com pernoite):</span><strong>${qtdRetiro}</strong></div>
+                <div class="flex justify-between"><span>Day Use Com Alimentação:</span><strong>${qtdDayCom}</strong></div>
+                <div class="flex justify-between"><span>Day Use Sem Alimentação:</span><strong>${qtdDaySem}</strong></div>
+                <div class="flex justify-between text-emerald-300 pt-1 border-t border-slate-800"><span>Crianças até 4 anos (incluídas acima):</span><strong>${qtdCriancasAte4}</strong></div>
+            `;
+
+            let comRestricao = 0;
+            let comMed = 0;
+            let comAlergia = 0;
+            ativas.forEach(i => {
+                const s = todasFichasSaude[i.cpf] || {};
+                if (s.possuiRestricaoAlimentar) comRestricao++;
+                if (s.usaMedicamento) comMed++;
+                if (s.possuiAlergia) comAlergia++;
+            });
+
+            document.getElementById('op-resumo-alimentacao').innerHTML = `
+                <div class="flex justify-between"><span>Participantes com pacote de refeições:</span><strong>${qtdRetiro + qtdDayCom}</strong></div>
+                <div class="flex justify-between text-amber-300"><span>Com restrição alimentar:</span><strong>${comRestricao}</strong></div>
+                <div class="flex justify-between text-rose-300"><span>Utilizam medicamentos:</span><strong>${comMed}</strong></div>
+                <div class="flex justify-between text-rose-300"><span>Possuem alergias relatadas:</span><strong>${comAlergia}</strong></div>
+            `;
+
+            const mapaIg = {};
+            ativas.forEach(i => {
+                const k = i.igrejaNome || 'Sem igreja';
+                mapaIg[k] = (mapaIg[k] || 0) + 1;
+            });
+            document.getElementById('op-resumo-igrejas').innerHTML = Object.entries(mapaIg)
+                .sort((a, b) => b[1] - a[1])
+                .map(([nome, qtd]) => `<div class="flex justify-between"><span>${nome}</span><strong>${qtd}</strong></div>`)
+                .join('');
+
+            const tbody = document.getElementById('tbody-adm-saude-hospedagem');
+            tbody.innerHTML = ativas.map(i => {
+                const s = todasFichasSaude[i.cpf] || {};
+                return `
+                    <tr>
+                        <td class="p-3">
+                            <div class="font-bold text-white">${i.nomeCompleto}</div>
+                            <div class="text-[11px] text-slate-400">${i.idadeCalculada ?? '—'} anos · ${i.igrejaNome || ''}</div>
+                        </td>
+                        <td class="p-3 text-[11px]">
+                            <div class="font-semibold text-slate-200">${i.contatoEmergencia?.nome || '—'} (${i.contatoEmergencia?.vinculo || ''})</div>
+                            <div class="text-slate-400">${i.contatoEmergencia?.whatsapp || ''}</div>
+                        </td>
+                        <td class="p-3 text-[11px]">
+                            <div>Med: <strong class="${s.usaMedicamento ? 'text-rose-400' : 'text-slate-500'}">${s.usaMedicamento ? s.medicamentoDetalhes || 'Sim' : 'Não'}</strong></div>
+                            <div>Alergia: <strong class="${s.possuiAlergia ? 'text-amber-300' : 'text-slate-500'}">${s.possuiAlergia ? s.alergiaDetalhes || 'Sim' : 'Não'}</strong></div>
+                        </td>
+                        <td class="p-3 text-[11px]">
+                            <div>Restrição: <strong class="${s.possuiRestricaoAlimentar ? 'text-amber-300' : 'text-slate-500'}">${s.possuiRestricaoAlimentar ? s.restricaoAlimentarDetalhes || 'Sim' : 'Não'}</strong></div>
+                            <div>Apoio: <strong class="${s.possuiCondicaoOuApoio ? 'text-indigo-300' : 'text-slate-500'}">${s.possuiCondicaoOuApoio ? s.condicaoOuApoioDetalhes || 'Sim' : 'Não'}</strong></div>
+                        </td>
+                        <td class="p-3">
+                            <input type="text" value="${i.quartoHospedagem || ''}" placeholder="Ex: Chalé 2"
+                                   onblur="salvarQuartoHospedagem('${i.cpf}', this.value)"
+                                   class="input-dark px-2.5 py-1.5 rounded-lg text-xs w-32" />
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        window.salvarQuartoHospedagem = async function(cpf, quarto) {
+            await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), {
+                quartoHospedagem: quarto.trim(),
+                atualizadoEm: serverTimestamp()
+            });
+        };
+
+        // =====================================================================
+        // ABA 4: CONFIGURAÇÕES E OS 23 ITENS "A DEFINIR" (SEÇÃO 17)
+        // =====================================================================
+        window.renderizarListaUsuariosGestores = function() {
+            const cont = document.getElementById('lista-usuarios-gestores-vathos');
+            if (!cont) return;
+            const busca = (document.getElementById('busca-usuarios-gestores')?.value || '').toLowerCase().trim();
+            const emailsAutorizados = (configEvento.gestoresAutorizadosEmails || []).map(e => e.toLowerCase());
+
+            const filtrados = todosUsuariosSistema.filter(u => {
+                if (!busca) return true;
+                return (u.nome || '').toLowerCase().includes(busca) || (u.email || '').toLowerCase().includes(busca);
+            });
+
+            cont.innerHTML = filtrados.map(u => {
+                const perms = Array.isArray(u.permissoes) ? u.permissoes : [];
+                const jaEhMasterOuSec = perms.includes('admin') || perms.includes('secretario');
+                const temPermVathos = perms.includes('vathos_admin') || emailsAutorizados.includes((u.email || '').toLowerCase());
+
+                let botaoAcao = '';
+                if (jaEhMasterOuSec) {
+                    botaoAcao = `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold uppercase">✓ Acesso Nativo (${perms[0]?.toUpperCase()})</span>`;
+                } else if (temPermVathos) {
+                    botaoAcao = `
+                        <div class="flex items-center gap-1.5">
+                            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold uppercase">✓ Gestor VATHOS</span>
+                            <button type="button" onclick="alternarPermissaoGestorVathos('${u.id}', false)" class="px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 text-[10px] font-bold">
+                                Remover
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    botaoAcao = `
+                        <button type="button" onclick="alternarPermissaoGestorVathos('${u.id}', true)" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-extrabold uppercase">
+                            + Dar Poderes de Gestor
+                        </button>
+                    `;
+                }
+
+                return `
+                    <div class="p-3.5 rounded-2xl border ${temPermVathos || jaEhMasterOuSec ? 'bg-indigo-950/30 border-indigo-500/40' : 'bg-slate-900/90 border-slate-800'} flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="text-xs font-extrabold text-white truncate">${u.nome || 'Sem nome'}</div>
+                            <div class="text-[10px] text-slate-400 truncate">${u.email || ''}</div>
+                            <div class="text-[10px] text-slate-500">${u.igrejaNome || 'Regional'} · Nível: ${perms[0] || '—'}</div>
+                        </div>
+                        <div class="shrink-0">${botaoAcao}</div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.alternarPermissaoGestorVathos = async function(userId, conceder) {
+            const u = todosUsuariosSistema.find(x => x.id === userId);
+            if (!u) return;
+
+            const permsAtuais = Array.isArray(u.permissoes) ? [...u.permissoes] : [];
+            let novasPerms = permsAtuais.filter(p => p !== 'vathos_admin');
+            if (conceder) novasPerms.push('vathos_admin');
+
+            const emailsAtuais = Array.isArray(configEvento.gestoresAutorizadosEmails) ? [...configEvento.gestoresAutorizadosEmails] : [];
+            const emailNorm = (u.email || '').toLowerCase();
+            let novosEmails = emailsAtuais.filter(e => e.toLowerCase() !== emailNorm);
+            if (conceder && emailNorm) novosEmails.push(emailNorm);
+
+            try {
+                await updateDoc(doc(db, 'usuarios', userId), {
+                    permissoes: novasPerms
+                });
+                await setDoc(doc(db, 'vathos_2027_config', 'geral'), {
+                    gestoresAutorizadosEmails: novosEmails
+                }, { merge: true });
+
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    cpfParticipante: 'EQUIPE_GESTORA',
+                    nomeParticipante: u.nome || u.email,
+                    acao: conceder ? 'concessao_gestor_vathos' : 'revogacao_gestor_vathos',
+                    autor: `${userAuth.nome} (${userAuth.email})`,
+                    detalhes: `${conceder ? 'Concedido' : 'Removido'} poder total de gestão do VATHOS 2027 para ${u.nome} (${u.email})`,
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+
+                await recarregarTudoAdmin();
+                alert(conceder
+                    ? `Pronto! ${u.nome} agora tem os mesmos poderes que você para gerenciar o VATHOS 2027!`
+                    : `Permissão de gestor do VATHOS 2027 removida de ${u.nome}.`);
+            } catch (e) {
+                alert('Erro ao atualizar permissão do usuário: ' + e.message);
+            }
+        };
+
+        function lerCaminhoObjeto(obj, path) {
+            return path.split('.').reduce((acc, k) => (acc && acc[k] !== undefined ? acc[k] : undefined), obj);
+        }
+
+        function preencherAbaConfiguracoesAdmin() {
+            const c = configEvento;
+            document.getElementById('cfg-endereco-acampamento').value = c.evento?.enderecoCompleto || '';
+            document.getElementById('cfg-hora-chegada').value = c.evento?.horarioChegada || '';
+            document.getElementById('cfg-hora-fim').value = c.evento?.horarioEncerramento || '';
+            document.getElementById('cfg-contato-org').value = c.evento?.contatoOrganizacao || '';
+            document.getElementById('cfg-servicos-retiro').value = c.modalidades?.retiroCompleto?.servicosIncluidos || '';
+
+            document.getElementById('cfg-chave-pix').value = c.pagamentos?.pix?.chavePix || '';
+            document.getElementById('cfg-favorecido-pix').value = c.pagamentos?.pix?.favorecidoPix || '';
+            document.getElementById('cfg-horario-escritorio').value = c.pagamentos?.escritorioRegional?.horarioAtendimento || '';
+            document.getElementById('cfg-end-escritorio-confirmado').checked = !!c.pagamentos?.escritorioRegional?.enderecoConfirmado;
+            document.getElementById('cfg-regra-data-lider').value = c.pagamentos?.lideresPastores?.regraDataLote || 'a_definir';
+
+            const lotes = c.modalidades?.retiroCompleto?.lotes || VATHOS_DEFAULT_CONFIG.modalidades.retiroCompleto.lotes;
+            document.getElementById('cfg-lote1-val').value = lotes[0]?.valorIntegral ?? 350;
+            document.getElementById('cfg-lote2-val').value = lotes[1]?.valorIntegral ?? 375;
+            document.getElementById('cfg-lote3-val').value = lotes[2]?.valorIntegral ?? 400;
+
+            document.getElementById('cfg-dayuse-sem').value = c.modalidades?.dayUse?.valorSemAlimentacao ?? 100;
+            document.getElementById('cfg-dayuse-com').value = c.modalidades?.dayUse?.valorComAlimentacao ?? 220;
+            document.getElementById('cfg-dayuse-horarios').value = c.modalidades?.dayUse?.horariosEntradaSaida || '';
+            document.getElementById('cfg-dayuse-infantil').value = String(c.modalidades?.dayUse?.aplicarDescontoInfantil ?? 'null');
+
+            document.getElementById('cfg-cartao-taxas').value = c.pagamentos?.cartao?.condicoesOperadoraTaxas || '';
+            document.getElementById('cfg-promo-regras').value = c.pagamentos?.promocaoParcelasFixas?.datasVencimento || '';
+            document.getElementById('cfg-requisitos-vaga').value = c.pagamentos?.regrasComerciais?.requisitosConfirmarVaga || '';
+            document.getElementById('cfg-solicitar-camiseta').checked = !!c.inscricaoConfig?.solicitarCamiseta;
+            document.getElementById('cfg-email-obrigatorio').checked = !!c.inscricaoConfig?.emailObrigatorio;
+            document.getElementById('cfg-data-idade-confirmada').checked = !!c.modalidades?.condicoesCriancas?.dataReferenciaConfirmada;
+
+            // Renderizar status dos 23 itens
+            let pendentesCount = 0;
+            const grid = document.getElementById('grid-23-decisoes');
+            grid.innerHTML = DECISOES_PENDENTES_CATALOGO.map(item => {
+                const val = lerCaminhoObjeto(c, item.caminho);
+                const definido = val !== null && val !== undefined && val !== '' && val !== false && val !== 'a_definir';
+                if (!definido) pendentesCount++;
+                return `
+                    <div class="p-2.5 rounded-xl border ${definido ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200' : 'bg-slate-900/90 border-slate-800 text-slate-300'} flex items-center justify-between gap-2">
+                        <span class="truncate"><strong>#${item.numero}.</strong> ${item.titulo}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase shrink-0 ${definido ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">
+                            ${definido ? 'Definido' : 'A definir'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('adm-kpi-decisoes').textContent = pendentesCount;
+        }
+
+        window.salvarConfiguracoesVathos = async function() {
+            const btn = document.getElementById('btn-salvar-cfg');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const infDayUseVal = document.getElementById('cfg-dayuse-infantil').value;
+                const infDayUseParsed = infDayUseVal === 'true' ? true : (infDayUseVal === 'false' ? false : null);
+
+                const lotes = structuredClone(configEvento.modalidades?.retiroCompleto?.lotes || VATHOS_DEFAULT_CONFIG.modalidades.retiroCompleto.lotes);
+                lotes[0].valorIntegral = Number(document.getElementById('cfg-lote1-val').value || 350);
+                lotes[1].valorIntegral = Number(document.getElementById('cfg-lote2-val').value || 375);
+                lotes[2].valorIntegral = Number(document.getElementById('cfg-lote3-val').value || 400);
+
+                const novoCfg = mergeVathosConfig({
+                    ...configEvento,
+                    evento: {
+                        ...configEvento.evento,
+                        enderecoCompleto: document.getElementById('cfg-endereco-acampamento').value.trim(),
+                        horarioChegada: document.getElementById('cfg-hora-chegada').value.trim(),
+                        horarioEncerramento: document.getElementById('cfg-hora-fim').value.trim(),
+                        contatoOrganizacao: document.getElementById('cfg-contato-org').value.trim()
+                    },
+                    modalidades: {
+                        ...configEvento.modalidades,
+                        retiroCompleto: {
+                            ...configEvento.modalidades.retiroCompleto,
+                            servicosIncluidos: document.getElementById('cfg-servicos-retiro').value.trim(),
+                            lotes
+                        },
+                        condicoesCriancas: {
+                            ...configEvento.modalidades.condicoesCriancas,
+                            dataReferenciaConfirmada: document.getElementById('cfg-data-idade-confirmada').checked
+                        },
+                        dayUse: {
+                            ...configEvento.modalidades.dayUse,
+                            valorSemAlimentacao: Number(document.getElementById('cfg-dayuse-sem').value || 100),
+                            valorComAlimentacao: Number(document.getElementById('cfg-dayuse-com').value || 220),
+                            horariosEntradaSaida: document.getElementById('cfg-dayuse-horarios').value.trim(),
+                            aplicarDescontoInfantil: infDayUseParsed
+                        }
+                    },
+                    pagamentos: {
+                        ...configEvento.pagamentos,
+                        pix: {
+                            ...configEvento.pagamentos.pix,
+                            chavePix: document.getElementById('cfg-chave-pix').value.trim(),
+                            favorecidoPix: document.getElementById('cfg-favorecido-pix').value.trim()
+                        },
+                        escritorioRegional: {
+                            ...configEvento.pagamentos.escritorioRegional,
+                            horarioAtendimento: document.getElementById('cfg-horario-escritorio').value.trim(),
+                            enderecoConfirmado: document.getElementById('cfg-end-escritorio-confirmado').checked
+                        },
+                        lideresPastores: {
+                            ...configEvento.pagamentos.lideresPastores,
+                            regraDataLote: document.getElementById('cfg-regra-data-lider').value
+                        },
+                        cartao: {
+                            ...configEvento.pagamentos.cartao,
+                            condicoesOperadoraTaxas: document.getElementById('cfg-cartao-taxas').value.trim()
+                        },
+                        promocaoParcelasFixas: {
+                            ...configEvento.pagamentos.promocaoParcelasFixas,
+                            datasVencimento: document.getElementById('cfg-promo-regras').value.trim()
+                        },
+                        regrasComerciais: {
+                            ...configEvento.pagamentos.regrasComerciais,
+                            requisitosConfirmarVaga: document.getElementById('cfg-requisitos-vaga').value.trim()
+                        }
+                    },
+                    inscricaoConfig: {
+                        ...configEvento.inscricaoConfig,
+                        solicitarCamiseta: document.getElementById('cfg-solicitar-camiseta').checked,
+                        emailObrigatorio: document.getElementById('cfg-email-obrigatorio').checked
+                    }
+                });
+
+                await setDoc(doc(db, 'vathos_2027_config', 'geral'), novoCfg, { merge: true });
+
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    cpfParticipante: 'CONFIG_SISTEMA',
+                    nomeParticipante: 'Configurações VATHOS 2027',
+                    acao: 'atualizacao_configuracoes_evento',
+                    autor: `${userAuth.nome} (${userAuth.email})`,
+                    detalhes: 'Parâmetros e decisões pendentes atualizados no painel administrativo.',
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+
+                await recarregarTudoAdmin();
+                alert('Configurações salvas com sucesso!');
+            } catch (e) {
+                alert('Erro ao salvar configurações: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Salvar Configurações';
+            }
+        };
+
+        // =====================================================================
+        // ABA 5: LOGS DE AUDITORIA
+        // =====================================================================
+        function renderizarLogsAuditoriaAdmin() {
+            const cont = document.getElementById('lista-logs-auditoria-vathos');
+            if (todosLogs.length === 0) {
+                cont.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">Nenhum registro de auditoria até o momento.</p>`;
+                return;
+            }
+            cont.innerHTML = todosLogs.map(l => `
+                <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div>
+                        <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px] uppercase">${l.acao}</span>
+                        <strong class="text-white ml-1.5">${l.nomeParticipante || l.cpfParticipante}</strong>
+                        <p class="text-slate-400 text-[11px] mt-0.5">${l.detalhes || ''}</p>
+                    </div>
+                    <div class="text-right text-[10px] text-slate-500 shrink-0">
+                        <div>Por: <strong class="text-slate-300">${l.autor || ''}</strong></div>
+                        <div>${l.dataHoraISO ? new Date(l.dataHoraISO).toLocaleString('pt-BR') : ''}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.trocarAbaAdmin = function(aba) {
+            ['inscricoes', 'financeiro', 'operacional', 'configuracoes', 'auditoria'].forEach(a => {
+                document.getElementById(`sec-adm-${a}`).classList.toggle('hidden', a !== aba);
+                const btn = document.getElementById(`adm-tab-${a}`);
+                if (a === aba) {
+                    btn.className = 'px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-indigo-600 text-white';
+                } else {
+                    btn.className = 'px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-slate-900 text-slate-400 hover:text-white border border-slate-800';
+                }
+            });
+        };
+
+        init();
+    </script>
+</body>
+</html>
+

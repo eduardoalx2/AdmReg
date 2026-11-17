@@ -37,7 +37,8 @@ const PERM_MIN_LEVEL = {
     dash_recibos: 80, dash_saldos: 80, agenda: 80, gestao_eventos: 80, presenca: 80, controle_presencas: 80,
     debitos_manuais: 90, relatorio_pendencias: 90, pendencias: 90, sorteio: 80, coordenadorias: 90,
     controle_avisos: 70, relatorio_avisos: 70,
-    levantamento_copel: 70, relatorio_copel: 80
+    levantamento_copel: 70, relatorio_copel: 80,
+    vathos_admin: 90
 };
 
 async function evaluateCurrentPageLayoutAccess(permissoes) {
@@ -162,7 +163,11 @@ export async function requireAuth({ requireActive = true } = {}) {
         firebaseUser = await waitForAuth();
     } catch (e) {
         console.warn('[auth] Usuário não autenticado, redirecionando para login...');
-        window.location.replace('login.html');
+        const currentPage = (window.location.pathname.split('/').pop() || '').split('?')[0];
+        const targetLogin = (currentPage && currentPage !== 'index.html' && currentPage !== 'login.html')
+            ? `login.html?redirect=${encodeURIComponent(currentPage + window.location.search)}`
+            : 'login.html';
+        window.location.replace(targetLogin);
         throw new Error('Redirecionando para login');
     }
 

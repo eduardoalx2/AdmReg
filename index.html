@@ -217,7 +217,10 @@
                 { id:'i-presencaab',tipo:'publico',  titulo:'Presença Evento Aberto',obs:'Registro por igreja com contagem',    url:'presencaeventoaberto.html',   icone:'🏛️',perm:null,              visivel:true, ordem:2 },
                 { id:'i-controle', tipo:'sistema', titulo:'Controle de Presenças',obs:'Painel de acompanhamento e faltas',      url:'controleeventosreg655.html',   icone:'📋', perm:'controle_presencas',visivel:true, ordem:3 },
                 { id:'i-releaberto',tipo:'sistema', titulo:'Rel. Eventos Abertos', obs:'Relatório de presenças de eventos abertos',url:'relatorio_evento_aberto.html',icone:'📊',perm:'gestao_eventos',   visivel:true, ordem:4 },
-                { id:'i-hubeventos', tipo:'sistema', titulo:'Hub de Congressos',   obs:'Acesso aos congressos regionais',        url:'eventos/index.html',          icone:'🎯', perm:'superintendente',  visivel:true, ordem:5 }
+                { id:'i-hubeventos', tipo:'sistema', titulo:'Hub de Congressos',   obs:'Acesso aos congressos regionais',        url:'eventos/index.html',          icone:'🎯', perm:'superintendente',  visivel:true, ordem:5 },
+                { id:'i-vathos2027-pub',   tipo:'publico', titulo:'VATHOS 2027 — Inscrições', obs:'Portal de inscrição e acesso por CPF', url:'vathos2027.html',         icone:'🔥', perm:null,              visivel:true, ordem:6 },
+                { id:'i-vathos2027-lider', tipo:'sistema', titulo:'VATHOS 2027 — Líderes',    obs:'Inscritos da igreja e acertos agrupados', url:'vathos2027_lideres.html', icone:'⛪', perm:'pastor_titular',  visivel:true, ordem:7 },
+                { id:'i-vathos2027-admin', tipo:'sistema', titulo:'VATHOS 2027 — Gestão',     obs:'Financeiro, comprovantes e configurações', url:'vathos2027_admin.html',   icone:'🛡️', perm:'vathos_admin',    visivel:true, ordem:8 }
             ]},
             { id:'g-avisos', nome:'Avisos', ordem:6, itens:[
                 { id:'i-controleavisos',  tipo:'sistema', titulo:'Controle de Avisos',  obs:'Gerencie avisos e acompanhe confirmações', url:'controle_avisos.html',  icone:'🔔', perm:'controle_avisos',  visivel:true, ordem:0 },
@@ -352,6 +355,17 @@
                             ordem: 1
                         });
                     }
+                    const temVathosAdmin = grupos.some(g => (g.itens || []).some(it => it.url === 'vathos2027_admin.html'));
+                    if (!temVathosAdmin) {
+                        const gEv = grupos.find(g => g.id === 'g-eventos') || grupos[0];
+                        if (gEv) {
+                            gEv.itens.push(
+                                { id:'i-vathos2027-pub',   tipo:'publico', titulo:'VATHOS 2027 — Inscrições', obs:'Portal de inscrição e acesso por CPF', url:'vathos2027.html',         icone:'🔥', perm:null,             visivel:true, ordem:gEv.itens.length },
+                                { id:'i-vathos2027-lider', tipo:'sistema', titulo:'VATHOS 2027 — Líderes',    obs:'Inscritos da igreja e acertos agrupados', url:'vathos2027_lideres.html', icone:'⛪', perm:'pastor_titular', visivel:true, ordem:gEv.itens.length + 1 },
+                                { id:'i-vathos2027-admin', tipo:'sistema', titulo:'VATHOS 2027 — Gestão',     obs:'Financeiro, comprovantes e configurações', url:'vathos2027_admin.html',   icone:'🛡️', perm:'vathos_admin',   visivel:true, ordem:gEv.itens.length + 2 }
+                            );
+                        }
+                    }
                     // Garante que Gerenciar Saldos, Gerenciar Recibos e Gestão da Agenda estejam acessíveis ao Secretário Regional
                     grupos.forEach(g => {
                         (g.itens || []).forEach(it => {
@@ -441,7 +455,8 @@
                 dash_recibos:80, dash_saldos:80, agenda:80, gestao_eventos:80, presenca:80, controle_presencas:80,
                 debitos_manuais:90, relatorio_pendencias:90, pendencias:90, sorteio:80, coordenadorias:90,
                 controle_avisos:70, relatorio_avisos:70,
-                levantamento_copel:70, relatorio_copel:80
+                levantamento_copel:70, relatorio_copel:80,
+                vathos_admin:90
             };
             const has = (p) => { if(!p) return true; if(nivel===100) return true; if(perms.includes(p)) return true; return nivel >= (permMinLevel[p] || 100); };
 
@@ -757,6 +772,26 @@
                 // Ações rápidas: apenas o que foi configurado em editpagpastores.html
                 // (Campanha Projeto de Vida 2027 oculta — pedidos encerrados)
                 const pastorLinks = (configPainel.acoesRapidas || []).filter(l => !(l.url || '').includes('campanha_projeto_vida_2027'));
+                if (!pastorLinks.some(l => (l.url || '').includes('vathos2027_lideres.html'))) {
+                    pastorLinks.push({
+                        titulo: 'VATHOS 2027 — Líderes e Acertos',
+                        obs: 'Inscritos da sua igreja e acertos agrupados',
+                        url: 'vathos2027_lideres.html',
+                        icone: '🔥',
+                        tipo: 'interno',
+                        formato: 'retangular'
+                    });
+                }
+                if ((userPerms || []).includes('vathos_admin') && !pastorLinks.some(l => (l.url || '').includes('vathos2027_admin.html'))) {
+                    pastorLinks.push({
+                        titulo: 'VATHOS 2027 — Painel Admin (Gestor)',
+                        obs: 'Acesso completo de gestão do retiro VATHOS 2027',
+                        url: 'vathos2027_admin.html',
+                        icone: '🛡️',
+                        tipo: 'interno',
+                        formato: 'retangular'
+                    });
+                }
 
                 // Garante que o layout_cache reconhece acesso do pastor_titular às ações rápidas internas
                 try {

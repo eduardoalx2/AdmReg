@@ -163,6 +163,54 @@ service cloud.firestore {
       allow create: if false;
     }
 
+    // --- VATHOS 2027 ---
+
+    // Configurações do evento VATHOS 2027 (lotes, termos, flags "A definir", gestores)
+    match /vathos_2027_config/{docId} {
+      allow read, write: if true;
+    }
+
+    // Inscrições VATHOS 2027 (portal público consulta/cria/atualiza por CPF; administração autenticada ou via gestor)
+    match /vathos_2027_inscricoes/{cpfId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['cpf', 'nomeCompleto', 'modalidade', 'statusCadastro', 'statusParticipacao'])
+                    && request.resource.data.cpf is string
+                    && request.resource.data.cpf.size() == 11;
+      allow update: if (request.resource.data.cpf == resource.data.cpf) || isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // Fichas de Saúde VATHOS 2027 (separadas das inscrições para privacidade na listagem de líderes)
+    match /vathos_2027_fichas_saude/{cpfId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasAll(['cpf'])
+                            && request.resource.data.cpf is string
+                            && request.resource.data.cpf.size() == 11;
+      allow delete: if isAuthenticated();
+    }
+
+    // Pagamentos individuais VATHOS 2027
+    match /vathos_2027_pagamentos/{pagamentoId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['cpfParticipante', 'forma', 'valorDestinadoInscricao', 'statusConferencia'])
+                    && request.resource.data.valorDestinadoInscricao is number
+                    && request.resource.data.valorDestinadoInscricao >= 0;
+      allow update: if true;
+      allow delete: if isAuthenticated();
+    }
+
+    // Acertos financeiros coletivos/igreja VATHOS 2027
+    match /vathos_2027_acertos/{acertoId} {
+      allow read, create, update: if true;
+      allow delete: if isAuthenticated();
+    }
+
+    // Trilha de auditoria imutável VATHOS 2027
+    match /vathos_2027_auditoria/{logId} {
+      allow read, create: if true;
+      allow update, delete: if false;
+    }
+
     // Qualquer outra coleção não listada: requer autenticação
     match /{collection}/{docId} {
       allow read, write: if isAuthenticated();

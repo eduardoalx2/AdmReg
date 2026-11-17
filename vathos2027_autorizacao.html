@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termo de Autorização para Menor de Idade — VATHOS 2027</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #1e293b;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Folha A4 Formal em tela e na impressão */
+        .folha-a4 {
+            background: #ffffff;
+            color: #000000;
+            width: 210mm;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10mm 12mm;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        .tabela-formal {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+        .tabela-formal th,
+        .tabela-formal td {
+            border: 1px solid #000000;
+            padding: 3.5px 6px;
+            text-align: left;
+            vertical-align: top;
+            color: #000000;
+            font-size: 10.5px;
+            line-height: 1.25;
+        }
+        .tabela-formal .rotulo {
+            font-size: 8.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #000000;
+            display: block;
+            margin-bottom: 1px;
+            letter-spacing: 0.02em;
+        }
+        .tabela-formal .valor {
+            font-size: 11px;
+            font-weight: 700;
+            color: #000000;
+        }
+
+        .titulo-secao {
+            background-color: #e5e7eb;
+            border: 1px solid #000000;
+            border-bottom: none;
+            padding: 3px 6px;
+            font-size: 9.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #000000;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 8mm 10mm;
+        }
+
+        @media print {
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .folha-a4 {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-3">
+
+    <!-- BARRA DE AÇÕES (OCULTA NA IMPRESSÃO) -->
+    <div class="max-w-[210mm] mx-auto mb-4 flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white p-3.5 rounded-xl border border-slate-700 no-print">
+        <a href="vathos2027.html" class="text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar ao Portal VATHOS 2027
+        </a>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="trocarCPFMenor()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg border border-slate-600">
+                Buscar Outro CPF
+            </button>
+            <button type="button" onclick="window.print()" class="text-xs font-extrabold bg-white text-black hover:bg-slate-200 px-4 py-2 rounded-lg flex items-center gap-1.5 shadow">
+                <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Autorização (1 Folha A4)
+            </button>
+        </div>
+    </div>
+
+    <!-- CAIXA DE BUSCA POR CPF (QUANDO ABERTO SEM ?cpf= NA URL) -->
+    <div id="box-busca-cpf" class="hidden max-w-md mx-auto bg-white text-black rounded-xl p-6 shadow-2xl border border-slate-300 no-print mb-6">
+        <h1 class="text-base font-extrabold uppercase text-black text-center">Localizar Termo de Autorização de Menor</h1>
+        <p class="text-xs text-slate-700 mt-1 mb-4 text-center">
+            Digite o <strong>CPF do menor inscrito</strong> ou o <strong>CPF do Pai / Mãe / Responsável Legal</strong>:
+        </p>
+        <form onsubmit="event.preventDefault(); buscarAutorizacaoPorCPF();" class="space-y-3">
+            <input type="text" id="input-busca-cpf-aut" required maxlength="14" placeholder="000.000.000-00"
+                   oninput="this.value = window.formatarCPFInput(this.value)"
+                   class="w-full border-2 border-black px-3 py-2.5 rounded text-base font-mono font-bold text-center text-black" />
+            <button type="submit" class="w-full bg-black hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded text-xs uppercase tracking-wider">
+                Abrir Formulário de Autorização
+            </button>
+        </form>
+        <div id="lista-menores-encontrados" class="hidden pt-3 mt-3 border-t border-slate-300 space-y-2 text-left"></div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="box-carregando" class="max-w-md mx-auto bg-white text-black rounded-xl p-8 text-center no-print">
+        <p class="text-xs font-bold">Carregando formulário de autorização...</p>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- FOLHA ÚNICA A4 — FORMULÁRIO SÉRIO EM PRETO E BRANCO                    -->
+    <!-- ====================================================================== -->
+    <div id="box-conteudo-aut" class="hidden">
+
+        <div class="folha-a4">
+            <!-- CABEÇALHO FORMAL DO DOCUMENTO -->
+            <div style="border: 1.5px solid #000; padding: 6px 10px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;">
+                        IGREJA DO EVANGELHO QUADRANGULAR — REGIÃO ECLESIÁSTICA 655 (LONDRINA/PR)
+                    </div>
+                    <div style="font-size: 13px; font-weight: 900; text-transform: uppercase; margin-top: 2px;">
+                        TERMO DE AUTORIZAÇÃO PARA PARTICIPAÇÃO DE MENOR DE IDADE — VATHOS 2027
+                    </div>
+                </div>
+                <div style="text-align: right; font-size: 9.5px; line-height: 1.3;">
+                    <div><strong>PROTOCOLO:</strong> <span id="aut-protocolo" style="font-family: monospace;">—</span></div>
+                    <div><strong>DATA EMISSÃO:</strong> <span id="aut-data-emissao">—</span></div>
+                </div>
+            </div>
+
+            <!-- 1. DADOS DO EVENTO -->
+            <div class="titulo-secao">1. Identificação do Evento</div>
+            <table class="tabela-formal">
+                <tr>
+                    <td style="width: 38%;">
+                        <span class="rotulo">Evento</span>
+                        <span class="valor">VATHOS 2027 — Retiro Regional de Jovens e Adolescentes</span>
+                    </td>
+                    <td style="width: 24%;">
+                        <span class="rotulo">Período de Realização</span>
+                        <span class="valor" id="aut-datas">26 a 28 de março de 2027</span>
+                    </td>
+                    <td style="width: 38%;">
+                        <span class="rotulo">Local do Evento</span>
+                        <span class="valor" id="aut-local">Acampamento Esperança</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <span class="rotulo">Modalidade Contratada</span>
+                        <span class="valor" id="aut-modalidade">—</span>
+                    </td>
+                    <td>
+                        <span class="rotulo">Transporte / Deslocamento</span>
+                        <span style="font-size: 9.5px; font-weight: 600;">Sob inteira responsabilidade da igreja local do participante.</span>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- 2. IDENTIFICAÇÃO DO PARTICIPANTE MENOR -->
+            <div class="titulo-secao">2. Identificação do Participante (Menor de 18 Anos)</div>
+            <table class="tabela-formal">
+                <tr>
+                    <td colspan="2" style="width: 52%;">
+                        <span class="rotulo">Nome Completo do Menor</span>
+                        <span class="valor" id="aut-menor-nome">—</span>
+                    </td>
+                    <td style="width: 24%;">
+                        <span class="rotulo">CPF do Menor</span>
+                        <span class="valor" id="aut-menor-cpf" style="font-family: monospace;">—</span>
+                    </td>
+                    <td style="width: 24%;">
+                        <span class="rotulo">RG / Documento (CIN)</span>
+                        <span class="valor" id="aut-menor-rg">—</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 26%;">
+                        <span class="rotulo">Data de Nascimento e Idade</span>
+                        <span class="valor" id="aut-menor-nasc">—</span>
+                    </td>
+                    <td style="width: 26%;">
+                        <span class="rotulo">Telefone / WhatsApp</span>
+                        <span class="valor" id="aut-menor-zap">—</span>
+                    </td>
+                    <td style="width: 24%;">
+                        <span class="rotulo">Igreja a que Pertence</span>
+                        <span class="valor" id="aut-menor-igreja">—</span>
+                    </td>
+                    <td style="width: 24%;">
+                        <span class="rotulo">Pastor / Líder de Referência</span>
+                        <span class="valor" id="aut-menor-lider">—</span>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- 3. IDENTIFICAÇÃO DO RESPONSÁVEL LEGAL -->
+            <div class="titulo-secao">3. Identificação do Pai, Mãe ou Responsável Legal</div>
+            <table class="tabela-formal">
+                <tr>
+                    <td colspan="2" style="width: 52%;">
+                        <span class="rotulo">Nome Completo do Responsável Legal</span>
+                        <span class="valor" id="aut-resp-nome">—</span>
+                    </td>
+                    <td style="width: 24%;">
+                        <span class="rotulo">CPF do Responsável Legal</span>
+                        <span class="valor" id="aut-resp-cpf" style="font-family: monospace;">—</span>
+                    </td>
+                    <td style="width: 24%;">
+                        <span class="rotulo">Vínculo Legal com o Menor</span>
+                        <span class="valor" id="aut-resp-vinculo">—</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 26%;">
+                        <span class="rotulo">Telefone / WhatsApp do Responsável</span>
+                        <span class="valor" id="aut-resp-zap">—</span>
+                    </td>
+                    <td style="width: 26%;">
+                        <span class="rotulo">E-mail do Responsável</span>
+                        <span class="valor" id="aut-resp-email">—</span>
+                    </td>
+                    <td colspan="2" style="width: 48%;">
+                        <span class="rotulo">Pessoa Autorizada para Retirada / Saída Antecipada do Menor (se houver)</span>
+                        <span class="valor" id="aut-resp-retirada">—</span>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- 4. DECLARAÇÃO DE AUTORIZAÇÃO E REGRAS DE SEGURANÇA -->
+            <div class="titulo-secao">4. Termo de Responsabilidade, Regras de Convivência e Ciência</div>
+            <div style="border: 1px solid #000; padding: 6px 8px; font-size: 9.8px; line-height: 1.35; text-align: justify; margin-bottom: 6px;">
+                <p style="margin: 0 0 4px 0;">
+                    <strong>4.1. AUTORIZAÇÃO DE PARTICIPAÇÃO:</strong> Na qualidade de pai, mãe ou responsável legal acima qualificado(a), <strong>AUTORIZO</strong> formalmente o(a) menor identificado(a) no item 2 a participar do retiro regional <strong>VATHOS 2027</strong>, a realizar-se de 26 a 28 de março de 2027 no Acampamento Esperança, sob organização da Região Eclesiástica 655 da Igreja do Evangelho Quadrangular.
+                </p>
+                <p style="margin: 0 0 4px 0;">
+                    <strong>4.2. PROIBIÇÃO EXPRESSA DE ENTRADA NO LAGO E NORMAS DISCIPLINARES:</strong> Declaro estar plenamente ciente, e ter orientado o(a) menor sob minha responsabilidade, de que <strong>É TERMINANTEMENTE PROIBIDO ENTRAR, NADAR OU ACESSAR O LAGO DO ACAMPAMENTO SOB QUALQUER CIRCUNSTÂNCIA</strong>, bem como ausentar-se do local sem autorização ou descumprir a separação de alojamentos. O descumprimento acarretará a <strong>penalidade de desligamento imediato (expulsão) do retiro</strong>, sem direito a reembolso, com imediata comunicação aos responsáveis para retirada do menor.
+                </p>
+                <p style="margin: 0 0 4px 0;">
+                    <strong>4.3. TRANSPORTE, SAÚDE E ALIMENTAÇÃO:</strong> Declaro ciência de que o transporte de ida e volta é organizado exclusivamente por cada igreja local; de que medicamentos de uso contínuo devem ser entregues identificados na embalagem original; e de que não é permitido levar alimentos caseiros/artesanais (bolos feitos em casa, pão de forma, etc.), sendo permitidos apenas lanches industrializados lacrados.
+                </p>
+                <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid #000; display: flex; align-items: center; justify-content: space-between; font-weight: 700;">
+                    <span>4.4. AUTORIZAÇÃO GRATUITA DE USO DE IMAGEM INSTITUCIONAL (OPCIONAL):</span>
+                    <span id="aut-check-imagem">[ &nbsp; ] AUTORIZO &nbsp;&nbsp;&nbsp;&nbsp; [ &nbsp; ] NÃO AUTORIZO</span>
+                </div>
+            </div>
+
+            <!-- 5. DATA E ASSINATURAS FÍSICAS -->
+            <div class="titulo-secao">5. Assinatura do Responsável Legal e do Participante</div>
+            <div style="border: 1px solid #000; padding: 6px 10px; margin-bottom: 6px;">
+                <div style="font-size: 10px; margin-bottom: 18px;">
+                    Por ser expressão da verdade, firmo o presente termo em Londrina/PR, na data de ____/____/202___.
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: center; margin-top: 8px;">
+                    <div>
+                        <div style="border-top: 1px solid #000; padding-top: 3px; font-size: 9.5px; font-weight: 800; text-transform: uppercase;">
+                            Assinatura do Pai / Mãe / Responsável Legal
+                        </div>
+                        <div style="font-size: 8.5px;" id="assinatura-resp-sub">Conforme documento de identidade anexado abaixo</div>
+                    </div>
+                    <div>
+                        <div style="border-top: 1px solid #000; padding-top: 3px; font-size: 9.5px; font-weight: 800; text-transform: uppercase;">
+                            Assinatura de Ciência do(a) Menor Participante
+                        </div>
+                        <div style="font-size: 8.5px;" id="assinatura-menor-sub">Ciente das regras de convivência do retiro</div>
+                    </div>
+                </div>
+                <div id="registro-eletronico-rodape" style="margin-top: 4px; font-size: 8.5px; text-align: center; border-top: 1px dotted #999; padding-top: 3px; display: none;"></div>
+            </div>
+
+            <!-- 6. ESPAÇO PARA CÓPIA DO DOCUMENTO DO RESPONSÁVEL -->
+            <div class="titulo-secao">6. Espaço para Cópia ou Colagem do Documento Oficial com Foto do Responsável Legal (RG / CIN / CNH)</div>
+            <div style="border: 1.5px dashed #000; height: 55mm; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8px; box-sizing: border-box;">
+                <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase;">
+                    COLE OU IMPRIMA NESTE ESPAÇO A CÓPIA DO DOCUMENTO DE IDENTIFICAÇÃO COM FOTO DO RESPONSÁVEL LEGAL
+                </div>
+                <div style="font-size: 9px; margin-top: 3px;">
+                    (RG, Carteira de Identidade Nacional - CIN ou CNH — Frente e Verso, de modo que conste a assinatura e o CPF do responsável que assinou no item 5)
+                </div>
+            </div>
+
+            <!-- PROTOCOLO DE RECEBIMENTO FÍSICO PELA EQUIPE -->
+            <div style="border: 1px solid #000; margin-top: 5px; padding: 4px 8px; font-size: 9px; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
+                <span>USO EXCLUSIVO DA EQUIPE VATHOS 2027: [ &nbsp; ] Documento impresso assinado + cópia do documento conferidos.</span>
+                <span>Recebido em: ____/____/202___ &nbsp; Por: ______________________________</span>
+            </div>
+        </div>
+
+        <!-- ORIENTAÇÃO DE IMPRESSÃO E AJUSTES ANTES DE IMPRIMIR (OCULTO NA IMPRESSÃO A4) -->
+        <div class="max-w-[210mm] mx-auto mt-6 bg-slate-900 text-white rounded-2xl p-6 border border-slate-700 space-y-4 no-print">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                    <h2 class="text-sm font-extrabold uppercase tracking-wider text-amber-300">Instruções para Validação da Autorização</h2>
+                    <p class="text-xs text-slate-300 mt-0.5">
+                        A confirmação da autorização no sistema é feita <strong>exclusivamente pela equipe organizadora mediante a entrega desta folha impressa assinada + cópia do documento do responsável</strong>.
+                    </p>
+                </div>
+                <span id="badge-status-aut" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+                    Pendente de Entrega Impressa
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Opção de Uso de Imagem na Folha Impressa</label>
+                    <select id="conf-uso-imagem" onchange="atualizarCheckImagemNaFolha()" class="w-full bg-slate-950 border border-slate-700 px-3 py-2 rounded-lg text-xs font-semibold text-white">
+                        <option value="autorizado">Marcar [ X ] AUTORIZO o uso de imagem</option>
+                        <option value="nao_autorizado">Marcar [ X ] NÃO AUTORIZO o uso de imagem</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Autorizado para Retirada (Se houver — preenche na folha acima)</label>
+                    <input type="text" id="input-retirada-terceiro" oninput="document.getElementById('aut-resp-retirada').textContent = this.value || 'Apenas o próprio responsável legal'"
+                           placeholder="Nome e CPF de quem poderá retirar o menor"
+                           class="w-full bg-slate-950 border border-slate-700 px-3 py-2 rounded-lg text-xs text-white" />
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 pt-1">
+                <button type="button" onclick="window.print()" class="bg-white text-black hover:bg-slate-200 font-extrabold py-3 px-6 rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg">
+                    <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Folha A4 Agora
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { doc, getDoc, getDocs, query, where, updateDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { VATHOS_DEFAULT_CONFIG, mergeVathosConfig, limparCPF, formatarCPF, formatarDataBR } from './js/vathos_calc.js';
+
+        window.formatarCPFInput = formatarCPF;
+
+        let inscricaoMenor = null;
+        let configEvento = structuredClone(VATHOS_DEFAULT_CONFIG);
+
+        async function init() {
+            lucide.createIcons();
+            try {
+                const snapCfg = await getDoc(doc(db, 'vathos_2027_config', 'geral'));
+                if (snapCfg.exists()) configEvento = mergeVathosConfig(snapCfg.data());
+            } catch (e) {}
+
+            const params = new URLSearchParams(window.location.search);
+            const cpf = limparCPF(params.get('cpf') || '');
+
+            if (!cpf) {
+                document.getElementById('box-carregando').classList.add('hidden');
+                document.getElementById('box-busca-cpf').classList.remove('hidden');
+                lucide.createIcons();
+                return;
+            }
+
+            await carregarMenorPorCPF(cpf);
+        }
+
+        window.trocarCPFMenor = function() {
+            document.getElementById('box-conteudo-aut').classList.add('hidden');
+            document.getElementById('box-busca-cpf').classList.remove('hidden');
+        };
+
+        window.buscarAutorizacaoPorCPF = async function() {
+            const cpfDigitado = limparCPF(document.getElementById('input-busca-cpf-aut').value);
+            if (cpfDigitado.length !== 11) {
+                alert('Informe um CPF válido de 11 dígitos.');
+                return;
+            }
+
+            const snapDireto = await getDoc(doc(db, 'vathos_2027_inscricoes', cpfDigitado));
+            if (snapDireto.exists()) {
+                document.getElementById('box-busca-cpf').classList.add('hidden');
+                inscricaoMenor = { id: snapDireto.id, ...snapDireto.data() };
+                preencherTela();
+                return;
+            }
+
+            const qFilhos = query(collection(db, 'vathos_2027_inscricoes'), where('responsavelCpf', '==', cpfDigitado));
+            const snapFilhos = await getDocs(qFilhos);
+            const filhos = [];
+            snapFilhos.forEach(d => filhos.push({ id: d.id, ...d.data() }));
+
+            if (filhos.length === 1) {
+                document.getElementById('box-busca-cpf').classList.add('hidden');
+                inscricaoMenor = filhos[0];
+                preencherTela();
+                return;
+            } else if (filhos.length > 1) {
+                const listaEl = document.getElementById('lista-menores-encontrados');
+                listaEl.classList.remove('hidden');
+                listaEl.innerHTML = `<p class="text-xs font-bold text-black">Selecione qual filho(a) menor deseja imprimir/autorizar:</p>` +
+                    filhos.map(f => `
+                        <a href="vathos2027_autorizacao.html?cpf=${f.cpf}" class="block p-2.5 rounded border border-black bg-slate-100 hover:bg-slate-200 text-xs font-bold text-black">
+                            ${f.nomeCompleto} (${formatarCPF(f.cpf)})
+                        </a>
+                    `).join('');
+                return;
+            }
+
+            alert('Nenhuma inscrição localizada para este CPF.');
+        };
+
+        async function carregarMenorPorCPF(cpf) {
+            try {
+                const snap = await getDoc(doc(db, 'vathos_2027_inscricoes', cpf));
+                if (!snap.exists()) {
+                    document.getElementById('box-carregando').classList.add('hidden');
+                    document.getElementById('box-busca-cpf').classList.remove('hidden');
+                    return;
+                }
+
+                inscricaoMenor = { id: snap.id, ...snap.data() };
+                preencherTela();
+            } catch (e) {
+                document.getElementById('box-carregando').innerHTML = `<p class="text-red-600 text-xs font-bold">Erro ao carregar autorização: ${e.message}</p>`;
+            }
+        }
+
+        window.atualizarCheckImagemNaFolha = function() {
+            const val = document.getElementById('conf-uso-imagem').value;
+            document.getElementById('aut-check-imagem').innerHTML = val === 'autorizado'
+                ? '[ X ] AUTORIZO &nbsp;&nbsp;&nbsp;&nbsp; [ &nbsp; ] NÃO AUTORIZO'
+                : '[ &nbsp; ] AUTORIZO &nbsp;&nbsp;&nbsp;&nbsp; [ X ] NÃO AUTORIZO';
+        };
+
+        function preencherTela() {
+            const i = inscricaoMenor;
+            document.getElementById('box-carregando').classList.add('hidden');
+            document.getElementById('box-conteudo-aut').classList.remove('hidden');
+
+            document.getElementById('aut-protocolo').textContent = i.protocolo || i.cpf;
+            document.getElementById('aut-data-emissao').textContent = new Date().toLocaleDateString('pt-BR');
+
+            const mapMod = {
+                retiro_completo: 'Retiro Completo (26 a 28/03/2027 — Com Pernoite)',
+                day_use_sem_alimentacao: `Day Use Sem Alimentação (${(i.diasDayUse || []).map(formatarDataBR).join(', ') || 'Dia a definir'})`,
+                day_use_com_alimentacao: `Day Use Com Alimentação (${(i.diasDayUse || []).map(formatarDataBR).join(', ') || 'Dia a definir'})`
+            };
+            document.getElementById('aut-modalidade').textContent = mapMod[i.modalidade] || i.modalidade;
+
+            document.getElementById('aut-menor-nome').textContent = i.nomeCompleto || '—';
+            document.getElementById('aut-menor-cpf').textContent = formatarCPF(i.cpf);
+            document.getElementById('aut-menor-nasc').textContent = `${formatarDataBR(i.dataNascimento)} (${i.idadeCalculada ?? '—'} anos)`;
+            document.getElementById('aut-menor-rg').textContent = i.rg || '—';
+            document.getElementById('aut-menor-zap').textContent = i.whatsapp || '—';
+            document.getElementById('aut-menor-igreja').textContent = i.igrejaNome || '—';
+            document.getElementById('aut-menor-lider').textContent = i.liderReferencia || '—';
+
+            const r = i.responsavel || {};
+            document.getElementById('aut-resp-nome').textContent = r.nome || '—';
+            document.getElementById('aut-resp-cpf').textContent = r.cpf ? formatarCPF(r.cpf) : '—';
+            document.getElementById('aut-resp-vinculo').textContent = r.vinculo || '—';
+            document.getElementById('aut-resp-zap').textContent = r.whatsapp || '—';
+            document.getElementById('aut-resp-email').textContent = r.email || '—';
+            document.getElementById('aut-resp-retirada').textContent = r.retiradaTerceiro || 'Apenas o próprio responsável legal';
+            document.getElementById('input-retirada-terceiro').value = r.retiradaTerceiro || '';
+
+            document.getElementById('assinatura-resp-sub').textContent = `${r.nome || 'Responsável Legal'} — CPF: ${r.cpf ? formatarCPF(r.cpf) : '___.___.___-__'}`;
+            document.getElementById('assinatura-menor-sub').textContent = `${i.nomeCompleto || 'Menor Participante'} — CPF: ${formatarCPF(i.cpf)}`;
+
+            const imgStatus = i.termos?.usoImagemStatus || 'autorizado';
+            document.getElementById('conf-uso-imagem').value = imgStatus;
+            atualizarCheckImagemNaFolha();
+
+            if (i.statusAutorizacao === 'concluida' && i.autorizacaoConfirmadaDados) {
+                const badge = document.getElementById('badge-status-aut');
+                badge.textContent = '✓ Documento Impresso Confirmado pela Equipe';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0';
+                const d = i.autorizacaoConfirmadaDados;
+                const rod = document.getElementById('registro-eletronico-rodape');
+                rod.style.display = 'block';
+                rod.textContent = `Documento impresso recebido e conferido pela equipe em ${new Date(d.dataHoraISO).toLocaleString('pt-BR')} (${d.confirmadoPorNome}).`;
+            }
+            lucide.createIcons();
+        }
+
+        window.confirmarAutorizacaoResponsavel = async function() {
+            if (!inscricaoMenor) return;
+            const cpfDigitado = limparCPF(document.getElementById('conf-cpf-resp').value);
+            const cpfEsperado = limparCPF(inscricaoMenor.responsavel?.cpf || '');
+
+            if (!cpfDigitado || (cpfEsperado && cpfDigitado !== cpfEsperado)) {
+                alert('O CPF informado não corresponde ao CPF do Responsável Legal cadastrado na ficha do menor.');
+                return;
+            }
+
+            const retirada = document.getElementById('input-retirada-terceiro').value.trim();
+            const usoImagem = document.getElementById('conf-uso-imagem').value;
+            const versaoTermo = configEvento?.termos?.versao || '1.1-formal';
+
+            const dadosConfirmacao = {
+                confirmadoPorNome: inscricaoMenor.responsavel?.nome || '',
+                confirmadoPorCpf: cpfDigitado,
+                metodo: 'Formulário de Autorização do Responsável',
+                versaoTermo,
+                dataHoraISO: new Date().toISOString()
+            };
+
+            const respAtualizado = {
+                ...(inscricaoMenor.responsavel || {}),
+                retiradaTerceiro: retirada,
+                confirmacaoLegal: true
+            };
+
+            await updateDoc(doc(db, 'vathos_2027_inscricoes', inscricaoMenor.cpf), {
+                statusAutorizacao: 'concluida',
+                responsavel: respAtualizado,
+                'termos.usoImagemStatus': usoImagem,
+                autorizacaoConfirmadaDados: dadosConfirmacao,
+                atualizadoEm: serverTimestamp()
+            });
+
+            await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                cpfParticipante: inscricaoMenor.cpf,
+                nomeParticipante: inscricaoMenor.nomeCompleto,
+                acao: 'confirmacao_autorizacao_menor',
+                autor: `${dadosConfirmacao.confirmadoPorNome} (CPF ${formatarCPF(cpfDigitado)})`,
+                detalhes: `Autorização do responsável confirmada no sistema (Versão: ${versaoTermo})`,
+                dataHora: serverTimestamp(),
+                dataHoraISO: new Date().toISOString()
+            }).catch(() => {});
+
+            inscricaoMenor.statusAutorizacao = 'concluida';
+            inscricaoMenor.autorizacaoConfirmadaDados = dadosConfirmacao;
+            inscricaoMenor.responsavel = respAtualizado;
+            preencherTela();
+            alert('Confirmação registrada no sistema! Agora você pode clicar em "Imprimir Folha A4" para assinar e anexar o documento.');
+        };
+
+        init();
+    </script>
+</body>
+</html>

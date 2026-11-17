@@ -1,0 +1,2303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VATHOS 2027 — Portal de Inscrições & Área do Participante</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #070b14;
+            color: #f1f5f9;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.16) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(147, 51, 234, 0.12) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .input-dark {
+            background: rgba(9, 13, 22, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #f8fafc;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .input-dark:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
+        }
+        .input-dark:disabled, .input-dark[readonly] {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+        .badge-a-definir {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- TOP BAR -->
+    <header class="sticky top-0 z-40 bg-slate-950/85 backdrop-blur border-b border-slate-800/80">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            <a href="login.html" class="flex items-center gap-2.5 text-slate-300 hover:text-white transition-colors">
+                <img src="logo.png" alt="Logo Região 655" class="h-8 w-auto object-contain" onerror="this.style.display='none'">
+                <div class="border-l border-slate-800 pl-2.5">
+                    <div class="text-xs font-extrabold text-white tracking-wide uppercase">VATHOS 2027</div>
+                    <div class="text-[10px] text-slate-400">Região 655 · Londrina/PR</div>
+                </div>
+            </a>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="abrirModalOrientacoes()" class="text-xs font-bold text-indigo-300 hover:text-white bg-indigo-950/60 hover:bg-indigo-900/70 border border-indigo-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+                    <span>Informações & Regras</span>
+                </button>
+                <a href="vathos2027_autorizacao.html" class="text-xs font-bold text-amber-300 hover:text-white bg-amber-950/50 hover:bg-amber-900/60 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
+                    <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Autorização Menores</span>
+                </a>
+                <a href="vathos2027_lideres.html" class="text-xs font-bold text-emerald-300 hover:text-white bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
+                    <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Líderes/Pastores</span>
+                </a>
+                <a href="vathos2027_admin.html" class="text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
+                    <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                    <span>Admin</span>
+                </a>
+                <a id="btn-sair-cpf" href="javascript:void(0)" onclick="encerrarSessaoCPF()" class="hidden text-xs font-bold text-rose-300 hover:text-white bg-rose-950/50 border border-rose-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Trocar CPF
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="max-w-5xl w-full mx-auto px-4 py-6 sm:py-8 flex-1 space-y-6">
+
+        <!-- HERO DO EVENTO -->
+        <section class="glass-card rounded-3xl p-6 sm:p-8 border border-indigo-500/20 shadow-2xl relative overflow-hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="space-y-2.5 max-w-2xl">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[11px] font-extrabold uppercase tracking-wider">
+                            🔥 Retiro Regional de Jovens e Adolescentes
+                        </span>
+                        <span class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold uppercase tracking-wider">
+                            26 a 28 de Março de 2027
+                        </span>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                        VATHOS 2027 — <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">“Por inteiro”</span>
+                    </h1>
+                    <p class="text-sm font-semibold text-indigo-200" id="hero-slogan">
+                        Não apenas uma parte de nós, tudo para Ele
+                    </p>
+                    <blockquote class="text-xs text-slate-300 italic border-l-2 border-indigo-500 pl-3 py-0.5">
+                        “Ame ao Senhor, o seu Deus, com todo o seu coração, com toda a sua alma, com todo o seu entendimento e com todas as suas forças.” — <strong>Marcos 12:30</strong>
+                    </blockquote>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-2.5 shrink-0 md:w-72">
+                    <div class="flex items-start gap-2.5 text-xs">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-rose-400 shrink-0 mt-0.5"></i>
+                        <div>
+                            <div class="font-bold text-white" id="hero-local">Acampamento Esperança</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5" id="hero-endereco-status">
+                                Endereço por escrito: <span class="badge-a-definir">A definir</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2.5 text-xs text-slate-300">
+                        <i data-lucide="clock" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                        <div id="hero-horarios-status">
+                            Chegada / Encerramento: <span class="badge-a-definir">A definir</span>
+                        </div>
+                    </div>
+                    <a id="btn-como-chegar" href="https://maps.google.com/?q=-23.405327,-51.113140" target="_blank" rel="noopener noreferrer"
+                       class="w-full mt-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 font-bold text-xs py-2 px-3 rounded-xl transition-colors flex items-center justify-center gap-1.5">
+                        <i data-lucide="navigation" class="w-3.5 h-3.5"></i> Como chegar (Google Maps)
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ETAPA 0: PORTA DE ENTRADA POR CPF -->
+        <section id="secao-entrada-cpf" class="glass-card rounded-3xl p-6 sm:p-8 max-w-xl mx-auto shadow-2xl border border-slate-800">
+            <div class="text-center space-y-2 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto">
+                    <i data-lucide="fingerprint" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-xl font-extrabold text-white">Acesso e Inscrição via CPF</h2>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Digite seu <strong>CPF</strong> abaixo. Se você já realizou sua inscrição/pré-reserva (ou é responsável por filhos inscritos), o sistema abrirá sua <strong>Área do Participante</strong>. Caso ainda não tenha inscrição, você iniciará sua <strong>Pré-Reserva</strong> agora.
+                </p>
+            </div>
+
+            <form id="form-entrada-cpf" onsubmit="event.preventDefault(); verificarAcessoPorCPF();" class="space-y-4">
+                <div>
+                    <label for="input-cpf-acesso" class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                        CPF do Participante ou Responsável
+                    </label>
+                    <input type="text" id="input-cpf-acesso" required maxlength="14" inputmode="numeric"
+                           placeholder="000.000.000-00"
+                           oninput="this.value = window.formatarCPFInput(this.value)"
+                           class="w-full input-dark px-4 py-3.5 rounded-xl text-lg font-extrabold text-center tracking-widest text-white placeholder-slate-600" />
+                    <p id="erro-cpf-acesso" class="hidden text-xs text-rose-400 font-semibold mt-2 text-center"></p>
+                </div>
+
+                <button type="submit" id="btn-entrar-cpf"
+                        class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-lg transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                    <span>Continuar com CPF</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </form>
+
+            <!-- Resumo Rápido de Modalidades e Lotes -->
+            <div class="mt-6 pt-6 border-t border-slate-800/90 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Modalidades & Lotes (Retiro Completo)</span>
+                    <button type="button" onclick="abrirModalOrientacoes()" class="text-[11px] text-indigo-400 hover:underline font-semibold">Ver tabela completa →</button>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase">Lote 1 (Até 31/01)</div>
+                        <div class="text-sm font-black text-emerald-400 mt-0.5">R$ 350,00</div>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase">Lote 2 (Fevereiro)</div>
+                        <div class="text-sm font-black text-indigo-300 mt-0.5">R$ 375,00</div>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase">Lote 3 (Março)</div>
+                        <div class="text-sm font-black text-amber-300 mt-0.5">R$ 400,00</div>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-400 text-center">
+                    Crianças até 4 anos: <strong>Gratuito</strong> · 5 a 8 anos: <strong>30% de desconto</strong> · Day Use: <strong>R$ 100</strong> (s/ alim.) ou <strong>R$ 220</strong> (c/ alim.)
+                </p>
+            </div>
+
+            <!-- ATALHOS RÁPIDOS PARA AS DEMAIS ÁREAS DO PROJETO -->
+            <div class="mt-6 pt-5 border-t border-slate-800/90 space-y-2.5">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block text-center">Outras Áreas do Portal VATHOS 2027</span>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <a href="vathos2027_autorizacao.html" class="p-3 rounded-xl bg-amber-950/30 hover:bg-amber-950/50 border border-amber-500/30 text-left transition-colors flex items-center gap-2.5">
+                        <i data-lucide="file-check" class="w-5 h-5 text-amber-400 shrink-0"></i>
+                        <div>
+                            <div class="text-xs font-extrabold text-amber-300 leading-tight">Autorização</div>
+                            <div class="text-[10px] text-slate-400">Para Pais de Menores</div>
+                        </div>
+                    </a>
+                    <a href="vathos2027_lideres.html" class="p-3 rounded-xl bg-emerald-950/30 hover:bg-emerald-950/50 border border-emerald-500/30 text-left transition-colors flex items-center gap-2.5">
+                        <i data-lucide="users" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+                        <div>
+                            <div class="text-xs font-extrabold text-emerald-300 leading-tight">Líderes/Pastores</div>
+                            <div class="text-[10px] text-slate-400">Inscritos e Acertos</div>
+                        </div>
+                    </a>
+                    <a href="vathos2027_admin.html" class="p-3 rounded-xl bg-indigo-950/40 hover:bg-indigo-950/60 border border-indigo-500/30 text-left transition-colors flex items-center gap-2.5">
+                        <i data-lucide="shield" class="w-5 h-5 text-indigo-400 shrink-0"></i>
+                        <div>
+                            <div class="text-xs font-extrabold text-indigo-300 leading-tight">Painel Admin</div>
+                            <div class="text-[10px] text-slate-400">Gestão Geral e Caixa</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- SELETOR DE VÍNCULOS (Quando o CPF logado é responsável por menores ou tem múltiplas fichas) -->
+        <section id="secao-banner-gestor-cpf" class="hidden glass-card rounded-2xl p-4 border border-emerald-500/40 bg-emerald-950/20">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center justify-center shrink-0">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">Acesso de Coordenação / Gestão Liberado</span>
+                        <p class="text-xs text-white font-bold" id="txt-nome-gestor-cpf">Você está autorizada como Gestora do VATHOS 2027.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="acessarPainelGestorComSenha()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-lg transition-colors flex items-center justify-center gap-1.5 shrink-0">
+                    <i data-lucide="lock" class="w-4 h-4"></i> Abrir Painel Gestor (Admin)
+                </button>
+            </div>
+        </section>
+
+        <section id="secao-vinculos-responsavel" class="hidden glass-card rounded-2xl p-4 border border-indigo-500/30">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400 block">Acesso do Responsável / Família</span>
+                    <p class="text-xs text-slate-300">Selecione qual inscrição deseja visualizar ou cadastre outro filho(a) menor vinculado ao seu CPF:</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2" id="lista-botoes-vinculos"></div>
+            </div>
+        </section>
+
+        <!-- ETAPA 1: FORMULÁRIO DE INSCRIÇÃO E PRÉ-RESERVA -->
+        <section id="secao-formulario-inscricao" class="hidden glass-card rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800 space-y-8">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div>
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400" id="form-modo-badge">Nova Inscrição & Pré-Reserva</span>
+                    <h2 class="text-xl sm:text-2xl font-black text-white mt-0.5" id="form-titulo-principal">Ficha de Inscrição — VATHOS 2027</h2>
+                </div>
+                <div class="text-right">
+                    <span class="text-[11px] text-slate-400 block">CPF Vinculado:</span>
+                    <span id="form-cpf-badge" class="font-mono text-sm font-extrabold text-indigo-300 bg-indigo-950/70 border border-indigo-500/30 px-3 py-1 rounded-lg inline-block mt-0.5">000.000.000-00</span>
+                </div>
+            </div>
+
+            <form id="form-vathos-inscricao" onsubmit="event.preventDefault(); salvarInscricaoPreReserva();" class="space-y-8">
+
+                <!-- 1. IDENTIFICAÇÃO DO PARTICIPANTE -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">1</span>
+                        Identificação do Participante
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="sm:col-span-2 lg:col-span-3">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome Completo <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-nome-completo" required placeholder="Nome completo conforme documento" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Data de Nascimento <span class="text-rose-400">*</span></label>
+                            <input type="date" id="f-data-nascimento" required onchange="atualizarCalculoIdadeModalidade()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Idade e Faixa Etária Calculada</label>
+                            <div id="box-idade-calculada" class="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2">
+                                <span id="texto-idade-calculada">Preencha a data de nascimento para calcular</span>
+                                <span id="badge-ref-idade" class="badge-a-definir" title="Data de referência proposta: 26/03/2027 (pendente de confirmação)">Ref. 26/03/2027 (Proposta)</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF do Participante <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-cpf" readonly required class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">RG ou Nova Identidade (CIN) <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-rg" required placeholder="Número do RG ou CIN" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">
+                                E-mail <span id="label-email-obrig" class="text-slate-500 text-[10px] font-normal">(Opcional / A definir)</span>
+                            </label>
+                            <input type="email" id="f-email" placeholder="seuemail@exemplo.com" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">WhatsApp Principal <span class="text-rose-400">*</span></label>
+                            <input type="tel" id="f-whatsapp" required maxlength="15" placeholder="(43) 99999-9999" oninput="this.value = window.formatarTelefoneInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                            <label class="inline-flex items-center gap-2 mt-1.5 text-[11px] text-slate-400 cursor-pointer">
+                                <input type="checkbox" id="f-whatsapp-eh-responsavel" class="rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                                <span>Contato pertence ao responsável (não tenho telefone próprio)</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Telefone Alternativo (Opcional)</label>
+                            <input type="tel" id="f-telefone-alt" maxlength="15" placeholder="(43) 99999-9999" oninput="this.value = window.formatarTelefoneInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+                    </div>
+
+                    <!-- Endereço com busca CEP -->
+                    <div class="pt-2 border-t border-slate-800/60 grid grid-cols-1 sm:grid-cols-6 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CEP <span class="text-rose-400">*</span></label>
+                            <div class="flex gap-2">
+                                <input type="text" id="f-cep" required maxlength="9" placeholder="00000-000" oninput="this.value = window.formatarCEPInput(this.value)" onblur="buscarCEPAutomatico()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono" />
+                            </div>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Rua / Logradouro <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-rua" required placeholder="Nome da rua, avenida..." class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Número <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-numero" required placeholder="Nº" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Complemento</label>
+                            <input type="text" id="f-complemento" placeholder="Apto, Bloco, Casa..." class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Bairro <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-bairro" required placeholder="Bairro" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Cidade / UF <span class="text-rose-400">*</span></label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <input type="text" id="f-cidade" required placeholder="Londrina" value="Londrina" class="col-span-2 input-dark px-3 py-2.5 rounded-xl text-sm" />
+                                <input type="text" id="f-uf" required maxlength="2" placeholder="PR" value="PR" class="col-span-1 input-dark px-2 py-2.5 rounded-xl text-sm text-center uppercase font-bold" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. VÍNCULO COM A IGREJA E CATEGORIA -->
+                <div class="space-y-4 pt-4 border-t border-slate-800">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">2</span>
+                        Vínculo com a Igreja e Categoria
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Igreja à qual pertence <span class="text-rose-400">*</span></label>
+                            <select id="f-igreja-select" required onchange="aoMudarIgrejaSelect()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                                <option value="">Selecione sua igreja...</option>
+                            </select>
+                        </div>
+
+                        <div id="wrap-outra-igreja" class="hidden">
+                            <label class="block text-xs font-bold text-amber-300 uppercase mb-1">Nome da Outra Igreja / Cidade <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-outra-igreja" placeholder="Informe o nome da igreja e cidade" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+
+                        <div id="wrap-lider-referencia">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Líder ou Pastor de Referência <span class="text-rose-400" id="ast-lider">*</span></label>
+                            <input type="text" id="f-lider-referencia" required placeholder="Nome do seu pastor ou líder de jovens" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Categoria de Participação <span class="text-rose-400">*</span></label>
+                            <select id="f-categoria" required class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                                <option value="participante">Participante</option>
+                                <option value="lider">Líder</option>
+                                <option value="equipe">Equipe de trabalho</option>
+                                <option value="pastor_titular">Pastor Titular</option>
+                            </select>
+                        </div>
+
+                        <div id="wrap-tamanho-camiseta" class="hidden">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Tamanho de Camiseta <span class="text-rose-400">*</span></label>
+                            <select id="f-camiseta" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ESCOLHA DA MODALIDADE E CONDIÇÃO DE PAGAMENTO -->
+                <div class="space-y-4 pt-4 border-t border-slate-800">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">3</span>
+                        Modalidade e Condição de Pagamento
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Modalidade de Participação <span class="text-rose-400">*</span></label>
+                            <select id="f-modalidade" required onchange="atualizarCalculoIdadeModalidade()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-bold">
+                                <option value="retiro_completo">Retiro Completo (26 a 28/03/2027 — Com pernoite)</option>
+                                <option value="day_use_sem_alimentacao">Day Use — Sem alimentação (R$ 100,00 / dia)</option>
+                                <option value="day_use_com_alimentacao">Day Use — Com café da manhã, almoço e café da tarde (R$ 220,00 / dia)</option>
+                            </select>
+                        </div>
+
+                        <div id="wrap-dia-dayuse" class="hidden">
+                            <label class="block text-xs font-bold text-amber-300 uppercase mb-1">
+                                Dia de Participação (Day Use) <span class="text-rose-400">*</span>
+                            </label>
+                            <select id="f-dia-dayuse" onchange="atualizarCalculoIdadeModalidade()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                                <option value="">Selecione o dia...</option>
+                                <option value="2027-03-26">26/03/2027 (Sexta-feira) — A confirmar disponibilidade</option>
+                                <option value="2027-03-27">27/03/2027 (Sábado) — A confirmar disponibilidade</option>
+                                <option value="2027-03-28">28/03/2027 (Domingo) — A confirmar disponibilidade</option>
+                            </select>
+                            <p class="text-[10px] text-amber-300 mt-1" id="aviso-dayuse-pendente">
+                                ⚠️ Dias disponíveis, horários de entrada/saída e desconto infantil no Day Use estão marcados como <strong>A definir</strong> pela organização.
+                            </p>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Condição e Forma de Pagamento Preferencial <span class="text-rose-400">*</span></label>
+                            <select id="f-condicao-pagamento" required onchange="atualizarCalculoIdadeModalidade()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                                <option value="parcelamento_livre">Pix — Parcelamento Livre por Percentual (Quita % do lote vigente em cada pagamento)</option>
+                                <option value="pix_integral">Pix — Pagamento Integral do Lote Vigente</option>
+                                <option value="promocional_nov_5x" id="opt-promo-nov-5x">Condição Promocional 1 (Adesão até 30/11/2026) — Início Nov/2026: 5x de R$ 70,00 (Nov a Mar · Total R$ 350,00)</option>
+                                <option value="promocional_dez_4x" id="opt-promo-dez-4x">Condição Promocional 2 (Adesão até 15/12/2026) — Dez/2026 a Mar/2027: 4x de R$ 87,50 (Total R$ 350,00)</option>
+                                <option value="cartao_presencial">Cartão de Crédito — Presencial no Escritório Regional (IEQ Central · Taxas repassadas ao participante)</option>
+                                <option value="dinheiro_presencial">Dinheiro — Presencial no Escritório Regional (IEQ Central)</option>
+                                <option value="lider_pastor">Pagamento via Líder ou Pastor da Igreja (Acerto agrupado com o Escritório)</option>
+                                <option value="isento_crianca">Inscrição Gratuita (Criança até 4 anos)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Resumo Financeiro da Escolha -->
+                    <div id="card-resumo-modalidade" class="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <span id="resumo-lote-nome" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-300">Lote Vigente</span>
+                            <div class="text-xs text-slate-300" id="resumo-regra-explicacao">
+                                No parcelamento livre, cada pagamento quita um percentual proporcional ao valor do lote vigente na data do pagamento.
+                            </div>
+                        </div>
+                        <div class="text-left sm:text-right shrink-0">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Valor Aplicável Hoje</span>
+                            <span id="resumo-valor-aplicavel" class="text-2xl font-black text-emerald-400">R$ 350,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. MENORES DE IDADE E RESPONSÁVEL LEGAL (Automático se < 18 anos) -->
+                <div id="secao-form-menor" class="hidden space-y-4 pt-4 border-t border-amber-500/30 bg-amber-950/10 p-5 rounded-2xl border">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-extrabold uppercase tracking-wider">Participante Menor de 18 Anos</span>
+                            <h3 class="text-base font-extrabold text-white mt-1">Dados do Pai, Mãe ou Responsável Legal</h3>
+                            <p class="text-xs text-slate-300">Obrigatório para participantes menores de idade. O responsável poderá acompanhar todos os filhos pelo próprio CPF.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome Completo do Responsável Legal <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-resp-nome" placeholder="Nome completo do pai, mãe ou responsável" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF do Responsável Legal <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-resp-cpf" maxlength="14" placeholder="000.000.000-00" oninput="this.value = window.formatarCPFInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Vínculo com o Menor <span class="text-rose-400">*</span></label>
+                            <select id="f-resp-vinculo" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                                <option value="">Selecione...</option>
+                                <option value="Pai">Pai</option>
+                                <option value="Mãe">Mãe</option>
+                                <option value="Responsável Legal / Tutor">Responsável Legal / Tutor</option>
+                                <option value="Avô / Avó com guarda">Avô / Avó</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">WhatsApp do Responsável <span class="text-rose-400">*</span></label>
+                            <input type="tel" id="f-resp-whatsapp" maxlength="15" placeholder="(43) 99999-9999" oninput="this.value = window.formatarTelefoneInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">E-mail do Responsável (Se houver)</label>
+                            <input type="email" id="f-resp-email" placeholder="email@exemplo.com" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Autorização para Retirada por Outra Pessoa / Saída Antecipada (Opcional)</label>
+                            <input type="text" id="f-resp-retirada-terceiro" placeholder="Se outra pessoa for retirar o menor, informe Nome Completo, CPF e parentesco" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                        <label class="inline-flex items-center gap-2 text-xs text-amber-200 font-semibold cursor-pointer">
+                            <input type="checkbox" id="f-resp-confirmacao-legal" class="rounded bg-slate-900 border-amber-500 text-amber-500 w-4 h-4" />
+                            <span>Confirmo a condição de responsável legal pelo participante menor de idade acima identificado.</span>
+                        </label>
+                        <button type="button" onclick="copiarResponsavelParaEmergencia()" class="text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 px-3 py-1.5 rounded-lg transition-colors">
+                            Usar Responsável como Contato de Emergência ↓
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 5. CONTATO DE EMERGÊNCIA (Para todos os participantes) -->
+                <div class="space-y-4 pt-4 border-t border-slate-800">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">4</span>
+                        Contato de Emergência
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome Completo <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-emerg-nome" required placeholder="Nome do contato de emergência" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Vínculo com o Participante <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-emerg-vinculo" required placeholder="Pai, Mãe, Cônjuge, Irmão..." class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Telefone com WhatsApp <span class="text-rose-400">*</span></label>
+                            <input type="tel" id="f-emerg-whatsapp" required maxlength="15" placeholder="(43) 99999-9999" oninput="this.value = window.formatarTelefoneInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Segundo Contato de Emergência (Opcional)</label>
+                            <input type="text" id="f-emerg-segundo" placeholder="Nome e telefone de um segundo contato" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. FICHA BÁSICA DE SAÚDE (Protegida em coleção separada) -->
+                <div class="space-y-4 pt-4 border-t border-slate-800">
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">5</span>
+                            Ficha Básica de Saúde (Acesso Restrito à Equipe de Cuidados)
+                        </h3>
+                        <div class="mt-2 p-3 rounded-xl bg-blue-950/40 border border-blue-500/30 text-xs text-blue-200 leading-relaxed">
+                            💊 <strong>Orientação importante:</strong> Se você utiliza medicamentos, leve a quantidade necessária para todos os dias, na embalagem original e identificada. Informe previamente à organização se precisar de auxílio com os horários ou armazenamento.
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <!-- Pergunta 1: Medicamento -->
+                        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-slate-200">1. Utiliza medicamento durante o período do evento?</span>
+                                <div class="flex items-center gap-4 text-xs font-bold">
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_med" value="nao" checked onchange="toggleCampoSaude('med', false)" /> Não</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input type="radio" name="saude_med" value="sim" onchange="toggleCampoSaude('med', true)" /> Sim</label>
+                                </div>
+                            </div>
+                            <div id="wrap-saude-med" class="hidden pt-2">
+                                <input type="text" id="f-saude-med-detalhes" placeholder="Informe nome do medicamento, dose, horários e se necessita de refrigeração" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                            </div>
+                        </div>
+
+                        <!-- Pergunta 2: Alergia -->
+                        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-slate-200">2. Possui alguma alergia (medicamentos, alimentos, insetos, etc.)?</span>
+                                <div class="flex items-center gap-4 text-xs font-bold">
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_alergia" value="nao" checked onchange="toggleCampoSaude('alergia', false)" /> Não</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input type="radio" name="saude_alergia" value="sim" onchange="toggleCampoSaude('alergia', true)" /> Sim</label>
+                                </div>
+                            </div>
+                            <div id="wrap-saude-alergia" class="hidden pt-2">
+                                <input type="text" id="f-saude-alergia-detalhes" placeholder="Informe qual alergia e cuidados necessários" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                            </div>
+                        </div>
+
+                        <!-- Pergunta 3: Restrição Alimentar -->
+                        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-slate-200">3. Possui restrição alimentar?</span>
+                                <div class="flex items-center gap-4 text-xs font-bold">
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_restricao" value="nao" checked onchange="toggleCampoSaude('restricao', false)" /> Não</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input type="radio" name="saude_restricao" value="sim" onchange="toggleCampoSaude('restricao', true)" /> Sim</label>
+                                </div>
+                            </div>
+                            <div id="wrap-saude-restricao" class="hidden pt-2">
+                                <input type="text" id="f-saude-restricao-detalhes" placeholder="Informe qual restrição (ex: intolerância a lactose, celíaco, vegetariano...)" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                            </div>
+                        </div>
+
+                        <!-- Pergunta 4: Condição de saúde ou necessidade de apoio -->
+                        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-slate-200">4. Existe alguma condição de saúde ou necessidade de apoio que a equipe precisa conhecer?</span>
+                                <div class="flex items-center gap-4 text-xs font-bold">
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_apoio" value="nao" checked onchange="toggleCampoSaude('apoio', false)" /> Não</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input type="radio" name="saude_apoio" value="sim" onchange="toggleCampoSaude('apoio', true)" /> Sim</label>
+                                </div>
+                            </div>
+                            <div id="wrap-saude-apoio" class="hidden pt-2">
+                                <input type="text" id="f-saude-apoio-detalhes" placeholder="Breve descrição dos cuidados necessários" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                            </div>
+                        </div>
+
+                        <!-- Pergunta 5: Plano de saúde -->
+                        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-slate-200">5. Possui plano de saúde?</span>
+                                <div class="flex items-center gap-4 text-xs font-bold">
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_plano" value="nao" checked onchange="toggleCampoSaude('plano', false)" /> Não</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-emerald-300"><input type="radio" name="saude_plano" value="sim" onchange="toggleCampoSaude('plano', true)" /> Sim</label>
+                                </div>
+                            </div>
+                            <div id="wrap-saude-plano" class="hidden pt-2">
+                                <input type="text" id="f-saude-plano-nome" placeholder="Nome do plano de saúde (opcional)" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Observações Relevantes de Saúde (Opcional)</label>
+                            <textarea id="f-saude-obs" rows="2" placeholder="Alguma informação adicional importante para a equipe de cuidados..." class="w-full input-dark px-3.5 py-2 rounded-xl text-xs"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. REGRAS DO RETIRO, O QUE LEVAR E TERMOS SEPARADOS (Seção 10 e 15) -->
+                <div class="space-y-4 pt-4 border-t border-slate-800">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">6</span>
+                            Regras de Convivência, O Que Levar e Confirmações
+                        </h3>
+                        <span class="badge-a-definir" id="badge-termos-versao">Leitura obrigatória</span>
+                    </div>
+
+                    <!-- Painel de Regras do Retiro e Lista do Que Levar -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <!-- Regras Essenciais e Proibição do Lago -->
+                        <div class="p-4 rounded-2xl bg-slate-900/95 border border-rose-500/30 space-y-2.5">
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                                <i data-lucide="alert-octagon" class="w-4 h-4"></i> Regras Essenciais do Retiro
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-200 leading-relaxed font-semibold">
+                                🚫 <strong>PROIBIÇÃO EXPRESSA — ENTRADA NO LAGO:</strong> É terminantemente proibido entrar, nadar ou acessar a água do lago do acampamento sob qualquer circunstância. O descumprimento desta regra de segurança acarretará a <strong>expulsão imediata do retiro</strong> (desligamento sem direito a reembolso e comunicação imediata aos pais/responsáveis e liderança).
+                            </div>
+                            <ul class="space-y-1.5 text-slate-300 list-disc pl-4 leading-relaxed">
+                                <li>Participar de todos os cultos, ministrações e atividades programadas.</li>
+                                <li>Respeitar rigorosamente os horários de recolhimento/silêncio e a separação entre alojamentos masculinos e femininos (vedado o trânsito no dormitório oposto).</li>
+                                <li>Não se ausentar das dependências do acampamento sem autorização formal da coordenação geral.</li>
+                                <li>Manter postura cristã, respeito à liderança, equipe de trabalho e zelo pelo patrimônio do local.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Lista Oficial do Que Levar -->
+                        <div class="p-4 rounded-2xl bg-slate-900/95 border border-indigo-500/30 space-y-2.5">
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                                <i data-lucide="backpack" class="w-4 h-4"></i> Lista Oficial — O Que Levar
+                            </div>
+                            <ul class="space-y-1.5 text-slate-300 leading-relaxed">
+                                <li class="p-2 rounded-lg bg-indigo-950/50 border border-indigo-500/30 text-indigo-200 font-bold">
+                                    📖 1º ITEM ESSENCIAL: Bíblia Sagrada, caderno de anotações e caneta.
+                                </li>
+                                <li>🛏️ <strong>Roupa de cama:</strong> Lençol, fronha, travesseiro e cobertor/edredom.</li>
+                                <li>🏊 <strong>Roupa de banho e toalhas:</strong> Toalha de banho/rosto e roupas de banho adequadas (uso exclusivo nas áreas permitidas — <em>proibido o lago</em>).</li>
+                                <li>👕 <strong>Vestuário e higiene pessoal:</strong> Roupas confortáveis para cultos e dinâmicas, agasalho, calçados, escova/pasta de dente, sabonete, shampoo, protetor solar e repelente.</li>
+                                <li class="text-emerald-300">🥨 <strong>Lanches permitidos:</strong> Salgadinhos, biscoitos, chocolates e refrigerantes/sucos <strong>somente industrializados e lacrados de fábrica</strong>.</li>
+                                <li class="text-amber-300 font-semibold">🚫 <strong>Não é permitido levar:</strong> Bolo feito em casa, pão de forma, lanches preparados em casa ou quaisquer alimentos artesanais/caseiros.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs">
+                        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="t-regras-convivencia" required class="mt-0.5 rounded bg-slate-950 border-slate-700 text-indigo-500 w-4 h-4 shrink-0" />
+                            <span class="text-slate-300 leading-relaxed">
+                                <strong class="text-white">1. Ciência das regras do retiro e proibição de entrada no lago (<span class="text-rose-400">*</span>):</strong>
+                                <span id="txt-termo-convivencia">Declaro estar plenamente ciente das regras de convivência, da proibição de levar alimentos caseiros/artesanais (como bolo feito em casa e pão de forma), de que cada igreja organiza seu transporte e de que é <strong>expressamente proibida a entrada no lago sob pena de expulsão imediata do retiro</strong>.</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="t-uso-dados" required class="mt-0.5 rounded bg-slate-950 border-slate-700 text-indigo-500 w-4 h-4 shrink-0" />
+                            <span class="text-slate-300 leading-relaxed">
+                                <strong class="text-white">2. Utilização de dados pessoais e de saúde (<span class="text-rose-400">*</span>):</strong>
+                                <span id="txt-termo-dados">Autorizo o tratamento dos dados pessoais e informações da ficha básica de saúde exclusivamente para gestão da inscrição, segurança, alimentação e cuidados médicos durante o evento.</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="t-condicoes-financeiras" required class="mt-0.5 rounded bg-slate-950 border-slate-700 text-indigo-500 w-4 h-4 shrink-0" />
+                            <span class="text-slate-300 leading-relaxed">
+                                <strong class="text-white">3. Condições financeiras e de cancelamento (<span class="text-rose-400">*</span>):</strong>
+                                <span id="txt-termo-financeiro">Declaro ciência das regras de lotes, cálculo de percentual no parcelamento livre e condições financeiras e de cancelamento.</span>
+                            </span>
+                        </label>
+
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+                            <div class="font-bold text-white">4. Autorização de uso de imagem (Escolha separada e opcional):</div>
+                            <p class="text-slate-400 text-[11px]" id="txt-termo-imagem">Autoriza o uso gratuito de imagem em fotos e vídeos institucionais do retiro VATHOS 2027 e da IEQ Região 655?</p>
+                            <div class="flex flex-wrap items-center gap-4 pt-1">
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer text-emerald-300 font-semibold">
+                                    <input type="radio" name="t_uso_imagem" value="autorizado" checked /> Sim, autorizo o uso de imagem
+                                </label>
+                                <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300">
+                                    <input type="radio" name="t_uso_imagem" value="nao_autorizado" /> Não autorizo o uso de imagem
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="wrap-termo-menor" class="hidden p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 space-y-1.5">
+                            <div class="font-bold text-amber-300">5. Autorização Impressa Obrigatória para Menor de Idade:</div>
+                            <p class="text-slate-300 text-[11px] leading-relaxed">
+                                Ao concluir a pré-reserva de um menor de 18 anos, o sistema liberará o <strong>Formulário Oficial de Autorização (1 Folha A4)</strong> para impressão. A confirmação da autorização no sistema é feita <strong>exclusivamente pela equipe organizadora mediante a entrega do documento impresso assinado pelo responsável legal + cópia do documento com foto</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTÕES DE SUBMISSÃO -->
+                <div class="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-3">
+                    <button type="button" onclick="cancelarEdicaoFormulario()" class="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-700 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider">
+                        Voltar
+                    </button>
+                    <button type="submit" id="btn-salvar-inscricao" class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 px-8 rounded-xl shadow-xl transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span id="txt-btn-salvar-inscricao">Confirmar Inscrição e Pré-Reserva</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ETAPA 2: ÁREA EXCLUSIVA DO PARTICIPANTE (ABERTA MEDIANTE CPF) -->
+        <section id="secao-area-participante" class="hidden space-y-6">
+
+            <!-- CARD DE IDENTIFICAÇÃO E STATUS GERAL -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 border border-indigo-500/30 shadow-2xl space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                    <div class="space-y-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 font-mono text-xs font-extrabold text-indigo-300" id="ap-protocolo">#VATHOS-0000</span>
+                            <span id="ap-badge-participacao" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                Pré-inscrição
+                            </span>
+                            <span id="ap-badge-faixa" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300">
+                                Faixa Etária
+                            </span>
+                        </div>
+                        <h2 class="text-2xl font-black text-white" id="ap-nome">Nome do Participante</h2>
+                        <p class="text-xs text-slate-400" id="ap-subtitulo-igreja">CPF: 000.000.000-00 · Igreja</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" onclick="abrirEdicaoDadosParticipante()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Atualizar Dados / Ficha
+                        </button>
+                        <button type="button" onclick="iniciarCadastroFilhoMenor()" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5">
+                            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Inscrever Filho(a) Menor
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OS 7 CONTROLES DE SITUAÇÃO SEPARADOS (Seção 14) -->
+                <div>
+                    <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">Painel de Situação da Inscrição (Controles Independentes)</div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">1. Cadastro</span>
+                            <span id="st-cadastro" class="text-xs font-extrabold text-emerald-400 mt-1 block">Completo</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">2. Autorização</span>
+                            <span id="st-autorizacao" class="text-xs font-extrabold text-slate-300 mt-1 block">Não se aplica</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">3. Financeiro</span>
+                            <span id="st-financeiro" class="text-xs font-extrabold text-amber-400 mt-1 block">Sem pagamento</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">4. Comprovante</span>
+                            <span id="st-comprovante" class="text-xs font-extrabold text-slate-400 mt-1 block">Nenhum</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">5. Acerto Líder</span>
+                            <span id="st-acerto-lider" class="text-xs font-extrabold text-slate-400 mt-1 block">Não se aplica</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">6. Participação</span>
+                            <span id="st-participacao" class="text-xs font-extrabold text-indigo-300 mt-1 block">Pré-inscrição</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">7. Presença</span>
+                            <span id="st-presenca" class="text-xs font-extrabold text-slate-400 mt-1 block">Não chegou</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ALERTA / CARD DE AUTORIZAÇÃO DE MENOR (Se aplicável) -->
+                <div id="card-autorizacao-menor-ap" class="hidden p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="text-xs font-extrabold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Termo de Autorização de Menor (Entrega Impressa Obrigatória)
+                        </div>
+                        <p class="text-xs text-slate-300" id="txt-status-autorizacao-menor">
+                            Imprima o formulário A4 no botão ao lado, assine, cole/anexe a cópia do documento do responsável e entregue à equipe para confirmação.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <a id="btn-abrir-link-autorizacao" href="#" target="_blank" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-1.5 shadow-lg">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Abrir e Imprimir Termo (Folha A4)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAINEL FINANCEIRO E MOTOR DE PERCENTUAL (Seções 3, 4 e 5) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Coluna Esquerda (2 cols): Progresso de Percentual Quitado e Histórico -->
+                <div class="lg:col-span-2 glass-card rounded-3xl p-6 border border-slate-800 space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+                        <div>
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400" id="ap-modalidade-label">Modalidade</span>
+                            <h3 class="text-lg font-extrabold text-white">Acompanhamento Financeiro por Percentual</h3>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block" id="ap-lote-atual-label">Lote Atual</span>
+                            <span class="text-sm font-black text-indigo-300" id="ap-preco-lote-atual">Base hoje: R$ 350,00</span>
+                        </div>
+                    </div>
+
+                    <!-- Barra de Progresso do Percentual Quitado -->
+                    <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-300">Percentual Acumulado Quitado (Confirmado):</span>
+                            <span class="text-lg font-black text-emerald-400" id="ap-pct-confirmado">0%</span>
+                        </div>
+                        <div class="w-full h-4 bg-slate-950 rounded-full overflow-hidden border border-slate-800 flex">
+                            <div id="bar-pct-confirmado" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%" title="Confirmado pelo escritório"></div>
+                            <div id="bar-pct-pendente" class="bg-amber-400/80 h-full transition-all duration-500" style="width: 0%" title="Aguardando conferência / Líder"></div>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs">
+                            <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                                <span class="text-[10px] text-slate-400 block">Total Confirmado</span>
+                                <strong class="text-emerald-400 text-sm" id="ap-val-confirmado">R$ 0,00</strong>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                                <span class="text-[10px] text-slate-400 block">Em Conferência / Líder</span>
+                                <strong class="text-amber-300 text-sm" id="ap-val-pendente">R$ 0,00 (0%)</strong>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                                <span class="text-[10px] text-slate-400 block">Percentual Restante</span>
+                                <strong class="text-indigo-300 text-sm" id="ap-pct-restante">100%</strong>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                                <span class="text-[10px] text-slate-400 block">Saldo Atual em Reais</span>
+                                <strong class="text-white text-sm" id="ap-saldo-atual-reais">R$ 350,00</strong>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            💡 <strong>Como funciona:</strong> O percentual já quitado em cada pagamento permanece preservado quando muda o lote. Somente o percentual restante acompanha o valor do lote atual.
+                        </p>
+                    </div>
+
+                    <!-- Histórico de Pagamentos e Comprovantes -->
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-300">Histórico de Pagamentos e Comprovantes</h4>
+                        <div id="lista-pagamentos-participante" class="space-y-2.5">
+                            <p class="text-xs text-slate-500 italic py-4 text-center">Nenhum pagamento ou comprovante registrado ainda.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita (1 col): Chave Pix & Declaração de Pagamento -->
+                <div class="glass-card rounded-3xl p-6 border border-slate-800 space-y-5 h-fit">
+                    <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                        <i data-lucide="wallet" class="w-5 h-5 text-emerald-400"></i>
+                        Declarar Pagamento & Pix
+                    </h3>
+
+                    <!-- Bloco da Chave Pix -->
+                    <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Chave Pix Oficial VATHOS 2027</span>
+                            <span id="badge-pix-status" class="badge-a-definir">A definir</span>
+                        </div>
+                        <div id="box-chave-pix-ativa" class="hidden space-y-2">
+                            <div class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                                <input type="text" id="ap-chave-pix-input" readonly class="bg-transparent text-xs font-mono text-emerald-300 flex-1 outline-none font-bold" />
+                                <button type="button" onclick="copiarPixParticipante()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors">
+                                    Copiar
+                                </button>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Favorecido: <strong class="text-slate-200" id="ap-favorecido-pix">—</strong></p>
+                        </div>
+                        <p id="box-chave-pix-pendente" class="text-xs text-amber-300/90 leading-relaxed">
+                            A chave Pix e o nome do favorecido exclusivos do VATHOS 2027 estão marcados como <strong>“A definir”</strong> pela organização e serão exibidos aqui assim que publicados.
+                        </p>
+                    </div>
+
+                    <!-- Formulário de Declaração de Pagamento (Com ou Sem Comprovante) -->
+                    <form id="form-enviar-comprovante" onsubmit="event.preventDefault(); enviarComprovanteParticipante();" class="space-y-3.5 pt-2 border-t border-slate-800">
+                        <div>
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-300">Declarar Pagamento Realizado</h4>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                Declare aqui seu pagamento (Pix, Cartão, Dinheiro ou Líder). O anexo do comprovante é opcional e o registro ficará <strong>pendente de confirmação pela equipe</strong>.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Forma Utilizada no Pagamento <span class="text-rose-400">*</span></label>
+                            <select id="comp-forma" required class="w-full input-dark px-3.5 py-2.5 rounded-xl text-xs font-bold">
+                                <option value="pix">Pix</option>
+                                <option value="cartao">Cartão de Crédito (Presencial)</option>
+                                <option value="dinheiro">Dinheiro (Presencial)</option>
+                                <option value="lider_pastor">Entregue ao Líder ou Pastor da Igreja</option>
+                                <option value="outro">Outra Forma</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Valor Pago (R$) <span class="text-rose-400">*</span></label>
+                                <input type="number" id="comp-valor" step="0.01" min="1" required placeholder="Ex: 70.00" oninput="simularPercentualNovoPagamento()" class="w-full input-dark px-3 py-2.5 rounded-xl text-sm font-bold" />
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Data do Pagamento <span class="text-rose-400">*</span></label>
+                                <input type="date" id="comp-data" required onchange="simularPercentualNovoPagamento()" class="w-full input-dark px-3 py-2.5 rounded-xl text-xs font-semibold" />
+                            </div>
+                        </div>
+
+                        <div id="box-simulacao-comp" class="hidden p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-[11px] text-emerald-200"></div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Anexar Comprovante <span class="text-slate-400 font-normal normal-case">(Opcional — Imagem ou PDF)</span></label>
+                            <input type="file" id="comp-arquivo" accept="image/*,.pdf" class="w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600/30 file:text-indigo-200 hover:file:bg-indigo-600/50" />
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Detalhes / Com quem pagou (Opcional)</label>
+                            <input type="text" id="comp-obs" placeholder="Ex: Pago em dinheiro na secretaria, entregue ao Pr. João, 1ª parcela..." class="w-full input-dark px-3 py-2 rounded-xl text-xs" />
+                        </div>
+
+                        <button type="submit" id="btn-enviar-comp" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-lg">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> Declarar Pagamento para Conferência
+                        </button>
+                    </form>
+
+                    <!-- Info Pagamentos Presenciais -->
+                    <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+                        <div class="font-bold text-slate-200">Pagamentos Presenciais (Cartão ou Dinheiro):</div>
+                        <p>Escritório Regional — IEQ Central (<span id="ap-end-escritorio">Travessa Belo Horizonte, 90 — Centro — Londrina/PR</span>).</p>
+                        <p class="text-amber-300/90 text-[10px]" id="ap-aviso-escritorio">* Confirmar endereço e horários de atendimento antes de se dirigir ao local.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RODAPÉ DA ÁREA DO PARTICIPANTE: CANCELAMENTO E ORIENTAÇÕES -->
+            <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="text-xs text-slate-400">
+                    Precisa consultar o que levar, regras de convivência ou solicitar o cancelamento da inscrição?
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="abrirModalOrientacoes()" class="text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl transition-colors">
+                        Ver Orientações do Evento
+                    </button>
+                    <button type="button" onclick="solicitarCancelamentoInscricao()" id="btn-solicitar-cancelamento" class="text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/50 border border-rose-500/30 px-3.5 py-2 rounded-xl transition-colors">
+                        Solicitar Cancelamento
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- MODAL DE INFORMAÇÕES, TABELA DE PREÇOS E ORIENTAÇÕES (Seções 1, 2 e 15) -->
+    <div id="modal-orientacoes" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col border border-slate-700 shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="text-base font-extrabold text-white uppercase tracking-wider">Informações, Modalidades e Orientações — VATHOS 2027</h3>
+                <button type="button" onclick="fecharModalOrientacoes()" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-300 leading-relaxed">
+                <div>
+                    <h4 class="text-sm font-bold text-indigo-300 uppercase mb-2">1. Tabela de Lotes e Faixas Etárias (Retiro Completo)</h4>
+                    <div class="overflow-x-auto rounded-xl border border-slate-800">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-900 text-[11px] uppercase text-slate-400">
+                                <tr>
+                                    <th class="p-2.5">Faixa Etária</th>
+                                    <th class="p-2.5">Lote 1 (Até 31/01/27)</th>
+                                    <th class="p-2.5">Lote 2 (01/02 a 28/02/27)</th>
+                                    <th class="p-2.5">Lote 3 (Março/27)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800 bg-slate-950/60">
+                                <tr>
+                                    <td class="p-2.5 font-bold text-emerald-300">Até 4 anos (Gratuito)</td>
+                                    <td class="p-2.5">Gratuito</td>
+                                    <td class="p-2.5">Gratuito</td>
+                                    <td class="p-2.5">Gratuito</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold text-indigo-300">De 5 a 8 anos (30% desc.)</td>
+                                    <td class="p-2.5">R$ 245,00</td>
+                                    <td class="p-2.5">R$ 262,50</td>
+                                    <td class="p-2.5">R$ 280,00</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-bold text-white">A partir de 9 anos (Integral)</td>
+                                    <td class="p-2.5">R$ 350,00</td>
+                                    <td class="p-2.5">R$ 375,00</td>
+                                    <td class="p-2.5">R$ 400,00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1.5">
+                        * Mesmo participantes gratuitos (até 4 anos) devem ter inscrição individual para controle de presença, alimentação, hospedagem e responsáveis.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                        <h4 class="font-bold text-white uppercase text-xs">2. Day Use (Sem pernoite)</h4>
+                        <p>• <strong>Sem alimentação:</strong> R$ 100,00 por pessoa.</p>
+                        <p>• <strong>Com café da manhã, almoço e café da tarde:</strong> R$ 220,00 por pessoa.</p>
+                        <p class="text-[11px] text-amber-300">Dias disponíveis, horários de entrada/saída e desconto infantil para Day Use: <strong>A definir</strong>.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                        <h4 class="font-bold text-white uppercase text-xs">3. Promoções de Parcelas Fixas (R$ 350,00)</h4>
+                        <p>• <strong>Condição Promocional 1 (Adesão até 30/11/2026):</strong> 5 parcelas de R$ 70,00 (Novembro/2026 a Março/2027)</p>
+                        <p>• <strong>Condição Promocional 2 (Adesão até 15/12/2026):</strong> 4 parcelas de R$ 87,50 (Dezembro/2026 a Março/2027)</p>
+                        <p class="text-[11px] text-amber-300">Após 30/11/2026, a Condição Promocional 1 encerra automaticamente, permanecendo a Condição Promocional 2.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="text-sm font-bold text-indigo-300 uppercase">4. Regras de Convivência e Lista Oficial do Que Levar</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/40 text-rose-200 space-y-1">
+                            <strong class="text-rose-300 block">🚫 Proibição Expressa — Entrada no Lago:</strong>
+                            É expressamente proibido entrar, nadar ou acessar o lago do acampamento sob qualquer hipótese, sujeito à <strong>penalização de expulsão imediata do retiro</strong>.
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/30 space-y-1">
+                            <strong class="text-indigo-200 block">📖 O Que Levar (Em ordem de prioridade):</strong>
+                            <div>1. <strong>Bíblia Sagrada, caderno e caneta</strong> (1º item essencial)</div>
+                            <div>2. Roupa de cama, roupa de banho e toalhas</div>
+                            <div>3. Roupas pessoais, calçados e higiene pessoal</div>
+                            <div>4. Lanches, salgadinhos e refrigerantes <strong>apenas industrializados e lacrados</strong></div>
+                            <div class="text-amber-300 font-semibold">🚫 Proibido levar: bolo feito em casa, pão de forma ou alimentos artesanais/caseiros.</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                            <strong class="text-white block mb-1">Transporte e Medicamentos:</strong>
+                            Cada igreja organiza seu transporte. Medicamentos de uso contínuo devem ser levados na embalagem original e identificada para todos os dias.
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                            <strong class="text-white block mb-1">Pagamentos Presenciais:</strong>
+                            Escritório Regional — IEQ Central (Travessa Belo Horizonte, 90 — Centro — Londrina/PR — sujeito a confirmação de horários).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-t border-slate-900 py-5 text-center text-[11px] text-slate-500">
+        VATHOS 2027 · Região Eclesiástica 655 — Londrina/PR · <a href="vathos2027_lideres.html" class="text-slate-400 hover:text-indigo-400 underline">Área de Líderes/Pastores</a> · <a href="vathos2027_admin.html" class="text-slate-400 hover:text-indigo-400 underline">Admin</a>
+    </footer>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import {
+            collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, query, where, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import {
+            VATHOS_DEFAULT_CONFIG,
+            mergeVathosConfig,
+            limparCPF,
+            formatarCPF,
+            validarCPF,
+            formatarTelefone,
+            formatarCEP,
+            formatarMoeda,
+            formatarPercentual,
+            formatarDataBR,
+            calcularIdadeNaData,
+            classificarFaixaEtaria,
+            calcularPrecoAplicavel,
+            calcularPercentualDePagamento,
+            consolidarFinanceiroInscricao
+        } from './js/vathos_calc.js';
+
+        let configEvento = structuredClone(VATHOS_DEFAULT_CONFIG);
+        let listaIgrejas = [];
+
+        // Estado de sessão por CPF
+        let cpfSessaoPrincipal = ''; // CPF digitado na entrada
+        let cpfInscricaoAtiva = '';  // CPF da ficha aberta atualmente (pode ser o próprio ou de um filho menor)
+        let inscricaoAtiva = null;
+        let fichaSaudeAtiva = null;
+        let pagamentosAtivos = [];
+        let fichasVinculadasAoResponsavel = []; // Lista de fichas onde cpf == cpfSessaoPrincipal ou responsavelCpf == cpfSessaoPrincipal
+        let modoEdicaoFichaExistente = false;
+
+        // Expor formatadores no window para os inputs HTML
+        window.formatarCPFInput = formatarCPF;
+        window.formatarTelefoneInput = formatarTelefone;
+        window.formatarCEPInput = formatarCEP;
+
+        async function init() {
+            lucide.createIcons();
+            document.getElementById('comp-data').value = new Date().toISOString().split('T')[0];
+
+            await Promise.all([
+                carregarConfiguracaoEvento(),
+                carregarListaIgrejas()
+            ]);
+
+            aplicarConfiguracaoNaInterface();
+
+            // Se já havia CPF na sessionStorage, restaura acesso
+            const cpfSalvo = sessionStorage.getItem('vathos2027_cpf_sessao');
+            if (cpfSalvo && validarCPF(cpfSalvo)) {
+                document.getElementById('input-cpf-acesso').value = formatarCPF(cpfSalvo);
+                await verificarAcessoPorCPF(cpfSalvo);
+            }
+        }
+
+        async function carregarConfiguracaoEvento() {
+            try {
+                const snap = await getDoc(doc(db, 'vathos_2027_config', 'geral'));
+                if (snap.exists()) {
+                    configEvento = mergeVathosConfig(snap.data());
+                }
+            } catch (e) {
+                console.warn('Usando configuração padrão do VATHOS 2027:', e);
+            }
+        }
+
+        async function carregarListaIgrejas() {
+            const sel = document.getElementById('f-igreja-select');
+            sel.innerHTML = `<option value="">Selecione sua igreja...</option>`;
+            try {
+                const snap = await getDocs(collection(db, 'igrejas'));
+                listaIgrejas = [];
+                snap.forEach(d => listaIgrejas.push({ id: d.id, ...d.data() }));
+                listaIgrejas.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+                listaIgrejas.forEach(ig => {
+                    const label = ig.codigo ? `${ig.codigo} - ${ig.nome}` : ig.nome;
+                    sel.innerHTML += `<option value="${ig.nome}">${label}</option>`;
+                });
+            } catch (e) {
+                console.warn('Erro ao carregar igrejas:', e);
+            }
+            sel.innerHTML += `<option value="__OUTRA_IGREJA__">Outra igreja (Informar nome)</option>`;
+            sel.innerHTML += `<option value="__NAO_FREQUENTO__">Não frequento uma igreja</option>`;
+        }
+
+        function aplicarConfiguracaoNaInterface() {
+            const ev = configEvento.evento;
+            document.getElementById('hero-slogan').textContent = ev.slogan || VATHOS_DEFAULT_CONFIG.evento.slogan;
+            document.getElementById('hero-local').textContent = ev.local || VATHOS_DEFAULT_CONFIG.evento.local;
+            document.getElementById('btn-como-chegar').href = ev.mapsUrl || VATHOS_DEFAULT_CONFIG.evento.mapsUrl;
+
+            if (ev.enderecoCompleto && ev.enderecoCompleto.trim()) {
+                document.getElementById('hero-endereco-status').innerHTML = `<span class="text-slate-300">${ev.enderecoCompleto}</span>`;
+            } else {
+                document.getElementById('hero-endereco-status').innerHTML = `Endereço por escrito: <span class="badge-a-definir">A definir</span>`;
+            }
+
+            if (ev.horarioChegada || ev.horarioEncerramento) {
+                document.getElementById('hero-horarios-status').innerHTML = `Chegada: <strong>${ev.horarioChegada || 'A definir'}</strong> · Fim: <strong>${ev.horarioEncerramento || 'A definir'}</strong>`;
+            }
+
+            // E-mail obrigatório?
+            const emailInput = document.getElementById('f-email');
+            const emailLabel = document.getElementById('label-email-obrig');
+            if (configEvento.inscricaoConfig?.emailObrigatorio) {
+                emailInput.required = true;
+                emailLabel.innerHTML = `<span class="text-rose-400">*</span>`;
+            } else {
+                emailInput.required = false;
+                emailLabel.textContent = `(Obrigatoriedade a definir — opcional no momento)`;
+            }
+
+            // Camiseta?
+            const wrapCamiseta = document.getElementById('wrap-tamanho-camiseta');
+            const selCamiseta = document.getElementById('f-camiseta');
+            if (configEvento.inscricaoConfig?.solicitarCamiseta) {
+                wrapCamiseta.classList.remove('hidden');
+                selCamiseta.required = true;
+                selCamiseta.innerHTML = `<option value="">Selecione...</option>` +
+                    (configEvento.inscricaoConfig.tamanhosCamiseta || ['P', 'M', 'G', 'GG', 'XG']).map(t => `<option value="${t}">${t}</option>`).join('');
+            } else {
+                wrapCamiseta.classList.add('hidden');
+                selCamiseta.required = false;
+            }
+
+            // Chave Pix
+            const chavePix = configEvento.pagamentos?.pix?.chavePix || '';
+            const favorecidoPix = configEvento.pagamentos?.pix?.favorecidoPix || '';
+            if (chavePix.trim()) {
+                document.getElementById('badge-pix-status').className = 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase';
+                document.getElementById('badge-pix-status').textContent = 'Ativa';
+                document.getElementById('box-chave-pix-ativa').classList.remove('hidden');
+                document.getElementById('box-chave-pix-pendente').classList.add('hidden');
+                document.getElementById('ap-chave-pix-input').value = chavePix.trim();
+                document.getElementById('ap-favorecido-pix').textContent = favorecidoPix || 'A confirmar';
+            } else {
+                document.getElementById('badge-pix-status').className = 'badge-a-definir';
+                document.getElementById('badge-pix-status').textContent = 'A definir';
+                document.getElementById('box-chave-pix-ativa').classList.add('hidden');
+                document.getElementById('box-chave-pix-pendente').classList.remove('hidden');
+            }
+
+            if (configEvento.orientacoes?.oQueLevar) {
+                const elOque = document.getElementById('modal-oque-levar');
+                if (elOque) elOque.textContent = configEvento.orientacoes.oQueLevar;
+            }
+
+            filtrarOpcoesPromocionaisPorData();
+        }
+
+        function filtrarOpcoesPromocionaisPorData(condicaoJaSalva = null) {
+            const hoje = new Date().toISOString().split('T')[0];
+            const limitePromo1 = configEvento?.pagamentos?.promocaoParcelasFixas?.dataLimitePromo1 || '2026-11-30';
+            const limitePromo2 = configEvento?.pagamentos?.promocaoParcelasFixas?.dataLimitePromo2 || '2026-12-15';
+
+            const opt1 = document.getElementById('opt-promo-nov-5x');
+            const opt2 = document.getElementById('opt-promo-dez-4x');
+            const sel = document.getElementById('f-condicao-pagamento');
+
+            if (opt1) {
+                const expirada1 = hoje > limitePromo1 && condicaoJaSalva !== 'promocional_nov_5x';
+                opt1.hidden = expirada1;
+                opt1.disabled = expirada1;
+                if (expirada1 && sel.value === 'promocional_nov_5x') {
+                    sel.value = hoje <= limitePromo2 ? 'promocional_dez_4x' : 'parcelamento_livre';
+                }
+            }
+            if (opt2) {
+                const expirada2 = hoje > limitePromo2 && condicaoJaSalva !== 'promocional_dez_4x';
+                opt2.hidden = expirada2;
+                opt2.disabled = expirada2;
+                if (expirada2 && sel.value === 'promocional_dez_4x') {
+                    sel.value = 'parcelamento_livre';
+                }
+            }
+        }
+
+        // =====================================================================
+        // ENTRADA E AUTENTICAÇÃO POR CPF
+        // =====================================================================
+        window.verificarAcessoPorCPF = async function(cpfForcado = null) {
+            const erroEl = document.getElementById('erro-cpf-acesso');
+            erroEl.classList.add('hidden');
+
+            const raw = cpfForcado || document.getElementById('input-cpf-acesso').value;
+            const cpfLimpo = limparCPF(raw);
+
+            if (!validarCPF(cpfLimpo)) {
+                erroEl.textContent = 'CPF inválido. Verifique os 11 dígitos informados.';
+                erroEl.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('btn-entrar-cpf');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Consultando CPF...`;
+
+            try {
+                cpfSessaoPrincipal = cpfLimpo;
+                sessionStorage.setItem('vathos2027_cpf_sessao', cpfLimpo);
+                document.getElementById('btn-sair-cpf').classList.remove('hidden');
+
+                // Verifica se o CPF pertence a um Gestor Autorizado (ex: Thatiane ou Audrey)
+                const cpfsGestores = (configEvento.gestoresAutorizadosCpfs || ['06637234931', '03480561926']).map(c => String(c).replace(/\D/g, ''));
+                const bannerGestor = document.getElementById('secao-banner-gestor-cpf');
+                if (cpfsGestores.includes(cpfLimpo)) {
+                    bannerGestor.classList.remove('hidden');
+                } else {
+                    bannerGestor.classList.add('hidden');
+                }
+
+                await recarregarFichasDoCPF(cpfLimpo);
+
+                if (fichasVinculadasAoResponsavel.length > 0) {
+                    // Já possui inscrição própria ou filhos menores vinculados -> Abre Área Exclusiva do Participante!
+                    const propria = fichasVinculadasAoResponsavel.find(f => f.cpf === cpfLimpo);
+                    const alvo = propria || fichasVinculadasAoResponsavel[0];
+                    await abrirAreaDoParticipante(alvo.cpf);
+                } else {
+                    // Ainda não possui inscrição -> Abre formulário de Pré-Reserva vinculado a este CPF
+                    iniciarNovaInscricaoParaCPF(cpfLimpo, false);
+                }
+            } catch (err) {
+                console.error('Erro ao consultar CPF:', err);
+                erroEl.textContent = 'Erro ao consultar o banco de dados: ' + err.message;
+                erroEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
+        };
+
+        async function recarregarFichasDoCPF(cpfPrincipal) {
+            fichasVinculadasAoResponsavel = [];
+            // 1. Busca inscrição direta pelo ID (CPF)
+            const docDireto = await getDoc(doc(db, 'vathos_2027_inscricoes', cpfPrincipal));
+            if (docDireto.exists()) {
+                fichasVinculadasAoResponsavel.push({ id: docDireto.id, ...docDireto.data() });
+            }
+
+            // 2. Busca inscrições de filhos menores onde este CPF é o responsável legal
+            const qFilhos = query(collection(db, 'vathos_2027_inscricoes'), where('responsavelCpf', '==', cpfPrincipal));
+            const snapFilhos = await getDocs(qFilhos);
+            snapFilhos.forEach(d => {
+                if (!fichasVinculadasAoResponsavel.some(f => f.cpf === d.id)) {
+                    fichasVinculadasAoResponsavel.push({ id: d.id, ...d.data() });
+                }
+            });
+
+            renderizarBarraVinculosResponsavel();
+        }
+
+        function renderizarBarraVinculosResponsavel() {
+            const sec = document.getElementById('secao-vinculos-responsavel');
+            const cont = document.getElementById('lista-botoes-vinculos');
+            if (fichasVinculadasAoResponsavel.length <= 1 && !fichasVinculadasAoResponsavel.some(f => f.responsavelCpf === cpfSessaoPrincipal && f.cpf !== cpfSessaoPrincipal)) {
+                sec.classList.add('hidden');
+                return;
+            }
+
+            sec.classList.remove('hidden');
+            cont.innerHTML = '';
+            fichasVinculadasAoResponsavel.forEach(f => {
+                const ativo = f.cpf === cpfInscricaoAtiva;
+                const ehFilho = f.cpf !== cpfSessaoPrincipal;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `px-3 py-1.5 rounded-xl text-xs font-bold transition-colors border ${
+                    ativo
+                        ? 'bg-indigo-600 text-white border-indigo-400'
+                        : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-indigo-400'
+                }`;
+                btn.innerHTML = `${ehFilho ? '👶 ' : '👤 '}${f.nomeCompleto.split(' ')[0]} (${formatarCPF(f.cpf)})`;
+                btn.onclick = () => abrirAreaDoParticipante(f.cpf);
+                cont.appendChild(btn);
+            });
+        }
+
+        window.acessarPainelGestorComSenha = function() {
+            const jaAut = sessionStorage.getItem('vathos2027_gestor_autenticado') === 'sim';
+            if (jaAut) {
+                window.location.href = 'vathos2027_admin.html';
+                return;
+            }
+            const senha = prompt('Digite sua senha de Gestor(a) do VATHOS 2027 para abrir o Painel Administrativo:');
+            if (senha === null) return;
+            if (senha.trim().toLowerCase() === 'vathos') {
+                sessionStorage.setItem('vathos2027_gestor_autenticado', 'sim');
+                window.location.href = 'vathos2027_admin.html';
+            } else {
+                alert('Senha incorreta.');
+            }
+        };
+
+        window.encerrarSessaoCPF = function() {
+            sessionStorage.removeItem('vathos2027_cpf_sessao');
+            sessionStorage.removeItem('vathos2027_gestor_autenticado');
+            document.getElementById('secao-banner-gestor-cpf')?.classList.add('hidden');
+            cpfSessaoPrincipal = '';
+            cpfInscricaoAtiva = '';
+            inscricaoAtiva = null;
+            fichasVinculadasAoResponsavel = [];
+            document.getElementById('btn-sair-cpf').classList.add('hidden');
+            document.getElementById('secao-vinculos-responsavel').classList.add('hidden');
+            document.getElementById('secao-formulario-inscricao').classList.add('hidden');
+            document.getElementById('secao-area-participante').classList.add('hidden');
+            document.getElementById('secao-entrada-cpf').classList.remove('hidden');
+            document.getElementById('input-cpf-acesso').value = '';
+        };
+
+        // =====================================================================
+        // FORMULÁRIO DE INSCRIÇÃO / PRÉ-RESERVA E CÁLCULOS DINÂMICOS
+        // =====================================================================
+        function iniciarNovaInscricaoParaCPF(cpfAlvo, ehFilhoMenor = false) {
+            modoEdicaoFichaExistente = false;
+            cpfInscricaoAtiva = cpfAlvo;
+
+            document.getElementById('secao-entrada-cpf').classList.add('hidden');
+            document.getElementById('secao-area-participante').classList.add('hidden');
+            document.getElementById('secao-formulario-inscricao').classList.remove('hidden');
+
+            document.getElementById('form-vathos-inscricao').reset();
+
+            const fCpf = document.getElementById('f-cpf');
+            if (ehFilhoMenor) {
+                document.getElementById('form-modo-badge').textContent = 'Vincular Filho(a) Menor ao Responsável';
+                document.getElementById('form-titulo-principal').textContent = 'Nova Inscrição de Menor Vinculado';
+                fCpf.removeAttribute('readonly');
+                fCpf.value = '';
+                fCpf.placeholder = 'Digite o CPF do filho(a) menor';
+                fCpf.oninput = function() {
+                    this.value = formatarCPF(this.value);
+                    document.getElementById('form-cpf-badge').textContent = this.value || '000.000.000-00';
+                };
+                // Pré-preenche dados do responsável com o titular da sessão se existir
+                const titular = fichasVinculadasAoResponsavel.find(f => f.cpf === cpfSessaoPrincipal);
+                document.getElementById('f-resp-cpf').value = formatarCPF(cpfSessaoPrincipal);
+                if (titular) {
+                    document.getElementById('f-resp-nome').value = titular.nomeCompleto || '';
+                    document.getElementById('f-resp-whatsapp').value = titular.whatsapp || '';
+                    document.getElementById('f-resp-email').value = titular.email || '';
+                }
+            } else {
+                document.getElementById('form-modo-badge').textContent = '1º Acesso — Realizar Pré-Reserva';
+                document.getElementById('form-titulo-principal').textContent = 'Ficha de Inscrição — VATHOS 2027';
+                fCpf.setAttribute('readonly', 'readonly');
+                fCpf.value = formatarCPF(cpfAlvo);
+                document.getElementById('form-cpf-badge').textContent = formatarCPF(cpfAlvo);
+            }
+
+            document.getElementById('txt-btn-salvar-inscricao').textContent = 'Confirmar Inscrição e Pré-Reserva';
+            filtrarOpcoesPromocionaisPorData(null);
+            atualizarCalculoIdadeModalidade();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.iniciarCadastroFilhoMenor = function() {
+            iniciarNovaInscricaoParaCPF('', true);
+        };
+
+        window.aoMudarIgrejaSelect = function() {
+            const val = document.getElementById('f-igreja-select').value;
+            const wrapOutra = document.getElementById('wrap-outra-igreja');
+            const inputOutra = document.getElementById('f-outra-igreja');
+            const inputLider = document.getElementById('f-lider-referencia');
+            const astLider = document.getElementById('ast-lider');
+
+            if (val === '__OUTRA_IGREJA__') {
+                wrapOutra.classList.remove('hidden');
+                inputOutra.required = true;
+                inputLider.required = false;
+                astLider.classList.add('hidden');
+            } else if (val === '__NAO_FREQUENTO__') {
+                wrapOutra.classList.add('hidden');
+                inputOutra.required = false;
+                inputLider.required = false;
+                astLider.classList.add('hidden');
+            } else {
+                wrapOutra.classList.add('hidden');
+                inputOutra.required = false;
+                inputLider.required = true;
+                astLider.classList.remove('hidden');
+            }
+        };
+
+        window.toggleCampoSaude = function(chave, mostrar) {
+            const el = document.getElementById(`wrap-saude-${chave}`);
+            if (el) el.classList.toggle('hidden', !mostrar);
+        };
+
+        window.buscarCEPAutomatico = async function() {
+            const cepLimpo = String(document.getElementById('f-cep').value || '').replace(/\D/g, '');
+            if (cepLimpo.length !== 8) return;
+            try {
+                const resp = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+                const data = await resp.json();
+                if (!data.erro) {
+                    if (data.logradouro) document.getElementById('f-rua').value = data.logradouro;
+                    if (data.bairro) document.getElementById('f-bairro').value = data.bairro;
+                    if (data.localidade) document.getElementById('f-cidade').value = data.localidade;
+                    if (data.uf) document.getElementById('f-uf').value = data.uf;
+                }
+            } catch (e) {}
+        };
+
+        window.copiarResponsavelParaEmergencia = function() {
+            document.getElementById('f-emerg-nome').value = document.getElementById('f-resp-nome').value;
+            document.getElementById('f-emerg-vinculo').value = document.getElementById('f-resp-vinculo').value || 'Responsável Legal';
+            document.getElementById('f-emerg-whatsapp').value = document.getElementById('f-resp-whatsapp').value;
+        };
+
+        window.atualizarCalculoIdadeModalidade = function() {
+            const dataNasc = document.getElementById('f-data-nascimento').value;
+            const dataRef = configEvento?.modalidades?.condicoesCriancas?.dataReferenciaIdade || '2027-03-26';
+            const idade = calcularIdadeNaData(dataNasc, dataRef);
+            const faixa = classificarFaixaEtaria(idade, configEvento);
+
+            const txtIdade = document.getElementById('texto-idade-calculada');
+            if (idade !== null) {
+                txtIdade.innerHTML = `<strong class="text-white">${idade} anos</strong> em ${formatarDataBR(dataRef)} — <span class="text-indigo-300 font-bold">${faixa.label}</span>`;
+            } else {
+                txtIdade.textContent = 'Preencha a data de nascimento para calcular';
+            }
+
+            // Mostra/oculta bloco de Menor de Idade (< 18 anos)
+            const secMenor = document.getElementById('secao-form-menor');
+            const wrapTermoMenor = document.getElementById('wrap-termo-menor');
+            const respNome = document.getElementById('f-resp-nome');
+            const respCpf = document.getElementById('f-resp-cpf');
+            const respVinc = document.getElementById('f-resp-vinculo');
+            const respZap = document.getElementById('f-resp-whatsapp');
+            const respConf = document.getElementById('f-resp-confirmacao-legal');
+
+            if (faixa.isMenorDeIdade) {
+                secMenor.classList.remove('hidden');
+                wrapTermoMenor.classList.remove('hidden');
+                respNome.required = true;
+                respCpf.required = true;
+                respVinc.required = true;
+                respZap.required = true;
+                respConf.required = true;
+            } else {
+                secMenor.classList.add('hidden');
+                wrapTermoMenor.classList.add('hidden');
+                respNome.required = false;
+                respCpf.required = false;
+                respVinc.required = false;
+                respZap.required = false;
+                respConf.required = false;
+            }
+
+            // Modalidade Day Use
+            const mod = document.getElementById('f-modalidade').value;
+            const wrapDiaDayUse = document.getElementById('wrap-dia-dayuse');
+            const selDiaDayUse = document.getElementById('f-dia-dayuse');
+            if (mod.startsWith('day_use')) {
+                wrapDiaDayUse.classList.remove('hidden');
+                selDiaDayUse.required = true;
+            } else {
+                wrapDiaDayUse.classList.add('hidden');
+                selDiaDayUse.required = false;
+            }
+
+            // Se criança até 4 anos no retiro completo -> seleciona isento
+            const selCond = document.getElementById('f-condicao-pagamento');
+            if (mod === 'retiro_completo' && faixa.codigo === 'ate_4') {
+                selCond.value = 'isento_crianca';
+            } else if (selCond.value === 'isento_crianca' && faixa.codigo !== 'ate_4') {
+                selCond.value = 'parcelamento_livre';
+            }
+
+            // Calcula preço aplicável hoje
+            const infoPreco = calcularPrecoAplicavel({
+                modalidade: mod,
+                condicaoPagamento: selCond.value,
+                idade: idade ?? 18,
+                diasDayUseQtd: 1,
+                config: configEvento
+            });
+
+            document.getElementById('resumo-lote-nome').textContent = infoPreco.loteNome;
+            document.getElementById('resumo-valor-aplicavel').textContent = infoPreco.isGratuito ? 'Gratuito (R$ 0,00)' : formatarMoeda(infoPreco.precoAplicavel);
+
+            if (infoPreco.observacaoPendente) {
+                document.getElementById('resumo-regra-explicacao').innerHTML = `<span class="text-amber-300">${infoPreco.observacaoPendente}</span>`;
+            } else if (selCond.value === 'parcelamento_livre') {
+                document.getElementById('resumo-regra-explicacao').textContent =
+                    'Parcelamento Livre por Percentual: cada pagamento quita uma porcentagem proporcional ao preço do lote vigente na data efetiva do pagamento.';
+            } else if (selCond.value === 'promocional_nov_5x') {
+                document.getElementById('resumo-regra-explicacao').textContent =
+                    'Condição Promocional 1 (Adesão até 30/11/2026): 5 parcelas de R$ 70,00 (Novembro de 2026 a Março de 2027 · Total R$ 350,00).';
+            } else if (selCond.value === 'promocional_dez_4x') {
+                document.getElementById('resumo-regra-explicacao').textContent =
+                    'Condição Promocional 2 (Adesão até 15/12/2026): 4 parcelas de R$ 87,50 (Dezembro de 2026 a Março de 2027 · Total R$ 350,00).';
+            } else {
+                document.getElementById('resumo-regra-explicacao').textContent =
+                    'Após confirmar sua pré-reserva, você acompanhará pagamentos, comprovantes e saldo diretamente na sua Área do Participante via CPF.';
+            }
+        };
+
+        // =====================================================================
+        // SALVAR INSCRIÇÃO / PRÉ-RESERVA NO FIRESTORE
+        // =====================================================================
+        window.salvarInscricaoPreReserva = async function() {
+            const cpfFormLimpo = limparCPF(document.getElementById('f-cpf').value);
+            if (!validarCPF(cpfFormLimpo)) {
+                alert('Por favor, informe um CPF válido de 11 dígitos para o participante.');
+                return;
+            }
+
+            const dataNasc = document.getElementById('f-data-nascimento').value;
+            const dataRef = configEvento?.modalidades?.condicoesCriancas?.dataReferenciaIdade || '2027-03-26';
+            const idade = calcularIdadeNaData(dataNasc, dataRef);
+            const faixa = classificarFaixaEtaria(idade, configEvento);
+
+            if (faixa.isMenorDeIdade) {
+                const cpfRespLimpo = limparCPF(document.getElementById('f-resp-cpf').value);
+                if (!validarCPF(cpfRespLimpo)) {
+                    alert('Por favor, informe um CPF válido para o Responsável Legal.');
+                    return;
+                }
+                if (cpfRespLimpo === cpfFormLimpo) {
+                    alert('O CPF do responsável legal deve ser diferente do CPF do menor.');
+                    return;
+                }
+            }
+
+            const btn = document.getElementById('btn-salvar-inscricao');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Salvando Pré-Reserva...`;
+
+            try {
+                // Se for novo cadastro (não edição), verifica se CPF já existe para evitar duplicidade
+                if (!modoEdicaoFichaExistente) {
+                    const checkExistente = await getDoc(doc(db, 'vathos_2027_inscricoes', cpfFormLimpo));
+                    if (checkExistente.exists()) {
+                        alert('Já existe uma inscrição registrada para este CPF! Abrindo a Área do Participante correspondente.');
+                        await abrirAreaDoParticipante(cpfFormLimpo);
+                        return;
+                    }
+                }
+
+                const selIgreja = document.getElementById('f-igreja-select').value;
+                let igrejaNomeFinal = selIgreja;
+                let outraIgrejaNome = '';
+                let naoFrequentaIgreja = false;
+                if (selIgreja === '__OUTRA_IGREJA__') {
+                    outraIgrejaNome = document.getElementById('f-outra-igreja').value.trim();
+                    igrejaNomeFinal = `Outra: ${outraIgrejaNome}`;
+                } else if (selIgreja === '__NAO_FREQUENTO__') {
+                    naoFrequentaIgreja = true;
+                    igrejaNomeFinal = 'Não frequenta igreja';
+                }
+
+                const modalidade = document.getElementById('f-modalidade').value;
+                const condicaoPagamento = document.getElementById('f-condicao-pagamento').value;
+                const diaDayUse = document.getElementById('f-dia-dayuse').value;
+                const usoImagem = document.querySelector('input[name="t_uso_imagem"]:checked')?.value || 'nao_autorizado';
+                const categoriaSelecionada = document.getElementById('f-categoria').value || 'participante';
+
+                // Se selecionou Líder, Equipe ou Pastor Titular, fica pendente de aprovação administrativa (salvo se já estava aprovada para a mesma categoria)
+                let statusCategoria = 'padrao';
+                if (categoriaSelecionada !== 'participante') {
+                    if (modoEdicaoFichaExistente && inscricaoAtiva?.categoriaParticipacao === categoriaSelecionada && inscricaoAtiva?.statusCategoria === 'aprovada') {
+                        statusCategoria = 'aprovada';
+                    } else {
+                        statusCategoria = 'pendente_aprovacao';
+                    }
+                }
+
+                const tokenAutorizacao = inscricaoAtiva?.autorizacaoToken || ('AUT-' + Math.random().toString(36).substring(2, 10).toUpperCase());
+                const protocolo = inscricaoAtiva?.protocolo || ('VATHOS-' + cpfFormLimpo.slice(-4) + '-' + Math.floor(1000 + Math.random() * 9000));
+
+                const infoPrecoInicial = calcularPrecoAplicavel({
+                    modalidade,
+                    condicaoPagamento,
+                    idade,
+                    diasDayUseQtd: 1,
+                    categoriaParticipacao: categoriaSelecionada,
+                    statusCategoria,
+                    valorPersonalizadoAprovado: inscricaoAtiva?.valorPersonalizadoAprovado ?? null,
+                    config: configEvento
+                });
+
+                const payloadInscricao = {
+                    cpf: cpfFormLimpo,
+                    protocolo,
+                    nomeCompleto: document.getElementById('f-nome-completo').value.trim(),
+                    nomePreferencia: '',
+                    dataNascimento: dataNasc,
+                    idadeCalculada: idade,
+                    dataReferenciaIdadeUsada: dataRef,
+                    faixaEtariaCodigo: faixa.codigo,
+                    faixaEtariaLabel: faixa.label,
+                    isMenor: faixa.isMenorDeIdade,
+                    rg: document.getElementById('f-rg').value.trim(),
+                    email: document.getElementById('f-email').value.trim(),
+                    whatsapp: document.getElementById('f-whatsapp').value.trim(),
+                    whatsappPertenceResponsavel: document.getElementById('f-whatsapp-eh-responsavel').checked,
+                    telefoneAlternativo: document.getElementById('f-telefone-alt').value.trim(),
+                    endereco: {
+                        cep: document.getElementById('f-cep').value.trim(),
+                        rua: document.getElementById('f-rua').value.trim(),
+                        numero: document.getElementById('f-numero').value.trim(),
+                        complemento: document.getElementById('f-complemento').value.trim(),
+                        bairro: document.getElementById('f-bairro').value.trim(),
+                        cidade: document.getElementById('f-cidade').value.trim(),
+                        uf: document.getElementById('f-uf').value.trim().toUpperCase()
+                    },
+                    igrejaSelect: selIgreja,
+                    igrejaNome: igrejaNomeFinal,
+                    outraIgrejaNome,
+                    naoFrequentaIgreja,
+                    liderReferencia: document.getElementById('f-lider-referencia').value.trim(),
+                    categoriaParticipacao: categoriaSelecionada,
+                    statusCategoria,
+                    tamanhoCamiseta: document.getElementById('f-camiseta').value || '',
+                    modalidade,
+                    diasDayUse: modalidade.startsWith('day_use') && diaDayUse ? [diaDayUse] : [],
+                    condicaoPagamento,
+                    responsavelCpf: faixa.isMenorDeIdade ? limparCPF(document.getElementById('f-resp-cpf').value) : '',
+                    responsavel: faixa.isMenorDeIdade ? {
+                        nome: document.getElementById('f-resp-nome').value.trim(),
+                        cpf: limparCPF(document.getElementById('f-resp-cpf').value),
+                        vinculo: document.getElementById('f-resp-vinculo').value,
+                        whatsapp: document.getElementById('f-resp-whatsapp').value.trim(),
+                        email: document.getElementById('f-resp-email').value.trim(),
+                        retiradaTerceiro: document.getElementById('f-resp-retirada-terceiro').value.trim(),
+                        confirmacaoLegal: document.getElementById('f-resp-confirmacao-legal').checked
+                    } : null,
+                    autorizacaoToken: faixa.isMenorDeIdade ? tokenAutorizacao : null,
+                    contatoEmergencia: {
+                        nome: document.getElementById('f-emerg-nome').value.trim(),
+                        vinculo: document.getElementById('f-emerg-vinculo').value.trim(),
+                        whatsapp: document.getElementById('f-emerg-whatsapp').value.trim(),
+                        segundoContato: document.getElementById('f-emerg-segundo').value.trim()
+                    },
+                    termos: {
+                        versao: configEvento?.termos?.versao || '1.0-pendente',
+                        regrasConvivenciaAceito: document.getElementById('t-regras-convivencia').checked,
+                        usoDadosPessoaisSaudeAceito: document.getElementById('t-uso-dados').checked,
+                        condicoesFinanceirasCancelamentoAceito: document.getElementById('t-condicoes-financeiras').checked,
+                        usoImagemStatus: usoImagem,
+                        registradoEmISO: new Date().toISOString()
+                    },
+                    // Os 7 controles separados (Seção 14) — Autorização de menor só muda para 'concluida' pela equipe após entrega impressa!
+                    statusCadastro: 'completo',
+                    statusAutorizacao: !faixa.isMenorDeIdade
+                        ? 'nao_se_aplica'
+                        : (inscricaoAtiva?.statusAutorizacao === 'concluida' ? 'concluida' : 'pendente'),
+                    statusFinanceiro: inscricaoAtiva?.statusFinanceiro || (infoPrecoInicial.isGratuito ? 'isento' : 'sem_pagamento'),
+                    statusComprovante: inscricaoAtiva?.statusComprovante || (infoPrecoInicial.isGratuito ? 'nao_se_aplica' : 'nenhum'),
+                    statusAcertoLider: inscricaoAtiva?.statusAcertoLider || (condicaoPagamento === 'lider_pastor' ? 'aguardando_repasse' : 'nenhum'),
+                    statusParticipacao: inscricaoAtiva?.statusParticipacao || 'pre_inscricao',
+                    statusPresenca: inscricaoAtiva?.statusPresenca || 'nao_chegou',
+                    atualizadoEm: serverTimestamp()
+                };
+
+                if (!modoEdicaoFichaExistente) {
+                    payloadInscricao.criadoEm = serverTimestamp();
+                    payloadInscricao.criadoEmISO = new Date().toISOString();
+                }
+
+                // Ficha Básica de Saúde separada em vathos_2027_fichas_saude/{cpf}
+                const payloadSaude = {
+                    cpf: cpfFormLimpo,
+                    nomeParticipante: payloadInscricao.nomeCompleto,
+                    usaMedicamento: document.querySelector('input[name="saude_med"]:checked')?.value === 'sim',
+                    medicamentoDetalhes: document.getElementById('f-saude-med-detalhes').value.trim(),
+                    possuiAlergia: document.querySelector('input[name="saude_alergia"]:checked')?.value === 'sim',
+                    alergiaDetalhes: document.getElementById('f-saude-alergia-detalhes').value.trim(),
+                    possuiRestricaoAlimentar: document.querySelector('input[name="saude_restricao"]:checked')?.value === 'sim',
+                    restricaoAlimentarDetalhes: document.getElementById('f-saude-restricao-detalhes').value.trim(),
+                    possuiCondicaoOuApoio: document.querySelector('input[name="saude_apoio"]:checked')?.value === 'sim',
+                    condicaoOuApoioDetalhes: document.getElementById('f-saude-apoio-detalhes').value.trim(),
+                    possuiPlanoSaude: document.querySelector('input[name="saude_plano"]:checked')?.value === 'sim',
+                    planoSaudeNome: document.getElementById('f-saude-plano-nome').value.trim(),
+                    observacoesRelevantes: document.getElementById('f-saude-obs').value.trim(),
+                    atualizadoEm: serverTimestamp()
+                };
+
+                await setDoc(doc(db, 'vathos_2027_inscricoes', cpfFormLimpo), payloadInscricao, { merge: true });
+                await setDoc(doc(db, 'vathos_2027_fichas_saude', cpfFormLimpo), payloadSaude, { merge: true });
+
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    cpfParticipante: cpfFormLimpo,
+                    nomeParticipante: payloadInscricao.nomeCompleto,
+                    acao: modoEdicaoFichaExistente ? 'atualizacao_cadastro_participante' : 'nova_pre_inscricao',
+                    autor: `CPF ${formatarCPF(cpfSessaoPrincipal || cpfFormLimpo)}`,
+                    detalhes: `Modalidade: ${modalidade} | Condição: ${condicaoPagamento} | Faixa: ${faixa.codigo}`,
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+
+                await recarregarFichasDoCPF(cpfSessaoPrincipal || cpfFormLimpo);
+                await abrirAreaDoParticipante(cpfFormLimpo);
+
+            } catch (err) {
+                console.error('Erro ao salvar inscrição:', err);
+                alert('Erro ao salvar inscrição: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
+        };
+
+        // =====================================================================
+        // ÁREA EXCLUSIVA DO PARTICIPANTE (MEDIANTE CPF)
+        // =====================================================================
+        async function abrirAreaDoParticipante(cpfAlvo) {
+            cpfInscricaoAtiva = cpfAlvo;
+            const snapInsc = await getDoc(doc(db, 'vathos_2027_inscricoes', cpfAlvo));
+            if (!snapInsc.exists()) {
+                iniciarNovaInscricaoParaCPF(cpfAlvo, false);
+                return;
+            }
+            inscricaoAtiva = { id: snapInsc.id, ...snapInsc.data() };
+
+            // Busca ficha de saúde
+            try {
+                const snapSaude = await getDoc(doc(db, 'vathos_2027_fichas_saude', cpfAlvo));
+                fichaSaudeAtiva = snapSaude.exists() ? snapSaude.data() : null;
+            } catch (e) {
+                fichaSaudeAtiva = null;
+            }
+
+            // Busca pagamentos vinculados a este CPF
+            const qPag = query(collection(db, 'vathos_2027_pagamentos'), where('cpfParticipante', '==', cpfAlvo));
+            const snapPag = await getDocs(qPag);
+            pagamentosAtivos = [];
+            snapPag.forEach(d => pagamentosAtivos.push({ id: d.id, ...d.data() }));
+
+            renderizarBarraVinculosResponsavel();
+            renderizarAreaDoParticipante();
+
+            document.getElementById('secao-entrada-cpf').classList.add('hidden');
+            document.getElementById('secao-formulario-inscricao').classList.add('hidden');
+            document.getElementById('secao-area-participante').classList.remove('hidden');
+            lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderizarAreaDoParticipante() {
+            const i = inscricaoAtiva;
+            const consolidado = consolidarFinanceiroInscricao({
+                inscricao: i,
+                pagamentos: pagamentosAtivos,
+                config: configEvento
+            });
+
+            const mapCatLabels = {
+                participante: 'Participante',
+                lider: 'Líder',
+                equipe: 'Equipe de Trabalho',
+                pastor_titular: 'Pastor Titular'
+            };
+            const catLabel = mapCatLabels[i.categoriaParticipacao] || i.categoriaParticipacao || 'Participante';
+            const statusCatTexto = (i.categoriaParticipacao && i.categoriaParticipacao !== 'participante')
+                ? (i.statusCategoria === 'aprovada' ? ' (✓ Autorizada)' : ' (⏳ Aguardando autorização — Valor padrão aplicado)')
+                : '';
+
+            document.getElementById('ap-protocolo').textContent = '#' + (i.protocolo || i.cpf);
+            document.getElementById('ap-nome').textContent = i.nomeCompleto;
+            document.getElementById('ap-subtitulo-igreja').textContent =
+                `CPF: ${formatarCPF(i.cpf)} · ${i.igrejaNome || 'Sem igreja'} · Categoria: ${catLabel}${statusCatTexto}`;
+            document.getElementById('ap-badge-faixa').textContent = `${i.idadeCalculada ?? '—'} anos · ${i.faixaEtariaLabel || ''}`;
+
+            // Mapas de labels amigáveis para os 7 controles separados
+            const mapStatus = {
+                completo: '✓ Completo', incompleto: '⚠️ Incompleto',
+                nao_se_aplica: 'Não se aplica', pendente: '⏳ Pendente', concluida: '✓ Concluída',
+                sem_pagamento: 'Sem pagamento', parcial: 'Parcial', quitado: '✓ Quitado', isento: '✓ Isento',
+                nenhum: 'Nenhum', aguardando_conferencia: '⏳ Aguardando conferência', aprovado: '✓ Aprovado', recusado: '✕ Recusado',
+                aguardando_repasse: '⏳ Recebido Líder (Ag. Repasse)', conferido: '✓ Repassado e Conferido',
+                pre_inscricao: 'Pré-inscrição (Pré-reserva)', confirmada: '✓ Vaga Confirmada', lista_espera: 'Lista de Espera', cancelada: '✕ Cancelada',
+                nao_chegou: 'Não chegou', presente: '✓ Presente', saida_registrada: 'Saída registrada'
+            };
+
+            const stFinanceiroReal = i.statusParticipacao === 'cancelada' ? i.statusFinanceiro : consolidado.statusFinanceiroSugerido;
+            const stComprovanteReal = consolidado.statusComprovanteSugerido;
+
+            document.getElementById('st-cadastro').textContent = mapStatus[i.statusCadastro] || i.statusCadastro;
+            document.getElementById('st-autorizacao').textContent = mapStatus[i.statusAutorizacao] || i.statusAutorizacao;
+            document.getElementById('st-financeiro').textContent = mapStatus[stFinanceiroReal] || stFinanceiroReal;
+            document.getElementById('st-comprovante').textContent = mapStatus[stComprovanteReal] || stComprovanteReal;
+            document.getElementById('st-acerto-lider').textContent = mapStatus[consolidado.statusAcertoLiderSugerido || i.statusAcertoLider] || 'Nenhum';
+            document.getElementById('st-participacao').textContent = mapStatus[i.statusParticipacao] || i.statusParticipacao;
+            document.getElementById('st-presenca').textContent = mapStatus[i.statusPresenca] || i.statusPresenca;
+
+            document.getElementById('ap-badge-participacao').textContent = mapStatus[i.statusParticipacao] || i.statusParticipacao;
+
+            // Autorização de menor e status do Cadastro do Responsável
+            const cardAutMenor = document.getElementById('card-autorizacao-menor-ap');
+            if (i.isMenor) {
+                cardAutMenor.classList.remove('hidden');
+                const r = i.responsavel || {};
+                const respCadastrado = Boolean(r.nome && r.cpf && r.whatsapp);
+                const statusCadRespHtml = respCadastrado
+                    ? `<div class="text-emerald-300 font-bold mb-1">✓ Cadastro do Responsável Concluído: ${r.nome} (${r.vinculo || 'Responsável'} · CPF ${formatarCPF(r.cpf)})</div>`
+                    : `<div class="text-rose-400 font-bold mb-1">⚠️ Cadastro do Responsável Pendente: Clique em "Atualizar Dados / Ficha" acima para preencher os dados do responsável.</div>`;
+
+                const urlAut = `vathos2027_autorizacao.html?cpf=${encodeURIComponent(i.cpf)}`;
+                document.getElementById('btn-abrir-link-autorizacao').href = urlAut;
+
+                if (i.statusAutorizacao === 'concluida') {
+                    document.getElementById('st-autorizacao').textContent = '✓ Autorizado (Impresso Entregue)';
+                    document.getElementById('st-autorizacao').className = 'text-xs font-extrabold text-emerald-400 mt-1 block';
+                    document.getElementById('txt-status-autorizacao-menor').innerHTML =
+                        statusCadRespHtml +
+                        `<span class="text-emerald-300 font-bold">✓ Autorização Confirmada pela Equipe (Documentos Impressos Entregues)!</span>`;
+                } else {
+                    document.getElementById('st-autorizacao').textContent = respCadastrado ? 'Resp. Cadastrado (Falta Entregar Impresso)' : '⚠️ Falta Cad. Responsável';
+                    document.getElementById('st-autorizacao').className = 'text-xs font-extrabold text-amber-300 mt-1 block';
+                    document.getElementById('txt-status-autorizacao-menor').innerHTML =
+                        statusCadRespHtml +
+                        `<div><strong>⏳ Status da Autorização: Aguardando Entrega dos Documentos Impressos.</strong> Clique no botão ao lado para imprimir a Folha A4, assine, junte a cópia do documento do responsável e entregue à equipe para confirmação.</div>`;
+                }
+            } else {
+                cardAutMenor.classList.add('hidden');
+            }
+
+            // Resumo de Modalidade & Percentual
+            const labelsMod = {
+                retiro_completo: 'Retiro Completo (26 a 28/03/2027)',
+                day_use_sem_alimentacao: 'Day Use — Sem Alimentação',
+                day_use_com_alimentacao: 'Day Use — Com Café, Almoço e Café da Tarde'
+            };
+            document.getElementById('ap-modalidade-label').textContent = `${labelsMod[i.modalidade] || i.modalidade} · ${i.condicaoPagamento}`;
+            document.getElementById('ap-lote-atual-label').textContent = consolidado.loteAtual.loteNome;
+            document.getElementById('ap-preco-lote-atual').textContent = `Preço base hoje: ${formatarMoeda(consolidado.loteAtual.precoAplicavel)}`;
+
+            document.getElementById('ap-pct-confirmado').textContent = formatarPercentual(consolidado.percentualConfirmado);
+            document.getElementById('bar-pct-confirmado').style.width = `${Math.min(100, consolidado.percentualConfirmado)}%`;
+            const pctPendTotal = Math.min(100 - consolidado.percentualConfirmado, consolidado.percentualAguardandoConferencia + consolidado.percentualRecebidoLider);
+            document.getElementById('bar-pct-pendente').style.width = `${Math.max(0, pctPendTotal)}%`;
+
+            document.getElementById('ap-val-confirmado').textContent = formatarMoeda(consolidado.totalPagoConfirmadoReais);
+            const valPendSoma = consolidado.totalAguardandoConferenciaReais + consolidado.totalRecebidoLiderReais;
+            const pctPendSoma = consolidado.percentualAguardandoConferencia + consolidado.percentualRecebidoLider;
+            document.getElementById('ap-val-pendente').textContent = `${formatarMoeda(valPendSoma)} (${formatarPercentual(pctPendSoma)})`;
+            document.getElementById('ap-pct-restante').textContent = formatarPercentual(consolidado.percentualRestante);
+            document.getElementById('ap-saldo-atual-reais').textContent = formatarMoeda(consolidado.saldoAtualReais);
+
+            // Lista de pagamentos
+            const contPag = document.getElementById('lista-pagamentos-participante');
+            if (consolidado.historicoProcessado.length === 0) {
+                contPag.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">Nenhum pagamento ou comprovante registrado ainda.</p>`;
+            } else {
+                contPag.innerHTML = consolidado.historicoProcessado.map(p => {
+                    let badge = `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">Aguardando conferência</span>`;
+                    if (p.statusConferencia === 'aprovado_escritorio') {
+                        badge = `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">✓ Confirmado pelo Escritório</span>`;
+                    } else if (p.statusConferencia === 'recebido_lider') {
+                        badge = `<span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">Recebido pelo Líder/Pastor (Ag. Repasse)</span>`;
+                    } else if (p.statusConferencia === 'recusado') {
+                        badge = `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">Recusado: ${p.motivoRecusa || 'Verifique com o escritório'}</span>`;
+                    } else if (p.statusConferencia === 'estornado') {
+                        badge = `<span class="px-2 py-0.5 rounded bg-slate-700 text-slate-400 text-[10px] font-bold">Estornado</span>`;
+                    }
+
+                    const infoTaxa = p.valorTaxaCartao > 0
+                        ? `<span class="text-[10px] text-slate-400 block">+ Taxa Cartão: ${formatarMoeda(p.valorTaxaCartao)} (não abate inscrição)</span>`
+                        : '';
+
+                    return `
+                        <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="space-y-0.5">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs font-extrabold text-white">${formatarMoeda(p.valorDestinadoInscricao)}</span>
+                                    <span class="text-xs font-bold text-emerald-400">(${formatarPercentual(p.percentualQuitado)} quitado)</span>
+                                    ${badge}
+                                </div>
+                                <div class="text-[11px] text-slate-400">
+                                    Data efetiva: <strong>${formatarDataBR(p.dataEfetivaPagamento)}</strong> · Base: ${p.loteNomeNaData || 'Lote'} (${formatarMoeda(p.precoBaseLoteNaData)}) · Forma: ${(p.forma || 'pix').toUpperCase()}
+                                </div>
+                                ${p.observacao ? `<div class="text-[11px] text-slate-500">${p.observacao}</div>` : ''}
+                                ${infoTaxa}
+                            </div>
+                            ${p.comprovanteDataUrl ? `<a href="${p.comprovanteDataUrl}" download="comprovante_${p.id}.png" target="_blank" class="text-[11px] font-bold text-indigo-400 hover:underline shrink-0">Ver comprovante ↗</a>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // =====================================================================
+        // ENVIO DE COMPROVANTE PIX PELO PARTICIPANTE
+        // =====================================================================
+        window.simularPercentualNovoPagamento = function() {
+            const box = document.getElementById('box-simulacao-comp');
+            const val = Number(document.getElementById('comp-valor').value || 0);
+            const dataPag = document.getElementById('comp-data').value || new Date().toISOString().split('T')[0];
+
+            if (!inscricaoAtiva || val <= 0) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            const infoLoteData = calcularPrecoAplicavel({
+                modalidade: inscricaoAtiva.modalidade,
+                condicaoPagamento: inscricaoAtiva.condicaoPagamento,
+                idade: inscricaoAtiva.idadeCalculada,
+                diasDayUseQtd: Array.isArray(inscricaoAtiva.diasDayUse) ? inscricaoAtiva.diasDayUse.length : 1,
+                dataReferenciaPrecoISO: dataPag,
+                categoriaParticipacao: inscricaoAtiva.categoriaParticipacao || 'participante',
+                statusCategoria: inscricaoAtiva.statusCategoria || 'padrao',
+                valorPersonalizadoAprovado: inscricaoAtiva.valorPersonalizadoAprovado ?? null,
+                config: configEvento
+            });
+
+            const calc = calcularPercentualDePagamento({
+                valorDestinadoInscricao: val,
+                precoAplicavelNoLote: infoLoteData.precoAplicavel
+            });
+
+            box.classList.remove('hidden');
+            box.innerHTML = `Na data <strong>${formatarDataBR(dataPag)}</strong> (${infoLoteData.loteNome}: ${formatarMoeda(infoLoteData.precoAplicavel)}), este pagamento de <strong>${formatarMoeda(val)}</strong> quitará <strong>${formatarPercentual(calc.percentualQuitado)}</strong> da inscrição após conferência.`;
+        };
+
+        function lerArquivoComoDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return resolve('');
+                // Se for imagem maior que 400KB, redimensiona em canvas para caber com folga no Firestore
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const maxDim = 1100;
+                            let w = img.width;
+                            let h = img.height;
+                            if (w > maxDim || h > maxDim) {
+                                if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+                                else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+                            }
+                            const canvas = document.createElement('canvas');
+                            canvas.width = w;
+                            canvas.height = h;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, w, h);
+                            resolve(canvas.toDataURL('image/jpeg', 0.72));
+                        };
+                        img.onerror = () => resolve(e.target.result);
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                } else {
+                    if (file.size > 750 * 1024) {
+                        reject(new Error('Para arquivos PDF, envie um arquivo de até 750 KB ou tire um print/foto do comprovante.'));
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        window.enviarComprovanteParticipante = async function() {
+            if (!inscricaoAtiva) return;
+            const forma = document.getElementById('comp-forma')?.value || 'pix';
+            const valor = Number(document.getElementById('comp-valor').value || 0);
+            const dataEfetiva = document.getElementById('comp-data').value;
+            const obs = document.getElementById('comp-obs').value.trim();
+            const fileInput = document.getElementById('comp-arquivo');
+            const file = fileInput.files[0] || null;
+
+            if (valor <= 0 || !dataEfetiva) {
+                alert('Informe o valor pago e a data do pagamento.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-enviar-comp');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Registrando declaração...`;
+
+            try {
+                const comprovanteDataUrl = file ? await lerArquivoComoDataUrl(file) : '';
+                const infoLote = calcularPrecoAplicavel({
+                    modalidade: inscricaoAtiva.modalidade,
+                    condicaoPagamento: inscricaoAtiva.condicaoPagamento,
+                    idade: inscricaoAtiva.idadeCalculada,
+                    diasDayUseQtd: Array.isArray(inscricaoAtiva.diasDayUse) ? inscricaoAtiva.diasDayUse.length : 1,
+                    dataReferenciaPrecoISO: dataEfetiva,
+                    categoriaParticipacao: inscricaoAtiva.categoriaParticipacao || 'participante',
+                    statusCategoria: inscricaoAtiva.statusCategoria || 'padrao',
+                    valorPersonalizadoAprovado: inscricaoAtiva.valorPersonalizadoAprovado ?? null,
+                    config: configEvento
+                });
+
+                const calc = calcularPercentualDePagamento({
+                    valorDestinadoInscricao: valor,
+                    precoAplicavelNoLote: infoLote.precoAplicavel
+                });
+
+                await addDoc(collection(db, 'vathos_2027_pagamentos'), {
+                    cpfParticipante: inscricaoAtiva.cpf,
+                    nomeParticipante: inscricaoAtiva.nomeCompleto,
+                    igrejaNome: inscricaoAtiva.igrejaNome || '',
+                    forma,
+                    valorTotalCobrado: valor,
+                    valorDestinadoInscricao: valor,
+                    valorTaxaCartao: 0,
+                    dataEfetivaPagamento: dataEfetiva,
+                    loteIdNaData: infoLote.loteId,
+                    loteNomeNaData: infoLote.loteNome,
+                    precoBaseLoteNaData: infoLote.precoAplicavel,
+                    percentualQuitado: calc.percentualQuitado,
+                    percentualQuitadoExato: calc.percentualQuitadoExato,
+                    comprovanteDataUrl,
+                    observacao: obs || (file ? 'Com comprovante anexado' : 'Pagamento declarado pelo participante (sem anexo)'),
+                    statusConferencia: 'aguardando_conferencia',
+                    registradoPor: `Participante (CPF ${formatarCPF(cpfSessaoPrincipal)})`,
+                    criadoEm: serverTimestamp(),
+                    criadoEmISO: new Date().toISOString()
+                });
+
+                await updateDoc(doc(db, 'vathos_2027_inscricoes', inscricaoAtiva.cpf), {
+                    statusComprovante: 'aguardando_conferencia',
+                    atualizadoEm: serverTimestamp()
+                });
+
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    cpfParticipante: inscricaoAtiva.cpf,
+                    nomeParticipante: inscricaoAtiva.nomeCompleto,
+                    acao: 'declaracao_pagamento_participante',
+                    autor: `CPF ${formatarCPF(cpfSessaoPrincipal)}`,
+                    detalhes: `Pagamento declarado (${forma.toUpperCase()}): ${formatarMoeda(valor)} (Data: ${formatarDataBR(dataEfetiva)} | ${formatarPercentual(calc.percentualQuitado)} no ${infoLote.loteNome}) ${file ? '[Com Anexo]' : '[Sem Anexo]'}`,
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+
+                document.getElementById('form-enviar-comprovante').reset();
+                document.getElementById('comp-data').value = new Date().toISOString().split('T')[0];
+                document.getElementById('box-simulacao-comp').classList.add('hidden');
+
+                await abrirAreaDoParticipante(inscricaoAtiva.cpf);
+                alert('Pagamento declarado com sucesso! Ele está pendente de confirmação pela equipe administrativa.');
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao enviar comprovante: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
+        };
+
+        // =====================================================================
+        // EDIÇÃO DE DADOS, LINK DE AUTORIZAÇÃO E SOLICITAÇÃO DE CANCELAMENTO
+        // =====================================================================
+        window.abrirEdicaoDadosParticipante = function() {
+            if (!inscricaoAtiva) return;
+            modoEdicaoFichaExistente = true;
+            const i = inscricaoAtiva;
+            const s = fichaSaudeAtiva || {};
+
+            document.getElementById('secao-area-participante').classList.add('hidden');
+            document.getElementById('secao-formulario-inscricao').classList.remove('hidden');
+
+            document.getElementById('form-modo-badge').textContent = 'Atualizar Cadastro & Ficha de Saúde';
+            document.getElementById('form-titulo-principal').textContent = `Editando: ${i.nomeCompleto}`;
+            document.getElementById('txt-btn-salvar-inscricao').textContent = 'Salvar Alterações';
+
+            const fCpf = document.getElementById('f-cpf');
+            fCpf.setAttribute('readonly', 'readonly');
+            fCpf.value = formatarCPF(i.cpf);
+            document.getElementById('form-cpf-badge').textContent = formatarCPF(i.cpf);
+
+            document.getElementById('f-nome-completo').value = i.nomeCompleto || '';
+            document.getElementById('f-data-nascimento').value = i.dataNascimento || '';
+            document.getElementById('f-rg').value = i.rg || '';
+            document.getElementById('f-email').value = i.email || '';
+            document.getElementById('f-whatsapp').value = i.whatsapp || '';
+            document.getElementById('f-whatsapp-eh-responsavel').checked = !!i.whatsappPertenceResponsavel;
+            document.getElementById('f-telefone-alt').value = i.telefoneAlternativo || '';
+
+            document.getElementById('f-cep').value = i.endereco?.cep || '';
+            document.getElementById('f-rua').value = i.endereco?.rua || '';
+            document.getElementById('f-numero').value = i.endereco?.numero || '';
+            document.getElementById('f-complemento').value = i.endereco?.complemento || '';
+            document.getElementById('f-bairro').value = i.endereco?.bairro || '';
+            document.getElementById('f-cidade').value = i.endereco?.cidade || 'Londrina';
+            document.getElementById('f-uf').value = i.endereco?.uf || 'PR';
+
+            document.getElementById('f-igreja-select').value = i.igrejaSelect || '';
+            aoMudarIgrejaSelect();
+            document.getElementById('f-outra-igreja').value = i.outraIgrejaNome || '';
+            document.getElementById('f-lider-referencia').value = i.liderReferencia || '';
+            document.getElementById('f-categoria').value = i.categoriaParticipacao || 'participante';
+            document.getElementById('f-camiseta').value = i.tamanhoCamiseta || '';
+
+            document.getElementById('f-modalidade').value = i.modalidade || 'retiro_completo';
+            filtrarOpcoesPromocionaisPorData(i.condicaoPagamento);
+            document.getElementById('f-condicao-pagamento').value = i.condicaoPagamento || 'parcelamento_livre';
+            if (Array.isArray(i.diasDayUse) && i.diasDayUse[0]) {
+                document.getElementById('f-dia-dayuse').value = i.diasDayUse[0];
+            }
+
+            if (i.responsavel) {
+                document.getElementById('f-resp-nome').value = i.responsavel.nome || '';
+                document.getElementById('f-resp-cpf').value = formatarCPF(i.responsavel.cpf || '');
+                document.getElementById('f-resp-vinculo').value = i.responsavel.vinculo || '';
+                document.getElementById('f-resp-whatsapp').value = i.responsavel.whatsapp || '';
+                document.getElementById('f-resp-email').value = i.responsavel.email || '';
+                document.getElementById('f-resp-retirada-terceiro').value = i.responsavel.retiradaTerceiro || '';
+                document.getElementById('f-resp-confirmacao-legal').checked = !!i.responsavel.confirmacaoLegal;
+            }
+
+            if (i.contatoEmergencia) {
+                document.getElementById('f-emerg-nome').value = i.contatoEmergencia.nome || '';
+                document.getElementById('f-emerg-vinculo').value = i.contatoEmergencia.vinculo || '';
+                document.getElementById('f-emerg-whatsapp').value = i.contatoEmergencia.whatsapp || '';
+                document.getElementById('f-emerg-segundo').value = i.contatoEmergencia.segundoContato || '';
+            }
+
+            // Ficha de Saúde
+            const setRadio = (name, boolVal, chave) => {
+                const v = boolVal ? 'sim' : 'nao';
+                const r = document.querySelector(`input[name="${name}"][value="${v}"]`);
+                if (r) r.checked = true;
+                toggleCampoSaude(chave, !!boolVal);
+            };
+            setRadio('saude_med', s.usaMedicamento, 'med');
+            document.getElementById('f-saude-med-detalhes').value = s.medicamentoDetalhes || '';
+            setRadio('saude_alergia', s.possuiAlergia, 'alergia');
+            document.getElementById('f-saude-alergia-detalhes').value = s.alergiaDetalhes || '';
+            setRadio('saude_restricao', s.possuiRestricaoAlimentar, 'restricao');
+            document.getElementById('f-saude-restricao-detalhes').value = s.restricaoAlimentarDetalhes || '';
+            setRadio('saude_apoio', s.possuiCondicaoOuApoio, 'apoio');
+            document.getElementById('f-saude-apoio-detalhes').value = s.condicaoOuApoioDetalhes || '';
+            setRadio('saude_plano', s.possuiPlanoSaude, 'plano');
+            document.getElementById('f-saude-plano-nome').value = s.planoSaudeNome || '';
+            document.getElementById('f-saude-obs').value = s.observacoesRelevantes || '';
+
+            document.getElementById('t-regras-convivencia').checked = true;
+            document.getElementById('t-uso-dados').checked = true;
+            document.getElementById('t-condicoes-financeiras').checked = true;
+
+            atualizarCalculoIdadeModalidade();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.cancelarEdicaoFormulario = function() {
+            if (fichasVinculadasAoResponsavel.length > 0 && cpfInscricaoAtiva) {
+                const existe = fichasVinculadasAoResponsavel.find(f => f.cpf === cpfInscricaoAtiva) || fichasVinculadasAoResponsavel[0];
+                if (existe) {
+                    abrirAreaDoParticipante(existe.cpf);
+                    return;
+                }
+            }
+            encerrarSessaoCPF();
+        };
+
+        window.copiarPixParticipante = function() {
+            const val = document.getElementById('ap-chave-pix-input').value;
+            if (!val) return;
+            navigator.clipboard.writeText(val);
+            alert('Chave Pix copiada para a área de transferência!');
+        };
+
+        window.copiarLinkAutorizacaoMenor = function() {
+            if (!inscricaoAtiva) return;
+            const url = new URL('vathos2027_autorizacao.html', window.location.href);
+            url.searchParams.set('cpf', inscricaoAtiva.cpf);
+            url.searchParams.set('token', inscricaoAtiva.autorizacaoToken || '');
+            navigator.clipboard.writeText(url.toString());
+            alert('Link exclusivo de autorização do responsável copiado!\n\nEnvie para o WhatsApp do responsável legal: ' + url.toString());
+        };
+
+        window.solicitarCancelamentoInscricao = async function() {
+            if (!inscricaoAtiva) return;
+            const motivo = prompt('Informe o motivo da solicitação de cancelamento da inscrição:');
+            if (!motivo) return;
+
+            if (!confirm(`Confirma a solicitação de cancelamento da inscrição de ${inscricaoAtiva.nomeCompleto}?`)) return;
+
+            try {
+                await updateDoc(doc(db, 'vathos_2027_inscricoes', inscricaoAtiva.cpf), {
+                    statusParticipacao: 'cancelada',
+                    motivoCancelamento: motivo.trim(),
+                    canceladoEmISO: new Date().toISOString(),
+                    atualizadoEm: serverTimestamp()
+                });
+
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    cpfParticipante: inscricaoAtiva.cpf,
+                    nomeParticipante: inscricaoAtiva.nomeCompleto,
+                    acao: 'solicitacao_cancelamento',
+                    autor: `CPF ${formatarCPF(cpfSessaoPrincipal)}`,
+                    detalhes: `Cancelamento solicitado pelo participante/responsável. Motivo: ${motivo.trim()}`,
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+
+                await abrirAreaDoParticipante(inscricaoAtiva.cpf);
+                alert('Solicitação de cancelamento registrada.');
+            } catch (err) {
+                alert('Erro ao solicitar cancelamento: ' + err.message);
+            }
+        };
+
+        window.abrirModalOrientacoes = () => document.getElementById('modal-orientacoes').classList.remove('hidden');
+        window.fecharModalOrientacoes = () => document.getElementById('modal-orientacoes').classList.add('hidden');
+
+        init();
+    </script>
+</body>
+</html>
+
