@@ -731,3 +731,206 @@ export function consolidarFinanceiroInscricao({
         historicoProcessado
     };
 }
+
+// ============================================================================
+// EMISSOR DE RECIBO INDIVIDUAL POR PAGAMENTO (EM NOME DA IGREJA)
+// ============================================================================
+
+export const DADOS_EMITENTE_RECIBO_VATHOS = {
+    nome: 'IGREJA DO EVANGELHO QUADRANGULAR',
+    regiao: 'Região 655 - Londrina/PR',
+    cnpj: '62.955.505/0252-32',
+    endereco: 'Travessa Belo Horizonte, 90'
+};
+
+export function abrirReciboIndividualVathos(pagamento, inscricao = {}, numeroSequencial = 1) {
+    // O valor do recibo é SEMPRE o valor líquido destinado à inscrição (sem taxas de cartão)
+    const valorLiquido = Number(pagamento?.valorDestinadoInscricao ?? pagamento?.valor ?? 0);
+    const codigoRecibo = `REC-${(pagamento?.id || '0000').slice(0, 6).toUpperCase()}-${String(numeroSequencial).padStart(2, '0')}`;
+    const nomePart = inscricao?.nomeCompleto || pagamento?.nomeParticipante || 'Participante';
+    const cpfPart = formatarCPF(inscricao?.cpf || pagamento?.cpfParticipante || '');
+    const igrejaPart = inscricao?.igrejaNome || pagamento?.igrejaNome || '—';
+    const dataPag = formatarDataBR(pagamento?.dataEfetivaPagamento || '');
+    const formaPag = String(pagamento?.forma || 'pix').toUpperCase();
+    const pctQuitado = formatarPercentual(pagamento?.percentualQuitado || 0);
+    const loteRef = pagamento?.loteNomeNaData || 'Retiro VATHOS 2027';
+
+    const win = window.open('', '_blank', 'width=800,height=700');
+    if (!win) {
+        alert('Permita pop-ups no navegador para visualizar e imprimir o recibo.');
+        return;
+    }
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo ${codigoRecibo} — VATHOS 2027</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; color: #000; }
+        body { margin: 0; padding: 16px; background: #f1f5f9; }
+        .recibo-box {
+            max-width: 720px;
+            margin: 0 auto;
+            background: #fff;
+            border: 2px solid #000;
+            padding: 20px 24px;
+        }
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+        .emitente-titulo { font-size: 16px; font-weight: 900; text-transform: uppercase; }
+        .emitente-sub { font-size: 12px; font-weight: 700; margin-top: 2px; }
+        .emitente-doc { font-size: 11px; margin-top: 2px; }
+        .recibo-num-box {
+            text-align: right;
+            border: 1.5px solid #000;
+            padding: 8px 12px;
+            min-width: 180px;
+        }
+        .recibo-valor-destaque { font-size: 20px; font-weight: 900; margin-top: 4px; }
+        .corpo-texto {
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 16px 0;
+            text-align: justify;
+        }
+        .tabela-detalhes {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+        }
+        .tabela-detalhes th, .tabela-detalhes td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            font-size: 11.5px;
+            text-align: left;
+        }
+        .tabela-detalhes th {
+            background: #e5e7eb;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+        .assinatura-area {
+            margin-top: 28px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 16px;
+            font-size: 11px;
+        }
+        .linha-assinatura {
+            border-top: 1px solid #000;
+            padding-top: 4px;
+            width: 260px;
+            text-align: center;
+            font-weight: 700;
+        }
+        .barra-acoes {
+            max-width: 720px;
+            margin: 0 auto 12px auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .btn {
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            border: 1px solid #000;
+            background: #000;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .no-print { display: none !important; }
+            .recibo-box { border: 2px solid #000; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="barra-acoes no-print">
+        <button class="btn" style="background:#fff;color:#000;" onclick="window.close()">✕ Fechar</button>
+        <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    </div>
+
+    <div class="recibo-box">
+        <div class="header">
+            <div>
+                <div class="emitente-titulo">${DADOS_EMITENTE_RECIBO_VATHOS.nome}</div>
+                <div class="emitente-sub">${DADOS_EMITENTE_RECIBO_VATHOS.regiao}</div>
+                <div class="emitente-doc"><strong>CNPJ:</strong> ${DADOS_EMITENTE_RECIBO_VATHOS.cnpj}</div>
+                <div class="emitente-doc"><strong>Endereço:</strong> ${DADOS_EMITENTE_RECIBO_VATHOS.endereco}</div>
+            </div>
+            <div class="recibo-num-box">
+                <div style="font-size:10px;font-weight:800;text-transform:uppercase;">Recibo de Pagamento Nº</div>
+                <div style="font-size:13px;font-weight:900;font-family:monospace;">${codigoRecibo}</div>
+                <div class="recibo-valor-destaque">${formatarMoeda(valorLiquido)}</div>
+            </div>
+        </div>
+
+        <div class="corpo-texto">
+            Recebemos de <strong>${nomePart}</strong>, inscrito(a) no CPF sob o nº <strong>${cpfPart}</strong>
+            (Igreja: <strong>${igrejaPart}</strong>), a importância líquida de <strong>${formatarMoeda(valorLiquido)}</strong>,
+            referente ao pagamento individual destinado à sua inscrição no evento <strong>VATHOS 2027 — Retiro Regional de Jovens e Adolescentes (26 a 28 de março de 2027)</strong>,
+            quitando <strong>${pctQuitado}</strong> da inscrição na referência <strong>${loteRef}</strong>.
+        </div>
+
+        <table class="tabela-detalhes">
+            <thead>
+                <tr>
+                    <th>Participante</th>
+                    <th>CPF</th>
+                    <th>Data do Pagamento</th>
+                    <th>Forma</th>
+                    <th>Referência / Lote</th>
+                    <th>% Quitado neste Recibo</th>
+                    <th>Valor Líquido</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>${nomePart}</strong></td>
+                    <td style="font-family:monospace;">${cpfPart}</td>
+                    <td>${dataPag}</td>
+                    <td>${formaPag}</td>
+                    <td>${loteRef}</td>
+                    <td><strong>${pctQuitado}</strong></td>
+                    <td><strong>${formatarMoeda(valorLiquido)}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="assinatura-area">
+            <div>
+                <div><strong>Local:</strong> Londrina/PR</div>
+                <div><strong>Data do Pagamento:</strong> ${dataPag}</div>
+                <div style="font-size:9.5px;margin-top:4px;">Documento emitido eletronicamente pelo Portal VATHOS 2027 — Região 655.</div>
+            </div>
+            <div class="linha-assinatura">
+                ${DADOS_EMITENTE_RECIBO_VATHOS.nome}<br>
+                <span style="font-size:10px;font-weight:400;">${DADOS_EMITENTE_RECIBO_VATHOS.regiao} · CNPJ ${DADOS_EMITENTE_RECIBO_VATHOS.cnpj}</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+}
+

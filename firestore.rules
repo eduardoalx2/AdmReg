@@ -177,7 +177,7 @@ service cloud.firestore {
                     && request.resource.data.cpf is string
                     && request.resource.data.cpf.size() == 11;
       allow update: if (request.resource.data.cpf == resource.data.cpf) || isAuthenticated();
-      allow delete: if isAuthenticated();
+      allow delete: if true;
     }
 
     // Fichas de Saúde VATHOS 2027 (separadas das inscrições para privacidade na listagem de líderes)
@@ -186,7 +186,7 @@ service cloud.firestore {
       allow create, update: if request.resource.data.keys().hasAll(['cpf'])
                             && request.resource.data.cpf is string
                             && request.resource.data.cpf.size() == 11;
-      allow delete: if isAuthenticated();
+      allow delete: if true;
     }
 
     // Pagamentos individuais VATHOS 2027
@@ -196,13 +196,13 @@ service cloud.firestore {
                     && request.resource.data.valorDestinadoInscricao is number
                     && request.resource.data.valorDestinadoInscricao >= 0;
       allow update: if true;
-      allow delete: if isAuthenticated();
+      allow delete: if true;
     }
 
     // Acertos financeiros coletivos/igreja VATHOS 2027
     match /vathos_2027_acertos/{acertoId} {
       allow read, create, update: if true;
-      allow delete: if isAuthenticated();
+      allow delete: if true;
     }
 
     // Trilha de auditoria imutável VATHOS 2027
