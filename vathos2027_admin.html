@@ -218,15 +218,118 @@
         <!-- ================================================================== -->
         <section id="sec-adm-financeiro" class="hidden space-y-6">
 
+            <!-- PAINEL DE PERCEPÇÃO FINANCEIRA, FLUXO DE CAIXA E BALANÇO DA CHÁCARA -->
+            <div class="glass-card rounded-3xl p-6 space-y-6 border border-indigo-500/30">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                            <span>🏕️</span> Balanço do Retiro & Compromisso com a Chácara
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Acompanhamento em tempo real do caixa realizado, previsão de entradas, custo fixo da chácara por inscrito e margem do evento.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="alternarDetalheChacara()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors">
+                            <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-400"></i> Detalhes dos Custos Chácara
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4 CARDS PRINCIPAIS DE BALANÇO -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- 1. COMPROMISSO CHÁCARA -->
+                    <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 relative overflow-hidden space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                                <span>🏕️</span> Custo Total Chácara
+                            </span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300" id="lbl-chacara-qtd-pessoas">0 vagas</span>
+                        </div>
+                        <div class="text-2xl font-black text-white" id="lbl-chacara-custo-total">R$ 0,00</div>
+                        <div class="text-[11px] text-slate-400 leading-tight">
+                            Total a pagar pelo retiro (R$ 300 completo / R$ 195 e R$ 70 day use; 30% desc. 5-8a; até 4a cortesia).
+                        </div>
+                    </div>
+
+                    <!-- 2. DINHEIRO EM CAIXA REALIZADO -->
+                    <div class="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 relative overflow-hidden space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                                <span>💵</span> Já Arrecadado (Em Caixa)
+                            </span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300" id="lbl-chacara-pct-cobertura">0% coberto</span>
+                        </div>
+                        <div class="text-2xl font-black text-emerald-400" id="lbl-caixa-confirmado-total">R$ 0,00</div>
+                        <div class="text-[11px] text-slate-300 font-medium truncate" id="lbl-caixa-por-forma-resumo">
+                            💵 R$ 0 · 📱 R$ 0 · 💳 R$ 0
+                        </div>
+                    </div>
+
+                    <!-- 3. PREVISÃO DE ENTRADAS / A RECEBER -->
+                    <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 relative overflow-hidden space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1">
+                                <span>⏳</span> Previsão a Receber
+                            </span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300" id="lbl-chacara-receita-total">Total: R$ 0</span>
+                        </div>
+                        <div class="text-2xl font-black text-white" id="lbl-caixa-a-receber-total">R$ 0,00</div>
+                        <div class="text-[11px] text-slate-400 leading-tight">
+                            Saldo pendente dos inscritos ativos a ser arrecadado até o retiro.
+                        </div>
+                    </div>
+
+                    <!-- 4. MARGEM PREVISTA / SOBRA PARA OUTROS GASTOS -->
+                    <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 relative overflow-hidden space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-300 flex items-center gap-1">
+                                <span>🎯</span> Margem Prevista do Retiro
+                            </span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300" id="lbl-despesas-total-badge">Despesas: R$ 0</span>
+                        </div>
+                        <div class="text-2xl font-black text-teal-300" id="lbl-margem-sobra-total">R$ 0,00</div>
+                        <div class="text-[11px] text-slate-400 leading-tight">
+                            Sobra projetada após pagar a chácara e as despesas registradas.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BARRA DE COBERTURA DA CHÁCARA -->
+                <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span class="font-bold text-slate-300">
+                            Cobertura do Custo da Chácara pelo Caixa Atual:
+                        </span>
+                        <span class="font-extrabold text-emerald-400" id="lbl-status-cobertura-chacara">
+                            R$ 0,00 em caixa de R$ 0,00 da chácara (0%)
+                        </span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-slate-800 flex">
+                        <div id="bar-cobertura-chacara" class="bg-gradient-to-r from-emerald-600 to-teal-500 h-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- DETALHAMENTO EXPANSÍVEL DOS CUSTOS DA CHÁCARA -->
+                <div id="box-detalhe-chacara" class="hidden p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-3">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                        <i data-lucide="calculator" class="w-4 h-4"></i> Detalhamento do Cálculo da Chácara por Modalidade e Faixa
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs" id="grid-detalhes-chacara-cards">
+                        <!-- Gerado dinamicamente -->
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Formulário de Registro de Pagamento Presencial (Pix, Dinheiro ou Cartão com Taxas Separadas) -->
+                <!-- Formulário de Registro de Pagamento Presencial (Pix, Dinheiro, Débito ou Crédito) -->
                 <div class="glass-card rounded-3xl p-6 space-y-4 h-fit">
                     <h2 class="text-base font-extrabold text-white flex items-center gap-2">
                         <i data-lucide="dollar-sign" class="w-5 h-5 text-emerald-400"></i>
                         Registrar Recebimento (Escritório Regional)
                     </h2>
                     <p class="text-xs text-slate-400">
-                        Lance pagamentos recebidos presencialmente no Escritório Regional (Dinheiro, Cartão de Crédito ou Pix direto).
+                        Lance pagamentos recebidos presencialmente no Escritório Regional (Dinheiro, Pix, Cartão de Crédito ou Débito).
                     </p>
 
                     <form id="form-caixa-presencial" onsubmit="event.preventDefault(); registrarPagamentoEscritorio();" class="space-y-3.5">
@@ -239,19 +342,31 @@
 
                         <div id="cx-resumo-participante" class="hidden p-3 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-300 space-y-1"></div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Forma <span class="text-rose-400">*</span></label>
-                                <select id="cx-forma" required onchange="aoMudarFormaCaixa()" class="w-full input-dark px-3 py-2.5 rounded-xl text-xs font-bold">
-                                    <option value="dinheiro">Dinheiro (Presencial)</option>
-                                    <option value="cartao">Cartão de Crédito</option>
-                                    <option value="pix">Pix (Conferido)</option>
-                                </select>
+                        <!-- SELETOR DE FORMA DE PAGAMENTO EM BOTÕES CLICÁVEIS -->
+                        <div class="space-y-1.5">
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">
+                                Forma de Entrada <span class="text-rose-400">*</span>
+                            </label>
+                            <div class="grid grid-cols-2 gap-2" id="cx-forma-botoes">
+                                <button type="button" onclick="selecionarFormaCaixa('dinheiro')" id="btn-forma-dinheiro" class="btn-forma-cx p-2.5 rounded-xl border border-emerald-500/50 bg-emerald-600/30 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow">
+                                    <span>💵</span> Dinheiro
+                                </button>
+                                <button type="button" onclick="selecionarFormaCaixa('pix')" id="btn-forma-pix" class="btn-forma-cx p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all">
+                                    <span>📱</span> Pix
+                                </button>
+                                <button type="button" onclick="selecionarFormaCaixa('cartao_credito')" id="btn-forma-cartao_credito" class="btn-forma-cx p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all">
+                                    <span>💳</span> Cartão Crédito
+                                </button>
+                                <button type="button" onclick="selecionarFormaCaixa('cartao_debito')" id="btn-forma-cartao_debito" class="btn-forma-cx p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all">
+                                    <span>💳</span> Cartão Débito
+                                </button>
                             </div>
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Data Efetiva <span class="text-rose-400">*</span></label>
-                                <input type="date" id="cx-data" required onchange="atualizarPreviewCaixa()" class="w-full input-dark px-3 py-2.5 rounded-xl text-xs font-semibold" />
-                            </div>
+                            <input type="hidden" id="cx-forma" value="dinheiro" />
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Data Efetiva do Pagamento <span class="text-rose-400">*</span></label>
+                            <input type="date" id="cx-data" required onchange="atualizarPreviewCaixa()" class="w-full input-dark px-3 py-2.5 rounded-xl text-xs font-semibold" />
                         </div>
 
                         <div>
@@ -259,21 +374,21 @@
                             <input type="number" id="cx-valor-inscricao" step="0.01" min="0.01" required oninput="atualizarPreviewCaixa()" placeholder="Ex: 150.00" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-bold" />
                         </div>
 
-                        <!-- Bloco exclusivo de Cartão de Crédito (Taxas separadas) -->
+                        <!-- Bloco exclusivo de Cartão (Taxas e parcelas) -->
                         <div id="wrap-cx-cartao" class="hidden p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 space-y-2.5">
-                            <div class="text-[11px] font-bold text-amber-300 uppercase">Cartão de Crédito — Controle de Taxas</div>
+                            <div class="text-[11px] font-bold text-amber-300 uppercase" id="lbl-titulo-cartao-cx">Cartão de Crédito — Controle de Taxas</div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Valor das Taxas (R$)</label>
                                     <input type="number" id="cx-valor-taxa" step="0.01" min="0" value="0" oninput="atualizarPreviewCaixa()" class="w-full input-dark px-2.5 py-2 rounded-lg text-xs font-bold" />
                                 </div>
-                                <div>
+                                <div id="wrap-cx-parcelas">
                                     <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Qtd. Parcelas</label>
                                     <input type="number" id="cx-parcelas-cartao" min="1" max="12" value="1" class="w-full input-dark px-2.5 py-2 rounded-lg text-xs font-bold" />
                                 </div>
                             </div>
                             <p class="text-[10px] text-amber-200 leading-relaxed">
-                                * As taxas do cartão são registradas separadamente e <strong>não aumentam</strong> o percentual quitado da inscrição.
+                                * As taxas cobradas na maquininha não aumentam o percentual quitado da inscrição.
                             </p>
                         </div>
 
@@ -316,6 +431,122 @@
                         <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-300">Histórico Geral de Pagamentos, Taxas e Estornos</h3>
                         <div id="lista-historico-geral-pagamentos" class="space-y-2.5 max-h-96 overflow-y-auto pr-1"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- MÓDULO DE DESPESAS DO EVENTO & CONTROLE DE NOTA FISCAL     -->
+            <!-- ========================================================== -->
+            <div class="glass-card rounded-3xl p-6 space-y-6 border border-slate-800">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div>
+                        <h3 class="text-base font-black text-white flex items-center gap-2">
+                            <span>🧾</span> Despesas do Retiro & Controle de Notas Fiscais
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Cadastre todos os custos do evento (chácara, som/iluminação, alimentação, pulseiras, materiais) e controle a emissão de Nota Fiscal.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-right">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">Total Despesas</span>
+                            <strong class="text-xs font-black text-white" id="lbl-despesas-total-geral">R$ 0,00</strong>
+                        </div>
+                        <div class="px-3 py-1.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-right">
+                            <span class="text-[10px] text-emerald-400 uppercase font-bold block">✓ Com Nota Fiscal</span>
+                            <strong class="text-xs font-black text-emerald-300" id="lbl-despesas-com-nf">R$ 0,00</strong>
+                        </div>
+                        <div class="px-3 py-1.5 rounded-xl bg-amber-950/30 border border-amber-500/30 text-right">
+                            <span class="text-[10px] text-amber-400 uppercase font-bold block">⏳ Sem NF / Pendente</span>
+                            <strong class="text-xs font-black text-amber-300" id="lbl-despesas-sem-nf">R$ 0,00</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FORMULÁRIO DE NOVA DESPESA -->
+                <form id="form-nova-despesa" onsubmit="event.preventDefault(); salvarNovaDespesa();" class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
+                    <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Registrar Nova Despesa
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Descrição do Gasto <span class="text-rose-400">*</span></label>
+                            <input type="text" id="desp-descricao" required placeholder="Ex: Pagamento 1ª parcela chácara, pulseiras de identificação..." class="w-full input-dark px-3 py-2 rounded-xl text-xs font-semibold" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Categoria <span class="text-rose-400">*</span></label>
+                            <select id="desp-categoria" required class="w-full input-dark px-3 py-2 rounded-xl text-xs font-bold">
+                                <option value="chacara">Chácara / Aluguel do Local</option>
+                                <option value="alimentacao">Alimentação & Bebidas</option>
+                                <option value="som_iluminacao">Som, Iluminação & Palco</option>
+                                <option value="grafica_pulseiras">Gráfica, Pulseiras & Crachás</option>
+                                <option value="decoracao">Decoração & Cenografia</option>
+                                <option value="transporte">Transporte & Combustível</option>
+                                <option value="administrativo">Material de Apoio / Escritório</option>
+                                <option value="outros">Outros Gastos</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-emerald-300 mb-1">Valor (R$) <span class="text-rose-400">*</span></label>
+                            <input type="number" step="0.01" min="0.01" id="desp-valor" required placeholder="0,00" class="w-full input-dark px-3 py-2 rounded-xl text-xs font-black text-emerald-400" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Data do Pagamento <span class="text-rose-400">*</span></label>
+                            <input type="date" id="desp-data" required class="w-full input-dark px-3 py-2 rounded-xl text-xs font-semibold" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Fornecedor / Favorecido</label>
+                            <input type="text" id="desp-fornecedor" placeholder="Nome da empresa ou pessoa..." class="w-full input-dark px-3 py-2 rounded-xl text-xs font-semibold" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Forma de Pagamento</label>
+                            <select id="desp-forma" class="w-full input-dark px-3 py-2 rounded-xl text-xs font-semibold">
+                                <option value="pix">Pix</option>
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="cartao">Cartão de Crédito</option>
+                                <option value="cartao_debito">Cartão de Débito</option>
+                                <option value="boleto">Boleto</option>
+                                <option value="transferencia">Transferência Bancária</option>
+                            </select>
+                        </div>
+                        <!-- CONTROLE DE NOTA FISCAL -->
+                        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col justify-center">
+                            <label class="inline-flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="desp-tem-nf" onchange="aoAlternarCheckboxNF()" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 bg-slate-900 border-slate-700" />
+                                <span class="text-xs font-extrabold text-emerald-300 uppercase">Nota Fiscal Emitida?</span>
+                            </label>
+                            <input type="text" id="desp-num-nf" placeholder="Nº da NF ou chave..." class="hidden mt-2 w-full input-dark px-2.5 py-1.5 rounded-lg text-[11px]" />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                        <input type="text" id="desp-obs" placeholder="Observações adicionais (opcional)..." class="w-full sm:w-2/3 input-dark px-3 py-2 rounded-xl text-xs" />
+                        <button type="submit" id="btn-salvar-despesa" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 shrink-0 transition-colors">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Salvar Despesa
+                        </button>
+                    </div>
+                </form>
+
+                <!-- TABELA DE DESPESAS CADASTRADAS -->
+                <div class="overflow-x-auto rounded-2xl border border-slate-800">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-900 text-[10px] font-extrabold uppercase text-slate-400">
+                            <tr>
+                                <th class="p-3">Data</th>
+                                <th class="p-3">Descrição & Categoria</th>
+                                <th class="p-3">Favorecido / Fornecedor</th>
+                                <th class="p-3">Forma</th>
+                                <th class="p-3">Valor</th>
+                                <th class="p-3 text-center">Nota Fiscal</th>
+                                <th class="p-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-adm-despesas" class="divide-y divide-slate-800/80"></tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -683,7 +914,9 @@
             DADOS_EMITENTE_RECIBO_VATHOS,
             CATALOGO_MODULOS_ALOJAMENTO_VATHOS,
             obterTodosQuartosVathos,
-            buscarInfoQuartoVathos
+            buscarInfoQuartoVathos,
+            calcularCustoChacaraInscricao,
+            calcularBalancoFinanceiroGeral
         } from './js/vathos_calc.js';
 
         window.abrirReciboIndividualVathos = abrirReciboIndividualVathos;
@@ -697,6 +930,7 @@
         let todasFichasSaude = {};
         let todosPagamentos = [];
         let todosAcertos = [];
+        let todasDespesas = [];
         let todosLogs = [];
         let todosUsuariosSistema = [];
 
@@ -760,13 +994,14 @@
             const snapCfg = await getDoc(doc(db, 'vathos_2027_config', 'geral'));
             if (snapCfg.exists()) configEvento = mergeVathosConfig(snapCfg.data());
 
-            const [snapInsc, snapSaude, snapPag, snapAc, snapLogs, snapUsers] = await Promise.all([
+            const [snapInsc, snapSaude, snapPag, snapAc, snapLogs, snapUsers, snapDesp] = await Promise.all([
                 getDocs(collection(db, 'vathos_2027_inscricoes')),
                 getDocs(collection(db, 'vathos_2027_fichas_saude')),
                 getDocs(collection(db, 'vathos_2027_pagamentos')),
                 getDocs(collection(db, 'vathos_2027_acertos')),
                 getDocs(collection(db, 'vathos_2027_auditoria')),
-                getDocs(collection(db, 'usuarios'))
+                getDocs(collection(db, 'usuarios')),
+                getDocs(collection(db, 'vathos_2027_despesas')).catch(() => ({ empty: true, forEach: () => {} }))
             ]);
 
             todasInscricoes = [];
@@ -780,6 +1015,12 @@
 
             todosAcertos = [];
             snapAc.forEach(d => todosAcertos.push({ id: d.id, ...d.data() }));
+
+            todasDespesas = [];
+            if (snapDesp && snapDesp.forEach) {
+                snapDesp.forEach(d => todasDespesas.push({ id: d.id, ...d.data() }));
+            }
+            todasDespesas.sort((a, b) => (b.dataPagamento || b.data || '').localeCompare(a.dataPagamento || a.data || ''));
 
             todosLogs = [];
             snapLogs.forEach(d => todosLogs.push({ id: d.id, ...d.data() }));
@@ -1280,11 +1521,171 @@
             atualizarPreviewCaixa();
         };
 
+        window.selecionarFormaCaixa = function(forma) {
+            document.getElementById('cx-forma').value = forma;
+            const formas = ['dinheiro', 'pix', 'cartao_credito', 'cartao_debito'];
+            formas.forEach(f => {
+                const btn = document.getElementById(`btn-forma-${f}`);
+                if (!btn) return;
+                if (f === forma) {
+                    btn.className = 'btn-forma-cx p-2.5 rounded-xl border border-emerald-500/50 bg-emerald-600/30 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow';
+                } else {
+                    btn.className = 'btn-forma-cx p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all';
+                }
+            });
+
+            const isCartao = forma === 'cartao_credito' || forma === 'cartao_debito' || forma === 'cartao';
+            const wrapCartao = document.getElementById('wrap-cx-cartao');
+            const wrapParcelas = document.getElementById('wrap-cx-parcelas');
+            const lblCartao = document.getElementById('lbl-titulo-cartao-cx');
+
+            if (isCartao) {
+                wrapCartao.classList.remove('hidden');
+                if (forma === 'cartao_credito') {
+                    if (lblCartao) lblCartao.textContent = 'Cartão de Crédito — Controle de Taxas e Parcelas';
+                    if (wrapParcelas) wrapParcelas.classList.remove('hidden');
+                } else {
+                    if (lblCartao) lblCartao.textContent = 'Cartão de Débito — Controle de Taxas da Maquininha';
+                    if (wrapParcelas) wrapParcelas.classList.add('hidden');
+                    const parcInput = document.getElementById('cx-parcelas-cartao');
+                    if (parcInput) parcInput.value = '1';
+                }
+            } else {
+                wrapCartao.classList.add('hidden');
+                const taxaInput = document.getElementById('cx-valor-taxa');
+                if (taxaInput) taxaInput.value = 0;
+            }
+
+            atualizarPreviewCaixa();
+        };
+
         window.aoMudarFormaCaixa = function() {
             const forma = document.getElementById('cx-forma').value;
-            document.getElementById('wrap-cx-cartao').classList.toggle('hidden', forma !== 'cartao');
-            if (forma !== 'cartao') document.getElementById('cx-valor-taxa').value = 0;
-            atualizarPreviewCaixa();
+            window.selecionarFormaCaixa(forma);
+        };
+
+        window.alternarDetalheChacara = function() {
+            const box = document.getElementById('box-detalhe-chacara');
+            if (box) box.classList.toggle('hidden');
+        };
+
+        window.aoAlternarCheckboxNF = function() {
+            const temNF = document.getElementById('desp-tem-nf')?.checked;
+            const inputNum = document.getElementById('desp-num-nf');
+            if (inputNum) {
+                inputNum.classList.toggle('hidden', !temNF);
+                if (temNF) inputNum.focus();
+            }
+        };
+
+        window.salvarNovaDespesa = async function() {
+            const descricao = document.getElementById('desp-descricao').value.trim();
+            const categoria = document.getElementById('desp-categoria').value;
+            const valor = Number(document.getElementById('desp-valor').value || 0);
+            const dataPagamento = document.getElementById('desp-data').value;
+            const fornecedor = document.getElementById('desp-fornecedor').value.trim();
+            const forma = document.getElementById('desp-forma').value;
+            const notaFiscalEmitida = document.getElementById('desp-tem-nf').checked;
+            const numeroNotaFiscal = document.getElementById('desp-num-nf').value.trim();
+            const observacao = document.getElementById('desp-obs').value.trim();
+
+            if (!descricao || valor <= 0 || !dataPagamento) {
+                alert('Por favor, preencha a descrição, valor válido e a data do pagamento.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-salvar-despesa');
+            btn.disabled = true;
+            btn.innerHTML = 'Salvando...';
+
+            try {
+                await addDoc(collection(db, 'vathos_2027_despesas'), {
+                    descricao,
+                    categoria,
+                    valor,
+                    dataPagamento,
+                    fornecedor,
+                    forma,
+                    notaFiscalEmitida,
+                    numeroNotaFiscal: notaFiscalEmitida ? numeroNotaFiscal : '',
+                    observacao,
+                    criadoPor: `${userAuth.nome} (${userAuth.email})`,
+                    criadoEm: serverTimestamp(),
+                    criadoEmISO: new Date().toISOString()
+                });
+
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    acao: 'despesa_cadastrada',
+                    autor: `${userAuth.nome} (${userAuth.email})`,
+                    detalhes: `Despesa: ${descricao} | Valor: ${formatarMoeda(valor)} | Cat: ${categoria} | NF: ${notaFiscalEmitida ? 'Sim (' + numeroNotaFiscal + ')' : 'Não'}`,
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+
+                // Reset formulário
+                document.getElementById('form-nova-despesa').reset();
+                document.getElementById('desp-num-nf').classList.add('hidden');
+                const hoje = new Date().toISOString().split('T')[0];
+                document.getElementById('desp-data').value = hoje;
+
+                await recarregarTudoAdmin();
+                alert('Despesa cadastrada com sucesso!');
+            } catch (err) {
+                console.error('Erro ao salvar despesa:', err);
+                alert('Erro ao salvar despesa: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="plus" class="w-4 h-4"></i> Salvar Despesa';
+                if (window.lucide) lucide.createIcons();
+            }
+        };
+
+        window.alternarStatusNFDespesa = async function(despId) {
+            const d = todasDespesas.find(x => x.id === despId);
+            if (!d) return;
+
+            const novoStatus = !d.notaFiscalEmitida;
+            let novoNumero = d.numeroNotaFiscal || '';
+
+            if (novoStatus && !novoNumero) {
+                novoNumero = prompt('Informe o número ou chave da Nota Fiscal (ou deixe vazio):') || '';
+            }
+
+            await updateDoc(doc(db, 'vathos_2027_despesas', despId), {
+                notaFiscalEmitida: novoStatus,
+                numeroNotaFiscal: novoStatus ? novoNumero.trim() : '',
+                atualizadoPor: `${userAuth.nome} (${userAuth.email})`,
+                atualizadoEmISO: new Date().toISOString()
+            });
+
+            await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                acao: 'alteracao_nf_despesa',
+                autor: `${userAuth.nome} (${userAuth.email})`,
+                detalhes: `Despesa "${d.descricao}": NF ${novoStatus ? 'Emitida (' + (novoNumero || 's/n') + ')' : 'Pendente/Removida'}`,
+                dataHora: serverTimestamp(),
+                dataHoraISO: new Date().toISOString()
+            }).catch(() => {});
+
+            await recarregarTudoAdmin();
+        };
+
+        window.excluirDespesa = async function(despId) {
+            const d = todasDespesas.find(x => x.id === despId);
+            if (!d) return;
+
+            if (!confirm(`Tem certeza que deseja excluir a despesa "${d.descricao}" no valor de ${formatarMoeda(d.valor)}?`)) return;
+
+            await deleteDoc(doc(db, 'vathos_2027_despesas', despId));
+
+            await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                acao: 'despesa_excluida',
+                autor: `${userAuth.nome} (${userAuth.email})`,
+                detalhes: `Exclusão de despesa: ${d.descricao} | Valor: ${formatarMoeda(d.valor)}`,
+                dataHora: serverTimestamp(),
+                dataHoraISO: new Date().toISOString()
+            }).catch(() => {});
+
+            await recarregarTudoAdmin();
         };
 
         window.atualizarPreviewCaixa = function() {
@@ -1332,8 +1733,9 @@
             const forma = document.getElementById('cx-forma').value;
             const dataEf = document.getElementById('cx-data').value;
             const valInsc = Number(document.getElementById('cx-valor-inscricao').value || 0);
-            const valTaxa = forma === 'cartao' ? Number(document.getElementById('cx-valor-taxa').value || 0) : 0;
-            const parcelasCartao = forma === 'cartao' ? Number(document.getElementById('cx-parcelas-cartao').value || 1) : 1;
+            const isCartao = forma === 'cartao_credito' || forma === 'cartao_debito' || forma === 'cartao';
+            const valTaxa = isCartao ? Number(document.getElementById('cx-valor-taxa').value || 0) : 0;
+            const parcelasCartao = forma === 'cartao_credito' ? Number(document.getElementById('cx-parcelas-cartao').value || 1) : 1;
             const obs = document.getElementById('cx-obs').value.trim();
 
             const insc = todasInscricoes.find(i => i.cpf === cpf);
@@ -1384,7 +1786,7 @@
                 nomeParticipante: insc.nomeCompleto,
                 acao: 'pagamento_presencial_escritorio',
                 autor: `${userAuth.nome} (${userAuth.email})`,
-                detalhes: `Forma: ${forma.toUpperCase()} | Valor Inscrição: ${formatarMoeda(valInsc)} | Taxa Cartão: ${formatarMoeda(valTaxa)} | Quitado: ${formatarPercentual(calc.percentualQuitado)}`,
+                detalhes: `Forma: ${forma.toUpperCase()} | Valor Inscrição: ${formatarMoeda(valInsc)} | Taxa Maquininha: ${formatarMoeda(valTaxa)} | Quitado: ${formatarPercentual(calc.percentualQuitado)}`,
                 dataHora: serverTimestamp(),
                 dataHoraISO: new Date().toISOString()
             }).catch(() => {});
@@ -1399,6 +1801,176 @@
         };
 
         function renderizarAbaFinanceiroAdmin() {
+            // Ajustar datas padrão
+            const hoje = new Date().toISOString().split('T')[0];
+            const inpDespData = document.getElementById('desp-data');
+            if (inpDespData && !inpDespData.value) inpDespData.value = hoje;
+            const inpCxData = document.getElementById('cx-data');
+            if (inpCxData && !inpCxData.value) inpCxData.value = hoje;
+
+            // 0. Balanço do Retiro & Compromisso com a Chácara
+            const balanco = calcularBalancoFinanceiroGeral({
+                inscricoes: todasInscricoes,
+                pagamentos: todosPagamentos,
+                despesas: todasDespesas,
+                config: configEvento
+            });
+
+            const elQtdPessoas = document.getElementById('lbl-chacara-qtd-pessoas');
+            if (elQtdPessoas) elQtdPessoas.textContent = `${balanco.totalInscricoesAtivas} vagas ativas`;
+
+            const elCustoTotal = document.getElementById('lbl-chacara-custo-total');
+            if (elCustoTotal) elCustoTotal.textContent = formatarMoeda(balanco.custoTotalChacara);
+
+            const elPctCobertura = document.getElementById('lbl-chacara-pct-cobertura');
+            if (elPctCobertura) elPctCobertura.textContent = `${balanco.coberturaChacaraPct}% coberto`;
+
+            const elCaixaConfirmado = document.getElementById('lbl-caixa-confirmado-total');
+            if (elCaixaConfirmado) elCaixaConfirmado.textContent = formatarMoeda(balanco.totalRecebidoEmCaixa);
+
+            const elCaixaPorForma = document.getElementById('lbl-caixa-por-forma-resumo');
+            if (elCaixaPorForma) {
+                const totalCartao = (balanco.porForma.cartao_credito || 0) + (balanco.porForma.cartao_debito || 0);
+                elCaixaPorForma.textContent = `💵 ${formatarMoeda(balanco.porForma.dinheiro)} · 📱 ${formatarMoeda(balanco.porForma.pix)} · 💳 ${formatarMoeda(totalCartao)}`;
+            }
+
+            const elReceitaTotal = document.getElementById('lbl-chacara-receita-total');
+            if (elReceitaTotal) elReceitaTotal.textContent = `Total: ${formatarMoeda(balanco.receitaTotalPrevista)}`;
+
+            const elCaixaAReceber = document.getElementById('lbl-caixa-a-receber-total');
+            if (elCaixaAReceber) elCaixaAReceber.textContent = formatarMoeda(balanco.totalReceitaPendente);
+
+            const elDespesasBadge = document.getElementById('lbl-despesas-total-badge');
+            if (elDespesasBadge) elDespesasBadge.textContent = `Despesas: ${formatarMoeda(balanco.totalDespesas)}`;
+
+            const elMargemSobra = document.getElementById('lbl-margem-sobra-total');
+            if (elMargemSobra) {
+                elMargemSobra.textContent = formatarMoeda(balanco.margemProjetada);
+                elMargemSobra.className = balanco.margemProjetada >= 0
+                    ? 'text-2xl font-black text-teal-300'
+                    : 'text-2xl font-black text-rose-400';
+            }
+
+            const elStatusCob = document.getElementById('lbl-status-cobertura-chacara');
+            if (elStatusCob) {
+                const faltanteMsg = balanco.faltaParaChacara > 0
+                    ? ` · Falta arrecadar ${formatarMoeda(balanco.faltaParaChacara)} para cobrir o custo da chácara`
+                    : ' · Custo da chácara 100% coberto pelo caixa arrecadado!';
+                elStatusCob.textContent = `${formatarMoeda(balanco.totalRecebidoEmCaixa)} arrecadado de ${formatarMoeda(balanco.custoTotalChacara)} da chácara (${balanco.coberturaChacaraPct}%)${faltanteMsg}`;
+            }
+
+            const elBarCob = document.getElementById('bar-cobertura-chacara');
+            if (elBarCob) {
+                elBarCob.style.width = `${Math.min(100, balanco.coberturaChacaraPct)}%`;
+            }
+
+            // Detalhamento do custo da chácara
+            const gridDetalhes = document.getElementById('grid-detalhes-chacara-cards');
+            if (gridDetalhes) {
+                const det = balanco.detalheChacara;
+                gridDetalhes.innerHTML = `
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div class="text-[10px] uppercase font-bold text-slate-400">Retiro 3 Dias (9+ anos)</div>
+                        <div class="text-sm font-black text-white">${formatarMoeda(det.retiroAdultosValor)}</div>
+                        <div class="text-[10px] text-slate-400">${det.retiroAdultosQtd} pessoa(s) × R$ 300,00</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div class="text-[10px] uppercase font-bold text-amber-400">Crianças 5 a 8 anos (30% desc)</div>
+                        <div class="text-sm font-black text-amber-300">${formatarMoeda(det.retiro5a8Valor)}</div>
+                        <div class="text-[10px] text-slate-400">${det.retiro5a8Qtd} criança(s) (70% do custo)</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div class="text-[10px] uppercase font-bold text-emerald-400">Crianças até 4 anos</div>
+                        <div class="text-sm font-black text-emerald-300">R$ 0,00 (Cortesia)</div>
+                        <div class="text-[10px] text-slate-400">${det.retiroAte4Qtd} criança(s) isenta(s)</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div class="text-[10px] uppercase font-bold text-indigo-300">Day Use c/ Alimentação</div>
+                        <div class="text-sm font-black text-white">${formatarMoeda(det.dayUseComAlimValor)}</div>
+                        <div class="text-[10px] text-slate-400">${det.dayUseComAlimQtd} inscrição(ões) (R$ 195/dia)</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div class="text-[10px] uppercase font-bold text-teal-300">Day Use s/ Alimentação</div>
+                        <div class="text-sm font-black text-white">${formatarMoeda(det.dayUseSemAlimValor)}</div>
+                        <div class="text-[10px] text-slate-400">${det.dayUseSemAlimQtd} inscrição(ões) (R$ 70/dia)</div>
+                    </div>
+                `;
+            }
+
+            // KPIs Despesas
+            const elDespTotal = document.getElementById('lbl-despesas-total-geral');
+            if (elDespTotal) elDespTotal.textContent = formatarMoeda(balanco.totalDespesas);
+
+            const elDespComNF = document.getElementById('lbl-despesas-com-nf');
+            if (elDespComNF) elDespComNF.textContent = `${formatarMoeda(balanco.totalDespesasComNF)} (${balanco.qtdDespesasComNF})`;
+
+            const elDespSemNF = document.getElementById('lbl-despesas-sem-nf');
+            if (elDespSemNF) elDespSemNF.textContent = `${formatarMoeda(balanco.totalDespesasSemNF)} (${balanco.qtdDespesasSemNF})`;
+
+            // Tabela de Despesas
+            const tbodyDesp = document.getElementById('tbody-adm-despesas');
+            if (tbodyDesp) {
+                if (todasDespesas.length === 0) {
+                    tbodyDesp.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="p-4 text-center text-slate-500 italic">
+                                Nenhuma despesa registrada ainda. Use o formulário acima para cadastrar gastos do retiro.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    const catMap = {
+                        chacara: 'Chácara / Aluguel',
+                        alimentacao: 'Alimentação & Bebidas',
+                        som_iluminacao: 'Som & Iluminação',
+                        grafica_pulseiras: 'Gráfica & Pulseiras',
+                        decoracao: 'Decoração',
+                        transporte: 'Transporte',
+                        administrativo: 'Material de Apoio',
+                        outros: 'Outros'
+                    };
+                    const formaMap = {
+                        pix: 'Pix',
+                        dinheiro: 'Dinheiro',
+                        cartao: 'Cartão Crédito',
+                        cartao_debito: 'Cartão Débito',
+                        boleto: 'Boleto',
+                        transferencia: 'Transferência'
+                    };
+
+                    tbodyDesp.innerHTML = todasDespesas.map(d => {
+                        const catLabel = catMap[d.categoria] || d.categoria || 'Geral';
+                        const formaLabel = formaMap[d.forma] || (d.forma || 'pix').toUpperCase();
+                        const nfBadge = d.notaFiscalEmitida
+                            ? `<button type="button" onclick="alternarStatusNFDespesa('${d.id}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 flex items-center justify-center gap-1 mx-auto transition-colors" title="Clique para alterar status">
+                                  <span>✓ NF Emitida</span> ${d.numeroNotaFiscal ? `<span class="font-mono">#${d.numeroNotaFiscal}</span>` : ''}
+                               </button>`
+                            : `<button type="button" onclick="alternarStatusNFDespesa('${d.id}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 flex items-center justify-center gap-1 mx-auto transition-colors" title="Clique para marcar como emitida">
+                                  <span>⏳ Pendente / Sem NF</span>
+                               </button>`;
+
+                        return `
+                            <tr class="hover:bg-slate-900/60 transition-colors">
+                                <td class="p-3 text-slate-300 whitespace-nowrap">${formatarDataBR(d.dataPagamento || d.data)}</td>
+                                <td class="p-3">
+                                    <div class="font-bold text-white">${d.descricao}</div>
+                                    <div class="text-[10px] text-indigo-400 font-semibold">${catLabel}</div>
+                                    ${d.observacao ? `<div class="text-[10px] text-slate-500 mt-0.5">${d.observacao}</div>` : ''}
+                                </td>
+                                <td class="p-3 text-slate-300">${d.fornecedor || '<span class="text-slate-600">—</span>'}</td>
+                                <td class="p-3 text-slate-300 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold">${formaLabel}</span></td>
+                                <td class="p-3 font-black text-emerald-400 whitespace-nowrap">${formatarMoeda(d.valor)}</td>
+                                <td class="p-3 text-center whitespace-nowrap">${nfBadge}</td>
+                                <td class="p-3 text-right whitespace-nowrap">
+                                    <button type="button" onclick="excluirDespesa('${d.id}')" class="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors" title="Excluir Despesa">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
             // 1. Comprovantes Pix aguardando conferência
             const pendPix = todosPagamentos.filter(p => p.statusConferencia === 'aguardando_conferencia');
             document.getElementById('badge-qtd-comp-pend').textContent = pendPix.length;
@@ -1511,6 +2083,7 @@
                     </div>
                 `).join('');
             }
+            if (window.lucide) lucide.createIcons();
         }
 
         window.conferirPagamentoPix = async function(pagId, aprovar) {

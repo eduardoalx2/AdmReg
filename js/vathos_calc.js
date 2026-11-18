@@ -59,6 +59,13 @@ export const VATHOS_DEFAULT_CONFIG = {
             permiteMaisDeUmDia: null, // A definir (Item 10): true | false | null
             aplicarDescontoInfantil: null, // A definir (Item 11): true | false | null
             refeicoesAvulsasInfo: '' // A definir (Item 12)
+        },
+        custosChacara: {
+            retiroCompleto: 300.00,
+            dayUseComAlimentacao: 195.00,
+            dayUseSemAlimentacao: 70.00,
+            descontoCrianca5a8Pct: 30, // 30% de desconto
+            cortesiaCriancaAte4: true
         }
     },
 
@@ -729,6 +736,180 @@ export function consolidarFinanceiroInscricao({
         statusComprovanteSugerido,
         statusAcertoLiderSugerido,
         historicoProcessado
+    };
+}
+
+// ============================================================================
+// CUSTO DA CHÁCARA & BALANÇO FINANCEIRO DO EVENTO
+// ============================================================================
+
+export function calcularCustoChacaraInscricao(insc, config = VATHOS_DEFAULT_CONFIG) {
+    if (!insc || insc.statusParticipacao === 'cancelada') return 0;
+
+    const c = config?.modalidades?.custosChacara || config?.custosChacara || {
+        retiroCompleto: 300.00,
+        dayUseComAlimentacao: 195.00,
+        dayUseSemAlimentacao: 70.00,
+        descontoCrianca5a8Pct: 30,
+        cortesiaCriancaAte4: true
+    };
+
+    const mod = insc.modalidade || 'retiro_completo';
+    const qtdDiasDayUse = Array.isArray(insc.diasDayUse) && insc.diasDayUse.length > 0 ? insc.diasDayUse.length : 1;
+
+    let custoBase = c.retiroCompleto ?? 300.00;
+    if (mod === 'day_use_com_alimentacao') {
+        custoBase = (c.dayUseComAlimentacao ?? 195.00) * qtdDiasDayUse;
+    } else if (mod === 'day_use_sem_alimentacao') {
+        custoBase = (c.dayUseSemAlimentacao ?? 70.00) * qtdDiasDayUse;
+    }
+
+    // Condições de crianças
+    const idade = insc.idadeCalculada;
+    const faixa = insc.faixaEtariaCodigo;
+
+    // Até 4 anos: cortesia (R$ 0,00)
+    if (faixa === 'ate_4' || (idade !== undefined && idade !== null && idade <= 4)) {
+        return 0;
+    }
+
+    // De 5 a 8 anos: 30% de desconto (paga 70% do custo)
+    if (faixa === 'de_5_a_8' || (idade !== undefined && idade !== null && idade >= 5 && idade <= 8)) {
+        const fator = (100 - (c.descontoCrianca5a8Pct ?? 30)) / 100;
+        return Number((custoBase * fator).toFixed(2));
+    }
+
+    // Adulto / a partir de 9 anos: valor integral
+    return Number(custoBase.toFixed(2));
+}
+
+export function calcularBalancoFinanceiroGeral({ inscricoes = [], pagamentos = [], despesas = [], config = VATHOS_DEFAULT_CONFIG } = {}) {
+    const ativas = inscricoes.filter(i => i.statusParticipacao !== 'cancelada');
+
+    let custoTotalChacara = 0;
+    let detalheChacara = {
+        retiroAdultosQtd: 0,
+        retiroAdultosValor: 0,
+        retiro5a8Qtd: 0,
+        retiro5a8Valor: 0,
+        retiroAte4Qtd: 0,
+        dayUseComAlimQtd: 0,
+        dayUseComAlimValor: 0,
+        dayUseSemAlimQtd: 0,
+        dayUseSemAlimValor: 0,
+        totalPessoas: ativas.length
+    };
+
+    ativas.forEach(i => {
+        const custo = calcularCustoChacaraInscricao(i, config);
+        custoTotalChacara += custo;
+
+        const mod = i.modalidade || 'retiro_completo';
+        const idade = i.idadeCalculada;
+        const faixa = i.faixaEtariaCodigo;
+
+        if (faixa === 'ate_4' || (idade !== undefined && idade !== null && idade <= 4)) {
+            detalheChacara.retiroAte4Qtd++;
+        } else if (faixa === 'de_5_a_8' || (idade !== undefined && idade !== null && idade >= 5 && idade <= 8)) {
+            if (mod === 'retiro_completo') {
+                detalheChacara.retiro5a8Qtd++;
+                detalheChacara.retiro5a8Valor += custo;
+            } else if (mod === 'day_use_com_alimentacao') {
+                detalheChacara.dayUseComAlimQtd++;
+                detalheChacara.dayUseComAlimValor += custo;
+            } else {
+                detalheChacara.dayUseSemAlimQtd++;
+                detalheChacara.dayUseSemAlimValor += custo;
+            }
+        } else {
+            if (mod === 'retiro_completo') {
+                detalheChacara.retiroAdultosQtd++;
+                detalheChacara.retiroAdultosValor += custo;
+            } else if (mod === 'day_use_com_alimentacao') {
+                detalheChacara.dayUseComAlimQtd++;
+                detalheChacara.dayUseComAlimValor += custo;
+            } else {
+                detalheChacara.dayUseSemAlimQtd++;
+                detalheChacara.dayUseSemAlimValor += custo;
+            }
+        }
+    });
+
+    // Receita Total Prevista (soma dos valores a cobrar das inscrições ativas)
+    let receitaTotalPrevista = 0;
+    ativas.forEach(i => {
+        const cons = i._consolidado || consolidarFinanceiroInscricao({ inscricao: i, pagamentos: pagamentos.filter(p => p.cpfParticipante === i.cpf), config });
+        if (!cons.isento) {
+            receitaTotalPrevista += (cons.loteAtual?.precoAplicavel || 0);
+        }
+    });
+
+    // Total recebido em caixa (aprovado pelo escritório)
+    let totalRecebidoEmCaixa = 0;
+    let porForma = {
+        dinheiro: 0,
+        pix: 0,
+        cartao_credito: 0,
+        cartao_debito: 0,
+        outros: 0
+    };
+
+    pagamentos.forEach(p => {
+        if (p.statusConferencia === 'aprovado_escritorio') {
+            const val = Number(p.valorDestinadoInscricao || p.valor || 0);
+            totalRecebidoEmCaixa += val;
+
+            const f = String(p.forma || '').toLowerCase();
+            if (f === 'dinheiro') porForma.dinheiro += val;
+            else if (f === 'pix') porForma.pix += val;
+            else if (f === 'cartao_credito' || f === 'cartao') porForma.cartao_credito += val;
+            else if (f === 'cartao_debito') porForma.cartao_debito += val;
+            else porForma.outros += val;
+        }
+    });
+
+    // Despesas registradas
+    let totalDespesas = 0;
+    let totalDespesasComNF = 0;
+    let totalDespesasSemNF = 0;
+    let qtdDespesasComNF = 0;
+    let qtdDespesasSemNF = 0;
+
+    despesas.forEach(d => {
+        const val = Number(d.valor || 0);
+        totalDespesas += val;
+        if (d.notaFiscalEmitida) {
+            totalDespesasComNF += val;
+            qtdDespesasComNF++;
+        } else {
+            totalDespesasSemNF += val;
+            qtdDespesasSemNF++;
+        }
+    });
+
+    const totalReceitaPendente = Math.max(0, receitaTotalPrevista - totalRecebidoEmCaixa);
+    const saldoAtualEmCaixa = totalRecebidoEmCaixa - totalDespesas;
+    const margemProjetada = receitaTotalPrevista - custoTotalChacara - totalDespesas;
+    const coberturaChacaraPct = custoTotalChacara > 0 ? Math.min(100, Math.round((totalRecebidoEmCaixa / custoTotalChacara) * 100)) : 100;
+    const faltaParaChacara = Math.max(0, custoTotalChacara - totalRecebidoEmCaixa);
+
+    return {
+        totalInscricoesAtivas: ativas.length,
+        custoTotalChacara: Number(custoTotalChacara.toFixed(2)),
+        detalheChacara,
+        receitaTotalPrevista: Number(receitaTotalPrevista.toFixed(2)),
+        totalRecebidoEmCaixa: Number(totalRecebidoEmCaixa.toFixed(2)),
+        porForma,
+        totalReceitaPendente: Number(totalReceitaPendente.toFixed(2)),
+        totalDespesas: Number(totalDespesas.toFixed(2)),
+        totalDespesasComNF: Number(totalDespesasComNF.toFixed(2)),
+        totalDespesasSemNF: Number(totalDespesasSemNF.toFixed(2)),
+        qtdDespesasComNF,
+        qtdDespesasSemNF,
+        saldoAtualEmCaixa: Number(saldoAtualEmCaixa.toFixed(2)),
+        margemProjetada: Number(margemProjetada.toFixed(2)),
+        coberturaChacaraPct,
+        faltaParaChacara: Number(faltaParaChacara.toFixed(2))
     };
 }
 

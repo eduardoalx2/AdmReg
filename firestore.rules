@@ -205,6 +205,12 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // Despesas do evento VATHOS 2027 (custos da chácara, som, alimentação, notas fiscais, etc.)
+    match /vathos_2027_despesas/{despesaId} {
+      allow read, create, update: if true;
+      allow delete: if true;
+    }
+
     // Trilha de auditoria imutável VATHOS 2027
     match /vathos_2027_auditoria/{logId} {
       allow read, create: if true;
