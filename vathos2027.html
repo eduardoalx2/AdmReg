@@ -2080,7 +2080,7 @@
             if (consolidado.historicoProcessado.length === 0) {
                 contPag.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">Nenhum pagamento ou comprovante registrado ainda.</p>`;
             } else {
-                contPag.innerHTML = consolidado.historicoProcessado.map(p => {
+                contPag.innerHTML = consolidado.historicoProcessado.map((p, idx) => {
                     let badge = `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">Aguardando conferência</span>`;
                     if (p.statusConferencia === 'aprovado_escritorio') {
                         badge = `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">✓ Confirmado pelo Escritório</span>`;
@@ -2097,7 +2097,7 @@
                         : '';
 
                     const btnRecibo = p.statusConferencia === 'aprovado_escritorio'
-                        ? `<button type="button" onclick="emitirReciboPagamento(${idx})" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1 shrink-0 transition-colors">
+                        ? `<button type="button" onclick="emitirReciboPagamento('${p.id || idx}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-bold border border-emerald-500/30 flex items-center gap-1 shrink-0 transition-colors">
                              <i data-lucide="receipt" class="w-3.5 h-3.5"></i> Emitir Recibo
                            </button>`
                         : '';
@@ -2123,16 +2123,36 @@
                         </div>
                     `;
                 }).join('');
+                if (window.lucide) lucide.createIcons();
             }
         }
 
-        window.emitirReciboPagamento = function(idx) {
-            if (!inscricaoAtiva || !pagamentosAtivos || !pagamentosAtivos[idx]) {
+        window.emitirReciboPagamento = function(identificador) {
+            if (!inscricaoAtiva || !pagamentosAtivos) {
                 alert('Pagamento não localizado.');
                 return;
             }
-            const pag = pagamentosAtivos[idx];
-            abrirReciboIndividualVathos(pag, inscricaoAtiva, idx + 1);
+            let pag = null;
+            let numIndice = 1;
+            if (typeof identificador === 'number') {
+                pag = pagamentosAtivos[identificador];
+                numIndice = identificador + 1;
+            } else {
+                const idx = pagamentosAtivos.findIndex(x => x.id === identificador);
+                if (idx !== -1) {
+                    pag = pagamentosAtivos[idx];
+                    numIndice = idx + 1;
+                } else if (!isNaN(Number(identificador))) {
+                    const n = Number(identificador);
+                    pag = pagamentosAtivos[n];
+                    numIndice = n + 1;
+                }
+            }
+            if (!pag) {
+                alert('Pagamento não localizado.');
+                return;
+            }
+            abrirReciboIndividualVathos(pag, inscricaoAtiva, numIndice);
         };
 
         // =====================================================================
