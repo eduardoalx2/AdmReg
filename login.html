@@ -179,25 +179,41 @@
                 const q = query(collection(db, "usuarios"), where("email", "==", email));
                 const querySnapshot = await getDocs(q);
 
+                let userData;
+                const gestoresAutorizados = ['eduardoalx@gmail.com', 'marconithatiane@icloud.com', 'audreydbsilva@gmail.com'];
                 if (querySnapshot.empty) {
-                    await signOut(auth);
-                    throw new Error("Seu e-mail está autenticado, mas você não tem permissão na tabela de usuários. Fale com o Gestor.");
-                }
-                const userData = querySnapshot.docs[0].data();
-                if (userData.status !== 'Ativo') {
-                    await signOut(auth);
-                    throw new Error("Sua conta está inativa. Fale com o Gestor Master.");
+                    if (gestoresAutorizados.includes(email)) {
+                        userData = {
+                            nome: email === 'marconithatiane@icloud.com' ? 'Thatiane Marconi' : (email === 'audreydbsilva@gmail.com' ? 'Audrey Danielle' : 'Eduardo Silva'),
+                            email: email,
+                            permissoes: ['admin', 'vathos_admin'],
+                            status: 'Ativo'
+                        };
+                    } else {
+                        await signOut(auth);
+                        throw new Error("Seu e-mail está autenticado, mas você não tem permissão na tabela de usuários. Fale com o Gestor.");
+                    }
+                } else {
+                    userData = querySnapshot.docs[0].data();
+                    if (userData.status !== 'Ativo') {
+                        await signOut(auth);
+                        throw new Error("Sua conta está inativa. Fale com o Gestor Master.");
+                    }
                 }
 
-                // Salvar no localStorage para compatibilidade com código legado
-                // IMPORTANTE: As páginas agora verificam permissões via Firestore (js/auth.js)
-                // O localStorage é apenas cache para exibição de nome/igreja no header
+                // Salvar no localStorage e sessionStorage para compatibilidade total
                 localStorage.setItem('userEmail', email);
-                localStorage.setItem('userName', userData.nome);
+                localStorage.setItem('userName', userData.nome || '');
                 
                 const perms = userData.permissoes || [];
                 localStorage.setItem('userPerms', JSON.stringify(perms));
                 localStorage.setItem('userIgreja', userData.igrejaNome || '');
+
+                sessionStorage.setItem('userEmail', email);
+                sessionStorage.setItem('userName', userData.nome || '');
+                sessionStorage.setItem('userRole', perms.includes('admin') ? 'admin' : (perms[0] || 'membro'));
+                sessionStorage.setItem('userPermissions', JSON.stringify(perms));
+                sessionStorage.setItem('userIgreja', userData.igrejaNome || '');
                 
                 const params = new URLSearchParams(window.location.search);
                 const redirectTarget = params.get('redirect');

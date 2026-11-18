@@ -2103,19 +2103,7 @@
         };
 
         window.acessarPainelGestorComSenha = function () {
-            const jaAut = sessionStorage.getItem('vathos2027_gestor_autenticado') === 'sim';
-            if (jaAut) {
-                window.location.href = 'vathos2027_admin.html';
-                return;
-            }
-            const senha = prompt('Digite sua senha de Gestor(a) do VATHOS 2027 para abrir o Painel Administrativo:');
-            if (senha === null) return;
-            if (senha.trim().toLowerCase() === 'vathos') {
-                sessionStorage.setItem('vathos2027_gestor_autenticado', 'sim');
-                window.location.href = 'vathos2027_admin.html';
-            } else {
-                alert('Senha incorreta.');
-            }
+            window.location.href = 'vathos2027_admin.html';
         };
 
         window.encerrarSessaoCPF = function () {

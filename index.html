@@ -41,6 +41,7 @@
                 <p id="top-user-name" style="font-size:12px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px;"></p>
                 <p id="top-user-role" style="font-size:9px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.2em;line-height:1;"></p>
             </div>
+            <button id="btn-toggle-visao" onclick="window.alternarVisaoAdminPastor()" style="display:none;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#a5b4fc;padding:8px 12px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;cursor:pointer;">👀 Visão Pastor</button>
             <a id="btn-ir-simular" href="visualizar_como.html" aria-label="Simular visão de outro usuário" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:8px 12px;border-radius:12px;font-size:10px;font-weight:700;text-decoration:none;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;" title="Simular visão de outro usuário/nível">👁 Simular</a>
             <button onclick="fazerLogout()" aria-label="Sair do sistema" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:white;padding:10px;border-radius:12px;cursor:pointer;transition:all 0.2s;" title="Sair">
                 <i class="ph ph-sign-out" style="font-size:18px;" aria-hidden="true"></i>
@@ -175,9 +176,20 @@
         const userIgreja = authData.igrejaNome;
         const userPerms  = authData.permissoes;
 
-        const isAdmin  = checkIsAdmin();
-        const isEquipe = userPerms.length > 0 && !userIgreja && !isAdmin;
+        const temPermissaoAdmin = (userPerms || []).some(p => ['admin', 'secretario', 'superintendente', 'coordenador', 'gestao_eventos', 'vathos_admin'].includes(p));
+        const isAdmin  = checkIsAdmin() || (userPerms || []).includes('admin') || temPermissaoAdmin;
+        const isEquipe = (userPerms || []).length > 0 && !userIgreja && !isAdmin;
         const isPastor = !isAdmin && !isEquipe;
+
+        let visaoAtual = isPastor ? 'pastor' : 'admin';
+
+        window.alternarVisaoAdminPastor = function() {
+            if (visaoAtual === 'admin') {
+                window.iniciarViewPastor();
+            } else {
+                window.voltarAdmin();
+            }
+        };
 
         // ===== LAYOUT PADRÃO ADMIN =====
         const DEFAULT_LAYOUT = [
@@ -272,6 +284,12 @@
         };
 
         async function mostrarViewAdmin() {
+            visaoAtual = 'admin';
+            const btnToggle = document.getElementById('btn-toggle-visao');
+            if (btnToggle && (isAdmin || userIgreja)) {
+                btnToggle.style.display = 'inline-flex';
+                btnToggle.textContent = '👀 Visão Pastor';
+            }
             document.getElementById('portalTitle').textContent = 'Painel Admin';
             document.getElementById('portalTitle').style.opacity = '';
             document.getElementById('portalSubtitle').textContent = 'Gestão Eclesiástica & Administração — Região 655 · Londrina/PR';
@@ -615,6 +633,12 @@
 
         // ===== VIEW PASTOR =====
         async function mostrarViewPastor() {
+            visaoAtual = 'pastor';
+            const btnToggle = document.getElementById('btn-toggle-visao');
+            if (btnToggle && isAdmin) {
+                btnToggle.style.display = 'inline-flex';
+                btnToggle.textContent = '🛡️ Visão Admin';
+            }
             document.getElementById('portalTitle').textContent = isPastor ? (userName?.split(' ')[0] || 'Portal') : 'Painel do Pastor';
             document.getElementById('portalTitle').style.opacity = '';
             document.getElementById('portalSubtitle').textContent = igrejaAtiva || (isPastor ? 'Carregando...' : 'Selecione uma igreja');

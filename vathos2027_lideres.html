@@ -510,7 +510,7 @@
                 </button>
             `;
 
-            const podeVerTodas = hasAnyPermission(['admin', 'secretario', 'superintendente', 'coordenador']);
+            const podeVerTodas = hasAnyPermission(['admin', 'secretario', 'superintendente', 'coordenador', 'gestao_eventos', 'vathos_admin']);
             if (podeVerTodas) {
                 const sel = document.getElementById('select-igreja-visao');
                 sel.classList.remove('hidden');

@@ -47,6 +47,44 @@
             body { background: #fff; color: #000; }
         }
     </style>
+    <script>
+        // Polyfill seguro de structuredClone
+        if (typeof window.structuredClone !== 'function') {
+            window.structuredClone = function(obj) {
+                try { return JSON.parse(JSON.stringify(obj)); } catch (e) { return obj; }
+            };
+        }
+
+        window.formatarCPFInput = function(valor) {
+            if (!valor) return '';
+            const d = String(valor).replace(/\D/g, '').slice(0, 11);
+            if (d.length <= 3) return d;
+            if (d.length <= 6) return d.slice(0, 3) + '.' + d.slice(3);
+            if (d.length <= 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
+            return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
+        };
+
+        window.trocarAbaAdmin = function(aba) {
+            ['inscricoes', 'financeiro', 'recibos', 'operacional', 'configuracoes', 'auditoria'].forEach(a => {
+                const sec = document.getElementById('sec-adm-' + a);
+                if (sec) sec.classList.toggle('hidden', a !== aba);
+                const btn = document.getElementById('adm-tab-' + a);
+                if (btn) {
+                    if (a === aba) {
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-indigo-600 text-white shadow-lg shadow-indigo-950/40';
+                    } else {
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-slate-900 text-slate-400 hover:text-white border border-slate-800';
+                    }
+                }
+            });
+            if (typeof window.aoTrocarAbaAdminCallback === 'function') {
+                window.aoTrocarAbaAdminCallback(aba);
+            }
+            if (window.lucide && typeof lucide.createIcons === 'function') {
+                try { lucide.createIcons(); } catch(e) {}
+            }
+        };
+    </script>
 </head>
 <body class="min-h-screen pb-14">
 
@@ -891,6 +929,44 @@
             <div id="lista-logs-auditoria-vathos" class="space-y-2 max-h-[65vh] overflow-y-auto"></div>
         </section>
 
+        <!-- MODAL DE ACESSO DO GESTOR VATHOS 2027 (INLINE, SEGURO E SEM PROMPT TRAVANDO) -->
+        <div id="modal-acesso-gestor" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+            <div class="glass-card max-w-md w-full rounded-3xl p-6 sm:p-8 border border-indigo-500/40 shadow-2xl space-y-5">
+                <div class="text-center space-y-2">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center mx-auto text-2xl">
+                        🛡️
+                    </div>
+                    <h3 class="text-xl font-black text-white">Painel da Equipe Gestora</h3>
+                    <p class="text-xs text-slate-400">Identifique-se como Gestor(a) do VATHOS 2027 ou entre com sua conta institucional.</p>
+                </div>
+
+                <form id="form-acesso-gestor" onsubmit="event.preventDefault(); confirmarAcessoGestorModal();" class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">CPF do(a) Gestor(a) (Opcional)</label>
+                        <input type="tel" id="inp-gestor-modal-cpf" maxlength="14" placeholder="000.000.000-00" oninput="this.value = window.formatarCPFInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Senha de Gestão</label>
+                        <input type="password" id="inp-gestor-modal-senha" placeholder="Digite a senha de gestão (vathos)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                    </div>
+
+                    <div id="erro-modal-gestor" class="hidden p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-bold text-center"></div>
+
+                    <button type="submit" id="btn-confirmar-acesso-gestor" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-extrabold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer border border-indigo-400/30 transition-all">
+                        <span>Acessar Painel Gestor</span> →
+                    </button>
+                </form>
+
+                <div class="pt-4 border-t border-slate-800 text-center space-y-2">
+                    <a href="login.html?redirect=vathos2027_admin.html" class="text-xs text-indigo-400 hover:underline font-bold block">
+                        Entrar com E-mail e Senha (Firebase Auth) →
+                    </a>
+                    <a href="vathos2027.html" class="text-xs text-slate-500 hover:text-slate-400 font-semibold block">
+                        ← Voltar ao Portal Público
+                    </a>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script type="module">
@@ -939,69 +1015,139 @@
             '03480561926': { nome: 'AUDREY DANIELLE B. DA SILVA', email: 'audreydbsilva@gmail.com' }
         };
 
+        window.abrirModalAcessoGestor = function(cpfPreenchido = '') {
+            const modal = document.getElementById('modal-acesso-gestor');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            const inpCpf = document.getElementById('inp-gestor-modal-cpf');
+            if (inpCpf) {
+                inpCpf.value = cpfPreenchido ? formatarCPF(cpfPreenchido) : (inpCpf.value || '');
+            }
+            const inpSenha = document.getElementById('inp-gestor-modal-senha');
+            if (inpSenha) {
+                inpSenha.value = '';
+                setTimeout(() => inpSenha.focus(), 150);
+            }
+        };
+
+        window.fecharModalAcessoGestor = function() {
+            const modal = document.getElementById('modal-acesso-gestor');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.confirmarAcessoGestorModal = async function() {
+            const inpCpf = document.getElementById('inp-gestor-modal-cpf');
+            const inpSenha = document.getElementById('inp-gestor-modal-senha');
+            const erroEl = document.getElementById('erro-modal-gestor');
+            if (erroEl) erroEl.classList.add('hidden');
+
+            const cpfLimpo = String(inpCpf?.value || '').replace(/\D/g, '');
+            const senha = (inpSenha?.value || '').trim().toLowerCase();
+
+            if (senha !== 'vathos') {
+                if (erroEl) {
+                    erroEl.textContent = 'Senha de gestão incorreta. Verifique e tente novamente.';
+                    erroEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            sessionStorage.setItem('vathos2027_cpf_sessao', cpfLimpo);
+            sessionStorage.setItem('vathos2027_gestor_autenticado', 'sim');
+
+            const infoG = GESTORES_NATIVOS_CPF[cpfLimpo] || { nome: `Gestor CPF ${formatarCPF(cpfLimpo)}`, email: `cpf_${cpfLimpo}@vathos2027` };
+            userAuth = {
+                nome: infoG.nome,
+                email: infoG.email,
+                cpf: cpfLimpo,
+                permissoes: ['vathos_admin']
+            };
+
+            window.fecharModalAcessoGestor();
+            const cxData = document.getElementById('cx-data');
+            if (cxData && !cxData.value) cxData.value = new Date().toISOString().split('T')[0];
+            await recarregarTudoAdmin();
+        };
+
         async function init() {
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
             const snapCfgCheck = await getDoc(doc(db, 'vathos_2027_config', 'geral')).catch(() => null);
             const cfgData = (snapCfgCheck && snapCfgCheck.exists()) ? snapCfgCheck.data() : {};
             const emailsGestores = (cfgData.gestoresAutorizadosEmails || ['marconithatiane@icloud.com', 'audreydbsilva@gmail.com', 'eduardoalx@gmail.com']).map(e => e.toLowerCase());
             const cpfsGestores = (cfgData.gestoresAutorizadosCpfs || ['06637234931', '03480561926']).map(c => String(c).replace(/\D/g, ''));
 
-            // 1. Verifica se há sessão de CPF de Gestora Autorizada (ex: Thatiane ou Audrey entrando via CPF + senha vathos)
+            // 1. Verifica se há sessão de CPF de Gestora Autorizada (Thatiane, Audrey ou qualquer CPF autorizado)
             const cpfSessao = String(sessionStorage.getItem('vathos2027_cpf_sessao') || '').replace(/\D/g, '');
+            const gestorAut = sessionStorage.getItem('vathos2027_gestor_autenticado') === 'sim';
+
             if (cpfSessao && (cpfsGestores.includes(cpfSessao) || GESTORES_NATIVOS_CPF[cpfSessao])) {
-                let gestorAut = sessionStorage.getItem('vathos2027_gestor_autenticado') === 'sim';
-                if (!gestorAut) {
-                    const senhaDigitada = prompt('Confirme sua senha de Gestor(a) do VATHOS 2027:');
-                    if (senhaDigitada && senhaDigitada.trim().toLowerCase() === 'vathos') {
-                        sessionStorage.setItem('vathos2027_gestor_autenticado', 'sim');
-                        gestorAut = true;
-                    } else {
-                        alert('Senha de gestão inválida.');
-                        window.location.replace('vathos2027.html');
-                        return;
-                    }
-                }
-                const infoG = GESTORES_NATIVOS_CPF[cpfSessao] || { nome: `Gestor CPF ${formatarCPF(cpfSessao)}`, email: `cpf_${cpfSessao}@vathos2027` };
-                userAuth = {
-                    nome: infoG.nome,
-                    email: infoG.email,
-                    cpf: cpfSessao,
-                    permissoes: ['vathos_admin']
-                };
-                document.getElementById('cx-data').value = new Date().toISOString().split('T')[0];
-                await recarregarTudoAdmin();
-                return;
-            }
-
-            // 2. Caso contrário, tenta autenticação Firebase Auth (ou solicita CPF de Gestor)
-            try {
-                userAuth = await requireAuth();
-                const ehGestorEmail = emailsGestores.includes((userAuth.email || '').toLowerCase());
-
-                if (!hasAnyPermission(['admin', 'secretario', 'superintendente', 'coordenador', 'gestao_eventos', 'vathos_admin']) && !ehGestorEmail) {
-                    window.location.replace('index.html');
+                if (gestorAut) {
+                    const infoG = GESTORES_NATIVOS_CPF[cpfSessao] || { nome: `Gestor CPF ${formatarCPF(cpfSessao)}`, email: `cpf_${cpfSessao}@vathos2027` };
+                    userAuth = {
+                        nome: infoG.nome,
+                        email: infoG.email,
+                        cpf: cpfSessao,
+                        permissoes: ['vathos_admin']
+                    };
+                    window.fecharModalAcessoGestor();
+                    const cxData = document.getElementById('cx-data');
+                    if (cxData && !cxData.value) cxData.value = new Date().toISOString().split('T')[0];
+                    await recarregarTudoAdmin();
+                    return;
+                } else {
+                    window.abrirModalAcessoGestor(cpfSessao);
                     return;
                 }
-            } catch (e) {
-                return;
             }
 
-            document.getElementById('cx-data').value = new Date().toISOString().split('T')[0];
-            await recarregarTudoAdmin();
+            // 2. Tenta autenticação Firebase Auth (usuário institucional)
+            let fbUser = null;
+            try {
+                fbUser = await new Promise((resolve) => {
+                    const unsub = onAuthStateChanged(auth, (u) => {
+                        unsub();
+                        resolve(u);
+                    }, () => resolve(null));
+                });
+            } catch (e) {
+                fbUser = null;
+            }
+
+            if (fbUser) {
+                try {
+                    userAuth = await requireAuth();
+                    const ehGestorEmail = emailsGestores.includes((userAuth.email || '').toLowerCase());
+                    const temPermissao = hasAnyPermission(['admin', 'secretario', 'superintendente', 'coordenador', 'gestao_eventos', 'vathos_admin']) || ehGestorEmail;
+
+                    if (temPermissao) {
+                        window.fecharModalAcessoGestor();
+                        const cxData = document.getElementById('cx-data');
+                        if (cxData && !cxData.value) cxData.value = new Date().toISOString().split('T')[0];
+                        await recarregarTudoAdmin();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Erro checando auth Firebase:', e);
+                }
+            }
+
+            // 3. Se ainda não autenticado por CPF nem Firebase, abre o modal seguro
+            window.abrirModalAcessoGestor(cpfSessao);
         }
 
         async function recarregarTudoAdmin() {
-            const snapCfg = await getDoc(doc(db, 'vathos_2027_config', 'geral'));
-            if (snapCfg.exists()) configEvento = mergeVathosConfig(snapCfg.data());
+            const snapCfg = await getDoc(doc(db, 'vathos_2027_config', 'geral')).catch(() => null);
+            if (snapCfg && snapCfg.exists()) configEvento = mergeVathosConfig(snapCfg.data());
 
+            // Carregamento resiliente: se qualquer coleção falhar por falta de permissão, as outras continuam funcionando
             const [snapInsc, snapSaude, snapPag, snapAc, snapLogs, snapUsers, snapDesp] = await Promise.all([
-                getDocs(collection(db, 'vathos_2027_inscricoes')),
-                getDocs(collection(db, 'vathos_2027_fichas_saude')),
-                getDocs(collection(db, 'vathos_2027_pagamentos')),
-                getDocs(collection(db, 'vathos_2027_acertos')),
-                getDocs(collection(db, 'vathos_2027_auditoria')),
-                getDocs(collection(db, 'usuarios')),
-                getDocs(collection(db, 'vathos_2027_despesas')).catch(() => ({ empty: true, forEach: () => {} }))
+                getDocs(collection(db, 'vathos_2027_inscricoes')).catch(e => { console.warn('Inscrições err:', e); return { empty: true, forEach: () => {} }; }),
+                getDocs(collection(db, 'vathos_2027_fichas_saude')).catch(e => { console.warn('Saúde err:', e); return { empty: true, forEach: () => {} }; }),
+                getDocs(collection(db, 'vathos_2027_pagamentos')).catch(e => { console.warn('Pagamentos err:', e); return { empty: true, forEach: () => {} }; }),
+                getDocs(collection(db, 'vathos_2027_acertos')).catch(e => { console.warn('Acertos err:', e); return { empty: true, forEach: () => {} }; }),
+                getDocs(collection(db, 'vathos_2027_auditoria')).catch(e => { console.warn('Auditoria err:', e); return { empty: true, forEach: () => {} }; }),
+                getDocs(collection(db, 'usuarios')).catch(e => { console.warn('Usuários err (requer auth institucional):', e); return { empty: true, forEach: () => {} }; }),
+                getDocs(collection(db, 'vathos_2027_despesas')).catch(e => { console.warn('Despesas err:', e); return { empty: true, forEach: () => {} }; })
             ]);
 
             todasInscricoes = [];
@@ -2411,6 +2557,15 @@
         window.renderizarListaUsuariosGestores = function() {
             const cont = document.getElementById('lista-usuarios-gestores-vathos');
             if (!cont) return;
+            if (todosUsuariosSistema.length === 0) {
+                cont.innerHTML = `
+                    <div class="col-span-full p-4 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400">
+                        <p class="font-bold text-amber-300 mb-1">ℹ️ Gestão de Usuários Institucionais:</p>
+                        <p>Para vincular ou listar outros usuários do painel regional, acesse com conta institucional (e-mail/senha). As gestoras do VATHOS cadastradas continuam com acesso total ao evento.</p>
+                    </div>
+                `;
+                return;
+            }
             const busca = (document.getElementById('busca-usuarios-gestores')?.value || '').toLowerCase().trim();
             const emailsAutorizados = (configEvento.gestoresAutorizadosEmails || []).map(e => e.toLowerCase());
 
@@ -2798,23 +2953,10 @@
             abrirReciboIndividualVathos(p, insc, 1);
         };
 
-        window.trocarAbaAdmin = function(aba) {
-            ['inscricoes', 'financeiro', 'recibos', 'operacional', 'configuracoes', 'auditoria'].forEach(a => {
-                const sec = document.getElementById(`sec-adm-${a}`);
-                if (sec) sec.classList.toggle('hidden', a !== aba);
-                const btn = document.getElementById(`adm-tab-${a}`);
-                if (btn) {
-                    if (a === aba) {
-                        btn.className = 'px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-indigo-600 text-white';
-                    } else {
-                        btn.className = 'px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-slate-900 text-slate-400 hover:text-white border border-slate-800';
-                    }
-                }
-            });
+        window.aoTrocarAbaAdminCallback = function(aba) {
             if (aba === 'recibos') {
                 renderizarTabelaRecibosAdmin();
             }
-            if (window.lucide) lucide.createIcons();
         };
 
         init();
