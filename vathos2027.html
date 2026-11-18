@@ -68,7 +68,10 @@
         }
     </style>
 
-    <!-- MÁSCARA INSTANTÂNEA E DISPONIBILIDADE IMEDIATA DO CPF -->
+    <link rel="modulepreload" href="./firebase-config.js">
+    <link rel="modulepreload" href="./js/vathos_calc.js">
+
+    <!-- MÁSCARA INSTANTÂNEA, VALIDAÇÃO E ENTRADA ULTRA-RÁPIDA POR CPF -->
     <script>
         // Polyfill seguro de structuredClone para navegadores mais antigos (iOS Safari < 15.4)
         if (typeof window.structuredClone !== 'function') {
@@ -83,9 +86,13 @@
             }
         };
 
+        window.limparCPF = function(valor) {
+            return String(valor || '').replace(/\D/g, '').slice(0, 11);
+        };
+
         window.aplicarMascaraCPF = function(valor) {
             if (!valor) return '';
-            const d = String(valor).replace(/\D/g, '').slice(0, 11);
+            const d = window.limparCPF(valor);
             if (d.length <= 3) return d;
             if (d.length <= 6) return d.slice(0, 3) + '.' + d.slice(3);
             if (d.length <= 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
@@ -102,11 +109,59 @@
             return formatado;
         };
 
-        // CONTROLE RESILIENTE DE ACESSO POR CPF (NUNCA TRAVA O BOTÃO)
+        window.validarCPF = function(valor) {
+            const cpf = window.limparCPF(valor);
+            if (cpf.length !== 11) return false;
+            if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+            let soma = 0;
+            for (let i = 0; i < 9; i++) {
+                soma += parseInt(cpf.charAt(i), 10) * (10 - i);
+            }
+            let resto = (soma * 10) % 11;
+            if (resto === 10 || resto === 11) resto = 0;
+            if (resto !== parseInt(cpf.charAt(9), 10)) return false;
+
+            soma = 0;
+            for (let i = 0; i < 10; i++) {
+                soma += parseInt(cpf.charAt(i), 10) * (11 - i);
+            }
+            resto = (soma * 10) % 11;
+            if (resto === 10 || resto === 11) resto = 0;
+            if (resto !== parseInt(cpf.charAt(10), 10)) return false;
+
+            return true;
+        };
+
+        // ABRE FORMULÁRIO DE INSCRIÇÃO INSTANTANEAMENTE (EM 1 MILISSEGUNDO, SEM TRAVAR)
+        window.abrirFormularioInscricaoInstantaneo = function(cpfLimpo) {
+            document.getElementById('cabecalho-compacto-topo')?.classList.add('hidden');
+            document.getElementById('secao-entrada-cpf')?.classList.add('hidden');
+            document.getElementById('secao-area-participante')?.classList.add('hidden');
+            document.getElementById('secao-formulario-inscricao')?.classList.remove('hidden');
+
+            const fCpf = document.getElementById('f-cpf');
+            if (fCpf) {
+                fCpf.setAttribute('readonly', 'readonly');
+                fCpf.value = window.aplicarMascaraCPF(cpfLimpo);
+            }
+            const badge = document.getElementById('form-cpf-badge');
+            if (badge) badge.textContent = window.aplicarMascaraCPF(cpfLimpo);
+
+            const modoBadge = document.getElementById('form-modo-badge');
+            if (modoBadge) modoBadge.textContent = '1º Acesso — Realizar Pré-Reserva';
+            const tituloForm = document.getElementById('form-titulo-principal');
+            if (tituloForm) tituloForm.textContent = 'Ficha de Inscrição — VATHOS 2027';
+
+            window.safeLucideIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // CONTROLE RESILIENTE E RÁPIDO DE ACESSO POR CPF
         window.__executarAcessoPorCPFReal = null;
         window.__cpfPendenteAcesso = null;
 
-        window.verificarAcessoPorCPF = function(cpfForcado = null) {
+        window.verificarAcessoPorCPF = async function(cpfForcado = null) {
             const raw = cpfForcado || document.getElementById('input-cpf-acesso')?.value || '';
             const erroEl = document.getElementById('erro-cpf-acesso');
             const btn = document.getElementById('btn-entrar-cpf');
@@ -114,13 +169,13 @@
 
             if (erroEl) erroEl.classList.add('hidden');
 
-            const digitos = String(raw).replace(/\D/g, '');
+            const digitos = window.limparCPF(raw);
             if (digitos.length === 0) {
                 if (erroEl) {
                     erroEl.textContent = 'Por favor, digite seu CPF.';
                     erroEl.classList.remove('hidden');
                 }
-                if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; }
+                if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; window.safeLucideIcons(); }
                 document.getElementById('input-cpf-acesso')?.focus();
                 return;
             }
@@ -130,45 +185,87 @@
                     erroEl.textContent = `CPF incompleto. Digite os 11 números (atualmente tem ${digitos.length}).`;
                     erroEl.classList.remove('hidden');
                 }
-                if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; }
+                if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; window.safeLucideIcons(); }
                 document.getElementById('input-cpf-acesso')?.focus();
                 return;
             }
 
-            // Se o módulo já carregou, executa na hora!
-            if (typeof window.__executarAcessoPorCPFReal === 'function') {
-                window.__executarAcessoPorCPFReal(digitos);
+            if (!window.validarCPF(digitos)) {
+                if (erroEl) {
+                    erroEl.textContent = 'Número de CPF inválido. Verifique se digitou os números corretamente.';
+                    erroEl.classList.remove('hidden');
+                }
+                if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; window.safeLucideIcons(); }
+                document.getElementById('input-cpf-acesso')?.focus();
                 return;
             }
 
-            // Se o módulo ainda está inicializando, guarda CPF pendente e dá feedback suave
-            window.__cpfPendenteAcesso = digitos;
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = `<span class="inline-block animate-spin mr-2">🔄</span> Conectando ao sistema...`;
+                btn.innerHTML = `<span class="inline-block animate-spin mr-2">🔄</span> Verificando...`;
             }
 
-            const inicio = Date.now();
-            const checarTimer = setInterval(function() {
-                if (typeof window.__executarAcessoPorCPFReal === 'function') {
-                    clearInterval(checarTimer);
-                    window.__cpfPendenteAcesso = null;
-                    window.__executarAcessoPorCPFReal(digitos);
-                } else if (Date.now() - inicio > 6000) {
-                    clearInterval(checarTimer);
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = defaultBtnHtml;
-                        if (window.lucide && typeof lucide.createIcons === 'function') {
-                            try { lucide.createIcons(); } catch(e){}
-                        }
-                    }
+            // 1. Se o módulo avançado do Firebase já estiver carregado, executa na hora:
+            if (typeof window.__executarAcessoPorCPFReal === 'function') {
+                try {
+                    await window.__executarAcessoPorCPFReal(digitos);
+                } catch (e) {
+                    console.error(e);
                     if (erroEl) {
-                        erroEl.textContent = 'A conexão demorou a responder. Toque novamente em "Continuar com CPF".';
+                        erroEl.textContent = 'Erro ao consultar: ' + (e.message || e);
                         erroEl.classList.remove('hidden');
                     }
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; window.safeLucideIcons(); }
                 }
-            }, 100);
+                return;
+            }
+
+            // 2. Se o módulo ainda está baixando, faz consulta direta via REST em ~60ms!
+            try {
+                sessionStorage.setItem('vathos2027_cpf_sessao', digitos);
+                const resp = await fetch('https://firestore.googleapis.com/v1/projects/regiao655-admin/databases/(default)/documents/vathos_2027_inscricoes/' + digitos);
+
+                if (resp.status === 404) {
+                    // CPF não cadastrado ainda -> Abre formulário de Inscrição / Pré-Reserva NA HORA!
+                    window.abrirFormularioInscricaoInstantaneo(digitos);
+                    if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; window.safeLucideIcons(); }
+                    return;
+                }
+
+                if (resp.ok) {
+                    // Inscrição já existe! Dá feedback e aguarda o módulo renderizar a Área do Participante
+                    window.__cpfPendenteAcesso = digitos;
+                    if (btn) {
+                        btn.innerHTML = `<span class="inline-block animate-spin mr-2">🔄</span> Carregando sua Área do Participante...`;
+                    }
+                    let checkCount = 0;
+                    const aguardar = setInterval(() => {
+                        checkCount++;
+                        if (typeof window.__executarAcessoPorCPFReal === 'function') {
+                            clearInterval(aguardar);
+                            window.__executarAcessoPorCPFReal(digitos);
+                        } else if (checkCount > 100) { // 10 segundos
+                            clearInterval(aguardar);
+                            if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; window.safeLucideIcons(); }
+                        }
+                    }, 100);
+                    return;
+                }
+
+                // Qualquer outro status -> abre o formulário
+                window.abrirFormularioInscricaoInstantaneo(digitos);
+            } catch (netErr) {
+                console.warn('Fallback direto:', netErr);
+                // Se der erro de rede, abre o formulário para não bloquear o usuário
+                window.abrirFormularioInscricaoInstantaneo(digitos);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = defaultBtnHtml;
+                    window.safeLucideIcons();
+                }
+            }
         };
     </script>
 </head>
@@ -1704,6 +1801,7 @@
             atualizarCalculoIdadeModalidade();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        window.iniciarNovaInscricaoParaCPF = iniciarNovaInscricaoParaCPF;
 
         window.iniciarCadastroFilhoMenor = function() {
             iniciarNovaInscricaoParaCPF('', true);
