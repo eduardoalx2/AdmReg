@@ -26,6 +26,17 @@
             outline: none;
         }
     </style>
+    <script>
+        window.aplicarMascaraCPF = function(valor) {
+            if (!valor) return '';
+            const d = String(valor).replace(/\D/g, '').slice(0, 11);
+            if (d.length <= 3) return d;
+            if (d.length <= 6) return d.slice(0, 3) + '.' + d.slice(3);
+            if (d.length <= 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
+            return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
+        };
+        window.formatarCPFInput = window.aplicarMascaraCPF;
+    </script>
 </head>
 <body class="min-h-screen pb-12">
 
@@ -71,7 +82,7 @@
                 </p>
 
                 <div class="space-y-2 pt-1">
-                    <input type="text" id="login-lider-cpf" placeholder="000.000.000-00" maxlength="14" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-mono font-bold text-center tracking-widest text-white" />
+                    <input type="tel" id="login-lider-cpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" oninput="this.value = window.aplicarMascaraCPF(this.value)" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-mono font-bold text-center tracking-widest text-white" />
                     <button type="button" id="btn-entrar-lider" onclick="autenticarLiderPorCPF()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3 px-4 rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all">
                         <i data-lucide="log-in" class="w-4 h-4"></i> Entrar na Área da Minha Igreja
                     </button>

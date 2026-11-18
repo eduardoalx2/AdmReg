@@ -67,6 +67,71 @@
             border: 1px solid rgba(245, 158, 11, 0.35);
         }
     </style>
+
+    <!-- MÁSCARA INSTANTÂNEA E DISPONIBILIDADE IMEDIATA DO CPF -->
+    <script>
+        window.aplicarMascaraCPF = function(valor) {
+            if (!valor) return '';
+            const d = String(valor).replace(/\D/g, '').slice(0, 11);
+            if (d.length <= 3) return d;
+            if (d.length <= 6) return d.slice(0, 3) + '.' + d.slice(3);
+            if (d.length <= 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
+            return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
+        };
+
+        window.formatarCPFInput = function(target) {
+            if (!target) return '';
+            const raw = typeof target === 'string' ? target : target.value;
+            const formatado = window.aplicarMascaraCPF(raw);
+            if (typeof target === 'object' && target !== null && 'value' in target) {
+                target.value = formatado;
+            }
+            return formatado;
+        };
+
+        // CONTROLE DE CLIQUE PRECOCE (Se o usuário clicar antes do Firebase/módulo terminar de carregar)
+        window.__sistemaVathosPronto = false;
+        window.__cpfPendenteAcesso = null;
+
+        window.verificarAcessoPorCPF = function(cpfForcado = null) {
+            const raw = cpfForcado || document.getElementById('input-cpf-acesso')?.value || '';
+            const erroEl = document.getElementById('erro-cpf-acesso');
+            if (erroEl) erroEl.classList.add('hidden');
+
+            const digitos = String(raw).replace(/\D/g, '');
+            if (digitos.length === 0) {
+                if (erroEl) {
+                    erroEl.textContent = 'Por favor, digite seu CPF.';
+                    erroEl.classList.remove('hidden');
+                }
+                document.getElementById('input-cpf-acesso')?.focus();
+                return;
+            }
+
+            if (digitos.length < 11) {
+                if (erroEl) {
+                    erroEl.textContent = `CPF incompleto. Digite os 11 números (atualmente tem ${digitos.length}).`;
+                    erroEl.classList.remove('hidden');
+                }
+                document.getElementById('input-cpf-acesso')?.focus();
+                return;
+            }
+
+            if (!window.__sistemaVathosPronto) {
+                window.__cpfPendenteAcesso = digitos;
+                const btn = document.getElementById('btn-entrar-cpf');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = `<span class="inline-block animate-spin mr-2">⏳</span> Conectando ao sistema...`;
+                }
+                return;
+            }
+
+            if (window.__executarAcessoPorCPFReal) {
+                window.__executarAcessoPorCPFReal(digitos);
+            }
+        };
+    </script>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
@@ -106,139 +171,178 @@
     </header>
 
     <!-- CONTEÚDO PRINCIPAL -->
-    <main class="max-w-5xl w-full mx-auto px-4 py-6 sm:py-8 flex-1 space-y-6">
+    <main class="max-w-5xl w-full mx-auto px-4 py-5 sm:py-8 flex-1 space-y-5 sm:space-y-6">
 
-        <!-- HERO DO EVENTO -->
-        <section class="glass-card rounded-3xl p-6 sm:p-8 border border-indigo-500/20 shadow-2xl relative overflow-hidden">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div class="space-y-2.5 max-w-2xl">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[11px] font-extrabold uppercase tracking-wider">
-                            🔥 Retiro Regional de Jovens e Adolescentes
+        <!-- HERO DO EVENTO (COMPACTO NO MOBILE, COMPLETO NO DESKTOP) -->
+        <section class="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-indigo-500/20 shadow-xl relative overflow-hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+                <div class="space-y-1.5 sm:space-y-2.5 max-w-2xl">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span class="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
+                            🔥 Retiro de Jovens & Adolescentes
                         </span>
-                        <span class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold uppercase tracking-wider">
+                        <span class="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">
                             26 a 28 de Março de 2027
                         </span>
                     </div>
-                    <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
                         VATHOS 2027 — <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">“Por inteiro”</span>
                     </h1>
-                    <p class="text-sm font-semibold text-indigo-200" id="hero-slogan">
+                    <p class="text-xs sm:text-sm font-semibold text-indigo-200" id="hero-slogan">
                         Não apenas uma parte de nós, tudo para Ele
                     </p>
-                    <blockquote class="text-xs text-slate-300 italic border-l-2 border-indigo-500 pl-3 py-0.5">
+                    <blockquote class="hidden sm:block text-xs text-slate-300 italic border-l-2 border-indigo-500 pl-3 py-0.5">
                         “Ame ao Senhor, o seu Deus, com todo o seu coração, com toda a sua alma, com todo o seu entendimento e com todas as suas forças.” — <strong>Marcos 12:30</strong>
                     </blockquote>
                 </div>
 
-                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-2.5 shrink-0 md:w-72">
-                    <div class="flex items-start gap-2.5 text-xs">
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-2 shrink-0 md:w-72">
+                    <div class="flex items-start gap-2 text-xs">
                         <i data-lucide="map-pin" class="w-4 h-4 text-rose-400 shrink-0 mt-0.5"></i>
                         <div>
-                            <div class="font-bold text-white" id="hero-local">Acampamento Esperança</div>
-                            <div class="text-[11px] text-slate-400 mt-0.5" id="hero-endereco-status">
+                            <div class="font-bold text-white text-xs sm:text-sm" id="hero-local">Acampamento Esperança</div>
+                            <div class="text-[10px] sm:text-[11px] text-slate-400" id="hero-endereco-status">
                                 Endereço por escrito: <span class="badge-a-definir">A definir</span>
                             </div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2.5 text-xs text-slate-300">
-                        <i data-lucide="clock" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                    <div class="flex items-center gap-2 text-[11px] sm:text-xs text-slate-300">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-400 shrink-0"></i>
                         <div id="hero-horarios-status">
                             Chegada / Encerramento: <span class="badge-a-definir">A definir</span>
                         </div>
                     </div>
                     <a id="btn-como-chegar" href="https://maps.google.com/?q=-23.405327,-51.113140" target="_blank" rel="noopener noreferrer"
-                       class="w-full mt-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 font-bold text-xs py-2 px-3 rounded-xl transition-colors flex items-center justify-center gap-1.5">
-                        <i data-lucide="navigation" class="w-3.5 h-3.5"></i> Como chegar (Google Maps)
+                       class="w-full bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 font-bold text-[11px] sm:text-xs py-1.5 sm:py-2 px-3 rounded-lg sm:rounded-xl transition-colors flex items-center justify-center gap-1.5">
+                        <i data-lucide="navigation" class="w-3 h-3"></i> Como chegar (Google Maps)
                     </a>
                 </div>
             </div>
         </section>
 
-        <!-- ETAPA 0: PORTA DE ENTRADA POR CPF -->
-        <section id="secao-entrada-cpf" class="glass-card rounded-3xl p-6 sm:p-8 max-w-xl mx-auto shadow-2xl border border-slate-800">
-            <div class="text-center space-y-2 mb-6">
-                <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto">
-                    <i data-lucide="fingerprint" class="w-6 h-6"></i>
+        <!-- ETAPA 0: PORTA DE ENTRADA POR CPF (SIMPLES, DIRETA E OBJETIVA) -->
+        <section id="secao-entrada-cpf" class="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-7 max-w-lg mx-auto shadow-2xl border border-slate-800">
+            <div class="text-center space-y-1.5 mb-5">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+                    <i data-lucide="fingerprint" class="w-4 h-4"></i> Acesso com CPF
                 </div>
-                <h2 class="text-xl font-extrabold text-white">Acesso e Inscrição via CPF</h2>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                    Digite seu <strong>CPF</strong> abaixo. Se você já realizou sua inscrição/pré-reserva (ou é responsável por filhos inscritos), o sistema abrirá sua <strong>Área do Participante</strong>. Caso ainda não tenha inscrição, você iniciará sua <strong>Pré-Reserva</strong> agora.
+                <h2 class="text-xl sm:text-2xl font-black text-white">Informe seu CPF</h2>
+                <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                    Acesse sua ficha do retiro ou inicie sua pré-reserva agora mesmo.
                 </p>
             </div>
 
-            <form id="form-entrada-cpf" onsubmit="event.preventDefault(); verificarAcessoPorCPF();" class="space-y-4">
+            <form id="form-entrada-cpf" onsubmit="event.preventDefault(); verificarAcessoPorCPF();" class="space-y-3.5">
                 <div>
-                    <label for="input-cpf-acesso" class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                        CPF do Participante ou Responsável
+                    <label for="input-cpf-acesso" class="block text-xs font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">
+                        Número do CPF
                     </label>
-                    <input type="text" id="input-cpf-acesso" required maxlength="14" inputmode="numeric"
-                           placeholder="000.000.000-00"
-                           oninput="this.value = window.formatarCPFInput(this.value)"
-                           class="w-full input-dark px-4 py-3.5 rounded-xl text-lg font-extrabold text-center tracking-widest text-white placeholder-slate-600" />
-                    <p id="erro-cpf-acesso" class="hidden text-xs text-rose-400 font-semibold mt-2 text-center"></p>
+                    <div class="relative">
+                        <input type="tel" id="input-cpf-acesso" required maxlength="14" inputmode="numeric"
+                               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                               placeholder="000.000.000-00"
+                               oninput="window.aoDigitarCPFAcesso(this)"
+                               class="w-full bg-slate-900 border-2 border-slate-700 focus:border-indigo-500 focus:bg-slate-950 rounded-2xl py-3.5 px-4 text-center text-xl sm:text-2xl font-mono font-black tracking-widest text-white placeholder-slate-600 outline-none transition-all shadow-inner" />
+                        <span id="icone-cpf-status" class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-emerald-400 font-bold text-base">✓</span>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[11px] text-slate-400 mt-1.5 px-1 font-semibold">
+                        <span id="hint-digitos-cpf">Digite apenas os números</span>
+                        <span id="contador-digitos-cpf" class="font-mono text-slate-400">0 / 11 dígitos</span>
+                    </div>
+
+                    <p id="erro-cpf-acesso" class="hidden text-xs text-rose-300 font-bold mt-2.5 text-center p-2.5 rounded-xl bg-rose-950/60 border border-rose-500/40"></p>
                 </div>
 
                 <button type="submit" id="btn-entrar-cpf"
-                        class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-lg transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-indigo-950/40 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer border border-indigo-400/30">
                     <span>Continuar com CPF</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </form>
 
-            <!-- Resumo Rápido de Modalidades e Lotes -->
-            <div class="mt-6 pt-6 border-t border-slate-800/90 space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Modalidades & Lotes (Retiro Completo)</span>
-                    <button type="button" onclick="abrirModalOrientacoes()" class="text-[11px] text-indigo-400 hover:underline font-semibold">Ver tabela completa →</button>
+            <p class="text-[11px] text-slate-500 text-center mt-3">
+                🔒 Seus dados são confidenciais e protegidos pela organização da IEQ Região 655.
+            </p>
+
+            <!-- Resumo Rápido de Modalidades e Lotes (Compacto e limpo) -->
+            <div class="mt-5 pt-4 border-t border-slate-800/80 space-y-2.5">
+                <div class="flex items-center justify-between text-[11px]">
+                    <span class="font-extrabold uppercase tracking-wider text-slate-400">Valores do Retiro Completo</span>
+                    <button type="button" onclick="abrirModalOrientacoes()" class="text-indigo-400 hover:underline font-bold">Ver regras →</button>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase">Lote 1 (Até 31/01)</div>
-                        <div class="text-sm font-black text-emerald-400 mt-0.5">R$ 350,00</div>
+                    <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase">Lote 1 (Até 31/01)</div>
+                        <div class="text-xs sm:text-sm font-black text-emerald-400 mt-0.5">R$ 350,00</div>
                     </div>
-                    <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase">Lote 2 (Fevereiro)</div>
-                        <div class="text-sm font-black text-indigo-300 mt-0.5">R$ 375,00</div>
+                    <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase">Lote 2 (Fev)</div>
+                        <div class="text-xs sm:text-sm font-black text-indigo-300 mt-0.5">R$ 375,00</div>
                     </div>
-                    <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase">Lote 3 (Março)</div>
-                        <div class="text-sm font-black text-amber-300 mt-0.5">R$ 400,00</div>
+                    <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase">Lote 3 (Mar)</div>
+                        <div class="text-xs sm:text-sm font-black text-amber-300 mt-0.5">R$ 400,00</div>
                     </div>
                 </div>
-                <p class="text-[11px] text-slate-400 text-center">
-                    Crianças até 4 anos: <strong>Gratuito</strong> · 5 a 8 anos: <strong>30% de desconto</strong> · Day Use: <strong>R$ 100</strong> (s/ alim.) ou <strong>R$ 220</strong> (c/ alim.)
+                <p class="text-[10px] text-slate-400 text-center">
+                    Crianças até 4a: <strong>Gratuito</strong> · 5 a 8a: <strong>30% desc.</strong> · Day Use: <strong>R$ 100/R$ 220</strong>
                 </p>
             </div>
 
-            <!-- ATALHOS RÁPIDOS PARA AS DEMAIS ÁREAS DO PROJETO -->
-            <div class="mt-6 pt-5 border-t border-slate-800/90 space-y-2.5">
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block text-center">Outras Áreas do Portal VATHOS 2027</span>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <a href="vathos2027_autorizacao.html" class="p-3 rounded-xl bg-amber-950/30 hover:bg-amber-950/50 border border-amber-500/30 text-left transition-colors flex items-center gap-2.5">
-                        <i data-lucide="file-check" class="w-5 h-5 text-amber-400 shrink-0"></i>
-                        <div>
-                            <div class="text-xs font-extrabold text-amber-300 leading-tight">Autorização</div>
-                            <div class="text-[10px] text-slate-400">Para Pais de Menores</div>
-                        </div>
-                    </a>
-                    <a href="vathos2027_lideres.html" class="p-3 rounded-xl bg-emerald-950/30 hover:bg-emerald-950/50 border border-emerald-500/30 text-left transition-colors flex items-center gap-2.5">
-                        <i data-lucide="users" class="w-5 h-5 text-emerald-400 shrink-0"></i>
-                        <div>
-                            <div class="text-xs font-extrabold text-emerald-300 leading-tight">Líderes/Pastores</div>
-                            <div class="text-[10px] text-slate-400">Inscritos e Acertos</div>
-                        </div>
-                    </a>
-                    <a href="vathos2027_admin.html" class="p-3 rounded-xl bg-indigo-950/40 hover:bg-indigo-950/60 border border-indigo-500/30 text-left transition-colors flex items-center gap-2.5">
-                        <i data-lucide="shield" class="w-5 h-5 text-indigo-400 shrink-0"></i>
-                        <div>
-                            <div class="text-xs font-extrabold text-indigo-300 leading-tight">Painel Admin</div>
-                            <div class="text-[10px] text-slate-400">Gestão Geral e Caixa</div>
-                        </div>
-                    </a>
-                </div>
+            <!-- ATALHOS RÁPIDOS COMPACTOS -->
+            <div class="mt-4 pt-3.5 border-t border-slate-800/80 flex items-center justify-center gap-3 text-xs text-slate-400">
+                <a href="vathos2027_autorizacao.html" class="hover:text-amber-300 transition-colors flex items-center gap-1 font-semibold text-[11px]">
+                    <i data-lucide="file-check" class="w-3.5 h-3.5 text-amber-400"></i> Autorização Pais
+                </a>
+                <span>·</span>
+                <a href="vathos2027_lideres.html" class="hover:text-emerald-300 transition-colors flex items-center gap-1 font-semibold text-[11px]">
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-emerald-400"></i> Líderes
+                </a>
+                <span>·</span>
+                <a href="vathos2027_admin.html" class="hover:text-indigo-300 transition-colors flex items-center gap-1 font-semibold text-[11px]">
+                    <i data-lucide="shield" class="w-3.5 h-3.5 text-indigo-400"></i> Admin
+                </a>
             </div>
         </section>
+
+        <script>
+            // Gerenciador reativo da digitação do CPF de Acesso
+            window.aoDigitarCPFAcesso = function(inp) {
+                if (!inp) return;
+                const digitos = inp.value.replace(/\D/g, '').slice(0, 11);
+                inp.value = window.aplicarMascaraCPF(digitos);
+
+                const contador = document.getElementById('contador-digitos-cpf');
+                const hint = document.getElementById('hint-digitos-cpf');
+                const icone = document.getElementById('icone-cpf-status');
+                const erroEl = document.getElementById('erro-cpf-acesso');
+
+                if (contador) contador.textContent = `${digitos.length} / 11 dígitos`;
+
+                if (erroEl && erroEl.textContent.includes('incompleto') && digitos.length === 11) {
+                    erroEl.classList.add('hidden');
+                }
+
+                if (digitos.length === 11) {
+                    inp.classList.remove('border-slate-700');
+                    inp.classList.add('border-emerald-500');
+                    if (icone) icone.classList.remove('hidden');
+                    if (hint) {
+                        hint.textContent = '✓ 11 dígitos preenchidos';
+                        hint.className = 'text-emerald-400 font-bold';
+                    }
+                } else {
+                    inp.classList.remove('border-emerald-500');
+                    inp.classList.add('border-slate-700');
+                    if (icone) icone.classList.add('hidden');
+                    if (hint) {
+                        hint.textContent = digitos.length === 0 ? 'Digite apenas os números' : `Faltam ${11 - digitos.length} dígito(s)`;
+                        hint.className = 'text-slate-400';
+                    }
+                }
+            };
+        </script>
 
         <!-- SELETOR DE VÍNCULOS (Quando o CPF logado é responsável por menores ou tem múltiplas fichas) -->
         <section id="secao-banner-gestor-cpf" class="hidden glass-card rounded-2xl p-4 border border-emerald-500/40 bg-emerald-950/20">
@@ -494,7 +598,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF do Responsável Legal <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-resp-cpf" maxlength="14" placeholder="000.000.000-00" oninput="this.value = window.formatarCPFInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
+                            <input type="tel" id="f-resp-cpf" maxlength="14" inputmode="numeric" placeholder="000.000.000-00" oninput="this.value = window.formatarCPFInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Vínculo com o Menor <span class="text-rose-400">*</span></label>
@@ -1326,36 +1430,52 @@
         // =====================================================================
         // ENTRADA E AUTENTICAÇÃO POR CPF
         // =====================================================================
-        window.verificarAcessoPorCPF = async function(cpfForcado = null) {
+        window.__executarAcessoPorCPFReal = async function(rawCpf) {
             const erroEl = document.getElementById('erro-cpf-acesso');
-            erroEl.classList.add('hidden');
+            if (erroEl) erroEl.classList.add('hidden');
 
-            const raw = cpfForcado || document.getElementById('input-cpf-acesso').value;
-            const cpfLimpo = limparCPF(raw);
+            const cpfLimpo = limparCPF(rawCpf);
+
+            if (!cpfLimpo || cpfLimpo.length < 11) {
+                if (erroEl) {
+                    erroEl.textContent = `CPF incompleto. Digite os 11 números (atualmente tem ${cpfLimpo.length}).`;
+                    erroEl.classList.remove('hidden');
+                }
+                document.getElementById('input-cpf-acesso')?.focus();
+                return;
+            }
 
             if (!validarCPF(cpfLimpo)) {
-                erroEl.textContent = 'CPF inválido. Verifique os 11 dígitos informados.';
-                erroEl.classList.remove('hidden');
+                if (erroEl) {
+                    erroEl.textContent = 'Número de CPF inválido. Verifique se digitou todos os números corretamente.';
+                    erroEl.classList.remove('hidden');
+                }
+                document.getElementById('input-cpf-acesso')?.focus();
                 return;
             }
 
             const btn = document.getElementById('btn-entrar-cpf');
-            const originalHTML = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Consultando CPF...`;
+            let originalHTML = '<span>Continuar com CPF</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>';
+            if (btn) {
+                originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<span class="inline-block animate-spin mr-2">🔄</span> Consultando banco de dados...`;
+            }
 
             try {
                 cpfSessaoPrincipal = cpfLimpo;
                 sessionStorage.setItem('vathos2027_cpf_sessao', cpfLimpo);
-                document.getElementById('btn-sair-cpf').classList.remove('hidden');
+                document.getElementById('btn-sair-cpf')?.classList.remove('hidden');
+
+                // Garante que o campo de entrada exiba a máscara completa
+                const inpAcesso = document.getElementById('input-cpf-acesso');
+                if (inpAcesso) inpAcesso.value = formatarCPF(cpfLimpo);
 
                 // Verifica se o CPF pertence a um Gestor Autorizado (ex: Thatiane ou Audrey)
                 const cpfsGestores = (configEvento.gestoresAutorizadosCpfs || ['06637234931', '03480561926']).map(c => String(c).replace(/\D/g, ''));
                 const bannerGestor = document.getElementById('secao-banner-gestor-cpf');
-                if (cpfsGestores.includes(cpfLimpo)) {
-                    bannerGestor.classList.remove('hidden');
-                } else {
-                    bannerGestor.classList.add('hidden');
+                if (bannerGestor) {
+                    bannerGestor.classList.toggle('hidden', !cpfsGestores.includes(cpfLimpo));
                 }
 
                 await recarregarFichasDoCPF(cpfLimpo);
@@ -1371,14 +1491,31 @@
                 }
             } catch (err) {
                 console.error('Erro ao consultar CPF:', err);
-                erroEl.textContent = 'Erro ao consultar o banco de dados: ' + err.message;
-                erroEl.classList.remove('hidden');
+                if (erroEl) {
+                    erroEl.textContent = 'Erro ao consultar o banco de dados: ' + (err.message || err);
+                    erroEl.classList.remove('hidden');
+                }
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
-                lucide.createIcons();
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                    if (window.lucide) lucide.createIcons();
+                }
             }
         };
+
+        window.verificarAcessoPorCPF = function(cpfForcado = null) {
+            const raw = cpfForcado || document.getElementById('input-cpf-acesso')?.value || '';
+            const cpfLimpo = limparCPF(raw);
+            return window.__executarAcessoPorCPFReal(cpfLimpo);
+        };
+
+        window.__sistemaVathosPronto = true;
+        if (window.__cpfPendenteAcesso) {
+            const pend = window.__cpfPendenteAcesso;
+            window.__cpfPendenteAcesso = null;
+            window.__executarAcessoPorCPFReal(pend);
+        }
 
         async function recarregarFichasDoCPF(cpfPrincipal) {
             fichasVinculadasAoResponsavel = [];
@@ -1501,10 +1638,12 @@
                 document.getElementById('form-modo-badge').textContent = 'Vincular Filho(a) Menor ao Responsável';
                 document.getElementById('form-titulo-principal').textContent = 'Nova Inscrição de Menor Vinculado';
                 fCpf.removeAttribute('readonly');
+                fCpf.setAttribute('inputmode', 'numeric');
+                fCpf.setAttribute('type', 'tel');
                 fCpf.value = '';
-                fCpf.placeholder = 'Digite o CPF do filho(a) menor';
+                fCpf.placeholder = '000.000.000-00';
                 fCpf.oninput = function() {
-                    this.value = formatarCPF(this.value);
+                    this.value = window.aplicarMascaraCPF(this.value);
                     document.getElementById('form-cpf-badge').textContent = this.value || '000.000.000-00';
                 };
                 // Pré-preenche dados do responsável com o titular da sessão se existir

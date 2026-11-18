@@ -99,6 +99,17 @@
             }
         }
     </style>
+    <script>
+        window.aplicarMascaraCPF = function(valor) {
+            if (!valor) return '';
+            const d = String(valor).replace(/\D/g, '').slice(0, 11);
+            if (d.length <= 3) return d;
+            if (d.length <= 6) return d.slice(0, 3) + '.' + d.slice(3);
+            if (d.length <= 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
+            return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
+        };
+        window.formatarCPFInput = window.aplicarMascaraCPF;
+    </script>
 </head>
 <body class="min-h-screen py-6 px-3">
 
@@ -124,7 +135,7 @@
             Digite o <strong>CPF do menor inscrito</strong> ou o <strong>CPF do Pai / Mãe / Responsável Legal</strong>:
         </p>
         <form onsubmit="event.preventDefault(); buscarAutorizacaoPorCPF();" class="space-y-3">
-            <input type="text" id="input-busca-cpf-aut" required maxlength="14" placeholder="000.000.000-00"
+            <input type="tel" id="input-busca-cpf-aut" required maxlength="14" inputmode="numeric" placeholder="000.000.000-00"
                    oninput="this.value = window.formatarCPFInput(this.value)"
                    class="w-full border-2 border-black px-3 py-2.5 rounded text-base font-mono font-bold text-center text-black" />
             <button type="submit" class="w-full bg-black hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded text-xs uppercase tracking-wider">
