@@ -1322,34 +1322,63 @@
             if (pendPix.length === 0) {
                 contPix.innerHTML = `<p class="text-xs text-slate-500 italic py-3 text-center">Nenhuma declaração de pagamento ou comprovante aguardando confirmação no momento.</p>`;
             } else {
-                contPix.innerHTML = pendPix.map(p => `
-                    <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div class="space-y-1 text-xs">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="font-bold text-white">${p.nomeParticipante}</span>
-                                <span class="font-mono text-slate-400">(${formatarCPF(p.cpfParticipante)})</span>
-                                <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-extrabold uppercase">Forma: ${(p.forma || 'pix').toUpperCase()}</span>
-                                ${p.comprovanteDataUrl
-                                    ? `<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">Com Comprovante</span>`
-                                    : `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">Declaração sem Anexo</span>`}
+                contPix.innerHTML = pendPix.map(p => {
+                    const insc = todasInscricoes.find(i => i.cpf === p.cpfParticipante);
+                    const foneBruto = insc?.whatsapp || p.whatsapp || insc?.contatoEmergencia?.whatsapp || '';
+                    const foneLimpo = foneBruto.replace(/\D/g, '');
+                    const primeiroNome = (p.nomeParticipante || 'Participante').split(' ')[0];
+                    const msgWhats = `Olá ${primeiroNome}! Tudo bem? Aqui é da organização do Retiro VATHOS 2027. Estou entrando em contato sobre a sua declaração de pagamento de ${formatarMoeda(p.valorDestinadoInscricao)} realizada em ${formatarDataBR(p.dataEfetivaPagamento)}.`;
+
+                    let zapBtn = '';
+                    if (foneLimpo) {
+                        const foneFinal = foneLimpo.startsWith('55') ? foneLimpo : '55' + foneLimpo;
+                        const zapUrl = `https://wa.me/${foneFinal}?text=${encodeURIComponent(msgWhats)}`;
+                        zapBtn = `
+                            <a href="${zapUrl}" target="_blank" class="bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors" title="Abrir conversa no WhatsApp (${foneBruto})">
+                                <i data-lucide="message-circle" class="w-4 h-4 text-emerald-400"></i> WhatsApp
+                            </a>
+                        `;
+                    } else {
+                        const zapGenerico = `https://wa.me/?text=${encodeURIComponent(msgWhats)}`;
+                        zapBtn = `
+                            <a href="${zapGenerico}" target="_blank" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors" title="Abrir WhatsApp">
+                                <i data-lucide="message-circle" class="w-4 h-4 text-slate-400"></i> WhatsApp
+                            </a>
+                        `;
+                    }
+
+                    return `
+                        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="space-y-1 text-xs">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-bold text-white">${p.nomeParticipante}</span>
+                                    <span class="font-mono text-slate-400">(${formatarCPF(p.cpfParticipante)})</span>
+                                    ${foneBruto ? `<span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">📱 ${foneBruto}</span>` : ''}
+                                    <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-extrabold uppercase">Forma: ${(p.forma || 'pix').toUpperCase()}</span>
+                                    ${p.comprovanteDataUrl
+                                        ? `<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">Com Comprovante</span>`
+                                        : `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">Declaração sem Anexo</span>`}
+                                </div>
+                                <div class="text-slate-300">
+                                    Valor declarado: <strong class="text-emerald-400">${formatarMoeda(p.valorDestinadoInscricao)}</strong>
+                                    (${formatarPercentual(p.percentualQuitado)} no ${p.loteNomeNaData || 'Lote'}) · Data do Pagamento: <strong>${formatarDataBR(p.dataEfetivaPagamento)}</strong>
+                                </div>
+                                ${p.observacao ? `<div class="text-[11px] text-slate-400">Detalhes: ${p.observacao}</div>` : ''}
+                                ${p.comprovanteDataUrl ? `<a href="${p.comprovanteDataUrl}" target="_blank" download="comprovante_${p.cpfParticipante}.jpg" class="inline-block text-indigo-400 font-bold underline mt-1">📎 Abrir Anexo do Comprovante ↗</a>` : ''}
                             </div>
-                            <div class="text-slate-300">
-                                Valor declarado: <strong class="text-emerald-400">${formatarMoeda(p.valorDestinadoInscricao)}</strong>
-                                (${formatarPercentual(p.percentualQuitado)} no ${p.loteNomeNaData || 'Lote'}) · Data do Pagamento: <strong>${formatarDataBR(p.dataEfetivaPagamento)}</strong>
+                            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                                ${zapBtn}
+                                <button type="button" onclick="conferirPagamentoPix('${p.id}', true)" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1 shadow-lg shadow-emerald-950/30">
+                                    ✓ Confirmar Pagamento
+                                </button>
+                                <button type="button" onclick="conferirPagamentoPix('${p.id}', false)" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1">
+                                    ✕ Recusar
+                                </button>
                             </div>
-                            ${p.observacao ? `<div class="text-[11px] text-slate-400">Detalhes: ${p.observacao}</div>` : ''}
-                            ${p.comprovanteDataUrl ? `<a href="${p.comprovanteDataUrl}" target="_blank" download="comprovante_${p.cpfParticipante}.jpg" class="inline-block text-indigo-400 font-bold underline mt-1">📎 Abrir Anexo do Comprovante ↗</a>` : ''}
                         </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            <button type="button" onclick="conferirPagamentoPix('${p.id}', true)" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl">
-                                ✓ Confirmar Pagamento
-                            </button>
-                            <button type="button" onclick="conferirPagamentoPix('${p.id}', false)" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 text-xs font-bold px-3.5 py-2 rounded-xl">
-                                ✕ Recusar
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
+                if (window.lucide) lucide.createIcons();
             }
 
             // 2. Acertos de líderes aguardando conferência
