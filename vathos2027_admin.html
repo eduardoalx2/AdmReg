@@ -2,21 +2,23 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Painel Administrativo — VATHOS 2027</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@0.300.0"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        html, body {
-            overflow-x: hidden;
-            max-width: 100vw;
+        html {
+            scroll-behavior: smooth;
             -webkit-text-size-adjust: 100%;
         }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #070b14;
             color: #f1f5f9;
+            overflow-x: clip;
+            width: 100%;
+            min-height: 100vh;
         }
         input, select, textarea {
             font-size: 16px;
@@ -821,6 +823,22 @@
                 selRecIg.value = valRecAtual;
             }
 
+            const selFiltroHosp = document.getElementById('f-hosp-quarto-filtro');
+            if (selFiltroHosp) {
+                const valHospAtual = selFiltroHosp.value;
+                let optHtml = `<option value="">Todos os quartos</option>`;
+                optHtml += `<option value="SEM_QUARTO">⚠️ Sem Quarto Definido</option>`;
+                CATALOGO_MODULOS_ALOJAMENTO_VATHOS.forEach(m => {
+                    optHtml += `<optgroup label="${m.moduloNome}">`;
+                    m.quartos.forEach(q => {
+                        optHtml += `<option value="${q.id}">${q.codigo} (${q.vagas} vagas)</option>`;
+                    });
+                    optHtml += `</optgroup>`;
+                });
+                selFiltroHosp.innerHTML = optHtml;
+                selFiltroHosp.value = valHospAtual;
+            }
+
             const selCx = document.getElementById('cx-cpf-participante');
             const valCx = selCx.value;
             selCx.innerHTML = `<option value="">Selecione o inscrito...</option>` +
@@ -1601,24 +1619,6 @@
                         </div>
                     `;
                 }).join('');
-            }
-
-            // Atualizar opções do filtro de quartos na tabela
-            const selFiltro = document.getElementById('f-hosp-quarto-filtro');
-            if (selFiltro) {
-                const valAtual = selFiltro.value;
-                let optHtml = `<option value="">Todos os quartos (${ativas.length} inscritos)</option>`;
-                optHtml += `<option value="SEM_QUARTO">⚠️ Sem Quarto Definido (${ativas.filter(i => !i.quartoHospedagem).length})</option>`;
-                CATALOGO_MODULOS_ALOJAMENTO_VATHOS.forEach(m => {
-                    optHtml += `<optgroup label="${m.moduloNome}">`;
-                    m.quartos.forEach(q => {
-                        const ocup = mapaOcupacaoQuartos[q.id]?.length || 0;
-                        optHtml += `<option value="${q.id}">${q.codigo} (${ocup}/${q.vagas} vagas)</option>`;
-                    });
-                    optHtml += `</optgroup>`;
-                });
-                selFiltro.innerHTML = optHtml;
-                selFiltro.value = valAtual;
             }
 
             // Filtragem da tabela
