@@ -177,6 +177,8 @@
                         <option value="cancelada">Cancelada</option>
                         <option value="aut_pendente">Autorização Menor Pendente</option>
                         <option value="cat_pendente">Categoria Especial Pendente (Líder/Equipe/Pastor)</option>
+                        <option value="lideres_pendentes">👑 Líderes Aguardando Aprovação</option>
+                        <option value="lideres_aprovados">👑 Líderes Aprovados</option>
                         <option value="quitado">Financeiro Quitado / Isento</option>
                     </select>
                 </div>
@@ -903,6 +905,8 @@
                 if (sit) {
                     if (sit === 'aut_pendente' && !(i.isMenor && i.statusAutorizacao !== 'concluida')) return false;
                     else if (sit === 'cat_pendente' && !(i.categoriaParticipacao && i.categoriaParticipacao !== 'participante' && i.statusCategoria !== 'aprovada')) return false;
+                    else if (sit === 'lideres_pendentes' && !(i.categoriaParticipacao === 'lider' && i.statusCategoria !== 'aprovada' && !i.liderAprovado)) return false;
+                    else if (sit === 'lideres_aprovados' && !(i.categoriaParticipacao === 'lider' && (i.statusCategoria === 'aprovada' || i.liderAprovado))) return false;
                     else if (sit === 'quitado' && !(i._consolidado.isento || i._consolidado.percentualConfirmado >= 100)) return false;
                     else if (['pre_inscricao', 'confirmada', 'lista_espera', 'cancelada'].includes(sit) && i.statusParticipacao !== sit) return false;
                 }
@@ -922,21 +926,45 @@
                 const cat = i.categoriaParticipacao || 'participante';
                 let blocoAutorizarCategoria = '';
                 if (cat !== 'participante') {
-                    if (i.statusCategoria === 'aprovada') {
-                        blocoAutorizarCategoria = `
-                            <div class="mt-1 flex items-center gap-1.5">
-                                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">✓ ${cat.toUpperCase()} Autorizado (${formatarMoeda(c.loteAtual.precoAplicavel)})</span>
-                                <button type="button" onclick="gerenciarAutorizacaoCategoria('${i.cpf}')" class="text-[10px] text-indigo-300 underline">Alterar</button>
-                            </div>
-                        `;
+                    if (cat === 'lider') {
+                        if (i.statusCategoria === 'aprovada' || i.liderAprovado) {
+                            blocoAutorizarCategoria = `
+                                <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold flex items-center gap-1">
+                                        👑 LÍDER APROVADO · Acesso Liberado (${formatarMoeda(c.loteAtual.precoAplicavel)})
+                                    </span>
+                                    <button type="button" onclick="gerenciarAutorizacaoCategoria('${i.cpf}')" class="text-[10px] text-indigo-300 underline" title="Alterar valor ou revogar">Alterar</button>
+                                </div>
+                            `;
+                        } else {
+                            blocoAutorizarCategoria = `
+                                <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                    <button type="button" onclick="aprovarLiderIgreja('${i.cpf}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-extrabold uppercase shadow flex items-center gap-1">
+                                        ✓ Aceitar como Líder (${i.igrejaNome || 'Igreja'})
+                                    </button>
+                                    <button type="button" onclick="gerenciarAutorizacaoCategoria('${i.cpf}')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold border border-slate-700">
+                                        Valor
+                                    </button>
+                                </div>
+                            `;
+                        }
                     } else {
-                        blocoAutorizarCategoria = `
-                            <div class="mt-1">
-                                <button type="button" onclick="gerenciarAutorizacaoCategoria('${i.cpf}')" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-extrabold uppercase">
-                                    ⏳ Autorizar ${cat.replace('_', ' ')}
-                                </button>
-                            </div>
-                        `;
+                        if (i.statusCategoria === 'aprovada') {
+                            blocoAutorizarCategoria = `
+                                <div class="mt-1 flex items-center gap-1.5">
+                                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">✓ ${cat.toUpperCase()} Autorizado (${formatarMoeda(c.loteAtual.precoAplicavel)})</span>
+                                    <button type="button" onclick="gerenciarAutorizacaoCategoria('${i.cpf}')" class="text-[10px] text-indigo-300 underline">Alterar</button>
+                                </div>
+                            `;
+                        } else {
+                            blocoAutorizarCategoria = `
+                                <div class="mt-1">
+                                    <button type="button" onclick="gerenciarAutorizacaoCategoria('${i.cpf}')" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-extrabold uppercase">
+                                        ⏳ Autorizar ${cat.replace('_', ' ')}
+                                    </button>
+                                </div>
+                            `;
+                        }
                     }
                 }
                 return `
@@ -1018,6 +1046,61 @@
             }).join('');
         };
 
+        window.aprovarLiderIgreja = async function(cpf) {
+            const insc = todasInscricoes.find(x => x.cpf === cpf);
+            if (!insc) return;
+
+            const confirmou = confirm(
+                `Confirmação de Líder de Igreja / Retiro VATHOS 2027\n\n` +
+                `Deseja aceitar e aprovar ${insc.nomeCompleto} como Líder da igreja "${insc.igrejaNome || 'Não informada'}"?\n\n` +
+                `✓ Esta pessoa terá acesso liberado ao Painel de Líderes (vathos2027_lideres.html) usando o próprio CPF para acompanhar os inscritos da sua igreja e registrar acertos agrupados.`
+            );
+            if (!confirmou) return;
+
+            const valorSugerido = insc.valorPersonalizadoAprovado !== undefined && insc.valorPersonalizadoAprovado !== null
+                ? insc.valorPersonalizadoAprovado
+                : 350;
+
+            const respValor = prompt(
+                `Valor da Inscrição para o Líder ${insc.nomeCompleto}:\n\n` +
+                `• Pressione OK para manter R$ ${valorSugerido},00;\n` +
+                `• Ou digite outro valor com desconto/diferenciado (ex: 250 ou 0 para isento):`,
+                String(valorSugerido)
+            );
+            if (respValor === null) return;
+
+            const numVal = Number(respValor.trim().replace(',', '.'));
+            const valorFinal = (!isNaN(numVal) && numVal >= 0) ? numVal : valorSugerido;
+
+            try {
+                await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), {
+                    categoriaParticipacao: 'lider',
+                    statusCategoria: 'aprovada',
+                    liderAprovado: true,
+                    liderAprovadoEm: serverTimestamp(),
+                    liderAprovadoPor: `${userAuth.nome} (${userAuth.email})`,
+                    valorPersonalizadoAprovado: valorFinal,
+                    atualizadoEm: serverTimestamp()
+                });
+
+                await addDoc(collection(db, 'vathos_2027_auditoria'), {
+                    cpfParticipante: cpf,
+                    nomeParticipante: insc.nomeCompleto,
+                    acao: 'aprovacao_lider_igreja',
+                    autor: `${userAuth.nome} (${userAuth.email})`,
+                    detalhes: `Líder aceito e aprovado para a igreja "${insc.igrejaNome}". Acesso à Área de Líderes liberado por CPF. Valor aplicado: ${formatarMoeda(valorFinal)}`,
+                    dataHora: serverTimestamp(),
+                    dataHoraISO: new Date().toISOString()
+                }).catch(() => {});
+
+                await recarregarTudoAdmin();
+                alert(`✓ Líder ${insc.nomeCompleto} aprovado(a) com sucesso!\n\nAcesso liberado à Área de Líderes para a igreja "${insc.igrejaNome}".`);
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao aprovar líder: ' + err.message);
+            }
+        };
+
         window.gerenciarAutorizacaoCategoria = async function(cpf) {
             const insc = todasInscricoes.find(x => x.cpf === cpf);
             if (!insc) return;
@@ -1039,6 +1122,7 @@
                 await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), {
                     statusCategoria: 'pendente_aprovacao',
                     valorPersonalizadoAprovado: null,
+                    liderAprovado: false,
                     atualizadoEm: serverTimestamp()
                 });
                 await addDoc(collection(db, 'vathos_2027_auditoria'), {
@@ -1046,7 +1130,7 @@
                     nomeParticipante: insc.nomeCompleto,
                     acao: 'revogacao_categoria_especial',
                     autor: `${userAuth.nome} (${userAuth.email})`,
-                    detalhes: `Categoria ${cat} voltou para valor padrão.`,
+                    detalhes: `Categoria ${cat} voltou para valor padrão (acesso de líder revogado se aplicável).`,
                     dataHora: serverTimestamp(),
                     dataHoraISO: new Date().toISOString()
                 }).catch(() => {});
@@ -1063,6 +1147,7 @@
             await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), {
                 statusCategoria: 'aprovada',
                 valorPersonalizadoAprovado: numVal,
+                liderAprovado: cat === 'LIDER' ? true : (insc.liderAprovado || false),
                 atualizadoEm: serverTimestamp()
             });
 

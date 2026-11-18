@@ -12,6 +12,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #070b14;
             color: #f1f5f9;
+            overflow-x: clip;
         }
         .glass-card {
             background: rgba(15, 23, 42, 0.85);
@@ -31,7 +32,7 @@
     <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800">
         <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-                <a href="index.html" class="text-slate-400 hover:text-white text-xs font-bold flex items-center gap-1">
+                <a href="index.html" id="link-voltar-painel" class="text-slate-400 hover:text-white text-xs font-bold flex items-center gap-1">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Painel
                 </a>
                 <div class="border-l border-slate-800 pl-3">
@@ -40,15 +41,71 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
+                <div id="header-user-badge" class="flex items-center gap-1.5"></div>
                 <select id="select-igreja-visao" onchange="aoTrocarIgrejaVisao()" class="hidden input-dark px-3 py-1.5 rounded-xl text-xs font-bold"></select>
                 <a href="vathos2027.html" class="text-xs font-bold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded-xl">
-                    Portal Público (CPF)
+                    Portal do Retiro
                 </a>
             </div>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 mt-6 space-y-6">
+    <!-- SEÇÃO DE AUTENTICAÇÃO DO LÍDER / PASTOR (Exibida caso ainda não autenticado) -->
+    <section id="secao-login-lider" class="hidden max-w-lg mx-auto px-4 mt-8 sm:mt-12 space-y-6">
+        <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6 text-center border border-slate-800 shadow-2xl">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-3xl">
+                ⛪
+            </div>
+            <div>
+                <h2 class="text-xl font-extrabold text-white">Área de Líderes e Pastores</h2>
+                <p class="text-xs text-slate-400 mt-1">VATHOS 2027 · Região 655 Londrina/PR</p>
+            </div>
+
+            <!-- LOGIN DO LÍDER DE JOVENS / IGREJA POR CPF -->
+            <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 text-left space-y-3">
+                <div class="flex items-center gap-2 text-emerald-400 font-extrabold text-xs uppercase tracking-wider">
+                    <span>👑</span> Acesso do Líder de Jovens / Igreja
+                </div>
+                <p class="text-xs text-slate-300">
+                    Se você se inscreveu no Retiro como <strong>Líder</strong> e sua modalidade foi aceita pela coordenação, digite seu <strong>CPF</strong> para acessar os inscritos e repasses da sua igreja:
+                </p>
+
+                <div class="space-y-2 pt-1">
+                    <input type="text" id="login-lider-cpf" placeholder="000.000.000-00" maxlength="14" class="w-full input-dark px-4 py-3 rounded-xl text-sm font-mono font-bold text-center tracking-widest text-white" />
+                    <button type="button" id="btn-entrar-lider" onclick="autenticarLiderPorCPF()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3 px-4 rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="log-in" class="w-4 h-4"></i> Entrar na Área da Minha Igreja
+                    </button>
+                </div>
+                <div id="msg-erro-lider" class="hidden p-3 rounded-xl text-xs font-semibold leading-relaxed"></div>
+            </div>
+
+            <div class="relative flex items-center justify-center my-2">
+                <div class="border-t border-slate-800 w-full"></div>
+                <span class="bg-[#070b14] px-3 text-[10px] uppercase font-bold text-slate-500 relative">Ou</span>
+            </div>
+
+            <!-- ACESSO PARA PASTORES TITULARES / GESTÃO -->
+            <div class="p-4 rounded-2xl bg-indigo-950/20 border border-indigo-500/20 text-left space-y-2">
+                <div class="text-xs font-extrabold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> Pastores Titulares e Coordenação Regional
+                </div>
+                <p class="text-xs text-slate-400">
+                    Se você já possui login e senha cadastrados no sistema administrativo da Região 655:
+                </p>
+                <a href="login.html?redirect=vathos2027_lideres.html" class="inline-flex items-center justify-center w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition-colors">
+                    Entrar com E-mail e Senha ➔
+                </a>
+            </div>
+
+            <div class="pt-1 text-center">
+                <a href="vathos2027.html" class="text-xs text-slate-400 hover:text-white underline">
+                    ← Voltar ao Portal Público do Retiro VATHOS
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <main id="conteudo-principal" class="hidden max-w-6xl mx-auto px-4 mt-6 space-y-6">
 
         <!-- Aviso de Privacidade de Saúde e Regra de Lote -->
         <div class="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
@@ -196,7 +253,8 @@
     </main>
 
     <script type="module">
-        import { db } from './firebase-config.js';
+        import { auth, db } from './firebase-config.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
         import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { requireAuth, hasAnyPermission } from './js/auth.js';
         import {
@@ -220,17 +278,28 @@
 
         async function init() {
             lucide.createIcons();
-            try {
-                userAuth = await requireAuth();
-            } catch (e) {
-                return;
+
+            // Máscara do CPF de login do Líder
+            const inpCpfLogin = document.getElementById('login-lider-cpf');
+            if (inpCpfLogin) {
+                inpCpfLogin.addEventListener('input', (e) => {
+                    let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+                    if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+                    else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+                    else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+                    e.target.value = v;
+                });
+                inpCpfLogin.addEventListener('keyup', (e) => {
+                    if (e.key === 'Enter') autenticarLiderPorCPF();
+                });
             }
 
-            document.getElementById('ac-lider-nome').value = userAuth.nome || '';
-            document.getElementById('ac-data-repasse').value = new Date().toISOString().split('T')[0];
-
-            const snapCfg = await getDoc(doc(db, 'vathos_2027_config', 'geral'));
-            if (snapCfg.exists()) configEvento = mergeVathosConfig(snapCfg.data());
+            try {
+                const snapCfg = await getDoc(doc(db, 'vathos_2027_config', 'geral'));
+                if (snapCfg.exists()) configEvento = mergeVathosConfig(snapCfg.data());
+            } catch (e) {
+                console.warn('Erro ao carregar config vathos:', e);
+            }
 
             const regraLote = configEvento?.pagamentos?.lideresPastores?.regraDataLote || 'a_definir';
             const mapRegra = {
@@ -238,7 +307,197 @@
                 data_pagamento_lider: 'Regra de Lote: Vale a data do pagamento ao líder/pastor',
                 data_repasse_escritorio: 'Regra de Lote: Vale a data do repasse ao escritório'
             };
-            document.getElementById('badge-regra-data-lote').textContent = mapRegra[regraLote] || mapRegra.a_definir;
+            const bRegra = document.getElementById('badge-regra-data-lote');
+            if (bRegra) bRegra.textContent = mapRegra[regraLote] || mapRegra.a_definir;
+
+            // 1. Verifica se há usuário Firebase Auth autenticado (Pastor Titular / Admin / Secretário)
+            let fbUser = null;
+            try {
+                fbUser = await new Promise((resolve) => {
+                    const unsub = onAuthStateChanged(auth, (u) => {
+                        unsub();
+                        resolve(u);
+                    }, () => resolve(null));
+                });
+            } catch (e) {
+                fbUser = null;
+            }
+
+            if (fbUser) {
+                try {
+                    userAuth = await requireAuth();
+                    await configurarSessaoPastorOuAdmin();
+                    return;
+                } catch (e) {
+                    console.warn('[vathos_lideres] requireAuth falhou ou usuário não tem permissão no sistema geral:', e);
+                }
+            }
+
+            // 2. Se não há usuário do sistema geral autenticado, verifica se há CPF de líder ativo na URL ou na sessão
+            const urlParams = new URLSearchParams(window.location.search);
+            const cpfUrl = (urlParams.get('cpf') || '').replace(/\D/g, '');
+            const cpfSessao = (sessionStorage.getItem('vathos_lider_cpf') || localStorage.getItem('vathos_lider_cpf') || '').replace(/\D/g, '');
+            const cpfCandidato = cpfUrl || cpfSessao;
+
+            if (cpfCandidato && cpfCandidato.length === 11) {
+                const ok = await tentarLogarComoLider(cpfCandidato, false);
+                if (ok) return;
+            }
+
+            // 3. Se nenhuma autenticação foi concluída, exibe a tela de identificação/login
+            exibirTelaAcessoLider();
+        }
+
+        function exibirTelaAcessoLider() {
+            document.getElementById('conteudo-principal').classList.add('hidden');
+            document.getElementById('secao-login-lider').classList.remove('hidden');
+            document.getElementById('header-subtitulo').textContent = 'Identificação necessária para acessar esta área';
+            document.getElementById('header-user-badge').innerHTML = '';
+            const linkPainel = document.getElementById('link-voltar-painel');
+            if (linkPainel) {
+                linkPainel.href = 'vathos2027.html';
+                linkPainel.innerHTML = `<i data-lucide="arrow-left" class="w-4 h-4"></i> Início`;
+            }
+            if (window.lucide) lucide.createIcons();
+            setTimeout(() => {
+                const inp = document.getElementById('login-lider-cpf');
+                if (inp) inp.focus();
+            }, 100);
+        }
+
+        async function tentarLogarComoLider(cpfLimpo, manual = false) {
+            const msgErro = document.getElementById('msg-erro-lider');
+            if (msgErro) msgErro.classList.add('hidden');
+
+            try {
+                const snap = await getDoc(doc(db, 'vathos_2027_inscricoes', cpfLimpo));
+                if (!snap.exists()) {
+                    if (manual && msgErro) {
+                        msgErro.innerHTML = `❌ Nenhuma inscrição encontrada com o CPF <strong>${formatarCPF(cpfLimpo)}</strong>. Certifique-se de que preencheu a sua inscrição no Retiro VATHOS selecionando a categoria Líder.`;
+                        msgErro.className = 'p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs font-semibold text-rose-300';
+                        msgErro.classList.remove('hidden');
+                    }
+                    return false;
+                }
+
+                const d = snap.data();
+                const ehLider = d.categoriaParticipacao === 'lider' || d.liderAprovado;
+                const estaAprovado = d.statusCategoria === 'aprovada' || d.liderAprovado;
+
+                if (!ehLider) {
+                    if (manual && msgErro) {
+                        msgErro.innerHTML = `⚠️ Olá, <strong>${d.nomeCompleto}</strong>!<br><br>A sua inscrição está registrada como '<strong>${d.categoriaParticipacao || 'Participante'}</strong>' da igreja <em>${d.igrejaNome || 'Não informada'}</em>.<br><br>Para ter acesso a gerenciar os inscritos e repasses da sua igreja, peça aos gestores do retiro para autorizar sua categoria como <strong>Líder</strong>.`;
+                        msgErro.className = 'p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs font-semibold text-amber-200';
+                        msgErro.classList.remove('hidden');
+                    }
+                    return false;
+                }
+
+                if (!estaAprovado) {
+                    if (manual && msgErro) {
+                        msgErro.innerHTML = `⏳ Olá, <strong>${d.nomeCompleto}</strong>!<br><br>Sua inscrição como <strong>Líder da igreja "${d.igrejaNome || 'Sua Igreja'}"</strong> foi recebida com sucesso, mas <strong>ainda está aguardando a aprovação dos gestores</strong> no painel administrativo.<br><br>Assim que a liderança aceitar a sua modalidade de Líder, seu acesso a esta área será liberado automaticamente com este CPF.`;
+                        msgErro.className = 'p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/40 text-xs font-semibold text-indigo-200';
+                        msgErro.classList.remove('hidden');
+                    }
+                    return false;
+                }
+
+                // SUCESSO: É líder aprovado!
+                sessionStorage.setItem('vathos_lider_cpf', cpfLimpo);
+                localStorage.setItem('vathos_lider_cpf', cpfLimpo);
+
+                userAuth = {
+                    tipo: 'lider',
+                    cpf: cpfLimpo,
+                    nome: d.nomeCompleto,
+                    email: d.email || `${cpfLimpo}@lider.vathos`,
+                    igrejaNome: d.igrejaNome || '',
+                    permissoes: ['lider_vathos']
+                };
+
+                await configurarSessaoLider(d);
+                return true;
+            } catch (err) {
+                console.error('Erro ao validar líder por CPF:', err);
+                if (manual && msgErro) {
+                    msgErro.innerHTML = 'Erro ao verificar CPF: ' + err.message;
+                    msgErro.className = 'p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs font-semibold text-rose-300';
+                    msgErro.classList.remove('hidden');
+                }
+                return false;
+            }
+        }
+
+        window.autenticarLiderPorCPF = async function() {
+            const input = document.getElementById('login-lider-cpf');
+            const cpfLimpo = (input.value || '').replace(/\D/g, '');
+            if (cpfLimpo.length !== 11) {
+                const msg = document.getElementById('msg-erro-lider');
+                msg.textContent = 'Por favor, digite um CPF válido com 11 dígitos.';
+                msg.className = 'p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs font-semibold text-rose-300';
+                msg.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('btn-entrar-lider');
+            const txtOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Verificando aprovação...`;
+
+            try {
+                await tentarLogarComoLider(cpfLimpo, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = txtOriginal;
+                if (window.lucide) lucide.createIcons();
+            }
+        };
+
+        async function configurarSessaoLider(dadosLider) {
+            document.getElementById('secao-login-lider').classList.add('hidden');
+            document.getElementById('conteudo-principal').classList.remove('hidden');
+
+            igrejaSelecionada = dadosLider.igrejaNome || '';
+            document.getElementById('select-igreja-visao').classList.add('hidden');
+
+            document.getElementById('header-subtitulo').textContent = `Igreja: ${igrejaSelecionada || 'Não informada'}`;
+            document.getElementById('header-user-badge').innerHTML = `
+                <span class="px-2.5 py-1 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5">
+                    👑 Líder: ${dadosLider.nomeCompleto.split(' ')[0]}
+                </span>
+                <button type="button" onclick="sairSessaoLider()" class="text-xs text-slate-400 hover:text-rose-400 font-bold px-2 py-1 flex items-center gap-1 transition-colors">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Sair
+                </button>
+            `;
+
+            const linkPainel = document.getElementById('link-voltar-painel');
+            if (linkPainel) {
+                linkPainel.href = 'vathos2027.html';
+                linkPainel.innerHTML = `<i data-lucide="arrow-left" class="w-4 h-4"></i> Portal VATHOS`;
+            }
+
+            document.getElementById('ac-lider-nome').value = dadosLider.nomeCompleto;
+            document.getElementById('ac-data-repasse').value = new Date().toISOString().split('T')[0];
+
+            await carregarDadosIgreja();
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function configurarSessaoPastorOuAdmin() {
+            document.getElementById('secao-login-lider').classList.add('hidden');
+            document.getElementById('conteudo-principal').classList.remove('hidden');
+
+            document.getElementById('ac-lider-nome').value = userAuth.nome || '';
+            document.getElementById('ac-data-repasse').value = new Date().toISOString().split('T')[0];
+
+            document.getElementById('header-user-badge').innerHTML = `
+                <span class="px-2.5 py-1 rounded-xl bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-xs font-bold flex items-center gap-1.5">
+                    ⛪ ${userAuth.nome ? userAuth.nome.split(' ')[0] : 'Usuário'}
+                </span>
+                <button type="button" onclick="sairSessaoLider()" class="text-xs text-slate-400 hover:text-rose-400 font-bold px-2 py-1 flex items-center gap-1 transition-colors">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Sair
+                </button>
+            `;
 
             const podeVerTodas = hasAnyPermission(['admin', 'secretario', 'superintendente', 'coordenador']);
             if (podeVerTodas) {
@@ -256,7 +515,17 @@
             }
 
             await carregarDadosIgreja();
+            if (window.lucide) lucide.createIcons();
         }
+
+        window.sairSessaoLider = async function() {
+            sessionStorage.removeItem('vathos_lider_cpf');
+            localStorage.removeItem('vathos_lider_cpf');
+            try {
+                if (auth.currentUser) await signOut(auth);
+            } catch (e) {}
+            window.location.href = 'vathos2027_lideres.html';
+        };
 
         window.aoTrocarIgrejaVisao = async function() {
             igrejaSelecionada = document.getElementById('select-igreja-visao').value;
@@ -351,6 +620,7 @@
                         <td class="p-3">
                             <div class="font-bold text-white">${i.nomeCompleto}</div>
                             <div class="text-[11px] text-slate-400 font-mono">${formatarCPF(i.cpf)} · ${i.idadeCalculada ?? '—'} anos</div>
+                            ${i.whatsapp ? `<div class="text-[11px] text-emerald-400 font-semibold mt-0.5"><a href="https://wa.me/55${i.whatsapp.replace(/\D/g, '')}" target="_blank" class="hover:underline inline-flex items-center gap-1">📱 ${i.whatsapp}</a></div>` : ''}
                         </td>
                         <td class="p-3">
                             <div class="font-semibold text-indigo-300">${i.modalidade}</div>

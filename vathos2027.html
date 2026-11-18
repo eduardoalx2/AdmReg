@@ -842,6 +842,34 @@
                         </a>
                     </div>
                 </div>
+
+                <!-- BANNER DE LÍDER DE IGREJA APROVADO -->
+                <div id="card-lider-aprovado-ap" class="hidden p-4 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-teal-950/70 border border-emerald-500/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 text-xl shrink-0">👑</div>
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-extrabold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+                                Líder Autorizado · <span id="txt-lider-igreja-nome">Igreja</span>
+                            </div>
+                            <p class="text-xs text-slate-200">
+                                Seu acesso ao <strong>Painel de Líderes e Pastores</strong> está liberado! Você pode acompanhar as inscrições da sua igreja e registrar repasses de acerto agrupado.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="irParaAreaLideres()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-emerald-950/40">
+                            <i data-lucide="external-link" class="w-4 h-4"></i> Acessar Painel de Líderes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ALERTA DE LÍDER PENDENTE DE APROVAÇÃO -->
+                <div id="card-lider-pendente-ap" class="hidden p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center gap-3 text-xs text-indigo-200">
+                    <span class="text-xl shrink-0">⏳</span>
+                    <div>
+                        <strong>Inscrição na categoria Líder em análise:</strong> A coordenação e os gestores do retiro estão validando as indicações de líderes da sua igreja. Assim que aceita, seu botão de acesso ao Painel de Líderes aparecerá aqui.
+                    </div>
+                </div>
             </div>
 
             <!-- PAINEL FINANCEIRO E MOTOR DE PERCENTUAL (Seções 3, 4 e 5) -->
@@ -2005,6 +2033,26 @@
                 cardAutMenor.classList.add('hidden');
             }
 
+            // Cards de Líder Autorizado ou Pendente
+            const cardLiderAprov = document.getElementById('card-lider-aprovado-ap');
+            const cardLiderPend = document.getElementById('card-lider-pendente-ap');
+            if (cardLiderAprov && cardLiderPend) {
+                const ehLider = i.categoriaParticipacao === 'lider' || i.liderAprovado;
+                const estaAprovado = i.statusCategoria === 'aprovada' || i.liderAprovado;
+
+                if (ehLider && estaAprovado) {
+                    cardLiderAprov.classList.remove('hidden');
+                    cardLiderPend.classList.add('hidden');
+                    document.getElementById('txt-lider-igreja-nome').textContent = i.igrejaNome || 'Sua Igreja';
+                } else if (ehLider && !estaAprovado) {
+                    cardLiderAprov.classList.add('hidden');
+                    cardLiderPend.classList.remove('hidden');
+                } else {
+                    cardLiderAprov.classList.add('hidden');
+                    cardLiderPend.classList.add('hidden');
+                }
+            }
+
             // Resumo de Modalidade & Percentual
             const labelsMod = {
                 retiro_completo: 'Retiro Completo (26 a 28/03/2027)',
@@ -2425,6 +2473,17 @@
                 alert('Solicitação de cancelamento registrada.');
             } catch (err) {
                 alert('Erro ao solicitar cancelamento: ' + err.message);
+            }
+        };
+
+        window.irParaAreaLideres = function(cpf) {
+            const cpfTarget = cpf || (inscricaoAtiva ? inscricaoAtiva.cpf : '');
+            if (cpfTarget) {
+                sessionStorage.setItem('vathos_lider_cpf', cpfTarget);
+                localStorage.setItem('vathos_lider_cpf', cpfTarget);
+                window.location.href = `vathos2027_lideres.html?cpf=${encodeURIComponent(cpfTarget)}`;
+            } else {
+                window.location.href = 'vathos2027_lideres.html';
             }
         };
 
