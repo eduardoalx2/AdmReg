@@ -580,6 +580,22 @@
                             <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Igreja à qual pertence <span class="text-rose-400">*</span></label>
                             <select id="f-igreja-select" required onchange="aoMudarIgrejaSelect()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
                                 <option value="">Selecione sua igreja...</option>
+                                <option value="IEQ CENTRAL">0252 - IEQ CENTRAL</option>
+                                <option value="IEQ ALTO DA BOA VISTA">3744 - IEQ ALTO DA BOA VISTA</option>
+                                <option value="IEQ CARNASCIALLI">63288 - IEQ CARNASCIALLI</option>
+                                <option value="IEQ COLÚMBIA">63236 - IEQ COLÚMBIA</option>
+                                <option value="IEQ CONJ. LUIS DE SÁ">60328 - IEQ CONJ. LUIS DE SÁ</option>
+                                <option value="IEQ FARID LIBOS">9078 - IEQ FARID LIBOS</option>
+                                <option value="IEQ INDUSVILLE">3852 - IEQ INDUSVILLE</option>
+                                <option value="IEQ JD. DO LESTE">4394 - IEQ JD. DO LESTE</option>
+                                <option value="IEQ MARIA CECÍLIA">3441 - IEQ MARIA CECÍLIA</option>
+                                <option value="IEQ MONACO">4016 - IEQ MONACO</option>
+                                <option value="IEQ PIZA">1328 - IEQ PIZA</option>
+                                <option value="IEQ SABARÁ">60205 - IEQ SABARÁ</option>
+                                <option value="IEQ SÃO JORGE">6018 - IEQ SÃO JORGE</option>
+                                <option value="REGIÃO ECLESIÁSTICA">655 - REGIÃO ECLESIÁSTICA</option>
+                                <option value="__OUTRA_IGREJA__">Outra igreja (Informar nome)</option>
+                                <option value="__NAO_FREQUENTO__">Não frequento uma igreja</option>
                             </select>
                         </div>
 
@@ -1502,21 +1518,27 @@
 
         async function carregarListaIgrejas() {
             const sel = document.getElementById('f-igreja-select');
-            sel.innerHTML = `<option value="">Selecione sua igreja...</option>`;
+            if (!sel) return;
+            const valorAtual = sel.value;
             try {
                 const snap = await getDocs(collection(db, 'igrejas'));
-                listaIgrejas = [];
-                snap.forEach(d => listaIgrejas.push({ id: d.id, ...d.data() }));
-                listaIgrejas.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-                listaIgrejas.forEach(ig => {
-                    const label = ig.codigo ? `${ig.codigo} - ${ig.nome}` : ig.nome;
-                    sel.innerHTML += `<option value="${ig.nome}">${label}</option>`;
-                });
+                const novasIgrejas = [];
+                snap.forEach(d => novasIgrejas.push({ id: d.id, ...d.data() }));
+                if (novasIgrejas.length > 0) {
+                    listaIgrejas = novasIgrejas;
+                    listaIgrejas.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+                    sel.innerHTML = `<option value="">Selecione sua igreja...</option>` +
+                        listaIgrejas.map(ig => {
+                            const label = ig.codigo ? `${ig.codigo} - ${ig.nome}` : ig.nome;
+                            return `<option value="${ig.nome}">${label}</option>`;
+                        }).join('') +
+                        `<option value="__OUTRA_IGREJA__">Outra igreja (Informar nome)</option>` +
+                        `<option value="__NAO_FREQUENTO__">Não frequento uma igreja</option>`;
+                    if (valorAtual) sel.value = valorAtual;
+                }
             } catch (e) {
-                console.warn('Erro ao carregar igrejas:', e);
+                console.warn('Mantendo lista padrão oficial de igrejas:', e);
             }
-            sel.innerHTML += `<option value="__OUTRA_IGREJA__">Outra igreja (Informar nome)</option>`;
-            sel.innerHTML += `<option value="__NAO_FREQUENTO__">Não frequento uma igreja</option>`;
         }
 
         function aplicarConfiguracaoNaInterface() {
