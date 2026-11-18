@@ -100,6 +100,11 @@
         }
     </style>
     <script>
+        if (typeof window.structuredClone !== 'function') {
+            window.structuredClone = function(obj) {
+                try { return JSON.parse(JSON.stringify(obj)); } catch (e) { return obj; }
+            };
+        }
         window.aplicarMascaraCPF = function(valor) {
             if (!valor) return '';
             const d = String(valor).replace(/\D/g, '').slice(0, 11);
@@ -377,7 +382,7 @@
         window.formatarCPFInput = formatarCPF;
 
         let inscricaoMenor = null;
-        let configEvento = structuredClone(VATHOS_DEFAULT_CONFIG);
+        let configEvento = (typeof structuredClone === 'function') ? structuredClone(VATHOS_DEFAULT_CONFIG) : JSON.parse(JSON.stringify(VATHOS_DEFAULT_CONFIG));
 
         async function init() {
             lucide.createIcons();

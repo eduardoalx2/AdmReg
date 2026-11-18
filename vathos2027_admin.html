@@ -925,7 +925,7 @@
         window.buscarInfoQuartoVathos = buscarInfoQuartoVathos;
 
         let userAuth = null;
-        let configEvento = structuredClone(VATHOS_DEFAULT_CONFIG);
+        let configEvento = (typeof structuredClone === 'function') ? structuredClone(VATHOS_DEFAULT_CONFIG) : JSON.parse(JSON.stringify(VATHOS_DEFAULT_CONFIG));
         let todasInscricoes = [];
         let todasFichasSaude = {};
         let todosPagamentos = [];
@@ -2560,7 +2560,8 @@
                 const infDayUseVal = document.getElementById('cfg-dayuse-infantil').value;
                 const infDayUseParsed = infDayUseVal === 'true' ? true : (infDayUseVal === 'false' ? false : null);
 
-                const lotes = structuredClone(configEvento.modalidades?.retiroCompleto?.lotes || VATHOS_DEFAULT_CONFIG.modalidades.retiroCompleto.lotes);
+                const lotesBase = configEvento.modalidades?.retiroCompleto?.lotes || VATHOS_DEFAULT_CONFIG.modalidades.retiroCompleto.lotes;
+                const lotes = (typeof structuredClone === 'function') ? structuredClone(lotesBase) : JSON.parse(JSON.stringify(lotesBase));
                 lotes[0].valorIntegral = Number(document.getElementById('cfg-lote1-val').value || 350);
                 lotes[1].valorIntegral = Number(document.getElementById('cfg-lote2-val').value || 375);
                 lotes[2].valorIntegral = Number(document.getElementById('cfg-lote3-val').value || 400);

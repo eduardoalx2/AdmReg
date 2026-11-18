@@ -282,7 +282,7 @@
 
         let userAuth = null;
         let igrejaSelecionada = '';
-        let configEvento = structuredClone(VATHOS_DEFAULT_CONFIG);
+        let configEvento = (typeof structuredClone === 'function') ? structuredClone(VATHOS_DEFAULT_CONFIG) : JSON.parse(JSON.stringify(VATHOS_DEFAULT_CONFIG));
         let inscricoesIgreja = [];
         let todosPagamentosIgreja = [];
         let acertosIgreja = [];

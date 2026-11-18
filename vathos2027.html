@@ -70,6 +70,19 @@
 
     <!-- MÁSCARA INSTANTÂNEA E DISPONIBILIDADE IMEDIATA DO CPF -->
     <script>
+        // Polyfill seguro de structuredClone para navegadores mais antigos (iOS Safari < 15.4)
+        if (typeof window.structuredClone !== 'function') {
+            window.structuredClone = function(obj) {
+                try { return JSON.parse(JSON.stringify(obj)); } catch (e) { return obj; }
+            };
+        }
+
+        window.safeLucideIcons = function() {
+            if (window.lucide && typeof lucide.createIcons === 'function') {
+                try { lucide.createIcons(); } catch(e){}
+            }
+        };
+
         window.aplicarMascaraCPF = function(valor) {
             if (!valor) return '';
             const d = String(valor).replace(/\D/g, '').slice(0, 11);
@@ -89,13 +102,16 @@
             return formatado;
         };
 
-        // CONTROLE DE CLIQUE PRECOCE (Se o usuário clicar antes do Firebase/módulo terminar de carregar)
-        window.__sistemaVathosPronto = false;
+        // CONTROLE RESILIENTE DE ACESSO POR CPF (NUNCA TRAVA O BOTÃO)
+        window.__executarAcessoPorCPFReal = null;
         window.__cpfPendenteAcesso = null;
 
         window.verificarAcessoPorCPF = function(cpfForcado = null) {
             const raw = cpfForcado || document.getElementById('input-cpf-acesso')?.value || '';
             const erroEl = document.getElementById('erro-cpf-acesso');
+            const btn = document.getElementById('btn-entrar-cpf');
+            const defaultBtnHtml = '<span>Continuar com CPF</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>';
+
             if (erroEl) erroEl.classList.add('hidden');
 
             const digitos = String(raw).replace(/\D/g, '');
@@ -104,6 +120,7 @@
                     erroEl.textContent = 'Por favor, digite seu CPF.';
                     erroEl.classList.remove('hidden');
                 }
+                if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; }
                 document.getElementById('input-cpf-acesso')?.focus();
                 return;
             }
@@ -113,112 +130,91 @@
                     erroEl.textContent = `CPF incompleto. Digite os 11 números (atualmente tem ${digitos.length}).`;
                     erroEl.classList.remove('hidden');
                 }
+                if (btn) { btn.disabled = false; btn.innerHTML = defaultBtnHtml; }
                 document.getElementById('input-cpf-acesso')?.focus();
                 return;
             }
 
-            if (!window.__sistemaVathosPronto) {
-                window.__cpfPendenteAcesso = digitos;
-                const btn = document.getElementById('btn-entrar-cpf');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = `<span class="inline-block animate-spin mr-2">⏳</span> Conectando ao sistema...`;
-                }
+            // Se o módulo já carregou, executa na hora!
+            if (typeof window.__executarAcessoPorCPFReal === 'function') {
+                window.__executarAcessoPorCPFReal(digitos);
                 return;
             }
 
-            if (window.__executarAcessoPorCPFReal) {
-                window.__executarAcessoPorCPFReal(digitos);
+            // Se o módulo ainda está inicializando, guarda CPF pendente e dá feedback suave
+            window.__cpfPendenteAcesso = digitos;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="inline-block animate-spin mr-2">🔄</span> Conectando ao sistema...`;
             }
+
+            const inicio = Date.now();
+            const checarTimer = setInterval(function() {
+                if (typeof window.__executarAcessoPorCPFReal === 'function') {
+                    clearInterval(checarTimer);
+                    window.__cpfPendenteAcesso = null;
+                    window.__executarAcessoPorCPFReal(digitos);
+                } else if (Date.now() - inicio > 6000) {
+                    clearInterval(checarTimer);
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = defaultBtnHtml;
+                        if (window.lucide && typeof lucide.createIcons === 'function') {
+                            try { lucide.createIcons(); } catch(e){}
+                        }
+                    }
+                    if (erroEl) {
+                        erroEl.textContent = 'A conexão demorou a responder. Toque novamente em "Continuar com CPF".';
+                        erroEl.classList.remove('hidden');
+                    }
+                }
+            }, 100);
         };
     </script>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
-    <!-- TOP BAR -->
-    <header class="sticky top-0 z-40 bg-slate-950/85 backdrop-blur border-b border-slate-800/80">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-            <a href="login.html" class="flex items-center gap-2.5 text-slate-300 hover:text-white transition-colors">
-                <img src="logo.png" alt="Logo Região 655" class="h-8 w-auto object-contain" onerror="this.style.display='none'">
-                <div class="border-l border-slate-800 pl-2.5">
-                    <div class="text-xs font-extrabold text-white tracking-wide uppercase">VATHOS 2027</div>
-                    <div class="text-[10px] text-slate-400">Região 655 · Londrina/PR</div>
+    <!-- TOP BAR (SIMPLES E LIMPO PARA CELULAR) -->
+    <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800">
+        <div class="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+            <a href="login.html" class="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
+                <img src="logo.png" alt="Logo Região 655" class="h-7 w-auto object-contain" onerror="this.style.display='none'">
+                <div class="border-l border-slate-800 pl-2">
+                    <div class="text-xs font-black text-white tracking-wide uppercase">VATHOS 2027</div>
+                    <div class="text-[9px] text-slate-400">Região 655 · Londrina/PR</div>
                 </div>
             </a>
 
-            <div class="flex flex-wrap items-center gap-2">
-                <button type="button" onclick="abrirModalOrientacoes()" class="text-xs font-bold text-indigo-300 hover:text-white bg-indigo-950/60 hover:bg-indigo-900/70 border border-indigo-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
-                    <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
-                    <span>Informações & Regras</span>
+            <!-- Apenas 2 botões limpos, sem quadradinhos quebrados -->
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="abrirModalOrientacoes()" class="text-xs font-bold text-indigo-300 hover:text-white bg-indigo-950/60 hover:bg-indigo-900/70 border border-indigo-500/30 px-3 py-1.5 rounded-xl transition-colors">
+                    Regras & Valores
                 </button>
-                <a href="vathos2027_autorizacao.html" class="text-xs font-bold text-amber-300 hover:text-white bg-amber-950/50 hover:bg-amber-900/60 border border-amber-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
-                    <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
-                    <span class="hidden sm:inline">Autorização Menores</span>
+                <a href="vathos2027_admin.html" class="text-xs font-bold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl transition-colors">
+                    Admin
                 </a>
-                <a href="vathos2027_lideres.html" class="text-xs font-bold text-emerald-300 hover:text-white bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
-                    <i data-lucide="users" class="w-3.5 h-3.5"></i>
-                    <span class="hidden sm:inline">Líderes/Pastores</span>
-                </a>
-                <a href="vathos2027_admin.html" class="text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">
-                    <i data-lucide="shield" class="w-3.5 h-3.5"></i>
-                    <span>Admin</span>
-                </a>
-                <a id="btn-sair-cpf" href="javascript:void(0)" onclick="encerrarSessaoCPF()" class="hidden text-xs font-bold text-rose-300 hover:text-white bg-rose-950/50 border border-rose-500/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
-                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Trocar CPF
-                </a>
+                <button id="btn-sair-cpf" type="button" onclick="encerrarSessaoCPF()" class="hidden text-xs font-bold text-rose-300 hover:text-white bg-rose-950/50 border border-rose-500/30 px-2.5 py-1.5 rounded-xl transition-colors">
+                    Sair
+                </button>
             </div>
         </div>
     </header>
 
     <!-- CONTEÚDO PRINCIPAL -->
-    <main class="max-w-5xl w-full mx-auto px-4 py-5 sm:py-8 flex-1 space-y-5 sm:space-y-6">
+    <main class="max-w-5xl w-full mx-auto px-4 py-4 sm:py-6 flex-1 space-y-4 sm:space-y-6">
 
-        <!-- HERO DO EVENTO (COMPACTO NO MOBILE, COMPLETO NO DESKTOP) -->
-        <section class="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-indigo-500/20 shadow-xl relative overflow-hidden">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
-                <div class="space-y-1.5 sm:space-y-2.5 max-w-2xl">
-                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <span class="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
-                            🔥 Retiro de Jovens & Adolescentes
-                        </span>
-                        <span class="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">
-                            26 a 28 de Março de 2027
-                        </span>
-                    </div>
-                    <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
-                        VATHOS 2027 — <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">“Por inteiro”</span>
-                    </h1>
-                    <p class="text-xs sm:text-sm font-semibold text-indigo-200" id="hero-slogan">
-                        Não apenas uma parte de nós, tudo para Ele
-                    </p>
-                    <blockquote class="hidden sm:block text-xs text-slate-300 italic border-l-2 border-indigo-500 pl-3 py-0.5">
-                        “Ame ao Senhor, o seu Deus, com todo o seu coração, com toda a sua alma, com todo o seu entendimento e com todas as suas forças.” — <strong>Marcos 12:30</strong>
-                    </blockquote>
-                </div>
-
-                <div class="bg-slate-900/90 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-2 shrink-0 md:w-72">
-                    <div class="flex items-start gap-2 text-xs">
-                        <i data-lucide="map-pin" class="w-4 h-4 text-rose-400 shrink-0 mt-0.5"></i>
-                        <div>
-                            <div class="font-bold text-white text-xs sm:text-sm" id="hero-local">Acampamento Esperança</div>
-                            <div class="text-[10px] sm:text-[11px] text-slate-400" id="hero-endereco-status">
-                                Endereço por escrito: <span class="badge-a-definir">A definir</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 text-[11px] sm:text-xs text-slate-300">
-                        <i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-400 shrink-0"></i>
-                        <div id="hero-horarios-status">
-                            Chegada / Encerramento: <span class="badge-a-definir">A definir</span>
-                        </div>
-                    </div>
-                    <a id="btn-como-chegar" href="https://maps.google.com/?q=-23.405327,-51.113140" target="_blank" rel="noopener noreferrer"
-                       class="w-full bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 font-bold text-[11px] sm:text-xs py-1.5 sm:py-2 px-3 rounded-lg sm:rounded-xl transition-colors flex items-center justify-center gap-1.5">
-                        <i data-lucide="navigation" class="w-3 h-3"></i> Como chegar (Google Maps)
-                    </a>
-                </div>
-            </div>
-        </section>
+        <!-- CABEÇALHO COMPACTO DO EVENTO (SIMPLES, DIRETO E BONITO) -->
+        <div id="cabecalho-compacto-topo" class="text-center space-y-1.5 py-1">
+            <span class="inline-block px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-black uppercase tracking-wider">
+                🔥 Retiro Regional de Jovens & Adolescentes · 26 a 28 de Março de 2027
+            </span>
+            <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
+                VATHOS 2027 — <span class="text-indigo-400">“Por inteiro”</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                Acampamento Esperança · IEQ Região 655 Londrina/PR
+            </p>
+        </div>
 
         <!-- ETAPA 0: PORTA DE ENTRADA POR CPF (SIMPLES, DIRETA E OBJETIVA) -->
         <section id="secao-entrada-cpf" class="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-7 max-w-lg mx-auto shadow-2xl border border-slate-800">
@@ -1269,7 +1265,7 @@
         window.abrirReciboIndividualVathos = abrirReciboIndividualVathos;
         window.buscarInfoQuartoVathos = buscarInfoQuartoVathos;
 
-        let configEvento = structuredClone(VATHOS_DEFAULT_CONFIG);
+        let configEvento = (typeof structuredClone === 'function') ? structuredClone(VATHOS_DEFAULT_CONFIG) : JSON.parse(JSON.stringify(VATHOS_DEFAULT_CONFIG));
         let listaIgrejas = [];
 
         // Estado de sessão por CPF
@@ -1286,8 +1282,99 @@
         window.formatarTelefoneInput = formatarTelefone;
         window.formatarCEPInput = formatarCEP;
 
+        // =====================================================================
+        // ENTRADA E AUTENTICAÇÃO POR CPF (DISPONÍVEL INSTANTANEAMENTE)
+        // =====================================================================
+        window.__executarAcessoPorCPFReal = async function(rawCpf) {
+            const erroEl = document.getElementById('erro-cpf-acesso');
+            if (erroEl) erroEl.classList.add('hidden');
+
+            const cpfLimpo = limparCPF(rawCpf);
+
+            if (!cpfLimpo || cpfLimpo.length < 11) {
+                if (erroEl) {
+                    erroEl.textContent = `CPF incompleto. Digite os 11 números (atualmente tem ${cpfLimpo.length}).`;
+                    erroEl.classList.remove('hidden');
+                }
+                document.getElementById('input-cpf-acesso')?.focus();
+                return;
+            }
+
+            if (!validarCPF(cpfLimpo)) {
+                if (erroEl) {
+                    erroEl.textContent = 'Número de CPF inválido. Verifique se digitou todos os números corretamente.';
+                    erroEl.classList.remove('hidden');
+                }
+                document.getElementById('input-cpf-acesso')?.focus();
+                return;
+            }
+
+            const btn = document.getElementById('btn-entrar-cpf');
+            const defaultBtnHtml = '<span>Continuar com CPF</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="inline-block animate-spin mr-2">🔄</span> Verificando no sistema...`;
+            }
+
+            try {
+                cpfSessaoPrincipal = cpfLimpo;
+                sessionStorage.setItem('vathos2027_cpf_sessao', cpfLimpo);
+                document.getElementById('btn-sair-cpf')?.classList.remove('hidden');
+
+                // Garante que o campo de entrada exiba a máscara completa
+                const inpAcesso = document.getElementById('input-cpf-acesso');
+                if (inpAcesso) inpAcesso.value = formatarCPF(cpfLimpo);
+
+                // Verifica se o CPF pertence a um Gestor Autorizado (ex: Thatiane ou Audrey)
+                const cpfsGestores = (configEvento.gestoresAutorizadosCpfs || ['06637234931', '03480561926']).map(c => String(c).replace(/\D/g, ''));
+                const bannerGestor = document.getElementById('secao-banner-gestor-cpf');
+                if (bannerGestor) {
+                    bannerGestor.classList.toggle('hidden', !cpfsGestores.includes(cpfLimpo));
+                }
+
+                await recarregarFichasDoCPF(cpfLimpo);
+
+                if (fichasVinculadasAoResponsavel.length > 0) {
+                    // Já possui inscrição própria ou filhos menores vinculados -> Abre Área Exclusiva do Participante!
+                    const propria = fichasVinculadasAoResponsavel.find(f => f.cpf === cpfLimpo);
+                    const alvo = propria || fichasVinculadasAoResponsavel[0];
+                    await abrirAreaDoParticipante(alvo.cpf);
+                } else {
+                    // Ainda não possui inscrição -> Abre formulário de Pré-Reserva vinculado a este CPF
+                    iniciarNovaInscricaoParaCPF(cpfLimpo, false);
+                }
+            } catch (err) {
+                console.error('Erro ao consultar CPF:', err);
+                if (erroEl) {
+                    erroEl.textContent = 'Erro ao consultar o banco de dados: ' + (err.message || err);
+                    erroEl.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = defaultBtnHtml;
+                    if (window.lucide && typeof lucide.createIcons === 'function') {
+                        try { lucide.createIcons(); } catch(e){}
+                    }
+                }
+            }
+        };
+
+        window.verificarAcessoPorCPF = function(cpfForcado = null) {
+            const raw = cpfForcado || document.getElementById('input-cpf-acesso')?.value || '';
+            const cpfLimpo = limparCPF(raw);
+            return window.__executarAcessoPorCPFReal(cpfLimpo);
+        };
+
+        window.__sistemaVathosPronto = true;
+        if (window.__cpfPendenteAcesso) {
+            const pend = window.__cpfPendenteAcesso;
+            window.__cpfPendenteAcesso = null;
+            window.__executarAcessoPorCPFReal(pend);
+        }
+
         async function init() {
-            lucide.createIcons();
+            window.safeLucideIcons();
             document.getElementById('comp-data').value = new Date().toISOString().split('T')[0];
 
             await Promise.all([
@@ -1336,30 +1423,39 @@
         }
 
         function aplicarConfiguracaoNaInterface() {
-            const ev = configEvento.evento;
-            document.getElementById('hero-slogan').textContent = ev.slogan || VATHOS_DEFAULT_CONFIG.evento.slogan;
-            document.getElementById('hero-local').textContent = ev.local || VATHOS_DEFAULT_CONFIG.evento.local;
-            document.getElementById('btn-como-chegar').href = ev.mapsUrl || VATHOS_DEFAULT_CONFIG.evento.mapsUrl;
+            const ev = configEvento.evento || {};
+            const elSlogan = document.getElementById('hero-slogan');
+            if (elSlogan) elSlogan.textContent = ev.slogan || VATHOS_DEFAULT_CONFIG.evento.slogan;
+            const elLocal = document.getElementById('hero-local');
+            if (elLocal) elLocal.textContent = ev.local || VATHOS_DEFAULT_CONFIG.evento.local;
+            const elBtnMaps = document.getElementById('btn-como-chegar');
+            if (elBtnMaps) elBtnMaps.href = ev.mapsUrl || VATHOS_DEFAULT_CONFIG.evento.mapsUrl;
 
-            if (ev.enderecoCompleto && ev.enderecoCompleto.trim()) {
-                document.getElementById('hero-endereco-status').innerHTML = `<span class="text-slate-300">${ev.enderecoCompleto}</span>`;
-            } else {
-                document.getElementById('hero-endereco-status').innerHTML = `Endereço por escrito: <span class="badge-a-definir">A definir</span>`;
+            const elEnd = document.getElementById('hero-endereco-status');
+            if (elEnd) {
+                if (ev.enderecoCompleto && ev.enderecoCompleto.trim()) {
+                    elEnd.innerHTML = `<span class="text-slate-300">${ev.enderecoCompleto}</span>`;
+                } else {
+                    elEnd.innerHTML = `Endereço por escrito: <span class="badge-a-definir">A definir</span>`;
+                }
             }
 
-            if (ev.horarioChegada || ev.horarioEncerramento) {
-                document.getElementById('hero-horarios-status').innerHTML = `Chegada: <strong>${ev.horarioChegada || 'A definir'}</strong> · Fim: <strong>${ev.horarioEncerramento || 'A definir'}</strong>`;
+            const elHor = document.getElementById('hero-horarios-status');
+            if (elHor && (ev.horarioChegada || ev.horarioEncerramento)) {
+                elHor.innerHTML = `Chegada: <strong>${ev.horarioChegada || 'A definir'}</strong> · Fim: <strong>${ev.horarioEncerramento || 'A definir'}</strong>`;
             }
 
             // E-mail obrigatório?
             const emailInput = document.getElementById('f-email');
             const emailLabel = document.getElementById('label-email-obrig');
-            if (configEvento.inscricaoConfig?.emailObrigatorio) {
-                emailInput.required = true;
-                emailLabel.innerHTML = `<span class="text-rose-400">*</span>`;
-            } else {
-                emailInput.required = false;
-                emailLabel.textContent = `(Obrigatoriedade a definir — opcional no momento)`;
+            if (emailInput && emailLabel) {
+                if (configEvento.inscricaoConfig?.emailObrigatorio) {
+                    emailInput.required = true;
+                    emailLabel.innerHTML = `<span class="text-rose-400">*</span>`;
+                } else {
+                    emailInput.required = false;
+                    emailLabel.textContent = `(Obrigatoriedade a definir — opcional no momento)`;
+                }
             }
 
             // Camiseta?
@@ -1427,95 +1523,7 @@
             }
         }
 
-        // =====================================================================
-        // ENTRADA E AUTENTICAÇÃO POR CPF
-        // =====================================================================
-        window.__executarAcessoPorCPFReal = async function(rawCpf) {
-            const erroEl = document.getElementById('erro-cpf-acesso');
-            if (erroEl) erroEl.classList.add('hidden');
 
-            const cpfLimpo = limparCPF(rawCpf);
-
-            if (!cpfLimpo || cpfLimpo.length < 11) {
-                if (erroEl) {
-                    erroEl.textContent = `CPF incompleto. Digite os 11 números (atualmente tem ${cpfLimpo.length}).`;
-                    erroEl.classList.remove('hidden');
-                }
-                document.getElementById('input-cpf-acesso')?.focus();
-                return;
-            }
-
-            if (!validarCPF(cpfLimpo)) {
-                if (erroEl) {
-                    erroEl.textContent = 'Número de CPF inválido. Verifique se digitou todos os números corretamente.';
-                    erroEl.classList.remove('hidden');
-                }
-                document.getElementById('input-cpf-acesso')?.focus();
-                return;
-            }
-
-            const btn = document.getElementById('btn-entrar-cpf');
-            let originalHTML = '<span>Continuar com CPF</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>';
-            if (btn) {
-                originalHTML = btn.innerHTML;
-                btn.disabled = true;
-                btn.innerHTML = `<span class="inline-block animate-spin mr-2">🔄</span> Consultando banco de dados...`;
-            }
-
-            try {
-                cpfSessaoPrincipal = cpfLimpo;
-                sessionStorage.setItem('vathos2027_cpf_sessao', cpfLimpo);
-                document.getElementById('btn-sair-cpf')?.classList.remove('hidden');
-
-                // Garante que o campo de entrada exiba a máscara completa
-                const inpAcesso = document.getElementById('input-cpf-acesso');
-                if (inpAcesso) inpAcesso.value = formatarCPF(cpfLimpo);
-
-                // Verifica se o CPF pertence a um Gestor Autorizado (ex: Thatiane ou Audrey)
-                const cpfsGestores = (configEvento.gestoresAutorizadosCpfs || ['06637234931', '03480561926']).map(c => String(c).replace(/\D/g, ''));
-                const bannerGestor = document.getElementById('secao-banner-gestor-cpf');
-                if (bannerGestor) {
-                    bannerGestor.classList.toggle('hidden', !cpfsGestores.includes(cpfLimpo));
-                }
-
-                await recarregarFichasDoCPF(cpfLimpo);
-
-                if (fichasVinculadasAoResponsavel.length > 0) {
-                    // Já possui inscrição própria ou filhos menores vinculados -> Abre Área Exclusiva do Participante!
-                    const propria = fichasVinculadasAoResponsavel.find(f => f.cpf === cpfLimpo);
-                    const alvo = propria || fichasVinculadasAoResponsavel[0];
-                    await abrirAreaDoParticipante(alvo.cpf);
-                } else {
-                    // Ainda não possui inscrição -> Abre formulário de Pré-Reserva vinculado a este CPF
-                    iniciarNovaInscricaoParaCPF(cpfLimpo, false);
-                }
-            } catch (err) {
-                console.error('Erro ao consultar CPF:', err);
-                if (erroEl) {
-                    erroEl.textContent = 'Erro ao consultar o banco de dados: ' + (err.message || err);
-                    erroEl.classList.remove('hidden');
-                }
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHTML;
-                    if (window.lucide) lucide.createIcons();
-                }
-            }
-        };
-
-        window.verificarAcessoPorCPF = function(cpfForcado = null) {
-            const raw = cpfForcado || document.getElementById('input-cpf-acesso')?.value || '';
-            const cpfLimpo = limparCPF(raw);
-            return window.__executarAcessoPorCPFReal(cpfLimpo);
-        };
-
-        window.__sistemaVathosPronto = true;
-        if (window.__cpfPendenteAcesso) {
-            const pend = window.__cpfPendenteAcesso;
-            window.__cpfPendenteAcesso = null;
-            window.__executarAcessoPorCPFReal(pend);
-        }
 
         async function recarregarFichasDoCPF(cpfPrincipal) {
             fichasVinculadasAoResponsavel = [];
@@ -1610,12 +1618,15 @@
             cpfInscricaoAtiva = '';
             inscricaoAtiva = null;
             fichasVinculadasAoResponsavel = [];
-            document.getElementById('btn-sair-cpf').classList.add('hidden');
-            document.getElementById('secao-vinculos-responsavel').classList.add('hidden');
-            document.getElementById('secao-formulario-inscricao').classList.add('hidden');
-            document.getElementById('secao-area-participante').classList.add('hidden');
-            document.getElementById('secao-entrada-cpf').classList.remove('hidden');
-            document.getElementById('input-cpf-acesso').value = '';
+            document.getElementById('btn-sair-cpf')?.classList.add('hidden');
+            document.getElementById('secao-vinculos-responsavel')?.classList.add('hidden');
+            document.getElementById('secao-formulario-inscricao')?.classList.add('hidden');
+            document.getElementById('secao-area-participante')?.classList.add('hidden');
+            document.getElementById('cabecalho-compacto-topo')?.classList.remove('hidden');
+            document.getElementById('secao-entrada-cpf')?.classList.remove('hidden');
+            const inp = document.getElementById('input-cpf-acesso');
+            if (inp) inp.value = '';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         // =====================================================================
@@ -1627,9 +1638,10 @@
             fichaSaudeAtiva = null;
             cpfInscricaoAtiva = cpfAlvo;
 
-            document.getElementById('secao-entrada-cpf').classList.add('hidden');
-            document.getElementById('secao-area-participante').classList.add('hidden');
-            document.getElementById('secao-formulario-inscricao').classList.remove('hidden');
+            document.getElementById('cabecalho-compacto-topo')?.classList.add('hidden');
+            document.getElementById('secao-entrada-cpf')?.classList.add('hidden');
+            document.getElementById('secao-area-participante')?.classList.add('hidden');
+            document.getElementById('secao-formulario-inscricao')?.classList.remove('hidden');
 
             document.getElementById('form-vathos-inscricao').reset();
 
@@ -2041,7 +2053,7 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHTML;
-                lucide.createIcons();
+                window.safeLucideIcons();
             }
         };
 
@@ -2074,10 +2086,13 @@
             renderizarBarraVinculosResponsavel();
             renderizarAreaDoParticipante();
 
-            document.getElementById('secao-entrada-cpf').classList.add('hidden');
-            document.getElementById('secao-formulario-inscricao').classList.add('hidden');
-            document.getElementById('secao-area-participante').classList.remove('hidden');
-            lucide.createIcons();
+            document.getElementById('cabecalho-compacto-topo')?.classList.add('hidden');
+            document.getElementById('secao-entrada-cpf')?.classList.add('hidden');
+            document.getElementById('secao-formulario-inscricao')?.classList.add('hidden');
+            document.getElementById('secao-area-participante')?.classList.remove('hidden');
+            if (window.lucide && typeof lucide.createIcons === 'function') {
+                try { lucide.createIcons(); } catch(e){}
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -2262,7 +2277,7 @@
                         </div>
                     `;
                 }).join('');
-                if (window.lucide) lucide.createIcons();
+                window.safeLucideIcons();
             }
         }
 
@@ -2477,7 +2492,7 @@
             } finally {
                 if (btnWhats) btnWhats.disabled = false;
                 if (btnSemWhats) btnSemWhats.disabled = false;
-                lucide.createIcons();
+                window.safeLucideIcons();
             }
         };
 
