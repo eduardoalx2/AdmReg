@@ -406,12 +406,53 @@
                 </div>
             </div>
 
+            <!-- MAPA GERAL DE OCUPAÇÃO DOS MÓDULOS E ALOJAMENTOS -->
+            <div class="glass-card rounded-3xl p-6 space-y-5 border border-indigo-500/30">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400">Acampamento Esperança</span>
+                        <h3 class="text-base font-black text-white flex items-center gap-2">
+                            <i data-lucide="home" class="w-5 h-5 text-indigo-400"></i> Distribuição por Módulos & Quartos
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Suítes 1 e 2 (3 camas de solteiro cada), Módulos A ao H (4 quartos · 3 beliches / 6 camas cada) e Módulo I (2 quartos · 4 beliches / 8 camas cada).
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <div class="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-right">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">Capacidade Total</span>
+                            <strong class="text-sm font-extrabold text-white">214 Camas</strong>
+                        </div>
+                        <div class="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-right">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">Ocupadas</span>
+                            <strong class="text-sm font-extrabold text-emerald-400" id="lbl-total-camas-ocupadas">0</strong>
+                        </div>
+                        <div class="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-right">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">Vagas Livres</span>
+                            <strong class="text-sm font-extrabold text-indigo-300" id="lbl-total-camas-livres">214</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid de Módulos e Ocupação -->
+                <div id="grid-modulos-alojamento" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                    <!-- Gerado dinamicamente -->
+                </div>
+            </div>
+
             <!-- Fichas de Saúde e Necessidades de Apoio (Equipe de Cuidados) -->
             <div class="glass-card rounded-3xl p-6 space-y-4 border border-rose-500/30">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-400">Acesso Restrito — Equipe de Cuidados e Alimentação</span>
-                        <h3 class="text-base font-extrabold text-white">Fichas de Saúde, Medicamentos, Alergias, Restrições e Hospedagem</h3>
+                        <h3 class="text-base font-extrabold text-white">Fichas de Saúde, Medicamentos, Alergias, Restrições e Alocação em Quartos</h3>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 no-print">
+                        <input type="text" id="f-hosp-busca" oninput="renderizarAbaOperacionalAdmin()" placeholder="Buscar participante..." class="input-dark px-3 py-1.5 rounded-xl text-xs w-44" />
+                        <select id="f-hosp-quarto-filtro" onchange="renderizarAbaOperacionalAdmin()" class="input-dark px-3 py-1.5 rounded-xl text-xs font-semibold">
+                            <option value="">Todos os quartos</option>
+                            <option value="SEM_QUARTO">⚠️ Sem Quarto Definido</option>
+                        </select>
                     </div>
                 </div>
 
@@ -423,7 +464,7 @@
                                 <th class="p-3">Contato de Emergência</th>
                                 <th class="p-3">Medicamentos / Alergias</th>
                                 <th class="p-3">Restrição Alimentar / Apoio</th>
-                                <th class="p-3">Quarto / Alojamento</th>
+                                <th class="p-3">Módulo / Quarto</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-adm-saude-hospedagem" class="divide-y divide-slate-800"></tbody>
@@ -635,10 +676,16 @@
             calcularPercentualDePagamento,
             consolidarFinanceiroInscricao,
             abrirReciboIndividualVathos,
-            DADOS_EMITENTE_RECIBO_VATHOS
+            DADOS_EMITENTE_RECIBO_VATHOS,
+            CATALOGO_MODULOS_ALOJAMENTO_VATHOS,
+            obterTodosQuartosVathos,
+            buscarInfoQuartoVathos
         } from './js/vathos_calc.js';
 
         window.abrirReciboIndividualVathos = abrirReciboIndividualVathos;
+        window.CATALOGO_MODULOS_ALOJAMENTO_VATHOS = CATALOGO_MODULOS_ALOJAMENTO_VATHOS;
+        window.obterTodosQuartosVathos = obterTodosQuartosVathos;
+        window.buscarInfoQuartoVathos = buscarInfoQuartoVathos;
 
         let userAuth = null;
         let configEvento = structuredClone(VATHOS_DEFAULT_CONFIG);
@@ -1473,11 +1520,160 @@
                 .map(([nome, qtd]) => `<div class="flex justify-between"><span>${nome}</span><strong>${qtd}</strong></div>`)
                 .join('');
 
+            // Mapa de ocupação de alojamentos (Acampamento Esperança)
+            const mapaOcupacaoQuartos = {};
+            const todosQuartos = obterTodosQuartosVathos();
+            todosQuartos.forEach(q => { mapaOcupacaoQuartos[q.id] = []; });
+
+            ativas.forEach(i => {
+                const qId = i.quartoHospedagem;
+                if (qId && mapaOcupacaoQuartos[qId]) {
+                    mapaOcupacaoQuartos[qId].push(i);
+                }
+            });
+
+            let totalOcupadas = 0;
+            Object.values(mapaOcupacaoQuartos).forEach(l => totalOcupadas += l.length);
+            const totalCapacidade = 214;
+            const totalLivres = Math.max(0, totalCapacidade - totalOcupadas);
+
+            const elOcupadas = document.getElementById('lbl-total-camas-ocupadas');
+            const elLivres = document.getElementById('lbl-total-camas-livres');
+            if (elOcupadas) elOcupadas.textContent = `${totalOcupadas} (${Math.round((totalOcupadas / totalCapacidade) * 100)}%)`;
+            if (elLivres) elLivres.textContent = `${totalLivres} camas`;
+
+            // Renderizar Grid de Módulos
+            const gridMod = document.getElementById('grid-modulos-alojamento');
+            if (gridMod) {
+                gridMod.innerHTML = CATALOGO_MODULOS_ALOJAMENTO_VATHOS.map(m => {
+                    const ocupModulo = m.quartos.reduce((acc, q) => acc + (mapaOcupacaoQuartos[q.id]?.length || 0), 0);
+                    const pctModulo = Math.round((ocupModulo / m.totalVagas) * 100);
+
+                    const quartosHtml = m.quartos.map(q => {
+                        const listaAlocados = mapaOcupacaoQuartos[q.id] || [];
+                        const ocup = listaAlocados.length;
+                        const lotado = ocup >= q.vagas;
+                        const badgeCor = lotado
+                            ? 'bg-rose-950/60 text-rose-300 border-rose-500/40'
+                            : (ocup > 0 ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700');
+
+                        const badgeTexto = lotado ? `LOTADO (${ocup}/${q.vagas})` : `${ocup}/${q.vagas} vagas`;
+
+                        const nomesAlocados = listaAlocados.length > 0
+                            ? `<div class="mt-1 pt-1 border-t border-slate-800/80 text-[10px] text-slate-300 space-y-0.5">
+                                 ${listaAlocados.map(a => `<div class="truncate">• <strong>${a.nomeCompleto}</strong> <span class="text-slate-400">(${a.igrejaNome || '—'})</span></div>`).join('')}
+                               </div>`
+                            : `<div class="mt-0.5 text-[10px] text-slate-500 italic">Nenhum participante alocado</div>`;
+
+                        return `
+                            <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                                <div class="flex items-center justify-between gap-1">
+                                    <div>
+                                        <strong class="text-xs text-white">${q.codigo}</strong>
+                                        <span class="text-[10px] text-slate-400 block">${q.tipoCama}</span>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${badgeCor}">
+                                        ${badgeTexto}
+                                    </span>
+                                </div>
+                                ${nomesAlocados}
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+                            <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                                <div>
+                                    <h4 class="text-xs font-black text-white uppercase tracking-wider">${m.moduloNome}</h4>
+                                    <p class="text-[10px] text-slate-400">${m.descricao}</p>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <span class="text-[10px] font-bold text-slate-400 block">${ocupModulo}/${m.totalVagas} leitos</span>
+                                    <div class="w-16 bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
+                                        <div class="bg-indigo-500 h-full rounded-full" style="width: ${Math.min(pctModulo, 100)}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                ${quartosHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Atualizar opções do filtro de quartos na tabela
+            const selFiltro = document.getElementById('f-hosp-quarto-filtro');
+            if (selFiltro) {
+                const valAtual = selFiltro.value;
+                let optHtml = `<option value="">Todos os quartos (${ativas.length} inscritos)</option>`;
+                optHtml += `<option value="SEM_QUARTO">⚠️ Sem Quarto Definido (${ativas.filter(i => !i.quartoHospedagem).length})</option>`;
+                CATALOGO_MODULOS_ALOJAMENTO_VATHOS.forEach(m => {
+                    optHtml += `<optgroup label="${m.moduloNome}">`;
+                    m.quartos.forEach(q => {
+                        const ocup = mapaOcupacaoQuartos[q.id]?.length || 0;
+                        optHtml += `<option value="${q.id}">${q.codigo} (${ocup}/${q.vagas} vagas)</option>`;
+                    });
+                    optHtml += `</optgroup>`;
+                });
+                selFiltro.innerHTML = optHtml;
+                selFiltro.value = valAtual;
+            }
+
+            // Filtragem da tabela
+            const filtroBusca = (document.getElementById('f-hosp-busca')?.value || '').toLowerCase().trim();
+            const filtroQuarto = document.getElementById('f-hosp-quarto-filtro')?.value || '';
+
+            const filtradas = ativas.filter(i => {
+                if (filtroBusca) {
+                    const m = (i.nomeCompleto || '').toLowerCase().includes(filtroBusca) || (i.cpf || '').includes(filtroBusca);
+                    if (!m) return false;
+                }
+                if (filtroQuarto) {
+                    if (filtroQuarto === 'SEM_QUARTO') {
+                        if (i.quartoHospedagem) return false;
+                    } else if (i.quartoHospedagem !== filtroQuarto) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            // Gerar opções de seleção para cada linha
+            function gerarOptionsQuarto(quartoSelecionado) {
+                let html = `<option value="">⚠️ Sem Quarto Definido</option>`;
+                CATALOGO_MODULOS_ALOJAMENTO_VATHOS.forEach(m => {
+                    html += `<optgroup label="${m.moduloNome} (${m.descricao})">`;
+                    m.quartos.forEach(q => {
+                        const ocup = mapaOcupacaoQuartos[q.id]?.length || 0;
+                        const sel = q.id === quartoSelecionado ? 'selected' : '';
+                        const lotado = ocup >= q.vagas && q.id !== quartoSelecionado ? ' — LOTADO' : '';
+                        html += `<option value="${q.id}" ${sel}>${q.codigo} (${ocup}/${q.vagas} vagas${lotado})</option>`;
+                    });
+                    html += `</optgroup>`;
+                });
+                return html;
+            }
+
             const tbody = document.getElementById('tbody-adm-saude-hospedagem');
-            tbody.innerHTML = ativas.map(i => {
+            if (!tbody) return;
+
+            if (filtradas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500 italic">Nenhum participante encontrado para os filtros selecionados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtradas.map(i => {
                 const s = todasFichasSaude[i.cpf] || {};
+                const quartoAtual = i.quartoHospedagem || '';
+                const infoQ = buscarInfoQuartoVathos(quartoAtual);
+                const badgeQuartoInfo = infoQ
+                    ? `<span class="text-[10px] text-indigo-300 block font-semibold mt-1">${infoQ.moduloNome} · ${infoQ.tipoCama}</span>`
+                    : `<span class="text-[10px] text-amber-400 block font-bold mt-1">⚠️ Não alocado</span>`;
+
                 return `
-                    <tr>
+                    <tr class="hover:bg-slate-900/50">
                         <td class="p-3">
                             <div class="font-bold text-white">${i.nomeCompleto}</div>
                             <div class="text-[11px] text-slate-400">${i.idadeCalculada ?? '—'} anos · ${i.igrejaNome || ''}</div>
@@ -1495,20 +1691,31 @@
                             <div>Apoio: <strong class="${s.possuiCondicaoOuApoio ? 'text-indigo-300' : 'text-slate-500'}">${s.possuiCondicaoOuApoio ? s.condicaoOuApoioDetalhes || 'Sim' : 'Não'}</strong></div>
                         </td>
                         <td class="p-3">
-                            <input type="text" value="${i.quartoHospedagem || ''}" placeholder="Ex: Chalé 2"
-                                   onblur="salvarQuartoHospedagem('${i.cpf}', this.value)"
-                                   class="input-dark px-2.5 py-1.5 rounded-lg text-xs w-32" />
+                            <select onchange="salvarQuartoHospedagem('${i.cpf}', this.value)" class="input-dark px-2.5 py-1.5 rounded-xl text-xs font-bold w-48 block">
+                                ${gerarOptionsQuarto(quartoAtual)}
+                            </select>
+                            ${badgeQuartoInfo}
                         </td>
                     </tr>
                 `;
             }).join('');
+            if (window.lucide) lucide.createIcons();
         }
 
         window.salvarQuartoHospedagem = async function(cpf, quarto) {
-            await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), {
-                quartoHospedagem: quarto.trim(),
-                atualizadoEm: serverTimestamp()
-            });
+            try {
+                const val = (quarto || '').trim();
+                await updateDoc(doc(db, 'vathos_2027_inscricoes', cpf), {
+                    quartoHospedagem: val,
+                    atualizadoEm: serverTimestamp()
+                });
+                const insc = todasInscricoes.find(x => x.cpf === cpf);
+                if (insc) insc.quartoHospedagem = val;
+                renderizarAbaOperacionalAdmin();
+            } catch (err) {
+                console.error('Erro ao salvar quarto:', err);
+                alert('Erro ao salvar quarto: ' + err.message);
+            }
         };
 
         // =====================================================================

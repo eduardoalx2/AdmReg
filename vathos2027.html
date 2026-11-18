@@ -788,7 +788,7 @@
                 <!-- OS 7 CONTROLES DE SITUAÇÃO SEPARADOS (Seção 14) -->
                 <div>
                     <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">Painel de Situação da Inscrição (Controles Independentes)</div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">1. Cadastro</span>
                             <span id="st-cadastro" class="text-xs font-extrabold text-emerald-400 mt-1 block">Completo</span>
@@ -816,6 +816,10 @@
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">7. Presença</span>
                             <span id="st-presenca" class="text-xs font-extrabold text-slate-400 mt-1 block">Não chegou</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">8. Alojamento</span>
+                            <span id="st-alojamento" class="text-xs font-extrabold text-slate-400 mt-1 block">A definir</span>
                         </div>
                     </div>
                 </div>
@@ -1124,10 +1128,12 @@
             calcularPercentualDePagamento,
             consolidarFinanceiroInscricao,
             abrirReciboIndividualVathos,
-            DADOS_EMITENTE_RECIBO_VATHOS
+            DADOS_EMITENTE_RECIBO_VATHOS,
+            buscarInfoQuartoVathos
         } from './js/vathos_calc.js';
 
         window.abrirReciboIndividualVathos = abrirReciboIndividualVathos;
+        window.buscarInfoQuartoVathos = buscarInfoQuartoVathos;
 
         let configEvento = structuredClone(VATHOS_DEFAULT_CONFIG);
         let listaIgrejas = [];
@@ -1952,6 +1958,18 @@
             document.getElementById('st-acerto-lider').textContent = mapStatus[consolidado.statusAcertoLiderSugerido || i.statusAcertoLider] || 'Nenhum';
             document.getElementById('st-participacao').textContent = mapStatus[i.statusParticipacao] || i.statusParticipacao;
             document.getElementById('st-presenca').textContent = mapStatus[i.statusPresenca] || i.statusPresenca;
+
+            const elAloj = document.getElementById('st-alojamento');
+            if (elAloj) {
+                if (i.quartoHospedagem) {
+                    const infoQ = buscarInfoQuartoVathos(i.quartoHospedagem);
+                    elAloj.textContent = infoQ ? `${infoQ.codigo} (${infoQ.moduloNome})` : i.quartoHospedagem;
+                    elAloj.className = 'text-xs font-extrabold text-emerald-400 mt-1 block';
+                } else {
+                    elAloj.textContent = 'A definir';
+                    elAloj.className = 'text-xs font-bold text-slate-400 mt-1 block';
+                }
+            }
 
             document.getElementById('ap-badge-participacao').textContent = mapStatus[i.statusParticipacao] || i.statusParticipacao;
 

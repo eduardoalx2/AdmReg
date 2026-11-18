@@ -920,9 +920,18 @@ export function abrirReciboIndividualVathos(pagamento, inscricao = {}, numeroSeq
                 <div><strong>Data do Pagamento:</strong> ${dataPag}</div>
                 <div style="font-size:9.5px;margin-top:4px;">Documento emitido eletronicamente pelo Portal VATHOS 2027 — Região 655.</div>
             </div>
-            <div class="linha-assinatura">
-                ${DADOS_EMITENTE_RECIBO_VATHOS.nome}<br>
-                <span style="font-size:10px;font-weight:400;">${DADOS_EMITENTE_RECIBO_VATHOS.regiao} · CNPJ ${DADOS_EMITENTE_RECIBO_VATHOS.cnpj}</span>
+            <div style="text-align: center; min-width: 260px;">
+                <div style="margin-bottom: -18px;">
+                    <picture>
+                        <source srcset="assinatura.webp" type="image/webp">
+                        <img src="assinatura.png" alt="Assinatura Pr. Eduardo Silva" style="height: 68px; object-fit: contain; mix-blend-mode: multiply; opacity: 0.95; display: inline-block;" onerror="this.style.display='none'">
+                    </picture>
+                </div>
+                <div class="linha-assinatura" style="width: 100%;">
+                    <strong style="font-size: 12px; text-transform: uppercase;">Pr. Eduardo Silva</strong><br>
+                    <span style="font-size:10px;font-weight:700;">${DADOS_EMITENTE_RECIBO_VATHOS.nome}</span><br>
+                    <span style="font-size:9.5px;font-weight:400;">${DADOS_EMITENTE_RECIBO_VATHOS.regiao} · CNPJ ${DADOS_EMITENTE_RECIBO_VATHOS.cnpj}</span>
+                </div>
             </div>
         </div>
     </div>
@@ -933,4 +942,72 @@ export function abrirReciboIndividualVathos(pagamento, inscricao = {}, numeroSeq
     win.document.write(html);
     win.document.close();
 }
+
+// ============================================================================
+// CATÁLOGO DE MÓDULOS E ALOJAMENTOS (ACAMPAMENTO ESPERANÇA)
+// ============================================================================
+// 4 - Suíte 1 e suíte 2, com 3 camas de solteiro em cada uma.
+// Módulos de A ao H: 4 quartos com 3 beliches em cada quarto (6 camas/vagas por quarto).
+// Módulo I: 2 quartos com 4 beliches em cada quarto (8 camas/vagas por quarto).
+
+export const CATALOGO_MODULOS_ALOJAMENTO_VATHOS = [
+    {
+        moduloId: 'suites',
+        moduloNome: 'Suítes',
+        descricao: 'Suíte 1 e Suíte 2 (3 camas de solteiro cada)',
+        totalQuartos: 2,
+        totalVagas: 6,
+        quartos: [
+            { id: 'Suite-1', codigo: 'Suíte 1', tipo: 'suite', beliches: 0, camasSolteiro: 3, vagas: 3 },
+            { id: 'Suite-2', codigo: 'Suíte 2', tipo: 'suite', beliches: 0, camasSolteiro: 3, vagas: 3 }
+        ]
+    },
+    ...['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(letra => ({
+        moduloId: `modulo_${letra.toLowerCase()}`,
+        moduloNome: `Módulo ${letra}`,
+        descricao: '4 quartos com 3 beliches em cada quarto (6 camas/vagas por quarto)',
+        totalQuartos: 4,
+        totalVagas: 24,
+        quartos: [1, 2, 3, 4].map(num => ({
+            id: `${letra}${num}`,
+            codigo: `${letra}${num}`,
+            tipo: 'quarto_padrao',
+            beliches: 3,
+            camasSolteiro: 0,
+            vagas: 6
+        }))
+    })),
+    {
+        moduloId: 'modulo_i',
+        moduloNome: 'Módulo I',
+        descricao: '2 quartos com 4 beliches em cada quarto (8 camas/vagas por quarto)',
+        totalQuartos: 2,
+        totalVagas: 16,
+        quartos: [
+            { id: 'I1', codigo: 'I1', tipo: 'quarto_especial', beliches: 4, camasSolteiro: 0, vagas: 8 },
+            { id: 'I2', codigo: 'I2', tipo: 'quarto_especial', beliches: 4, camasSolteiro: 0, vagas: 8 }
+        ]
+    }
+];
+
+export function obterTodosQuartosVathos() {
+    const lista = [];
+    CATALOGO_MODULOS_ALOJAMENTO_VATHOS.forEach(m => {
+        m.quartos.forEach(q => {
+            lista.push({
+                ...q,
+                moduloNome: m.moduloNome,
+                moduloId: m.moduloId
+            });
+        });
+    });
+    return lista;
+}
+
+export function buscarInfoQuartoVathos(idQuarto) {
+    if (!idQuarto) return null;
+    const todos = obterTodosQuartosVathos();
+    return todos.find(q => q.id === idQuarto || q.codigo.toLowerCase() === idQuarto.toLowerCase()) || null;
+}
+
 
