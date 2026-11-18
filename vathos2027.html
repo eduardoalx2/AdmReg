@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>VATHOS 2027 — Portal de Inscrições & Área do Participante</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@0.300.0"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         html {
             scroll-behavior: smooth;
             -webkit-text-size-adjust: 100%;
         }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #070b14;
@@ -24,19 +27,28 @@
             width: 100%;
             min-height: 100vh;
         }
-        input, select, textarea {
+
+        input,
+        select,
+        textarea {
             font-size: 16px;
         }
+
         @media (min-width: 640px) {
-            input, select, textarea {
+
+            input,
+            select,
+            textarea {
                 font-size: 0.875rem;
             }
         }
+
         .glass-card {
             background: rgba(15, 23, 42, 0.82);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
+
         .input-dark {
             background: rgba(9, 13, 22, 0.9);
             border: 1px solid rgba(148, 163, 184, 0.2);
@@ -44,14 +56,18 @@
             outline: none;
             transition: all 0.2s ease;
         }
+
         .input-dark:focus {
             border-color: #6366f1;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
         }
-        .input-dark:disabled, .input-dark[readonly] {
+
+        .input-dark:disabled,
+        .input-dark[readonly] {
             opacity: 0.65;
             cursor: not-allowed;
         }
+
         .badge-a-definir {
             display: inline-flex;
             align-items: center;
@@ -75,22 +91,22 @@
     <script>
         // Polyfill seguro de structuredClone para navegadores mais antigos (iOS Safari < 15.4)
         if (typeof window.structuredClone !== 'function') {
-            window.structuredClone = function(obj) {
+            window.structuredClone = function (obj) {
                 try { return JSON.parse(JSON.stringify(obj)); } catch (e) { return obj; }
             };
         }
 
-        window.safeLucideIcons = function() {
+        window.safeLucideIcons = function () {
             if (window.lucide && typeof lucide.createIcons === 'function') {
-                try { lucide.createIcons(); } catch(e){}
+                try { lucide.createIcons(); } catch (e) { }
             }
         };
 
-        window.limparCPF = function(valor) {
+        window.limparCPF = function (valor) {
             return String(valor || '').replace(/\D/g, '').slice(0, 11);
         };
 
-        window.aplicarMascaraCPF = function(valor) {
+        window.aplicarMascaraCPF = function (valor) {
             if (!valor) return '';
             const d = window.limparCPF(valor);
             if (d.length <= 3) return d;
@@ -99,7 +115,7 @@
             return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
         };
 
-        window.formatarCPFInput = function(target) {
+        window.formatarCPFInput = function (target) {
             if (!target) return '';
             const raw = typeof target === 'string' ? target : target.value;
             const formatado = window.aplicarMascaraCPF(raw);
@@ -109,7 +125,7 @@
             return formatado;
         };
 
-        window.validarCPF = function(valor) {
+        window.validarCPF = function (valor) {
             const cpf = window.limparCPF(valor);
             if (cpf.length !== 11) return false;
             if (/^(\d)\1{10}$/.test(cpf)) return false;
@@ -134,7 +150,7 @@
         };
 
         // ABRE FORMULÁRIO DE INSCRIÇÃO INSTANTANEAMENTE (EM 1 MILISSEGUNDO, SEM TRAVAR)
-        window.abrirFormularioInscricaoInstantaneo = function(cpfLimpo) {
+        window.abrirFormularioInscricaoInstantaneo = function (cpfLimpo) {
             document.getElementById('cabecalho-compacto-topo')?.classList.add('hidden');
             document.getElementById('secao-entrada-cpf')?.classList.add('hidden');
             document.getElementById('secao-area-participante')?.classList.add('hidden');
@@ -161,7 +177,7 @@
         window.__executarAcessoPorCPFReal = null;
         window.__cpfPendenteAcesso = null;
 
-        window.verificarAcessoPorCPF = async function(cpfForcado = null) {
+        window.verificarAcessoPorCPF = async function (cpfForcado = null) {
             const raw = cpfForcado || document.getElementById('input-cpf-acesso')?.value || '';
             const erroEl = document.getElementById('erro-cpf-acesso');
             const btn = document.getElementById('btn-entrar-cpf');
@@ -267,15 +283,46 @@
                 }
             }
         };
+
+        // Fallback global de submissão acessível imediatamente no carregamento da página
+        window.salvarInscricaoPreReserva = function () {
+            if (typeof window.__salvarInscricaoReal === 'function') {
+                return window.__salvarInscricaoReal();
+            }
+            const btn = document.getElementById('btn-salvar-inscricao');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="inline-block animate-spin mr-2">🔄</span> Conectando ao sistema...`;
+            }
+            let tent = 0;
+            const aguardarModulo = setInterval(() => {
+                tent++;
+                if (typeof window.__salvarInscricaoReal === 'function') {
+                    clearInterval(aguardarModulo);
+                    if (btn) btn.disabled = false;
+                    window.__salvarInscricaoReal();
+                } else if (tent > 80) {
+                    clearInterval(aguardarModulo);
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i> Confirmar Inscrição e Pré-Reserva`;
+                        window.safeLucideIcons();
+                    }
+                    alert('Conectando ao sistema. Por favor, toque novamente em Confirmar.');
+                }
+            }, 100);
+        };
     </script>
 </head>
+
 <body class="min-h-screen flex flex-col justify-between">
 
     <!-- TOP BAR (SIMPLES E LIMPO PARA CELULAR) -->
     <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800">
         <div class="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
             <a href="login.html" class="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
-                <img src="logo.png" alt="Logo Região 655" class="h-7 w-auto object-contain" onerror="this.style.display='none'">
+                <img src="logo.png" alt="Logo Região 655" class="h-7 w-auto object-contain"
+                    onerror="this.style.display='none'">
                 <div class="border-l border-slate-800 pl-2">
                     <div class="text-xs font-black text-white tracking-wide uppercase">VATHOS 2027</div>
                     <div class="text-[9px] text-slate-400">Região 655 · Londrina/PR</div>
@@ -284,13 +331,16 @@
 
             <!-- Apenas 2 botões limpos, sem quadradinhos quebrados -->
             <div class="flex items-center gap-2">
-                <button type="button" onclick="abrirModalOrientacoes()" class="text-xs font-bold text-indigo-300 hover:text-white bg-indigo-950/60 hover:bg-indigo-900/70 border border-indigo-500/30 px-3 py-1.5 rounded-xl transition-colors">
+                <button type="button" onclick="abrirModalOrientacoes()"
+                    class="text-xs font-bold text-indigo-300 hover:text-white bg-indigo-950/60 hover:bg-indigo-900/70 border border-indigo-500/30 px-3 py-1.5 rounded-xl transition-colors">
                     Regras & Valores
                 </button>
-                <a href="vathos2027_admin.html" class="text-xs font-bold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl transition-colors">
+                <a href="vathos2027_admin.html"
+                    class="text-xs font-bold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl transition-colors">
                     Admin
                 </a>
-                <button id="btn-sair-cpf" type="button" onclick="encerrarSessaoCPF()" class="hidden text-xs font-bold text-rose-300 hover:text-white bg-rose-950/50 border border-rose-500/30 px-2.5 py-1.5 rounded-xl transition-colors">
+                <button id="btn-sair-cpf" type="button" onclick="encerrarSessaoCPF()"
+                    class="hidden text-xs font-bold text-rose-300 hover:text-white bg-rose-950/50 border border-rose-500/30 px-2.5 py-1.5 rounded-xl transition-colors">
                     Sair
                 </button>
             </div>
@@ -302,7 +352,8 @@
 
         <!-- CABEÇALHO COMPACTO DO EVENTO (SIMPLES, DIRETO E BONITO) -->
         <div id="cabecalho-compacto-topo" class="text-center space-y-1.5 py-1">
-            <span class="inline-block px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-black uppercase tracking-wider">
+            <span
+                class="inline-block px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-black uppercase tracking-wider">
                 🔥 Retiro Regional de Jovens & Adolescentes · 26 a 28 de Março de 2027
             </span>
             <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
@@ -314,9 +365,11 @@
         </div>
 
         <!-- ETAPA 0: PORTA DE ENTRADA POR CPF (SIMPLES, DIRETA E OBJETIVA) -->
-        <section id="secao-entrada-cpf" class="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-7 max-w-lg mx-auto shadow-2xl border border-slate-800">
+        <section id="secao-entrada-cpf"
+            class="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-7 max-w-lg mx-auto shadow-2xl border border-slate-800">
             <div class="text-center space-y-1.5 mb-5">
-                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+                <div
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
                     <i data-lucide="fingerprint" class="w-4 h-4"></i> Acesso com CPF
                 </div>
                 <h2 class="text-xl sm:text-2xl font-black text-white">Informe seu CPF</h2>
@@ -327,16 +380,17 @@
 
             <form id="form-entrada-cpf" onsubmit="event.preventDefault(); verificarAcessoPorCPF();" class="space-y-3.5">
                 <div>
-                    <label for="input-cpf-acesso" class="block text-xs font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label for="input-cpf-acesso"
+                        class="block text-xs font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">
                         Número do CPF
                     </label>
                     <div class="relative">
                         <input type="tel" id="input-cpf-acesso" required maxlength="14" inputmode="numeric"
-                               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                               placeholder="000.000.000-00"
-                               oninput="window.aoDigitarCPFAcesso(this)"
-                               class="w-full bg-slate-900 border-2 border-slate-700 focus:border-indigo-500 focus:bg-slate-950 rounded-2xl py-3.5 px-4 text-center text-xl sm:text-2xl font-mono font-black tracking-widest text-white placeholder-slate-600 outline-none transition-all shadow-inner" />
-                        <span id="icone-cpf-status" class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-emerald-400 font-bold text-base">✓</span>
+                            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                            placeholder="000.000.000-00" oninput="window.aoDigitarCPFAcesso(this)"
+                            class="w-full bg-slate-900 border-2 border-slate-700 focus:border-indigo-500 focus:bg-slate-950 rounded-2xl py-3.5 px-4 text-center text-xl sm:text-2xl font-mono font-black tracking-widest text-white placeholder-slate-600 outline-none transition-all shadow-inner" />
+                        <span id="icone-cpf-status"
+                            class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-emerald-400 font-bold text-base">✓</span>
                     </div>
 
                     <div class="flex items-center justify-between text-[11px] text-slate-400 mt-1.5 px-1 font-semibold">
@@ -344,11 +398,13 @@
                         <span id="contador-digitos-cpf" class="font-mono text-slate-400">0 / 11 dígitos</span>
                     </div>
 
-                    <p id="erro-cpf-acesso" class="hidden text-xs text-rose-300 font-bold mt-2.5 text-center p-2.5 rounded-xl bg-rose-950/60 border border-rose-500/40"></p>
+                    <p id="erro-cpf-acesso"
+                        class="hidden text-xs text-rose-300 font-bold mt-2.5 text-center p-2.5 rounded-xl bg-rose-950/60 border border-rose-500/40">
+                    </p>
                 </div>
 
                 <button type="submit" id="btn-entrar-cpf"
-                        class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-indigo-950/40 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer border border-indigo-400/30">
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-indigo-950/40 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer border border-indigo-400/30">
                     <span>Continuar com CPF</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
@@ -361,8 +417,10 @@
             <!-- Resumo Rápido de Modalidades e Lotes (Compacto e limpo) -->
             <div class="mt-5 pt-4 border-t border-slate-800/80 space-y-2.5">
                 <div class="flex items-center justify-between text-[11px]">
-                    <span class="font-extrabold uppercase tracking-wider text-slate-400">Valores do Retiro Completo</span>
-                    <button type="button" onclick="abrirModalOrientacoes()" class="text-indigo-400 hover:underline font-bold">Ver regras →</button>
+                    <span class="font-extrabold uppercase tracking-wider text-slate-400">Valores do Retiro
+                        Completo</span>
+                    <button type="button" onclick="abrirModalOrientacoes()"
+                        class="text-indigo-400 hover:underline font-bold">Ver regras →</button>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
@@ -379,21 +437,26 @@
                     </div>
                 </div>
                 <p class="text-[10px] text-slate-400 text-center">
-                    Crianças até 4a: <strong>Gratuito</strong> · 5 a 8a: <strong>30% desc.</strong> · Day Use: <strong>R$ 100/R$ 220</strong>
+                    Crianças até 4a: <strong>Gratuito</strong> · 5 a 8a: <strong>30% desc.</strong> · Day Use:
+                    <strong>R$ 100/R$ 220</strong>
                 </p>
             </div>
 
             <!-- ATALHOS RÁPIDOS COMPACTOS -->
-            <div class="mt-4 pt-3.5 border-t border-slate-800/80 flex items-center justify-center gap-3 text-xs text-slate-400">
-                <a href="vathos2027_autorizacao.html" class="hover:text-amber-300 transition-colors flex items-center gap-1 font-semibold text-[11px]">
+            <div
+                class="mt-4 pt-3.5 border-t border-slate-800/80 flex items-center justify-center gap-3 text-xs text-slate-400">
+                <a href="vathos2027_autorizacao.html"
+                    class="hover:text-amber-300 transition-colors flex items-center gap-1 font-semibold text-[11px]">
                     <i data-lucide="file-check" class="w-3.5 h-3.5 text-amber-400"></i> Autorização Pais
                 </a>
                 <span>·</span>
-                <a href="vathos2027_lideres.html" class="hover:text-emerald-300 transition-colors flex items-center gap-1 font-semibold text-[11px]">
+                <a href="vathos2027_lideres.html"
+                    class="hover:text-emerald-300 transition-colors flex items-center gap-1 font-semibold text-[11px]">
                     <i data-lucide="users" class="w-3.5 h-3.5 text-emerald-400"></i> Líderes
                 </a>
                 <span>·</span>
-                <a href="vathos2027_admin.html" class="hover:text-indigo-300 transition-colors flex items-center gap-1 font-semibold text-[11px]">
+                <a href="vathos2027_admin.html"
+                    class="hover:text-indigo-300 transition-colors flex items-center gap-1 font-semibold text-[11px]">
                     <i data-lucide="shield" class="w-3.5 h-3.5 text-indigo-400"></i> Admin
                 </a>
             </div>
@@ -401,7 +464,7 @@
 
         <script>
             // Gerenciador reativo da digitação do CPF de Acesso
-            window.aoDigitarCPFAcesso = function(inp) {
+            window.aoDigitarCPFAcesso = function (inp) {
                 if (!inp) return;
                 const digitos = inp.value.replace(/\D/g, '').slice(0, 11);
                 inp.value = window.aplicarMascaraCPF(digitos);
@@ -438,18 +501,23 @@
         </script>
 
         <!-- SELETOR DE VÍNCULOS (Quando o CPF logado é responsável por menores ou tem múltiplas fichas) -->
-        <section id="secao-banner-gestor-cpf" class="hidden glass-card rounded-2xl p-4 border border-emerald-500/40 bg-emerald-950/20">
+        <section id="secao-banner-gestor-cpf"
+            class="hidden glass-card rounded-2xl p-4 border border-emerald-500/40 bg-emerald-950/20">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center justify-center shrink-0">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center justify-center shrink-0">
                         <i data-lucide="shield-check" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">Acesso de Coordenação / Gestão Liberado</span>
-                        <p class="text-xs text-white font-bold" id="txt-nome-gestor-cpf">Você está autorizada como Gestora do VATHOS 2027.</p>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">Acesso
+                            de Coordenação / Gestão Liberado</span>
+                        <p class="text-xs text-white font-bold" id="txt-nome-gestor-cpf">Você está autorizada como
+                            Gestora do VATHOS 2027.</p>
                     </div>
                 </div>
-                <button type="button" onclick="acessarPainelGestorComSenha()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-lg transition-colors flex items-center justify-center gap-1.5 shrink-0">
+                <button type="button" onclick="acessarPainelGestorComSenha()"
+                    class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-lg transition-colors flex items-center justify-center gap-1.5 shrink-0">
                     <i data-lucide="lock" class="w-4 h-4"></i> Abrir Painel Gestor (Admin)
                 </button>
             </div>
@@ -458,111 +526,163 @@
         <section id="secao-vinculos-responsavel" class="hidden glass-card rounded-2xl p-4 border border-indigo-500/30">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400 block">Acesso do Responsável / Família</span>
-                    <p class="text-xs text-slate-300">Selecione qual inscrição deseja visualizar ou cadastre outro filho(a) menor vinculado ao seu CPF:</p>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400 block">Acesso do
+                        Responsável / Família</span>
+                    <p class="text-xs text-slate-300">Selecione qual inscrição deseja visualizar ou cadastre outro
+                        filho(a) menor vinculado ao seu CPF:</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2" id="lista-botoes-vinculos"></div>
             </div>
         </section>
 
         <!-- ETAPA 1: FORMULÁRIO DE INSCRIÇÃO E PRÉ-RESERVA -->
-        <section id="secao-formulario-inscricao" class="hidden glass-card rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800 space-y-8">
+        <section id="secao-formulario-inscricao"
+            class="hidden glass-card rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800 space-y-8">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
                 <div>
-                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400" id="form-modo-badge">Nova Inscrição & Pré-Reserva</span>
-                    <h2 class="text-xl sm:text-2xl font-black text-white mt-0.5" id="form-titulo-principal">Ficha de Inscrição — VATHOS 2027</h2>
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400"
+                        id="form-modo-badge">Nova Inscrição & Pré-Reserva</span>
+                    <h2 class="text-xl sm:text-2xl font-black text-white mt-0.5" id="form-titulo-principal">Ficha de
+                        Inscrição — VATHOS 2027</h2>
                 </div>
                 <div class="text-right">
                     <span class="text-[11px] text-slate-400 block">CPF Vinculado:</span>
-                    <span id="form-cpf-badge" class="font-mono text-sm font-extrabold text-indigo-300 bg-indigo-950/70 border border-indigo-500/30 px-3 py-1 rounded-lg inline-block mt-0.5">000.000.000-00</span>
+                    <span id="form-cpf-badge"
+                        class="font-mono text-sm font-extrabold text-indigo-300 bg-indigo-950/70 border border-indigo-500/30 px-3 py-1 rounded-lg inline-block mt-0.5">000.000.000-00</span>
                 </div>
             </div>
 
-            <form id="form-vathos-inscricao" onsubmit="event.preventDefault(); salvarInscricaoPreReserva();" class="space-y-8">
+            <!-- AVISO DE VALIDAÇÃO NO TOPO DO FORMULÁRIO -->
+            <div id="aviso-validacao-form-topo"
+                class="hidden p-4 rounded-2xl bg-rose-950/90 border-2 border-rose-500 text-rose-200 text-xs font-bold shadow-xl flex items-center gap-3 mb-4">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 shrink-0"></i>
+                <span id="texto-aviso-validacao-topo">Por favor, preencha todos os campos obrigatórios destacados.</span>
+            </div>
+
+            <form id="form-vathos-inscricao" novalidate onsubmit="event.preventDefault(); salvarInscricaoPreReserva();"
+                class="space-y-8">
 
                 <!-- 1. IDENTIFICAÇÃO DO PARTICIPANTE -->
                 <div class="space-y-4">
                     <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">1</span>
+                        <span
+                            class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">1</span>
                         Identificação do Participante
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div class="sm:col-span-2 lg:col-span-3">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome Completo <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-nome-completo" required placeholder="Nome completo conforme documento" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome Completo <span
+                                    class="text-rose-400">*</span></label>
+                            <input type="text" id="f-nome-completo" required
+                                placeholder="Nome completo conforme documento"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Data de Nascimento <span class="text-rose-400">*</span></label>
-                            <input type="date" id="f-data-nascimento" required onchange="atualizarCalculoIdadeModalidade()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Data de Nascimento
+                                <span class="text-rose-400">*</span></label>
+                            <input type="date" id="f-data-nascimento" required
+                                onchange="atualizarCalculoIdadeModalidade()"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Idade e Faixa Etária Calculada</label>
-                            <div id="box-idade-calculada" class="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Idade e Faixa Etária
+                                Calculada</label>
+                            <div id="box-idade-calculada"
+                                class="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2">
                                 <span id="texto-idade-calculada">Preencha a data de nascimento para calcular</span>
-                                <span id="badge-ref-idade" class="badge-a-definir" title="Data de referência proposta: 26/03/2027 (pendente de confirmação)">Ref. 26/03/2027 (Proposta)</span>
+                                <span id="badge-ref-idade" class="badge-a-definir"
+                                    title="Data de referência proposta: 26/03/2027 (pendente de confirmação)">Ref.
+                                    26/03/2027 (Proposta)</span>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF do Participante <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-cpf" readonly required class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF do Participante
+                                <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-cpf" readonly required
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">RG ou Nova Identidade (CIN) <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-rg" required placeholder="Número do RG ou CIN" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">RG ou Nova Identidade (CIN)
+                                <span class="text-slate-500 text-[10px] font-normal">(Opcional)</span></label>
+                            <input type="text" id="f-rg" placeholder="Número do RG ou CIN (opcional)"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-300 uppercase mb-1">
-                                E-mail <span id="label-email-obrig" class="text-slate-500 text-[10px] font-normal">(Opcional / A definir)</span>
+                                E-mail <span id="label-email-obrig"
+                                    class="text-slate-500 text-[10px] font-normal">(Opcional / A definir)</span>
                             </label>
-                            <input type="email" id="f-email" placeholder="seuemail@exemplo.com" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <input type="email" id="f-email" placeholder="seuemail@exemplo.com"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">WhatsApp Principal <span class="text-rose-400">*</span></label>
-                            <input type="tel" id="f-whatsapp" required maxlength="15" placeholder="(43) 99999-9999" oninput="this.value = window.formatarTelefoneInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
-                            <label class="inline-flex items-center gap-2 mt-1.5 text-[11px] text-slate-400 cursor-pointer">
-                                <input type="checkbox" id="f-whatsapp-eh-responsavel" class="rounded bg-slate-900 border-slate-700 text-indigo-500" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">WhatsApp Principal
+                                <span class="text-rose-400">*</span></label>
+                            <input type="tel" id="f-whatsapp" required maxlength="15" placeholder="(43) 99999-9999"
+                                oninput="this.value = window.formatarTelefoneInput(this.value)"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                            <label
+                                class="inline-flex items-center gap-2 mt-1.5 text-[11px] text-slate-400 cursor-pointer">
+                                <input type="checkbox" id="f-whatsapp-eh-responsavel"
+                                    class="rounded bg-slate-900 border-slate-700 text-indigo-500" />
                                 <span>Contato pertence ao responsável (não tenho telefone próprio)</span>
                             </label>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Telefone Alternativo (Opcional)</label>
-                            <input type="tel" id="f-telefone-alt" maxlength="15" placeholder="(43) 99999-9999" oninput="this.value = window.formatarTelefoneInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Telefone Alternativo
+                                (Opcional)</label>
+                            <input type="tel" id="f-telefone-alt" maxlength="15" placeholder="(43) 99999-9999"
+                                oninput="this.value = window.formatarTelefoneInput(this.value)"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
                     </div>
 
                     <!-- Endereço com busca CEP -->
                     <div class="pt-2 border-t border-slate-800/60 grid grid-cols-1 sm:grid-cols-6 gap-4">
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CEP <span class="text-rose-400">*</span></label>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CEP
+                                <span class="text-slate-500 text-[10px] font-normal">(Opcional)</span></label>
                             <div class="flex gap-2">
-                                <input type="text" id="f-cep" required maxlength="9" placeholder="00000-000" oninput="this.value = window.formatarCEPInput(this.value)" onblur="buscarCEPAutomatico()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono" />
+                                <input type="text" id="f-cep" maxlength="9" placeholder="00000-000"
+                                    oninput="this.value = window.formatarCEPInput(this.value)"
+                                    onblur="buscarCEPAutomatico()"
+                                    class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono" />
                             </div>
                         </div>
                         <div class="sm:col-span-3">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Rua / Logradouro <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-rua" required placeholder="Nome da rua, avenida..." class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Rua / Logradouro
+                                <span class="text-slate-500 text-[10px] font-normal">(Opcional)</span></label>
+                            <input type="text" id="f-rua" placeholder="Nome da rua, avenida..."
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
                         <div class="sm:col-span-1">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Número <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-numero" required placeholder="Nº" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Número
+                                <span class="text-slate-500 text-[10px] font-normal">(Opcional)</span></label>
+                            <input type="text" id="f-numero" placeholder="Nº"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Complemento</label>
-                            <input type="text" id="f-complemento" placeholder="Apto, Bloco, Casa..." class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <input type="text" id="f-complemento" placeholder="Apto, Bloco, Casa..."
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Bairro <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-bairro" required placeholder="Bairro" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Bairro
+                                <span class="text-slate-500 text-[10px] font-normal">(Opcional)</span></label>
+                            <input type="text" id="f-bairro" placeholder="Bairro"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Cidade / UF <span class="text-rose-400">*</span></label>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Cidade / UF</label>
                             <div class="grid grid-cols-3 gap-2">
-                                <input type="text" id="f-cidade" required placeholder="Londrina" value="Londrina" class="col-span-2 input-dark px-3 py-2.5 rounded-xl text-sm" />
-                                <input type="text" id="f-uf" required maxlength="2" placeholder="PR" value="PR" class="col-span-1 input-dark px-2 py-2.5 rounded-xl text-sm text-center uppercase font-bold" />
+                                <input type="text" id="f-cidade" placeholder="Londrina" value="Londrina"
+                                    class="col-span-2 input-dark px-3 py-2.5 rounded-xl text-sm" />
+                                <input type="text" id="f-uf" maxlength="2" placeholder="PR" value="PR"
+                                    class="col-span-1 input-dark px-2 py-2.5 rounded-xl text-sm text-center uppercase font-bold" />
                             </div>
                         </div>
                     </div>
@@ -571,14 +691,17 @@
                 <!-- 2. VÍNCULO COM A IGREJA E CATEGORIA -->
                 <div class="space-y-4 pt-4 border-t border-slate-800">
                     <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">2</span>
+                        <span
+                            class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">2</span>
                         Vínculo com a Igreja e Categoria
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Igreja à qual pertence <span class="text-rose-400">*</span></label>
-                            <select id="f-igreja-select" required onchange="aoMudarIgrejaSelect()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Igreja à qual pertence
+                                <span class="text-rose-400">*</span></label>
+                            <select id="f-igreja-select" required onchange="aoMudarIgrejaSelect()"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
                                 <option value="">Selecione sua igreja...</option>
                                 <option value="IEQ CENTRAL">0252 - IEQ CENTRAL</option>
                                 <option value="IEQ ALTO DA BOA VISTA">3744 - IEQ ALTO DA BOA VISTA</option>
@@ -600,18 +723,25 @@
                         </div>
 
                         <div id="wrap-outra-igreja" class="hidden">
-                            <label class="block text-xs font-bold text-amber-300 uppercase mb-1">Nome da Outra Igreja / Cidade <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-outra-igreja" placeholder="Informe o nome da igreja e cidade" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-amber-300 uppercase mb-1">Nome da Outra Igreja /
+                                Cidade <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-outra-igreja" placeholder="Informe o nome da igreja e cidade"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
 
                         <div id="wrap-lider-referencia">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Líder ou Pastor de Referência <span class="text-rose-400" id="ast-lider">*</span></label>
-                            <input type="text" id="f-lider-referencia" required placeholder="Nome do seu pastor ou líder de jovens" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Líder ou Pastor de
+                                Referência <span class="text-slate-500 text-[10px] font-normal">(Se houver)</span></label>
+                            <input type="text" id="f-lider-referencia"
+                                placeholder="Nome do seu pastor ou líder de jovens (opcional)"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Categoria de Participação <span class="text-rose-400">*</span></label>
-                            <select id="f-categoria" required class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Categoria de
+                                Participação <span class="text-rose-400">*</span></label>
+                            <select id="f-categoria" required
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
                                 <option value="participante">Participante</option>
                                 <option value="lider">Líder</option>
                                 <option value="equipe">Equipe de trabalho</option>
@@ -620,8 +750,10 @@
                         </div>
 
                         <div id="wrap-tamanho-camiseta" class="hidden">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Tamanho de Camiseta <span class="text-rose-400">*</span></label>
-                            <select id="f-camiseta" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Tamanho de Camiseta
+                                <span class="text-rose-400">*</span></label>
+                            <select id="f-camiseta"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
                                 <option value="">Selecione...</option>
                             </select>
                         </div>
@@ -631,17 +763,23 @@
                 <!-- 3. ESCOLHA DA MODALIDADE E CONDIÇÃO DE PAGAMENTO -->
                 <div class="space-y-4 pt-4 border-t border-slate-800">
                     <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">3</span>
+                        <span
+                            class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">3</span>
                         Modalidade e Condição de Pagamento
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Modalidade de Participação <span class="text-rose-400">*</span></label>
-                            <select id="f-modalidade" required onchange="atualizarCalculoIdadeModalidade()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-bold">
-                                <option value="retiro_completo">Retiro Completo (26 a 28/03/2027 — Com pernoite)</option>
-                                <option value="day_use_sem_alimentacao">Day Use — Sem alimentação (R$ 100,00 / dia)</option>
-                                <option value="day_use_com_alimentacao">Day Use — Com café da manhã, almoço e café da tarde (R$ 220,00 / dia)</option>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Modalidade de
+                                Participação <span class="text-rose-400">*</span></label>
+                            <select id="f-modalidade" required onchange="atualizarCalculoIdadeModalidade()"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-bold">
+                                <option value="retiro_completo">Retiro Completo (26 a 28/03/2027 — Com pernoite)
+                                </option>
+                                <option value="day_use_sem_alimentacao">Day Use — Sem alimentação (R$ 100,00 / dia)
+                                </option>
+                                <option value="day_use_com_alimentacao">Day Use — Com café da manhã, almoço e café da
+                                    tarde (R$ 220,00 / dia)</option>
                             </select>
                         </div>
 
@@ -649,69 +787,99 @@
                             <label class="block text-xs font-bold text-amber-300 uppercase mb-1">
                                 Dia de Participação (Day Use) <span class="text-rose-400">*</span>
                             </label>
-                            <select id="f-dia-dayuse" onchange="atualizarCalculoIdadeModalidade()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                            <select id="f-dia-dayuse" onchange="atualizarCalculoIdadeModalidade()"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
                                 <option value="">Selecione o dia...</option>
-                                <option value="2027-03-26">26/03/2027 (Sexta-feira) — A confirmar disponibilidade</option>
+                                <option value="2027-03-26">26/03/2027 (Sexta-feira) — A confirmar disponibilidade
+                                </option>
                                 <option value="2027-03-27">27/03/2027 (Sábado) — A confirmar disponibilidade</option>
                                 <option value="2027-03-28">28/03/2027 (Domingo) — A confirmar disponibilidade</option>
                             </select>
                             <p class="text-[10px] text-amber-300 mt-1" id="aviso-dayuse-pendente">
-                                ⚠️ Dias disponíveis, horários de entrada/saída e desconto infantil no Day Use estão marcados como <strong>A definir</strong> pela organização.
+                                ⚠️ Dias disponíveis, horários de entrada/saída e desconto infantil no Day Use estão
+                                marcados como <strong>A definir</strong> pela organização.
                             </p>
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Condição e Forma de Pagamento Preferencial <span class="text-rose-400">*</span></label>
-                            <select id="f-condicao-pagamento" required onchange="atualizarCalculoIdadeModalidade()" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
-                                <option value="parcelamento_livre">Pix — Parcelamento Livre por Percentual (Quita % do lote vigente em cada pagamento)</option>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Condição e Forma de
+                                Pagamento Preferencial <span class="text-rose-400">*</span></label>
+                            <select id="f-condicao-pagamento" required onchange="atualizarCalculoIdadeModalidade()"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                                <option value="parcelamento_livre">Pix — Parcelamento Livre por Percentual (Quita % do
+                                    lote vigente em cada pagamento)</option>
                                 <option value="pix_integral">Pix — Pagamento Integral do Lote Vigente</option>
-                                <option value="promocional_nov_5x" id="opt-promo-nov-5x">Condição Promocional 1 (Adesão até 30/11/2026) — Início Nov/2026: 5x de R$ 70,00 (Nov a Mar · Total R$ 350,00)</option>
-                                <option value="promocional_dez_4x" id="opt-promo-dez-4x">Condição Promocional 2 (Adesão até 15/12/2026) — Dez/2026 a Mar/2027: 4x de R$ 87,50 (Total R$ 350,00)</option>
-                                <option value="cartao_presencial">Cartão de Crédito — Presencial no Escritório Regional (IEQ Central · Taxas repassadas ao participante)</option>
-                                <option value="dinheiro_presencial">Dinheiro — Presencial no Escritório Regional (IEQ Central)</option>
-                                <option value="lider_pastor">Pagamento via Líder ou Pastor da Igreja (Acerto agrupado com o Escritório)</option>
+                                <option value="promocional_nov_5x" id="opt-promo-nov-5x">Condição Promocional 1 (Adesão
+                                    até 30/11/2026) — Início Nov/2026: 5x de R$ 70,00 (Nov a Mar · Total R$ 350,00)
+                                </option>
+                                <option value="promocional_dez_4x" id="opt-promo-dez-4x">Condição Promocional 2 (Adesão
+                                    até 15/12/2026) — Dez/2026 a Mar/2027: 4x de R$ 87,50 (Total R$ 350,00)</option>
+                                <option value="cartao_presencial">Cartão de Crédito — Presencial no Escritório Regional
+                                    (IEQ Central · Taxas repassadas ao participante)</option>
+                                <option value="dinheiro_presencial">Dinheiro — Presencial no Escritório Regional (IEQ
+                                    Central)</option>
+                                <option value="lider_pastor">Pagamento via Líder ou Pastor da Igreja (Acerto agrupado
+                                    com o Escritório)</option>
                                 <option value="isento_crianca">Inscrição Gratuita (Criança até 4 anos)</option>
                             </select>
                         </div>
                     </div>
 
                     <!-- Resumo Financeiro da Escolha -->
-                    <div id="card-resumo-modalidade" class="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div id="card-resumo-modalidade"
+                        class="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div class="space-y-1">
-                            <span id="resumo-lote-nome" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-300">Lote Vigente</span>
+                            <span id="resumo-lote-nome"
+                                class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-300">Lote
+                                Vigente</span>
                             <div class="text-xs text-slate-300" id="resumo-regra-explicacao">
-                                No parcelamento livre, cada pagamento quita um percentual proporcional ao valor do lote vigente na data do pagamento.
+                                No parcelamento livre, cada pagamento quita um percentual proporcional ao valor do lote
+                                vigente na data do pagamento.
                             </div>
                         </div>
                         <div class="text-left sm:text-right shrink-0">
-                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Valor Aplicável Hoje</span>
-                            <span id="resumo-valor-aplicavel" class="text-2xl font-black text-emerald-400">R$ 350,00</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Valor Aplicável
+                                Hoje</span>
+                            <span id="resumo-valor-aplicavel" class="text-2xl font-black text-emerald-400">R$
+                                350,00</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- 4. MENORES DE IDADE E RESPONSÁVEL LEGAL (Automático se < 18 anos) -->
-                <div id="secao-form-menor" class="hidden space-y-4 pt-4 border-t border-amber-500/30 bg-amber-950/10 p-5 rounded-2xl border">
+                <div id="secao-form-menor"
+                    class="hidden space-y-4 pt-4 border-t border-amber-500/30 bg-amber-950/10 p-5 rounded-2xl border">
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-extrabold uppercase tracking-wider">Participante Menor de 18 Anos</span>
-                            <h3 class="text-base font-extrabold text-white mt-1">Dados do Pai, Mãe ou Responsável Legal</h3>
-                            <p class="text-xs text-slate-300">Obrigatório para participantes menores de idade. O responsável poderá acompanhar todos os filhos pelo próprio CPF.</p>
+                            <span
+                                class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-extrabold uppercase tracking-wider">Participante
+                                Menor de 18 Anos</span>
+                            <h3 class="text-base font-extrabold text-white mt-1">Dados do Pai, Mãe ou Responsável Legal
+                            </h3>
+                            <p class="text-xs text-slate-300">Obrigatório para participantes menores de idade. O
+                                responsável poderá acompanhar todos os filhos pelo próprio CPF.</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome Completo do Responsável Legal <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-resp-nome" placeholder="Nome completo do pai, mãe ou responsável" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome Completo do
+                                Responsável Legal <span class="text-rose-400">*</span></label>
+                            <input type="text" id="f-resp-nome" placeholder="Nome completo do pai, mãe ou responsável"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF do Responsável Legal <span class="text-rose-400">*</span></label>
-                            <input type="tel" id="f-resp-cpf" maxlength="14" inputmode="numeric" placeholder="000.000.000-00" oninput="this.value = window.formatarCPFInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF do Responsável
+                                Legal <span class="text-rose-400">*</span></label>
+                            <input type="tel" id="f-resp-cpf" maxlength="14" inputmode="numeric"
+                                placeholder="000.000.000-00" oninput="this.value = window.formatarCPFInput(this.value)"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold" />
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Vínculo com o Menor <span class="text-rose-400">*</span></label>
-                            <select id="f-resp-vinculo" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Vínculo com o Menor
+                                <span class="text-rose-400">*</span></label>
+                            <select id="f-resp-vinculo"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold">
                                 <option value="">Selecione...</option>
                                 <option value="Pai">Pai</option>
                                 <option value="Mãe">Mãe</option>
@@ -720,25 +888,37 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">WhatsApp do Responsável <span class="text-rose-400">*</span></label>
-                            <input type="tel" id="f-resp-whatsapp" maxlength="15" placeholder="(43) 99999-9999" oninput="this.value = window.formatarTelefoneInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">WhatsApp do Responsável
+                                <span class="text-rose-400">*</span></label>
+                            <input type="tel" id="f-resp-whatsapp" maxlength="15" placeholder="(43) 99999-9999"
+                                oninput="this.value = window.formatarTelefoneInput(this.value)"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">E-mail do Responsável (Se houver)</label>
-                            <input type="email" id="f-resp-email" placeholder="email@exemplo.com" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">E-mail do Responsável
+                                (Se houver)</label>
+                            <input type="email" id="f-resp-email" placeholder="email@exemplo.com"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
                         <div class="sm:col-span-3">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Autorização para Retirada por Outra Pessoa / Saída Antecipada (Opcional)</label>
-                            <input type="text" id="f-resp-retirada-terceiro" placeholder="Se outra pessoa for retirar o menor, informe Nome Completo, CPF e parentesco" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Autorização para
+                                Retirada por Outra Pessoa / Saída Antecipada (Opcional)</label>
+                            <input type="text" id="f-resp-retirada-terceiro"
+                                placeholder="Se outra pessoa for retirar o menor, informe Nome Completo, CPF e parentesco"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
                     </div>
 
                     <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
-                        <label class="inline-flex items-center gap-2 text-xs text-amber-200 font-semibold cursor-pointer">
-                            <input type="checkbox" id="f-resp-confirmacao-legal" class="rounded bg-slate-900 border-amber-500 text-amber-500 w-4 h-4" />
-                            <span>Confirmo a condição de responsável legal pelo participante menor de idade acima identificado.</span>
+                        <label
+                            class="inline-flex items-center gap-2 text-xs text-amber-200 font-semibold cursor-pointer">
+                            <input type="checkbox" id="f-resp-confirmacao-legal"
+                                class="rounded bg-slate-900 border-amber-500 text-amber-500 w-4 h-4" />
+                            <span>Confirmo a condição de responsável legal pelo participante menor de idade acima
+                                identificado.</span>
                         </label>
-                        <button type="button" onclick="copiarResponsavelParaEmergencia()" class="text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 px-3 py-1.5 rounded-lg transition-colors">
+                        <button type="button" onclick="copiarResponsavelParaEmergencia()"
+                            class="text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 px-3 py-1.5 rounded-lg transition-colors">
                             Usar Responsável como Contato de Emergência ↓
                         </button>
                     </div>
@@ -747,26 +927,37 @@
                 <!-- 5. CONTATO DE EMERGÊNCIA (Para todos os participantes) -->
                 <div class="space-y-4 pt-4 border-t border-slate-800">
                     <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">4</span>
+                        <span
+                            class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">4</span>
                         Contato de Emergência
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome Completo <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-emerg-nome" required placeholder="Nome do contato de emergência" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome Completo <span
+                                    class="text-rose-400">*</span></label>
+                            <input type="text" id="f-emerg-nome" required placeholder="Nome do contato de emergência"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Vínculo com o Participante <span class="text-rose-400">*</span></label>
-                            <input type="text" id="f-emerg-vinculo" required placeholder="Pai, Mãe, Cônjuge, Irmão..." class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Vínculo com o
+                                Participante</label>
+                            <input type="text" id="f-emerg-vinculo" placeholder="Pai, Mãe, Cônjuge, Irmão, Amigo..."
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Telefone com WhatsApp <span class="text-rose-400">*</span></label>
-                            <input type="tel" id="f-emerg-whatsapp" required maxlength="15" placeholder="(43) 99999-9999" oninput="this.value = window.formatarTelefoneInput(this.value)" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Telefone com WhatsApp
+                                <span class="text-rose-400">*</span></label>
+                            <input type="tel" id="f-emerg-whatsapp" required maxlength="15"
+                                placeholder="(43) 99999-9999"
+                                oninput="this.value = window.formatarTelefoneInput(this.value)"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm font-semibold" />
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Segundo Contato de Emergência (Opcional)</label>
-                            <input type="text" id="f-emerg-segundo" placeholder="Nome e telefone de um segundo contato" class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Segundo Contato de
+                                Emergência (Opcional)</label>
+                            <input type="text" id="f-emerg-segundo" placeholder="Nome e telefone de um segundo contato"
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-sm" />
                         </div>
                     </div>
                 </div>
@@ -774,12 +965,17 @@
                 <!-- 6. FICHA BÁSICA DE SAÚDE (Protegida em coleção separada) -->
                 <div class="space-y-4 pt-4 border-t border-slate-800">
                     <div>
-                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">5</span>
+                        <h3
+                            class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                            <span
+                                class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">5</span>
                             Ficha Básica de Saúde (Acesso Restrito à Equipe de Cuidados)
                         </h3>
-                        <div class="mt-2 p-3 rounded-xl bg-blue-950/40 border border-blue-500/30 text-xs text-blue-200 leading-relaxed">
-                            💊 <strong>Orientação importante:</strong> Se você utiliza medicamentos, leve a quantidade necessária para todos os dias, na embalagem original e identificada. Informe previamente à organização se precisar de auxílio com os horários ou armazenamento.
+                        <div
+                            class="mt-2 p-3 rounded-xl bg-blue-950/40 border border-blue-500/30 text-xs text-blue-200 leading-relaxed">
+                            💊 <strong>Orientação importante:</strong> Se você utiliza medicamentos, leve a quantidade
+                            necessária para todos os dias, na embalagem original e identificada. Informe previamente à
+                            organização se precisar de auxílio com os horários ou armazenamento.
                         </div>
                     </div>
 
@@ -787,28 +983,42 @@
                         <!-- Pergunta 1: Medicamento -->
                         <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <span class="text-xs font-bold text-slate-200">1. Utiliza medicamento durante o período do evento?</span>
+                                <span class="text-xs font-bold text-slate-200">1. Utiliza medicamento durante o período
+                                    do evento?</span>
                                 <div class="flex items-center gap-4 text-xs font-bold">
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_med" value="nao" checked onchange="toggleCampoSaude('med', false)" /> Não</label>
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input type="radio" name="saude_med" value="sim" onchange="toggleCampoSaude('med', true)" /> Sim</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio"
+                                            name="saude_med" value="nao" checked
+                                            onchange="toggleCampoSaude('med', false)" /> Não</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input
+                                            type="radio" name="saude_med" value="sim"
+                                            onchange="toggleCampoSaude('med', true)" /> Sim</label>
                                 </div>
                             </div>
                             <div id="wrap-saude-med" class="hidden pt-2">
-                                <input type="text" id="f-saude-med-detalhes" placeholder="Informe nome do medicamento, dose, horários e se necessita de refrigeração" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                                <input type="text" id="f-saude-med-detalhes"
+                                    placeholder="Informe nome do medicamento, dose, horários e se necessita de refrigeração"
+                                    class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
                             </div>
                         </div>
 
                         <!-- Pergunta 2: Alergia -->
                         <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <span class="text-xs font-bold text-slate-200">2. Possui alguma alergia (medicamentos, alimentos, insetos, etc.)?</span>
+                                <span class="text-xs font-bold text-slate-200">2. Possui alguma alergia (medicamentos,
+                                    alimentos, insetos, etc.)?</span>
                                 <div class="flex items-center gap-4 text-xs font-bold">
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_alergia" value="nao" checked onchange="toggleCampoSaude('alergia', false)" /> Não</label>
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input type="radio" name="saude_alergia" value="sim" onchange="toggleCampoSaude('alergia', true)" /> Sim</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio"
+                                            name="saude_alergia" value="nao" checked
+                                            onchange="toggleCampoSaude('alergia', false)" /> Não</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input
+                                            type="radio" name="saude_alergia" value="sim"
+                                            onchange="toggleCampoSaude('alergia', true)" /> Sim</label>
                                 </div>
                             </div>
                             <div id="wrap-saude-alergia" class="hidden pt-2">
-                                <input type="text" id="f-saude-alergia-detalhes" placeholder="Informe qual alergia e cuidados necessários" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                                <input type="text" id="f-saude-alergia-detalhes"
+                                    placeholder="Informe qual alergia e cuidados necessários"
+                                    class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
                             </div>
                         </div>
 
@@ -817,26 +1027,39 @@
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <span class="text-xs font-bold text-slate-200">3. Possui restrição alimentar?</span>
                                 <div class="flex items-center gap-4 text-xs font-bold">
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_restricao" value="nao" checked onchange="toggleCampoSaude('restricao', false)" /> Não</label>
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input type="radio" name="saude_restricao" value="sim" onchange="toggleCampoSaude('restricao', true)" /> Sim</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio"
+                                            name="saude_restricao" value="nao" checked
+                                            onchange="toggleCampoSaude('restricao', false)" /> Não</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input
+                                            type="radio" name="saude_restricao" value="sim"
+                                            onchange="toggleCampoSaude('restricao', true)" /> Sim</label>
                                 </div>
                             </div>
                             <div id="wrap-saude-restricao" class="hidden pt-2">
-                                <input type="text" id="f-saude-restricao-detalhes" placeholder="Informe qual restrição (ex: intolerância a lactose, celíaco, vegetariano...)" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                                <input type="text" id="f-saude-restricao-detalhes"
+                                    placeholder="Informe qual restrição (ex: intolerância a lactose, celíaco, vegetariano...)"
+                                    class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
                             </div>
                         </div>
 
                         <!-- Pergunta 4: Condição de saúde ou necessidade de apoio -->
                         <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <span class="text-xs font-bold text-slate-200">4. Existe alguma condição de saúde ou necessidade de apoio que a equipe precisa conhecer?</span>
+                                <span class="text-xs font-bold text-slate-200">4. Existe alguma condição de saúde ou
+                                    necessidade de apoio que a equipe precisa conhecer?</span>
                                 <div class="flex items-center gap-4 text-xs font-bold">
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_apoio" value="nao" checked onchange="toggleCampoSaude('apoio', false)" /> Não</label>
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input type="radio" name="saude_apoio" value="sim" onchange="toggleCampoSaude('apoio', true)" /> Sim</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio"
+                                            name="saude_apoio" value="nao" checked
+                                            onchange="toggleCampoSaude('apoio', false)" /> Não</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-amber-300"><input
+                                            type="radio" name="saude_apoio" value="sim"
+                                            onchange="toggleCampoSaude('apoio', true)" /> Sim</label>
                                 </div>
                             </div>
                             <div id="wrap-saude-apoio" class="hidden pt-2">
-                                <input type="text" id="f-saude-apoio-detalhes" placeholder="Breve descrição dos cuidados necessários" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                                <input type="text" id="f-saude-apoio-detalhes"
+                                    placeholder="Breve descrição dos cuidados necessários"
+                                    class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
                             </div>
                         </div>
 
@@ -845,18 +1068,28 @@
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <span class="text-xs font-bold text-slate-200">5. Possui plano de saúde?</span>
                                 <div class="flex items-center gap-4 text-xs font-bold">
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="saude_plano" value="nao" checked onchange="toggleCampoSaude('plano', false)" /> Não</label>
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-emerald-300"><input type="radio" name="saude_plano" value="sim" onchange="toggleCampoSaude('plano', true)" /> Sim</label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio"
+                                            name="saude_plano" value="nao" checked
+                                            onchange="toggleCampoSaude('plano', false)" /> Não</label>
+                                    <label
+                                        class="inline-flex items-center gap-1.5 cursor-pointer text-emerald-300"><input
+                                            type="radio" name="saude_plano" value="sim"
+                                            onchange="toggleCampoSaude('plano', true)" /> Sim</label>
                                 </div>
                             </div>
                             <div id="wrap-saude-plano" class="hidden pt-2">
-                                <input type="text" id="f-saude-plano-nome" placeholder="Nome do plano de saúde (opcional)" class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
+                                <input type="text" id="f-saude-plano-nome"
+                                    placeholder="Nome do plano de saúde (opcional)"
+                                    class="w-full input-dark px-3 py-2 rounded-lg text-xs" />
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Observações Relevantes de Saúde (Opcional)</label>
-                            <textarea id="f-saude-obs" rows="2" placeholder="Alguma informação adicional importante para a equipe de cuidados..." class="w-full input-dark px-3.5 py-2 rounded-xl text-xs"></textarea>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Observações Relevantes
+                                de Saúde (Opcional)</label>
+                            <textarea id="f-saude-obs" rows="2"
+                                placeholder="Alguma informação adicional importante para a equipe de cuidados..."
+                                class="w-full input-dark px-3.5 py-2 rounded-xl text-xs"></textarea>
                         </div>
                     </div>
                 </div>
@@ -864,8 +1097,10 @@
                 <!-- 7. REGRAS DO RETIRO, O QUE LEVAR E TERMOS SEPARADOS (Seção 10 e 15) -->
                 <div class="space-y-4 pt-4 border-t border-slate-800">
                     <div class="flex items-center justify-between flex-wrap gap-2">
-                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">6</span>
+                        <h3
+                            class="text-sm font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                            <span
+                                class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-xs">6</span>
                             Regras de Convivência, O Que Levar e Confirmações
                         </h3>
                         <span class="badge-a-definir" id="badge-termos-versao">Leitura obrigatória</span>
@@ -875,94 +1110,152 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <!-- Regras Essenciais e Proibição do Lago -->
                         <div class="p-4 rounded-2xl bg-slate-900/95 border border-rose-500/30 space-y-2.5">
-                            <div class="text-xs font-extrabold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                            <div
+                                class="text-xs font-extrabold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
                                 <i data-lucide="alert-octagon" class="w-4 h-4"></i> Regras Essenciais do Retiro
                             </div>
-                            <div class="p-2.5 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-200 leading-relaxed font-semibold">
-                                🚫 <strong>PROIBIÇÃO EXPRESSA — ENTRADA NO LAGO:</strong> É terminantemente proibido entrar, nadar ou acessar a água do lago do acampamento sob qualquer circunstância. O descumprimento desta regra de segurança acarretará a <strong>expulsão imediata do retiro</strong> (desligamento sem direito a reembolso e comunicação imediata aos pais/responsáveis e liderança).
+                            <div
+                                class="p-2.5 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-200 leading-relaxed font-semibold">
+                                🚫 <strong>PROIBIÇÃO EXPRESSA — ENTRADA NO LAGO:</strong> É terminantemente proibido
+                                entrar, nadar ou acessar a água do lago do acampamento sob qualquer circunstância. O
+                                descumprimento desta regra de segurança acarretará a <strong>expulsão imediata do
+                                    retiro</strong> (desligamento sem direito a reembolso e comunicação imediata aos
+                                pais/responsáveis e liderança).
                             </div>
                             <ul class="space-y-1.5 text-slate-300 list-disc pl-4 leading-relaxed">
                                 <li>Participar de todos os cultos, ministrações e atividades programadas.</li>
-                                <li>Respeitar rigorosamente os horários de recolhimento/silêncio e a separação entre alojamentos masculinos e femininos (vedado o trânsito no dormitório oposto).</li>
-                                <li>Não se ausentar das dependências do acampamento sem autorização formal da coordenação geral.</li>
-                                <li>Manter postura cristã, respeito à liderança, equipe de trabalho e zelo pelo patrimônio do local.</li>
+                                <li>Respeitar rigorosamente os horários de recolhimento/silêncio e a separação entre
+                                    alojamentos masculinos e femininos (vedado o trânsito no dormitório oposto).</li>
+                                <li>Não se ausentar das dependências do acampamento sem autorização formal da
+                                    coordenação geral.</li>
+                                <li>Manter postura cristã, respeito à liderança, equipe de trabalho e zelo pelo
+                                    patrimônio do local.</li>
                             </ul>
                         </div>
 
                         <!-- Lista Oficial do Que Levar -->
                         <div class="p-4 rounded-2xl bg-slate-900/95 border border-indigo-500/30 space-y-2.5">
-                            <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                            <div
+                                class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
                                 <i data-lucide="backpack" class="w-4 h-4"></i> Lista Oficial — O Que Levar
                             </div>
                             <ul class="space-y-1.5 text-slate-300 leading-relaxed">
-                                <li class="p-2 rounded-lg bg-indigo-950/50 border border-indigo-500/30 text-indigo-200 font-bold">
+                                <li
+                                    class="p-2 rounded-lg bg-indigo-950/50 border border-indigo-500/30 text-indigo-200 font-bold">
                                     📖 1º ITEM ESSENCIAL: Bíblia Sagrada, caderno de anotações e caneta.
                                 </li>
-                                <li>🛏️ <strong>Roupa de cama:</strong> Lençol, fronha, travesseiro e cobertor/edredom.</li>
-                                <li>🏊 <strong>Roupa de banho e toalhas:</strong> Toalha de banho/rosto e roupas de banho adequadas (uso exclusivo nas áreas permitidas — <em>proibido o lago</em>).</li>
-                                <li>👕 <strong>Vestuário e higiene pessoal:</strong> Roupas confortáveis para cultos e dinâmicas, agasalho, calçados, escova/pasta de dente, sabonete, shampoo, protetor solar e repelente.</li>
-                                <li class="text-emerald-300">🥨 <strong>Lanches permitidos:</strong> Salgadinhos, biscoitos, chocolates e refrigerantes/sucos <strong>somente industrializados e lacrados de fábrica</strong>.</li>
-                                <li class="text-amber-300 font-semibold">🚫 <strong>Não é permitido levar:</strong> Bolo feito em casa, pão de forma, lanches preparados em casa ou quaisquer alimentos artesanais/caseiros.</li>
+                                <li>🛏️ <strong>Roupa de cama:</strong> Lençol, fronha, travesseiro e cobertor/edredom.
+                                </li>
+                                <li>🏊 <strong>Roupa de banho e toalhas:</strong> Toalha de banho/rosto e roupas de
+                                    banho adequadas (uso exclusivo nas áreas permitidas — <em>proibido o lago</em>).
+                                </li>
+                                <li>👕 <strong>Vestuário e higiene pessoal:</strong> Roupas confortáveis para cultos e
+                                    dinâmicas, agasalho, calçados, escova/pasta de dente, sabonete, shampoo, protetor
+                                    solar e repelente.</li>
+                                <li class="text-emerald-300">🥨 <strong>Lanches permitidos:</strong> Salgadinhos,
+                                    biscoitos, chocolates e refrigerantes/sucos <strong>somente industrializados e
+                                        lacrados de fábrica</strong>.</li>
+                                <li class="text-amber-300 font-semibold">🚫 <strong>Não é permitido levar:</strong> Bolo
+                                    feito em casa, pão de forma, lanches preparados em casa ou quaisquer alimentos
+                                    artesanais/caseiros.</li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="space-y-2.5 text-xs">
-                        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-slate-700">
-                            <input type="checkbox" id="t-regras-convivencia" required class="mt-0.5 rounded bg-slate-950 border-slate-700 text-indigo-500 w-4 h-4 shrink-0" />
+                        <label
+                            class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="t-regras-convivencia" required
+                                class="mt-0.5 rounded bg-slate-950 border-slate-700 text-indigo-500 w-4 h-4 shrink-0" />
                             <span class="text-slate-300 leading-relaxed">
-                                <strong class="text-white">1. Ciência das regras do retiro e proibição de entrada no lago (<span class="text-rose-400">*</span>):</strong>
-                                <span id="txt-termo-convivencia">Declaro estar plenamente ciente das regras de convivência, da proibição de levar alimentos caseiros/artesanais (como bolo feito em casa e pão de forma), de que cada igreja organiza seu transporte e de que é <strong>expressamente proibida a entrada no lago sob pena de expulsão imediata do retiro</strong>.</span>
+                                <strong class="text-white">1. Ciência das regras do retiro e proibição de entrada no
+                                    lago (<span class="text-rose-400">*</span>):</strong>
+                                <span id="txt-termo-convivencia">Declaro estar plenamente ciente das regras de
+                                    convivência, da proibição de levar alimentos caseiros/artesanais (como bolo feito em
+                                    casa e pão de forma), de que cada igreja organiza seu transporte e de que é
+                                    <strong>expressamente proibida a entrada no lago sob pena de expulsão imediata do
+                                        retiro</strong>.</span>
                             </span>
                         </label>
 
-                        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-slate-700">
-                            <input type="checkbox" id="t-uso-dados" required class="mt-0.5 rounded bg-slate-950 border-slate-700 text-indigo-500 w-4 h-4 shrink-0" />
+                        <label
+                            class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="t-uso-dados" required
+                                class="mt-0.5 rounded bg-slate-950 border-slate-700 text-indigo-500 w-4 h-4 shrink-0" />
                             <span class="text-slate-300 leading-relaxed">
-                                <strong class="text-white">2. Utilização de dados pessoais e de saúde (<span class="text-rose-400">*</span>):</strong>
-                                <span id="txt-termo-dados">Autorizo o tratamento dos dados pessoais e informações da ficha básica de saúde exclusivamente para gestão da inscrição, segurança, alimentação e cuidados médicos durante o evento.</span>
+                                <strong class="text-white">2. Utilização de dados pessoais e de saúde (<span
+                                        class="text-rose-400">*</span>):</strong>
+                                <span id="txt-termo-dados">Autorizo o tratamento dos dados pessoais e informações da
+                                    ficha básica de saúde exclusivamente para gestão da inscrição, segurança,
+                                    alimentação e cuidados médicos durante o evento.</span>
                             </span>
                         </label>
 
-                        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-slate-700">
-                            <input type="checkbox" id="t-condicoes-financeiras" required class="mt-0.5 rounded bg-slate-950 border-slate-700 text-indigo-500 w-4 h-4 shrink-0" />
+                        <label
+                            class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="t-condicoes-financeiras" required
+                                class="mt-0.5 rounded bg-slate-950 border-slate-700 text-indigo-500 w-4 h-4 shrink-0" />
                             <span class="text-slate-300 leading-relaxed">
-                                <strong class="text-white">3. Condições financeiras e de cancelamento (<span class="text-rose-400">*</span>):</strong>
-                                <span id="txt-termo-financeiro">Declaro ciência das regras de lotes, cálculo de percentual no parcelamento livre e condições financeiras e de cancelamento.</span>
+                                <strong class="text-white">3. Condições financeiras e de cancelamento (<span
+                                        class="text-rose-400">*</span>):</strong>
+                                <span id="txt-termo-financeiro">Declaro ciência das regras de lotes, cálculo de
+                                    percentual no parcelamento livre e condições financeiras e de cancelamento.</span>
                             </span>
                         </label>
 
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
-                            <div class="font-bold text-white">4. Autorização de uso de imagem (Escolha separada e opcional):</div>
-                            <p class="text-slate-400 text-[11px]" id="txt-termo-imagem">Autoriza o uso gratuito de imagem em fotos e vídeos institucionais do retiro VATHOS 2027 e da IEQ Região 655?</p>
+                            <div class="font-bold text-white">4. Autorização de uso de imagem (Escolha separada e
+                                opcional):</div>
+                            <p class="text-slate-400 text-[11px]" id="txt-termo-imagem">Autoriza o uso gratuito de
+                                imagem em fotos e vídeos institucionais do retiro VATHOS 2027 e da IEQ Região 655?</p>
                             <div class="flex flex-wrap items-center gap-4 pt-1">
-                                <label class="inline-flex items-center gap-1.5 cursor-pointer text-emerald-300 font-semibold">
-                                    <input type="radio" name="t_uso_imagem" value="autorizado" checked /> Sim, autorizo o uso de imagem
+                                <label
+                                    class="inline-flex items-center gap-1.5 cursor-pointer text-emerald-300 font-semibold">
+                                    <input type="radio" name="t_uso_imagem" value="autorizado" checked /> Sim, autorizo
+                                    o uso de imagem
                                 </label>
                                 <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300">
-                                    <input type="radio" name="t_uso_imagem" value="nao_autorizado" /> Não autorizo o uso de imagem
+                                    <input type="radio" name="t_uso_imagem" value="nao_autorizado" /> Não autorizo o uso
+                                    de imagem
                                 </label>
                             </div>
                         </div>
 
-                        <div id="wrap-termo-menor" class="hidden p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 space-y-1.5">
-                            <div class="font-bold text-amber-300">5. Autorização Impressa Obrigatória para Menor de Idade:</div>
+                        <div id="wrap-termo-menor"
+                            class="hidden p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 space-y-1.5">
+                            <div class="font-bold text-amber-300">5. Autorização Impressa Obrigatória para Menor de
+                                Idade:</div>
                             <p class="text-slate-300 text-[11px] leading-relaxed">
-                                Ao concluir a pré-reserva de um menor de 18 anos, o sistema liberará o <strong>Formulário Oficial de Autorização (1 Folha A4)</strong> para impressão. A confirmação da autorização no sistema é feita <strong>exclusivamente pela equipe organizadora mediante a entrega do documento impresso assinado pelo responsável legal + cópia do documento com foto</strong>.
+                                Ao concluir a pré-reserva de um menor de 18 anos, o sistema liberará o
+                                <strong>Formulário Oficial de Autorização (1 Folha A4)</strong> para impressão. A
+                                confirmação da autorização no sistema é feita <strong>exclusivamente pela equipe
+                                    organizadora mediante a entrega do documento impresso assinado pelo responsável
+                                    legal + cópia do documento com foto</strong>.
                             </p>
                         </div>
                     </div>
                 </div>
 
                 <!-- BOTÕES DE SUBMISSÃO -->
-                <div class="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-3">
-                    <button type="button" onclick="cancelarEdicaoFormulario()" class="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-700 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider">
-                        Voltar
-                    </button>
-                    <button type="submit" id="btn-salvar-inscricao" class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 px-8 rounded-xl shadow-xl transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2">
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                        <span id="txt-btn-salvar-inscricao">Confirmar Inscrição e Pré-Reserva</span>
-                    </button>
+                <div class="space-y-3 pt-4 border-t border-slate-800">
+                    <!-- AVISO DE VALIDAÇÃO FLUTUANTE / DESTACADO -->
+                    <div id="aviso-validacao-form"
+                        class="hidden p-4 rounded-2xl bg-rose-950/90 border-2 border-rose-500 text-rose-200 text-xs font-bold shadow-xl flex items-center gap-3">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 shrink-0"></i>
+                        <span id="texto-aviso-validacao">Por favor, preencha todos os campos obrigatórios destacados.</span>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-end gap-3">
+                        <button type="button" onclick="cancelarEdicaoFormulario()"
+                            class="w-full sm:w-auto px-5 py-3.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider cursor-pointer">
+                            Voltar
+                        </button>
+                        <button type="button" id="btn-salvar-inscricao" onclick="salvarInscricaoPreReserva()"
+                            class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 px-8 rounded-xl shadow-xl transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer border border-emerald-400/30">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            <span id="txt-btn-salvar-inscricao">Confirmar Inscrição e Pré-Reserva</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </section>
@@ -972,14 +1265,19 @@
 
             <!-- CARD DE IDENTIFICAÇÃO E STATUS GERAL -->
             <div class="glass-card rounded-3xl p-6 sm:p-8 border border-indigo-500/30 shadow-2xl space-y-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                <div
+                    class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
                     <div class="space-y-1">
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="px-2.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 font-mono text-xs font-extrabold text-indigo-300" id="ap-protocolo">#VATHOS-0000</span>
-                            <span id="ap-badge-participacao" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            <span
+                                class="px-2.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/40 font-mono text-xs font-extrabold text-indigo-300"
+                                id="ap-protocolo">#VATHOS-0000</span>
+                            <span id="ap-badge-participacao"
+                                class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
                                 Pré-inscrição
                             </span>
-                            <span id="ap-badge-faixa" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300">
+                            <span id="ap-badge-faixa"
+                                class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300">
                                 Faixa Etária
                             </span>
                         </div>
@@ -988,13 +1286,17 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" id="btn-fazer-minha-propria-inscricao" onclick="iniciarInscricaoProprioResponsavel()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-lg">
+                        <button type="button" id="btn-fazer-minha-propria-inscricao"
+                            onclick="iniciarInscricaoProprioResponsavel()"
+                            class="hidden bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-lg">
                             <i data-lucide="user-check" class="w-4 h-4"></i> Fazer Minha Própria Inscrição
                         </button>
-                        <button type="button" onclick="abrirEdicaoDadosParticipante()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5">
+                        <button type="button" onclick="abrirEdicaoDadosParticipante()"
+                            class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5">
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Atualizar Dados / Ficha
                         </button>
-                        <button type="button" onclick="iniciarCadastroFilhoMenor()" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5">
+                        <button type="button" onclick="iniciarCadastroFilhoMenor()"
+                            class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5">
                             <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Inscrever Filho(a) Menor
                         </button>
                     </div>
@@ -1002,85 +1304,108 @@
 
                 <!-- OS 7 CONTROLES DE SITUAÇÃO SEPARADOS (Seção 14) -->
                 <div>
-                    <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">Painel de Situação da Inscrição (Controles Independentes)</div>
+                    <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">Painel de
+                        Situação da Inscrição (Controles Independentes)</div>
                     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">1. Cadastro</span>
-                            <span id="st-cadastro" class="text-xs font-extrabold text-emerald-400 mt-1 block">Completo</span>
+                            <span id="st-cadastro"
+                                class="text-xs font-extrabold text-emerald-400 mt-1 block">Completo</span>
                         </div>
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">2. Autorização</span>
-                            <span id="st-autorizacao" class="text-xs font-extrabold text-slate-300 mt-1 block">Não se aplica</span>
+                            <span id="st-autorizacao" class="text-xs font-extrabold text-slate-300 mt-1 block">Não se
+                                aplica</span>
                         </div>
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">3. Financeiro</span>
-                            <span id="st-financeiro" class="text-xs font-extrabold text-amber-400 mt-1 block">Sem pagamento</span>
+                            <span id="st-financeiro" class="text-xs font-extrabold text-amber-400 mt-1 block">Sem
+                                pagamento</span>
                         </div>
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">4. Comprovante</span>
-                            <span id="st-comprovante" class="text-xs font-extrabold text-slate-400 mt-1 block">Nenhum</span>
+                            <span id="st-comprovante"
+                                class="text-xs font-extrabold text-slate-400 mt-1 block">Nenhum</span>
                         </div>
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">5. Acerto Líder</span>
-                            <span id="st-acerto-lider" class="text-xs font-extrabold text-slate-400 mt-1 block">Não se aplica</span>
+                            <span id="st-acerto-lider" class="text-xs font-extrabold text-slate-400 mt-1 block">Não se
+                                aplica</span>
                         </div>
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">6. Participação</span>
-                            <span id="st-participacao" class="text-xs font-extrabold text-indigo-300 mt-1 block">Pré-inscrição</span>
+                            <span id="st-participacao"
+                                class="text-xs font-extrabold text-indigo-300 mt-1 block">Pré-inscrição</span>
                         </div>
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">7. Presença</span>
-                            <span id="st-presenca" class="text-xs font-extrabold text-slate-400 mt-1 block">Não chegou</span>
+                            <span id="st-presenca" class="text-xs font-extrabold text-slate-400 mt-1 block">Não
+                                chegou</span>
                         </div>
                         <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
                             <span class="text-[10px] text-slate-400 uppercase font-bold block">8. Alojamento</span>
-                            <span id="st-alojamento" class="text-xs font-extrabold text-slate-400 mt-1 block">A definir</span>
+                            <span id="st-alojamento" class="text-xs font-extrabold text-slate-400 mt-1 block">A
+                                definir</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- ALERTA / CARD DE AUTORIZAÇÃO DE MENOR (Se aplicável) -->
-                <div id="card-autorizacao-menor-ap" class="hidden p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div id="card-autorizacao-menor-ap"
+                    class="hidden p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="space-y-1">
-                        <div class="text-xs font-extrabold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                            <i data-lucide="printer" class="w-4 h-4"></i> Termo de Autorização de Menor (Entrega Impressa Obrigatória)
+                        <div
+                            class="text-xs font-extrabold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Termo de Autorização de Menor (Entrega
+                            Impressa Obrigatória)
                         </div>
                         <p class="text-xs text-slate-300" id="txt-status-autorizacao-menor">
-                            Imprima o formulário A4 no botão ao lado, assine, cole/anexe a cópia do documento do responsável e entregue à equipe para confirmação.
+                            Imprima o formulário A4 no botão ao lado, assine, cole/anexe a cópia do documento do
+                            responsável e entregue à equipe para confirmação.
                         </p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 shrink-0">
-                        <a id="btn-abrir-link-autorizacao" href="#" target="_blank" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-1.5 shadow-lg">
+                        <a id="btn-abrir-link-autorizacao" href="#" target="_blank"
+                            class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-1.5 shadow-lg">
                             <i data-lucide="printer" class="w-4 h-4"></i> Abrir e Imprimir Termo (Folha A4)
                         </a>
                     </div>
                 </div>
 
                 <!-- BANNER DE LÍDER DE IGREJA APROVADO -->
-                <div id="card-lider-aprovado-ap" class="hidden p-4 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-teal-950/70 border border-emerald-500/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+                <div id="card-lider-aprovado-ap"
+                    class="hidden p-4 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-teal-950/70 border border-emerald-500/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 text-xl shrink-0">👑</div>
+                        <div
+                            class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 text-xl shrink-0">
+                            👑</div>
                         <div class="space-y-0.5">
-                            <div class="text-xs font-extrabold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <div
+                                class="text-xs font-extrabold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
                                 Líder Autorizado · <span id="txt-lider-igreja-nome">Igreja</span>
                             </div>
                             <p class="text-xs text-slate-200">
-                                Seu acesso ao <strong>Painel de Líderes e Pastores</strong> está liberado! Você pode acompanhar as inscrições da sua igreja e registrar repasses de acerto agrupado.
+                                Seu acesso ao <strong>Painel de Líderes e Pastores</strong> está liberado! Você pode
+                                acompanhar as inscrições da sua igreja e registrar repasses de acerto agrupado.
                             </p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
-                        <button type="button" onclick="irParaAreaLideres()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-emerald-950/40">
+                        <button type="button" onclick="irParaAreaLideres()"
+                            class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-emerald-950/40">
                             <i data-lucide="external-link" class="w-4 h-4"></i> Acessar Painel de Líderes
                         </button>
                     </div>
                 </div>
 
                 <!-- ALERTA DE LÍDER PENDENTE DE APROVAÇÃO -->
-                <div id="card-lider-pendente-ap" class="hidden p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center gap-3 text-xs text-indigo-200">
+                <div id="card-lider-pendente-ap"
+                    class="hidden p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center gap-3 text-xs text-indigo-200">
                     <span class="text-xl shrink-0">⏳</span>
                     <div>
-                        <strong>Inscrição na categoria Líder em análise:</strong> A coordenação e os gestores do retiro estão validando as indicações de líderes da sua igreja. Assim que aceita, seu botão de acesso ao Painel de Líderes aparecerá aqui.
+                        <strong>Inscrição na categoria Líder em análise:</strong> A coordenação e os gestores do retiro
+                        estão validando as indicações de líderes da sua igreja. Assim que aceita, seu botão de acesso ao
+                        Painel de Líderes aparecerá aqui.
                     </div>
                 </div>
             </div>
@@ -1090,14 +1415,18 @@
 
                 <!-- Coluna Esquerda (2 cols): Progresso de Percentual Quitado e Histórico -->
                 <div class="lg:col-span-2 glass-card rounded-3xl p-6 border border-slate-800 space-y-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+                    <div
+                        class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
                         <div>
-                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400" id="ap-modalidade-label">Modalidade</span>
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400"
+                                id="ap-modalidade-label">Modalidade</span>
                             <h3 class="text-lg font-extrabold text-white">Acompanhamento Financeiro por Percentual</h3>
                         </div>
                         <div class="text-right">
-                            <span class="text-[10px] text-slate-400 uppercase font-bold block" id="ap-lote-atual-label">Lote Atual</span>
-                            <span class="text-sm font-black text-indigo-300" id="ap-preco-lote-atual">Base hoje: R$ 350,00</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block"
+                                id="ap-lote-atual-label">Lote Atual</span>
+                            <span class="text-sm font-black text-indigo-300" id="ap-preco-lote-atual">Base hoje: R$
+                                350,00</span>
                         </div>
                     </div>
 
@@ -1108,8 +1437,10 @@
                             <span class="text-lg font-black text-emerald-400" id="ap-pct-confirmado">0%</span>
                         </div>
                         <div class="w-full h-4 bg-slate-950 rounded-full overflow-hidden border border-slate-800 flex">
-                            <div id="bar-pct-confirmado" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%" title="Confirmado pelo escritório"></div>
-                            <div id="bar-pct-pendente" class="bg-amber-400/80 h-full transition-all duration-500" style="width: 0%" title="Aguardando conferência / Líder"></div>
+                            <div id="bar-pct-confirmado" class="bg-emerald-500 h-full transition-all duration-500"
+                                style="width: 0%" title="Confirmado pelo escritório"></div>
+                            <div id="bar-pct-pendente" class="bg-amber-400/80 h-full transition-all duration-500"
+                                style="width: 0%" title="Aguardando conferência / Líder"></div>
                         </div>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs">
                             <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
@@ -1130,15 +1461,19 @@
                             </div>
                         </div>
                         <p class="text-[11px] text-slate-400 leading-relaxed">
-                            💡 <strong>Como funciona:</strong> O percentual já quitado em cada pagamento permanece preservado quando muda o lote. Somente o percentual restante acompanha o valor do lote atual.
+                            💡 <strong>Como funciona:</strong> O percentual já quitado em cada pagamento permanece
+                            preservado quando muda o lote. Somente o percentual restante acompanha o valor do lote
+                            atual.
                         </p>
                     </div>
 
                     <!-- Histórico de Pagamentos e Comprovantes -->
                     <div class="space-y-3">
-                        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-300">Histórico de Pagamentos e Comprovantes</h4>
+                        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-300">Histórico de
+                            Pagamentos e Comprovantes</h4>
                         <div id="lista-pagamentos-participante" class="space-y-2.5">
-                            <p class="text-xs text-slate-500 italic py-4 text-center">Nenhum pagamento ou comprovante registrado ainda.</p>
+                            <p class="text-xs text-slate-500 italic py-4 text-center">Nenhum pagamento ou comprovante
+                                registrado ainda.</p>
                         </div>
                     </div>
                 </div>
@@ -1153,35 +1488,46 @@
                     <!-- Bloco da Chave Pix -->
                     <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5">
                         <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Chave Pix Oficial VATHOS 2027</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Chave Pix
+                                Oficial VATHOS 2027</span>
                             <span id="badge-pix-status" class="badge-a-definir">A definir</span>
                         </div>
                         <div id="box-chave-pix-ativa" class="hidden space-y-2">
                             <div class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                                <input type="text" id="ap-chave-pix-input" readonly class="bg-transparent text-xs font-mono text-emerald-300 flex-1 outline-none font-bold" />
-                                <button type="button" onclick="copiarPixParticipante()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors">
+                                <input type="text" id="ap-chave-pix-input" readonly
+                                    class="bg-transparent text-xs font-mono text-emerald-300 flex-1 outline-none font-bold" />
+                                <button type="button" onclick="copiarPixParticipante()"
+                                    class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors">
                                     Copiar
                                 </button>
                             </div>
-                            <p class="text-[11px] text-slate-400">Favorecido: <strong class="text-slate-200" id="ap-favorecido-pix">—</strong></p>
+                            <p class="text-[11px] text-slate-400">Favorecido: <strong class="text-slate-200"
+                                    id="ap-favorecido-pix">—</strong></p>
                         </div>
                         <p id="box-chave-pix-pendente" class="text-xs text-amber-300/90 leading-relaxed">
-                            A chave Pix e o nome do favorecido exclusivos do VATHOS 2027 estão marcados como <strong>“A definir”</strong> pela organização e serão exibidos aqui assim que publicados.
+                            A chave Pix e o nome do favorecido exclusivos do VATHOS 2027 estão marcados como <strong>“A
+                                definir”</strong> pela organização e serão exibidos aqui assim que publicados.
                         </p>
                     </div>
 
                     <!-- Formulário de Declaração de Pagamento (Com ou Sem Comprovante) -->
-                    <form id="form-enviar-comprovante" onsubmit="event.preventDefault(); enviarComprovanteParticipante();" class="space-y-3.5 pt-2 border-t border-slate-800">
+                    <form id="form-enviar-comprovante"
+                        onsubmit="event.preventDefault(); enviarComprovanteParticipante();"
+                        class="space-y-3.5 pt-2 border-t border-slate-800">
                         <div>
-                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-300">Declarar Pagamento Realizado</h4>
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-300">Declarar
+                                Pagamento Realizado</h4>
                             <p class="text-[11px] text-slate-400 mt-0.5">
-                                Declare aqui seu pagamento (Pix, Cartão, Dinheiro ou Líder). O anexo do comprovante é opcional e o registro ficará <strong>pendente de confirmação pela equipe</strong>.
+                                Declare aqui seu pagamento (Pix, Cartão, Dinheiro ou Líder). O anexo do comprovante é
+                                opcional e o registro ficará <strong>pendente de confirmação pela equipe</strong>.
                             </p>
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Forma Utilizada no Pagamento <span class="text-rose-400">*</span></label>
-                            <select id="comp-forma" required class="w-full input-dark px-3.5 py-2.5 rounded-xl text-xs font-bold">
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Forma Utilizada no
+                                Pagamento <span class="text-rose-400">*</span></label>
+                            <select id="comp-forma" required
+                                class="w-full input-dark px-3.5 py-2.5 rounded-xl text-xs font-bold">
                                 <option value="pix">Pix</option>
                                 <option value="cartao">Cartão de Crédito (Presencial)</option>
                                 <option value="dinheiro">Dinheiro (Presencial)</option>
@@ -1192,57 +1538,82 @@
 
                         <div class="grid grid-cols-2 gap-2.5">
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Valor Pago (R$) <span class="text-rose-400">*</span></label>
-                                <input type="number" id="comp-valor" step="0.01" min="1" required placeholder="Ex: 70.00" oninput="simularPercentualNovoPagamento()" class="w-full input-dark px-3 py-2.5 rounded-xl text-sm font-bold" />
+                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Valor Pago (R$)
+                                    <span class="text-rose-400">*</span></label>
+                                <input type="number" id="comp-valor" step="0.01" min="1" required
+                                    placeholder="Ex: 70.00" oninput="simularPercentualNovoPagamento()"
+                                    class="w-full input-dark px-3 py-2.5 rounded-xl text-sm font-bold" />
                             </div>
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Data do Pagamento <span class="text-rose-400">*</span></label>
-                                <input type="date" id="comp-data" required onchange="simularPercentualNovoPagamento()" class="w-full input-dark px-3 py-2.5 rounded-xl text-xs font-semibold" />
+                                <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Data do
+                                    Pagamento <span class="text-rose-400">*</span></label>
+                                <input type="date" id="comp-data" required onchange="simularPercentualNovoPagamento()"
+                                    class="w-full input-dark px-3 py-2.5 rounded-xl text-xs font-semibold" />
                             </div>
                         </div>
 
-                        <div id="box-simulacao-comp" class="hidden p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-[11px] text-emerald-200"></div>
-
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Anexar Arquivo do Comprovante <span class="text-slate-400 font-normal normal-case">(Opcional — Imagem ou PDF)</span></label>
-                            <input type="file" id="comp-arquivo" accept="image/*,.pdf" class="w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600/30 file:text-indigo-200 hover:file:bg-indigo-600/50" />
-                            <p class="text-[10px] text-slate-400 mt-1">Dica: Se já tirou print ou está com o comprovante no celular, você pode enviá-lo diretamente pelo WhatsApp clicando no botão verde abaixo!</p>
+                        <div id="box-simulacao-comp"
+                            class="hidden p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-[11px] text-emerald-200">
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Detalhes / Com quem pagou (Opcional)</label>
-                            <input type="text" id="comp-obs" placeholder="Ex: Pix direto, pago na secretaria, entregue ao líder, 1ª parcela..." class="w-full input-dark px-3 py-2 rounded-xl text-xs" />
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Anexar Arquivo do
+                                Comprovante <span class="text-slate-400 font-normal normal-case">(Opcional — Imagem ou
+                                    PDF)</span></label>
+                            <input type="file" id="comp-arquivo" accept="image/*,.pdf"
+                                class="w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600/30 file:text-indigo-200 hover:file:bg-indigo-600/50" />
+                            <p class="text-[10px] text-slate-400 mt-1">Dica: Se já tirou print ou está com o comprovante
+                                no celular, você pode enviá-lo diretamente pelo WhatsApp clicando no botão verde abaixo!
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-300 uppercase mb-1">Detalhes / Com quem
+                                pagou (Opcional)</label>
+                            <input type="text" id="comp-obs"
+                                placeholder="Ex: Pix direto, pago na secretaria, entregue ao líder, 1ª parcela..."
+                                class="w-full input-dark px-3 py-2 rounded-xl text-xs" />
                         </div>
 
                         <div class="space-y-2 pt-1">
-                            <button type="button" onclick="enviarComprovanteParticipante(true)" id="btn-enviar-comp-whats" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 px-4 rounded-xl text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40">
-                                <i data-lucide="message-circle" class="w-4 h-4 text-white"></i> Declarar e Abrir no WhatsApp 💬
+                            <button type="button" onclick="enviarComprovanteParticipante(true)"
+                                id="btn-enviar-comp-whats"
+                                class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 px-4 rounded-xl text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40">
+                                <i data-lucide="message-circle" class="w-4 h-4 text-white"></i> Declarar e Abrir no
+                                WhatsApp 💬
                             </button>
-                            <button type="button" onclick="enviarComprovanteParticipante(false)" id="btn-enviar-comp" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 border border-slate-700">
+                            <button type="button" onclick="enviarComprovanteParticipante(false)" id="btn-enviar-comp"
+                                class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 border border-slate-700">
                                 <i data-lucide="check" class="w-3.5 h-3.5"></i> Apenas Declarar Pagamento (Sem WhatsApp)
                             </button>
                         </div>
                     </form>
 
                     <!-- Info Pagamentos Presenciais -->
-                    <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+                    <div
+                        class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 text-[11px] text-slate-400 space-y-1">
                         <div class="font-bold text-slate-200">Pagamentos Presenciais (Cartão ou Dinheiro):</div>
-                        <p>Escritório Regional — IEQ Central (<span id="ap-end-escritorio">Travessa Belo Horizonte, 90 — Centro — Londrina/PR</span>).</p>
-                        <p class="text-amber-300/90 text-[10px]" id="ap-aviso-escritorio">* Confirmar endereço e horários de atendimento antes de se dirigir ao local.</p>
+                        <p>Escritório Regional — IEQ Central (<span id="ap-end-escritorio">Travessa Belo Horizonte, 90 —
+                                Centro — Londrina/PR</span>).</p>
+                        <p class="text-amber-300/90 text-[10px]" id="ap-aviso-escritorio">* Confirmar endereço e
+                            horários de atendimento antes de se dirigir ao local.</p>
                     </div>
                 </div>
             </div>
 
             <!-- RODAPÉ DA ÁREA DO PARTICIPANTE: CANCELAMENTO E ORIENTAÇÕES -->
-            <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div
+                class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="text-xs text-slate-400">
                     Precisa consultar o que levar, regras de convivência ou solicitar o cancelamento da inscrição?
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" onclick="abrirModalOrientacoes()" class="text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl transition-colors">
+                    <button type="button" onclick="abrirModalOrientacoes()"
+                        class="text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl transition-colors">
                         Ver Orientações do Evento
                     </button>
-                    <button type="button" onclick="solicitarCancelamentoInscricao()" id="btn-solicitar-cancelamento" class="text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/50 border border-rose-500/30 px-3.5 py-2 rounded-xl transition-colors">
+                    <button type="button" onclick="solicitarCancelamentoInscricao()" id="btn-solicitar-cancelamento"
+                        class="text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/50 border border-rose-500/30 px-3.5 py-2 rounded-xl transition-colors">
                         Solicitar Cancelamento
                     </button>
                 </div>
@@ -1253,17 +1624,21 @@
     </main>
 
     <!-- MODAL DE INFORMAÇÕES, TABELA DE PREÇOS E ORIENTAÇÕES (Seções 1, 2 e 15) -->
-    <div id="modal-orientacoes" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="glass-card rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col border border-slate-700 shadow-2xl overflow-hidden">
+    <div id="modal-orientacoes"
+        class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+            class="glass-card rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col border border-slate-700 shadow-2xl overflow-hidden">
             <div class="px-6 py-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
-                <h3 class="text-base font-extrabold text-white uppercase tracking-wider">Informações, Modalidades e Orientações — VATHOS 2027</h3>
+                <h3 class="text-base font-extrabold text-white uppercase tracking-wider">Informações, Modalidades e
+                    Orientações — VATHOS 2027</h3>
                 <button type="button" onclick="fecharModalOrientacoes()" class="text-slate-400 hover:text-white p-1">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
             <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-300 leading-relaxed">
                 <div>
-                    <h4 class="text-sm font-bold text-indigo-300 uppercase mb-2">1. Tabela de Lotes e Faixas Etárias (Retiro Completo)</h4>
+                    <h4 class="text-sm font-bold text-indigo-300 uppercase mb-2">1. Tabela de Lotes e Faixas Etárias
+                        (Retiro Completo)</h4>
                     <div class="overflow-x-auto rounded-xl border border-slate-800">
                         <table class="w-full text-left">
                             <thead class="bg-slate-900 text-[11px] uppercase text-slate-400">
@@ -1297,7 +1672,8 @@
                         </table>
                     </div>
                     <p class="text-[11px] text-slate-400 mt-1.5">
-                        * Mesmo participantes gratuitos (até 4 anos) devem ter inscrição individual para controle de presença, alimentação, hospedagem e responsáveis.
+                        * Mesmo participantes gratuitos (até 4 anos) devem ter inscrição individual para controle de
+                        presença, alimentação, hospedagem e responsáveis.
                     </p>
                 </div>
 
@@ -1306,38 +1682,49 @@
                         <h4 class="font-bold text-white uppercase text-xs">2. Day Use (Sem pernoite)</h4>
                         <p>• <strong>Sem alimentação:</strong> R$ 100,00 por pessoa.</p>
                         <p>• <strong>Com café da manhã, almoço e café da tarde:</strong> R$ 220,00 por pessoa.</p>
-                        <p class="text-[11px] text-amber-300">Dias disponíveis, horários de entrada/saída e desconto infantil para Day Use: <strong>A definir</strong>.</p>
+                        <p class="text-[11px] text-amber-300">Dias disponíveis, horários de entrada/saída e desconto
+                            infantil para Day Use: <strong>A definir</strong>.</p>
                     </div>
                     <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1.5">
-                        <h4 class="font-bold text-white uppercase text-xs">3. Promoções de Parcelas Fixas (R$ 350,00)</h4>
-                        <p>• <strong>Condição Promocional 1 (Adesão até 30/11/2026):</strong> 5 parcelas de R$ 70,00 (Novembro/2026 a Março/2027)</p>
-                        <p>• <strong>Condição Promocional 2 (Adesão até 15/12/2026):</strong> 4 parcelas de R$ 87,50 (Dezembro/2026 a Março/2027)</p>
-                        <p class="text-[11px] text-amber-300">Após 30/11/2026, a Condição Promocional 1 encerra automaticamente, permanecendo a Condição Promocional 2.</p>
+                        <h4 class="font-bold text-white uppercase text-xs">3. Promoções de Parcelas Fixas (R$ 350,00)
+                        </h4>
+                        <p>• <strong>Condição Promocional 1 (Adesão até 30/11/2026):</strong> 5 parcelas de R$ 70,00
+                            (Novembro/2026 a Março/2027)</p>
+                        <p>• <strong>Condição Promocional 2 (Adesão até 15/12/2026):</strong> 4 parcelas de R$ 87,50
+                            (Dezembro/2026 a Março/2027)</p>
+                        <p class="text-[11px] text-amber-300">Após 30/11/2026, a Condição Promocional 1 encerra
+                            automaticamente, permanecendo a Condição Promocional 2.</p>
                     </div>
                 </div>
 
                 <div class="space-y-2">
-                    <h4 class="text-sm font-bold text-indigo-300 uppercase">4. Regras de Convivência e Lista Oficial do Que Levar</h4>
+                    <h4 class="text-sm font-bold text-indigo-300 uppercase">4. Regras de Convivência e Lista Oficial do
+                        Que Levar</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/40 text-rose-200 space-y-1">
                             <strong class="text-rose-300 block">🚫 Proibição Expressa — Entrada no Lago:</strong>
-                            É expressamente proibido entrar, nadar ou acessar o lago do acampamento sob qualquer hipótese, sujeito à <strong>penalização de expulsão imediata do retiro</strong>.
+                            É expressamente proibido entrar, nadar ou acessar o lago do acampamento sob qualquer
+                            hipótese, sujeito à <strong>penalização de expulsão imediata do retiro</strong>.
                         </div>
                         <div class="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/30 space-y-1">
                             <strong class="text-indigo-200 block">📖 O Que Levar (Em ordem de prioridade):</strong>
                             <div>1. <strong>Bíblia Sagrada, caderno e caneta</strong> (1º item essencial)</div>
                             <div>2. Roupa de cama, roupa de banho e toalhas</div>
                             <div>3. Roupas pessoais, calçados e higiene pessoal</div>
-                            <div>4. Lanches, salgadinhos e refrigerantes <strong>apenas industrializados e lacrados</strong></div>
-                            <div class="text-amber-300 font-semibold">🚫 Proibido levar: bolo feito em casa, pão de forma ou alimentos artesanais/caseiros.</div>
+                            <div>4. Lanches, salgadinhos e refrigerantes <strong>apenas industrializados e
+                                    lacrados</strong></div>
+                            <div class="text-amber-300 font-semibold">🚫 Proibido levar: bolo feito em casa, pão de
+                                forma ou alimentos artesanais/caseiros.</div>
                         </div>
                         <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
                             <strong class="text-white block mb-1">Transporte e Medicamentos:</strong>
-                            Cada igreja organiza seu transporte. Medicamentos de uso contínuo devem ser levados na embalagem original e identificada para todos os dias.
+                            Cada igreja organiza seu transporte. Medicamentos de uso contínuo devem ser levados na
+                            embalagem original e identificada para todos os dias.
                         </div>
                         <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
                             <strong class="text-white block mb-1">Pagamentos Presenciais:</strong>
-                            Escritório Regional — IEQ Central (Travessa Belo Horizonte, 90 — Centro — Londrina/PR — sujeito a confirmação de horários).
+                            Escritório Regional — IEQ Central (Travessa Belo Horizonte, 90 — Centro — Londrina/PR —
+                            sujeito a confirmação de horários).
                         </div>
                     </div>
                 </div>
@@ -1346,7 +1733,9 @@
     </div>
 
     <footer class="border-t border-slate-900 py-5 text-center text-[11px] text-slate-500">
-        VATHOS 2027 · Região Eclesiástica 655 — Londrina/PR · <a href="vathos2027_lideres.html" class="text-slate-400 hover:text-indigo-400 underline">Área de Líderes/Pastores</a> · <a href="vathos2027_admin.html" class="text-slate-400 hover:text-indigo-400 underline">Admin</a>
+        VATHOS 2027 · Região Eclesiástica 655 — Londrina/PR · <a href="vathos2027_lideres.html"
+            class="text-slate-400 hover:text-indigo-400 underline">Área de Líderes/Pastores</a> · <a
+            href="vathos2027_admin.html" class="text-slate-400 hover:text-indigo-400 underline">Admin</a>
     </footer>
 
     <script type="module">
@@ -1398,7 +1787,7 @@
         // =====================================================================
         // ENTRADA E AUTENTICAÇÃO POR CPF (DISPONÍVEL INSTANTANEAMENTE)
         // =====================================================================
-        window.__executarAcessoPorCPFReal = async function(rawCpf) {
+        window.__executarAcessoPorCPFReal = async function (rawCpf) {
             const erroEl = document.getElementById('erro-cpf-acesso');
             if (erroEl) erroEl.classList.add('hidden');
 
@@ -1467,13 +1856,13 @@
                     btn.disabled = false;
                     btn.innerHTML = defaultBtnHtml;
                     if (window.lucide && typeof lucide.createIcons === 'function') {
-                        try { lucide.createIcons(); } catch(e){}
+                        try { lucide.createIcons(); } catch (e) { }
                     }
                 }
             }
         };
 
-        window.verificarAcessoPorCPF = function(cpfForcado = null) {
+        window.verificarAcessoPorCPF = function (cpfForcado = null) {
             const raw = cpfForcado || document.getElementById('input-cpf-acesso')?.value || '';
             const cpfLimpo = limparCPF(raw);
             return window.__executarAcessoPorCPFReal(cpfLimpo);
@@ -1485,6 +1874,7 @@
             window.__cpfPendenteAcesso = null;
             window.__executarAcessoPorCPFReal(pend);
         }
+
 
         async function init() {
             window.safeLucideIcons();
@@ -1697,23 +2087,22 @@
                 const ehFilho = f.cpf !== cpfSessaoPrincipal;
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = `px-3 py-1.5 rounded-xl text-xs font-bold transition-colors border ${
-                    ativo
+                btn.className = `px-3 py-1.5 rounded-xl text-xs font-bold transition-colors border ${ativo
                         ? 'bg-indigo-600 text-white border-indigo-400'
                         : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-indigo-400'
-                }`;
+                    }`;
                 btn.innerHTML = `${ehFilho ? '👶 Menor: ' : '👤 Minha Inscrição: '}${f.nomeCompleto.split(' ')[0]} (${formatarCPF(f.cpf)})`;
                 btn.onclick = () => abrirAreaDoParticipante(f.cpf);
                 cont.appendChild(btn);
             });
         }
 
-        window.iniciarInscricaoProprioResponsavel = function() {
+        window.iniciarInscricaoProprioResponsavel = function () {
             if (!cpfSessaoPrincipal) return;
             iniciarNovaInscricaoParaCPF(cpfSessaoPrincipal, false);
         };
 
-        window.acessarPainelGestorComSenha = function() {
+        window.acessarPainelGestorComSenha = function () {
             const jaAut = sessionStorage.getItem('vathos2027_gestor_autenticado') === 'sim';
             if (jaAut) {
                 window.location.href = 'vathos2027_admin.html';
@@ -1729,7 +2118,7 @@
             }
         };
 
-        window.encerrarSessaoCPF = function() {
+        window.encerrarSessaoCPF = function () {
             sessionStorage.removeItem('vathos2027_cpf_sessao');
             sessionStorage.removeItem('vathos2027_gestor_autenticado');
             document.getElementById('secao-banner-gestor-cpf')?.classList.add('hidden');
@@ -1773,7 +2162,7 @@
                 fCpf.setAttribute('type', 'tel');
                 fCpf.value = '';
                 fCpf.placeholder = '000.000.000-00';
-                fCpf.oninput = function() {
+                fCpf.oninput = function () {
                     this.value = window.aplicarMascaraCPF(this.value);
                     document.getElementById('form-cpf-badge').textContent = this.value || '000.000.000-00';
                 };
@@ -1825,11 +2214,11 @@
         }
         window.iniciarNovaInscricaoParaCPF = iniciarNovaInscricaoParaCPF;
 
-        window.iniciarCadastroFilhoMenor = function() {
+        window.iniciarCadastroFilhoMenor = function () {
             iniciarNovaInscricaoParaCPF('', true);
         };
 
-        window.aoMudarIgrejaSelect = function() {
+        window.aoMudarIgrejaSelect = function () {
             const val = document.getElementById('f-igreja-select').value;
             const wrapOutra = document.getElementById('wrap-outra-igreja');
             const inputOutra = document.getElementById('f-outra-igreja');
@@ -1854,12 +2243,12 @@
             }
         };
 
-        window.toggleCampoSaude = function(chave, mostrar) {
+        window.toggleCampoSaude = function (chave, mostrar) {
             const el = document.getElementById(`wrap-saude-${chave}`);
             if (el) el.classList.toggle('hidden', !mostrar);
         };
 
-        window.buscarCEPAutomatico = async function() {
+        window.buscarCEPAutomatico = async function () {
             const cepLimpo = String(document.getElementById('f-cep').value || '').replace(/\D/g, '');
             if (cepLimpo.length !== 8) return;
             try {
@@ -1871,16 +2260,16 @@
                     if (data.localidade) document.getElementById('f-cidade').value = data.localidade;
                     if (data.uf) document.getElementById('f-uf').value = data.uf;
                 }
-            } catch (e) {}
+            } catch (e) { }
         };
 
-        window.copiarResponsavelParaEmergencia = function() {
+        window.copiarResponsavelParaEmergencia = function () {
             document.getElementById('f-emerg-nome').value = document.getElementById('f-resp-nome').value;
             document.getElementById('f-emerg-vinculo').value = document.getElementById('f-resp-vinculo').value || 'Responsável Legal';
             document.getElementById('f-emerg-whatsapp').value = document.getElementById('f-resp-whatsapp').value;
         };
 
-        window.atualizarCalculoIdadeModalidade = function() {
+        window.atualizarCalculoIdadeModalidade = function () {
             const dataNasc = document.getElementById('f-data-nascimento').value;
             const dataRef = configEvento?.modalidades?.condicoesCriancas?.dataReferenciaIdade || '2027-03-26';
             const idade = calcularIdadeNaData(dataNasc, dataRef);
@@ -1970,36 +2359,148 @@
         };
 
         // =====================================================================
-        // SALVAR INSCRIÇÃO / PRÉ-RESERVA NO FIRESTORE
+        // SALVAR INSCRIÇÃO / PRÉ-RESERVA NO FIRESTORE (COM VALIDAÇÃO EXPLÍCITA E FOCO VISUAL)
         // =====================================================================
-        window.salvarInscricaoPreReserva = async function() {
-            const cpfFormLimpo = limparCPF(document.getElementById('f-cpf').value);
-            if (!validarCPF(cpfFormLimpo)) {
-                alert('Por favor, informe um CPF válido de 11 dígitos para o participante.');
-                return;
+        function acusarCampoInvalido(idOuElemento, mensagem) {
+            const el = typeof idOuElemento === 'string' ? document.getElementById(idOuElemento) : idOuElemento;
+            
+            const avisoBtm = document.getElementById('aviso-validacao-form');
+            const txtBtm = document.getElementById('texto-aviso-validacao');
+            if (avisoBtm && txtBtm) {
+                txtBtm.textContent = mensagem;
+                avisoBtm.classList.remove('hidden');
+            }
+            const avisoTop = document.getElementById('aviso-validacao-form-topo');
+            const txtTop = document.getElementById('texto-aviso-validacao-topo');
+            if (avisoTop && txtTop) {
+                txtTop.textContent = mensagem;
+                avisoTop.classList.remove('hidden');
             }
 
-            const dataNasc = document.getElementById('f-data-nascimento').value;
+            if (el) {
+                document.querySelectorAll('.campo-com-erro').forEach(c => {
+                    c.classList.remove('campo-com-erro', 'border-rose-500', 'ring-4', 'ring-rose-500/40', 'bg-rose-950/30');
+                });
+
+                el.classList.add('campo-com-erro', 'border-rose-500', 'ring-4', 'ring-rose-500/40', 'bg-rose-950/30');
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                try { el.focus(); } catch (e) { }
+
+                const limparErro = () => {
+                    el.classList.remove('campo-com-erro', 'border-rose-500', 'ring-4', 'ring-rose-500/40', 'bg-rose-950/30');
+                    if (avisoBtm) avisoBtm.classList.add('hidden');
+                    if (avisoTop) avisoTop.classList.add('hidden');
+                    el.removeEventListener('input', limparErro);
+                    el.removeEventListener('change', limparErro);
+                };
+                el.addEventListener('input', limparErro, { once: true });
+                el.addEventListener('change', limparErro, { once: true });
+            }
+
+            setTimeout(() => {
+                alert(mensagem);
+            }, 60);
+
+            return false;
+        }
+
+        window.__salvarInscricaoReal = async function () {
+            // 1. CPF do Participante
+            const cpfFormLimpo = limparCPF(document.getElementById('f-cpf')?.value || '');
+            if (!validarCPF(cpfFormLimpo)) {
+                return acusarCampoInvalido('f-cpf', 'Por favor, informe um CPF válido de 11 dígitos para o participante.');
+            }
+
+            // 2. Nome Completo
+            const nomeCompleto = document.getElementById('f-nome-completo')?.value?.trim() || '';
+            if (!nomeCompleto || nomeCompleto.length < 3) {
+                return acusarCampoInvalido('f-nome-completo', 'Por favor, informe o Nome Completo do participante (mínimo 3 caracteres).');
+            }
+
+            // 3. Data de Nascimento
+            const dataNasc = document.getElementById('f-data-nascimento')?.value || '';
+            if (!dataNasc) {
+                return acusarCampoInvalido('f-data-nascimento', 'Por favor, selecione a Data de Nascimento do participante.');
+            }
             const dataRef = configEvento?.modalidades?.condicoesCriancas?.dataReferenciaIdade || '2027-03-26';
             const idade = calcularIdadeNaData(dataNasc, dataRef);
+            if (isNaN(idade) || idade < 0 || idade > 120) {
+                return acusarCampoInvalido('f-data-nascimento', 'Por favor, informe uma Data de Nascimento válida.');
+            }
             const faixa = classificarFaixaEtaria(idade, configEvento);
 
-            if (faixa.isMenorDeIdade) {
-                const cpfRespLimpo = limparCPF(document.getElementById('f-resp-cpf').value);
-                if (!validarCPF(cpfRespLimpo)) {
-                    alert('Por favor, informe um CPF válido para o Responsável Legal.');
-                    return;
-                }
-                if (cpfRespLimpo === cpfFormLimpo) {
-                    alert('O CPF do responsável legal deve ser diferente do CPF do menor.');
-                    return;
+            // 4. WhatsApp Principal
+            const foneWhats = limparCPF(document.getElementById('f-whatsapp')?.value || '');
+            if (!foneWhats || foneWhats.length < 10) {
+                return acusarCampoInvalido('f-whatsapp', 'Por favor, informe o WhatsApp principal do participante com DDD (mínimo 10 dígitos).');
+            }
+
+            // 5. Igreja
+            const selIgreja = document.getElementById('f-igreja-select')?.value || '';
+            if (!selIgreja) {
+                return acusarCampoInvalido('f-igreja-select', 'Por favor, selecione a sua Igreja Quadrangular ou congregação.');
+            }
+            if (selIgreja === '__OUTRA_IGREJA__') {
+                const outraIgrejaNome = document.getElementById('f-outra-igreja')?.value?.trim() || '';
+                if (!outraIgrejaNome) {
+                    return acusarCampoInvalido('f-outra-igreja', 'Por favor, informe o nome e cidade da sua Igreja.');
                 }
             }
 
+            // 6. Se menor de idade: validação dos campos do responsável legal
+            if (faixa.isMenorDeIdade) {
+                const respNome = document.getElementById('f-resp-nome')?.value?.trim() || '';
+                if (!respNome || respNome.length < 3) {
+                    return acusarCampoInvalido('f-resp-nome', 'Participante menor de 18 anos: Por favor, informe o Nome Completo do Responsável Legal.');
+                }
+                const cpfRespLimpo = limparCPF(document.getElementById('f-resp-cpf')?.value || '');
+                if (!validarCPF(cpfRespLimpo)) {
+                    return acusarCampoInvalido('f-resp-cpf', 'Por favor, informe um CPF válido de 11 dígitos para o Responsável Legal.');
+                }
+                if (cpfRespLimpo === cpfFormLimpo) {
+                    return acusarCampoInvalido('f-resp-cpf', 'O CPF do responsável legal deve ser diferente do CPF do participante menor.');
+                }
+                const respWhats = limparCPF(document.getElementById('f-resp-whatsapp')?.value || '');
+                if (!respWhats || respWhats.length < 10) {
+                    return acusarCampoInvalido('f-resp-whatsapp', 'Por favor, informe o WhatsApp com DDD do Responsável Legal.');
+                }
+                const respCheck = document.getElementById('f-resp-confirmacao-legal')?.checked;
+                if (!respCheck) {
+                    return acusarCampoInvalido('f-resp-confirmacao-legal', 'O responsável legal precisa marcar a confirmação de responsabilidade sobre a inscrição.');
+                }
+            }
+
+            // 7. Contato de Emergência
+            const emergNome = document.getElementById('f-emerg-nome')?.value?.trim() || '';
+            if (!emergNome || emergNome.length < 2) {
+                return acusarCampoInvalido('f-emerg-nome', 'Por favor, informe o Nome do Contato de Emergência (Pai, Mãe ou Responsável).');
+            }
+            const emergWhats = limparCPF(document.getElementById('f-emerg-whatsapp')?.value || '');
+            if (!emergWhats || emergWhats.length < 10) {
+                return acusarCampoInvalido('f-emerg-whatsapp', 'Por favor, informe o Telefone / WhatsApp do Contato de Emergência com DDD.');
+            }
+
+            // 8. Termos de Aceite Obrigatórios
+            if (!document.getElementById('t-regras-convivencia')?.checked) {
+                return acusarCampoInvalido('t-regras-convivencia', 'Você precisa marcar a caixa confirmando ciência das Regras de Convivência e Valores do retiro.');
+            }
+            if (!document.getElementById('t-uso-dados')?.checked) {
+                return acusarCampoInvalido('t-uso-dados', 'Você precisa marcar a caixa concordando com os Termos de Uso de Dados e Ficha de Saúde (LGPD).');
+            }
+            if (!document.getElementById('t-condicoes-financeiras')?.checked) {
+                return acusarCampoInvalido('t-condicoes-financeiras', 'Você precisa marcar a caixa concordando com as Condições Financeiras e de Cancelamento.');
+            }
+
+            // Oculta alertas de validação anteriores se passou em todas
+            document.getElementById('aviso-validacao-form')?.classList.add('hidden');
+            document.getElementById('aviso-validacao-form-topo')?.classList.add('hidden');
+
             const btn = document.getElementById('btn-salvar-inscricao');
-            const originalHTML = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Salvando Pré-Reserva...`;
+            const originalHTML = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="inline-block animate-spin mr-2">🔄</span> Salvando Inscrição no Sistema...`;
+            }
 
             try {
                 // Se for novo cadastro (não edição), verifica se CPF já existe para evitar duplicidade
@@ -2162,7 +2663,7 @@
                     detalhes: `Modalidade: ${modalidade} | Condição: ${condicaoPagamento} | Faixa: ${faixa.codigo}`,
                     dataHora: serverTimestamp(),
                     dataHoraISO: new Date().toISOString()
-                }).catch(() => {});
+                }).catch(() => { });
 
                 await recarregarFichasDoCPF(cpfSessaoPrincipal || cpfFormLimpo);
                 await abrirAreaDoParticipante(cpfFormLimpo);
@@ -2171,11 +2672,16 @@
                 console.error('Erro ao salvar inscrição:', err);
                 alert('Erro ao salvar inscrição: ' + err.message);
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }
                 window.safeLucideIcons();
             }
         };
+
+        // Liga o salvamento real ao manipulador global
+        window.salvarInscricaoPreReserva = window.__salvarInscricaoReal;
 
         // =====================================================================
         // ÁREA EXCLUSIVA DO PARTICIPANTE (MEDIANTE CPF)
@@ -2211,7 +2717,7 @@
             document.getElementById('secao-formulario-inscricao')?.classList.add('hidden');
             document.getElementById('secao-area-participante')?.classList.remove('hidden');
             if (window.lucide && typeof lucide.createIcons === 'function') {
-                try { lucide.createIcons(); } catch(e){}
+                try { lucide.createIcons(); } catch (e) { }
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -2401,7 +2907,7 @@
             }
         }
 
-        window.emitirReciboPagamento = function(identificador) {
+        window.emitirReciboPagamento = function (identificador) {
             if (!inscricaoAtiva || !pagamentosAtivos) {
                 alert('Pagamento não localizado.');
                 return;
@@ -2432,7 +2938,7 @@
         // =====================================================================
         // ENVIO DE COMPROVANTE PIX PELO PARTICIPANTE
         // =====================================================================
-        window.simularPercentualNovoPagamento = function() {
+        window.simularPercentualNovoPagamento = function () {
             const box = document.getElementById('box-simulacao-comp');
             const val = Number(document.getElementById('comp-valor').value || 0);
             const dataPag = document.getElementById('comp-data').value || new Date().toISOString().split('T')[0];
@@ -2504,7 +3010,7 @@
             });
         }
 
-        window.enviarComprovanteParticipante = async function(abrirWhats = true) {
+        window.enviarComprovanteParticipante = async function (abrirWhats = true) {
             if (!inscricaoAtiva) return;
             const forma = document.getElementById('comp-forma')?.value || 'pix';
             const valor = Number(document.getElementById('comp-valor').value || 0);
@@ -2577,7 +3083,7 @@
                     detalhes: `Pagamento declarado (${forma.toUpperCase()}): ${formatarMoeda(valor)} (Data: ${formatarDataBR(dataEfetiva)} | ${formatarPercentual(calc.percentualQuitado)} no ${infoLote.loteNome}) ${file ? '[Com Anexo]' : (abrirWhats ? '[Aberto no WhatsApp]' : '[Sem Anexo]')}`,
                     dataHora: serverTimestamp(),
                     dataHoraISO: new Date().toISOString()
-                }).catch(() => {});
+                }).catch(() => { });
 
                 document.getElementById('form-enviar-comprovante').reset();
                 document.getElementById('comp-data').value = new Date().toISOString().split('T')[0];
@@ -2619,7 +3125,7 @@
         // =====================================================================
         // EDIÇÃO DE DADOS, LINK DE AUTORIZAÇÃO E SOLICITAÇÃO DE CANCELAMENTO
         // =====================================================================
-        window.abrirEdicaoDadosParticipante = function() {
+        window.abrirEdicaoDadosParticipante = function () {
             if (!inscricaoAtiva) return;
             modoEdicaoFichaExistente = true;
             const i = inscricaoAtiva;
@@ -2711,7 +3217,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        window.cancelarEdicaoFormulario = function() {
+        window.cancelarEdicaoFormulario = function () {
             if (fichasVinculadasAoResponsavel.length > 0 && cpfInscricaoAtiva) {
                 const existe = fichasVinculadasAoResponsavel.find(f => f.cpf === cpfInscricaoAtiva) || fichasVinculadasAoResponsavel[0];
                 if (existe) {
@@ -2722,14 +3228,14 @@
             encerrarSessaoCPF();
         };
 
-        window.copiarPixParticipante = function() {
+        window.copiarPixParticipante = function () {
             const val = document.getElementById('ap-chave-pix-input').value;
             if (!val) return;
             navigator.clipboard.writeText(val);
             alert('Chave Pix copiada para a área de transferência!');
         };
 
-        window.copiarLinkAutorizacaoMenor = function() {
+        window.copiarLinkAutorizacaoMenor = function () {
             if (!inscricaoAtiva) return;
             const url = new URL('vathos2027_autorizacao.html', window.location.href);
             url.searchParams.set('cpf', inscricaoAtiva.cpf);
@@ -2738,7 +3244,7 @@
             alert('Link exclusivo de autorização do responsável copiado!\n\nEnvie para o WhatsApp do responsável legal: ' + url.toString());
         };
 
-        window.solicitarCancelamentoInscricao = async function() {
+        window.solicitarCancelamentoInscricao = async function () {
             if (!inscricaoAtiva) return;
             const motivo = prompt('Informe o motivo da solicitação de cancelamento da inscrição:');
             if (!motivo) return;
@@ -2761,7 +3267,7 @@
                     detalhes: `Cancelamento solicitado pelo participante/responsável. Motivo: ${motivo.trim()}`,
                     dataHora: serverTimestamp(),
                     dataHoraISO: new Date().toISOString()
-                }).catch(() => {});
+                }).catch(() => { });
 
                 await abrirAreaDoParticipante(inscricaoAtiva.cpf);
                 alert('Solicitação de cancelamento registrada.');
@@ -2770,7 +3276,7 @@
             }
         };
 
-        window.irParaAreaLideres = function(cpf) {
+        window.irParaAreaLideres = function (cpf) {
             const cpfTarget = cpf || (inscricaoAtiva ? inscricaoAtiva.cpf : '');
             if (cpfTarget) {
                 sessionStorage.setItem('vathos_lider_cpf', cpfTarget);
@@ -2787,5 +3293,5 @@
         init();
     </script>
 </body>
-</html>
 
+</html>
