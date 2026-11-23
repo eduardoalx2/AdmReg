@@ -678,11 +678,12 @@
             },
             {
                 name: 'consultar_presencas',
-                description: 'Consulta registros de Presenças e Eventos da Região 655 (quem esteve Presente, Justificado ou Ausente em reuniões/eventos, motivo da justificativa, taxa de presença).',
+                description: 'Consulta registros de Presenças e Eventos da Região 655 (Presente, Justificado e Ausente — usando exatamente a mesma regra do Controle de Eventos). Quando perguntarem sobre a "última reunião" ou "último evento", use ultimoEvento: true.',
                 parameters: {
                     type: 'OBJECT',
                     properties: {
-                        evento: { type: 'STRING', description: 'Nome ou parte do nome do evento (opcional).' },
+                        evento: { type: 'STRING', description: 'Nome ou parte do nome do evento, ex: "Reunião de Pastores" (opcional).' },
+                        ultimoEvento: { type: 'BOOLEAN', description: 'Se true, seleciona automaticamente o evento mais recente (pela data) que corresponda ao filtro de evento.' },
                         nome: { type: 'STRING', description: 'Nome do pastor/participante (opcional).' },
                         igreja: { type: 'STRING', description: 'Nome ou código da igreja (opcional).' },
                         status: { type: 'STRING', enum: ['Presente', 'Justificado', 'Ausente'], description: 'Filtro por status de presença (opcional).' },
@@ -1151,8 +1152,97 @@
                     mesNorm = parsed.mes || (/^\d{1,2}$/.test(String(args.mes).trim()) ? String(args.mes).trim().padStart(2, '0') : '');
                 }
 
-                const filtrados = presencasData.filter(pr => {
-                    if (fEvento && !normalizeText(`${pr.tipoEvento || ''} ${pr.eventoId || ''}`).includes(fEvento)) return false;
+                // Ordena eventos do mais recente para o mais antigo (YYYY-MM-DD)
+                const eventosOrdenados = [...eventosData].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
+
+                // Filtra eventos pelo nome/ano/mês
+                let eventosAlvo = eventosOrdenados.filter(ev => {
+                    if (fEvento) {
+                        const tokens = fEvento.split(/\s+/).filter(t => t.length >= 2);
+                        const evTxt = normalizeText(`${ev.nome || ''} ${ev.id || ''}`);
+                        if (!evTxt.includes(fEvento) && !(tokens.length > 0 && tokens.every(t => evTxt.includes(t)))) {
+                            return false;
+                        }
+                    }
+                    if (anoNorm || mesNorm) {
+                        const per = parseMonthYear(ev.data || '');
+                        if (anoNorm && per.ano !== anoNorm) return false;
+                        if (mesNorm && per.mes !== mesNorm) return false;
+                    }
+                    return true;
+                });
+
+                if (args.ultimoEvento && eventosAlvo.length > 0) {
+                    eventosAlvo = [eventosAlvo[0]];
+                }
+
+                // Constrói a lista completa seguindo exatamente a regra de controleeventosreg655.html
+                const registrosCompletos = [];
+                const seenKeys = new Set();
+                const pushRegistro = (item) => {
+                    const k = `${item.eventoId}_${(item.nome || '').trim().toUpperCase()}`;
+                    if (seenKeys.has(k)) return;
+                    seenKeys.add(k);
+                    registrosCompletos.push(item);
+                };
+
+                for (const ev of eventosAlvo) {
+                    const eventoInativo = ev.status === 'Inativo';
+                    const publico = ev.publicoAlvo || 'Todos';
+                    const presencasDoEv = presencasData.filter(p => p.eventoId === ev.id);
+
+                    const expectedPastores = pastoresData.filter(p => {
+                        if (publico === 'Titulares') return p.funcao === 'Pastor Titular';
+                        if (publico === 'Coordenadores') return p.coordenador === true;
+                        if (publico === 'TitularesECoordenadores') return p.funcao === 'Pastor Titular' || p.coordenador === true;
+                        return true;
+                    });
+
+                    for (const pastor of expectedPastores) {
+                        const pastorInicio = pastor.dataInicioIgreja || '2025-01-01';
+                        if (ev.data && ev.data < pastorInicio) continue;
+                        const pNorm = (pastor.nome || '').trim().toUpperCase();
+                        const pr = presencasDoEv.find(x => (x.nome || '').trim().toUpperCase() === pNorm);
+                        if (pr) {
+                            if (pr.status === 'Ausente' && !eventoInativo) continue;
+                            pushRegistro({
+                                nome: pr.nome || pastor.nome,
+                                igreja: pr.igreja || (Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : (pastor.igreja || '')),
+                                eventoId: ev.id,
+                                tipoEvento: ev.nome || pr.tipoEvento || '',
+                                dataEvento: ev.data || pr.dataEvento || '',
+                                status: pr.status || '',
+                                motivo: pr.motivo || ''
+                            });
+                        } else if (eventoInativo) {
+                            pushRegistro({
+                                nome: pastor.nome || '',
+                                igreja: Array.isArray(pastor.igreja) ? pastor.igreja.join(', ') : (pastor.igreja || ''),
+                                eventoId: ev.id,
+                                tipoEvento: ev.nome || '',
+                                dataEvento: ev.data || '',
+                                status: 'Ausente',
+                                motivo: 'Não registrou presença'
+                            });
+                        }
+                    }
+
+                    for (const pr of presencasDoEv) {
+                        if (pr.status === 'Ausente' && !eventoInativo) continue;
+                        if (pr.status === 'Ausente' && !expectedPastores.some(p => (p.nome || '').trim().toUpperCase() === (pr.nome || '').trim().toUpperCase())) continue;
+                        pushRegistro({
+                            nome: pr.nome || '',
+                            igreja: pr.igreja || '',
+                            eventoId: ev.id,
+                            tipoEvento: ev.nome || pr.tipoEvento || '',
+                            dataEvento: ev.data || pr.dataEvento || '',
+                            status: pr.status || '',
+                            motivo: pr.motivo || ''
+                        });
+                    }
+                }
+
+                const filtrados = registrosCompletos.filter(pr => {
                     if (fNome && !normalizeText(pr.nome).includes(fNome)) return false;
                     if (fIgreja) {
                         const cleanIgr = fIgreja.replace(/\b(ieq|igreja|quadrangular)\b/g, '').trim();
@@ -1160,12 +1250,16 @@
                         if (!normIgr.includes(fIgreja) && !(cleanIgr && normIgr.includes(cleanIgr))) return false;
                     }
                     if (fStatus && normalizeText(pr.status) !== fStatus) return false;
-                    if (anoNorm || mesNorm) {
-                        const per = parseMonthYear(pr.dataEvento || pr.dataPostagem || '');
-                        if (anoNorm && per.ano !== anoNorm) return false;
-                        if (mesNorm && per.mes !== mesNorm) return false;
-                    }
                     return true;
+                });
+
+                const statusOrder = { presente: 1, justificado: 2, ausente: 3 };
+                filtrados.sort((a, b) => {
+                    const dCmp = String(b.dataEvento || '').localeCompare(String(a.dataEvento || ''));
+                    if (dCmp !== 0) return dCmp;
+                    const sCmp = (statusOrder[normalizeText(a.status)] || 9) - (statusOrder[normalizeText(b.status)] || 9);
+                    if (sCmp !== 0) return sCmp;
+                    return String(a.nome || '').localeCompare(String(b.nome || ''));
                 });
 
                 const countStatus = (lista) => {
@@ -1185,8 +1279,20 @@
                     };
                 };
 
+                const formatDataBR = (iso) => (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) ? iso.split('-').reverse().join('/') : (iso || '');
+
                 const res = {
-                    eventosCadastrados: eventosData.slice(0, 20).map(e => ({ nome: e.nome || '', data: e.data || '', status: e.status || '' })),
+                    eventosSelecionados: eventosAlvo.slice(0, 15).map(e => ({
+                        nome: e.nome || '',
+                        data: formatDataBR(e.data),
+                        status: e.status || '',
+                        publicoAlvo: e.publicoAlvo || 'Todos'
+                    })),
+                    eventosRecentesDisponiveis: eventosOrdenados.slice(0, 10).map(e => ({
+                        nome: e.nome || '',
+                        data: formatDataBR(e.data),
+                        status: e.status || ''
+                    })),
                     resumoGeral: countStatus(filtrados)
                 };
 
@@ -1195,7 +1301,7 @@
                     const groups = new Map();
                     for (const p of filtrados) {
                         let key = 'Sem informação';
-                        if (agruparPor === 'evento') key = `${p.tipoEvento || 'Evento'} (${p.dataEvento || 'S/D'})`;
+                        if (agruparPor === 'evento') key = `${p.tipoEvento || 'Evento'} (${formatDataBR(p.dataEvento) || 'S/D'})`;
                         else if (agruparPor === 'igreja') key = p.igreja || 'Sem igreja';
                         else if (agruparPor === 'nome') key = p.nome || 'Sem nome';
                         if (!groups.has(key)) groups.set(key, []);
@@ -1205,11 +1311,11 @@
                         .map(([grupo, itens]) => ({ grupo, ...countStatus(itens) }))
                         .sort((a, b) => b.total - a.total);
                 } else {
-                    res.registros = filtrados.slice(0, 50).map(p => ({
+                    res.registros = filtrados.slice(0, 200).map(p => ({
                         nome: p.nome || '',
                         igreja: p.igreja || '',
                         evento: p.tipoEvento || '',
-                        dataEvento: p.dataEvento || '',
+                        dataEvento: formatDataBR(p.dataEvento),
                         status: p.status || '',
                         motivo: p.motivo || ''
                     }));
