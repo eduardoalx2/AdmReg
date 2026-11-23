@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente Inteligente Financeiro — Região 655</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.300.0"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        .chat-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        /* Estilo do conteúdo markdown das respostas */
+        .md-content p { margin-bottom: 0.5rem; }
+        .md-content p:last-child { margin-bottom: 0; }
+        .md-content ul, .md-content ol { margin: 0.4rem 0 0.6rem 1.25rem; }
+        .md-content ul { list-style-type: disc; }
+        .md-content ol { list-style-type: decimal; }
+        .md-content li { margin-bottom: 0.2rem; }
+        .md-content strong { font-weight: 700; color: #0f172a; }
+        .md-content h3, .md-content h4 { font-weight: 800; color: #0f172a; margin: 0.6rem 0 0.3rem; }
+        .md-content code {
+            background: #f1f5f9;
+            padding: 0.1rem 0.35rem;
+            border-radius: 0.35rem;
+            font-size: 0.85em;
+            color: #334155;
+        }
+        .md-content .md-table-wrap {
+            overflow-x: auto;
+            margin: 0.6rem 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+        }
+        .md-content table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+        .md-content th {
+            background: #f8fafc;
+            text-align: left;
+            padding: 0.45rem 0.65rem;
+            font-weight: 700;
+            color: #334155;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .md-content td {
+            padding: 0.4rem 0.65rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .md-content tr:last-child td { border-bottom: none; }
+
+        @keyframes pulseDot {
+            0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: #4f46e5;
+            animation: pulseDot 1.3s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- CABEÇALHO -->
+    <header class="w-full shadow-sm bg-white border-b flex-shrink-0 z-30">
+        <div class="max-w-5xl mx-auto px-3 sm:px-4 py-1.5">
+            <div class="flex justify-between items-center">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="logo.png" alt="Logo IEQ" class="h-7 sm:h-8 w-auto object-contain" onerror="this.style.display='none'">
+                    <div class="border-l border-gray-200 pl-2">
+                        <div class="text-[11px] sm:text-xs font-bold text-slate-800 leading-none">Região 655</div>
+                        <div class="text-[8px] sm:text-[9px] font-medium text-slate-500 uppercase leading-none mt-0.5">Londrina/PR</div>
+                    </div>
+                </a>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="syncBtn" type="button" onclick="syncDatabase()" title="Recarregar dados do Firebase" class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1 bg-slate-100 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg transition-colors">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Sincronizar</span>
+                    </button>
+                    <button type="button" onclick="openSettingsModal()" title="Configurar chave do Google AI Studio" class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1 bg-slate-100 hover:bg-indigo-50 px-2.5 py-1.5 rounded-lg transition-colors">
+                        <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Chave IA</span>
+                        <span id="keyStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    </button>
+                    <a href="index.html" class="text-[10px] font-semibold text-slate-400 hover:text-blue-600 flex items-center gap-1 uppercase tracking-wider" title="Painel Admin">
+                        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Painel</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-gradient py-2 sm:py-2.5 px-3 sm:px-4">
+            <div class="max-w-5xl mx-auto flex justify-between items-center gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    </div>
+                    <h1 class="text-xs sm:text-sm font-bold text-white tracking-wide uppercase truncate">
+                        Assistente Financeiro — Somente Leitura
+                    </h1>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span id="dbStatusBadge" class="text-[10px] font-semibold text-slate-300 bg-white/10 px-2.5 py-1 rounded-full">
+                        Carregando dados...
+                    </span>
+                    <button type="button" onclick="resetChat()" title="Nova conversa" class="text-[10px] font-bold text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors">
+                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                        <span class="hidden sm:inline">Nova conversa</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ÁREA DO CHAT -->
+    <main class="flex-1 flex flex-col max-w-5xl w-full mx-auto overflow-hidden px-3 sm:px-4">
+        <!-- Aviso de chave pendente -->
+        <div id="missingKeyBanner" class="hidden mt-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="flex items-start gap-2.5">
+                <i data-lucide="key-round" class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0"></i>
+                <p class="text-xs text-amber-900">
+                    <strong>Falta só configurar sua chave do Google AI Studio.</strong> Ela fica salva apenas neste navegador e nunca vai para o GitHub.
+                </p>
+            </div>
+            <button type="button" onclick="openSettingsModal()" class="text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2 rounded-xl whitespace-nowrap transition-colors self-start sm:self-auto">
+                Configurar chave
+            </button>
+        </div>
+
+        <!-- Mensagens -->
+        <div id="chatMessages" class="flex-1 overflow-y-auto chat-scroll py-4 space-y-4">
+            <!-- Estado inicial / Boas-vindas -->
+            <div id="welcomeScreen" class="max-w-2xl mx-auto text-center pt-4 sm:pt-8 pb-4">
+                <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                    <i data-lucide="bot" class="w-7 h-7"></i>
+                </div>
+                <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 mb-1">
+                    Pergunte sobre os Recibos e o Financeiro
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto mb-5">
+                    Eu consulto diretamente a base de recibos e igrejas da Região 655 e faço todas as contas com precisão. <strong>Modo somente leitura:</strong> nada no banco é alterado.
+                </p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+                    <button type="button" onclick="askSuggestion(this)" class="p-3 bg-white hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-300 rounded-xl text-xs text-slate-700 font-medium transition-all shadow-sm flex items-start gap-2">
+                        <i data-lucide="calculator" class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5"></i>
+                        <span>Qual a soma do subtotal de entradas da IEQ Central em 2026?</span>
+                    </button>
+                    <button type="button" onclick="askSuggestion(this)" class="p-3 bg-white hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-300 rounded-xl text-xs text-slate-700 font-medium transition-all shadow-sm flex items-start gap-2">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5"></i>
+                        <span>Qual foi o total arrecadado pela região em 2026, mês a mês?</span>
+                    </button>
+                    <button type="button" onclick="askSuggestion(this)" class="p-3 bg-white hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-300 rounded-xl text-xs text-slate-700 font-medium transition-all shadow-sm flex items-start gap-2">
+                        <i data-lucide="trophy" class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5"></i>
+                        <span>Quais são as 5 igrejas com maior subtotal de entradas em 2026?</span>
+                    </button>
+                    <button type="button" onclick="askSuggestion(this)" class="p-3 bg-white hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-300 rounded-xl text-xs text-slate-700 font-medium transition-all shadow-sm flex items-start gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5"></i>
+                        <span>Quais igrejas não tiveram recibo no mês passado?</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de digitação -->
+        <div class="pb-3 sm:pb-4 pt-2 flex-shrink-0">
+            <form id="chatForm" class="bg-white border border-slate-200 rounded-2xl shadow-sm p-1.5 sm:p-2 flex items-end gap-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                <textarea id="userInput" rows="1" placeholder="Digite sua pergunta sobre recibos, taxas, igrejas ou períodos..." class="flex-1 resize-none bg-transparent px-2.5 py-2 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none max-h-32"></textarea>
+                <button id="sendBtn" type="submit" class="h-9 sm:h-10 px-3.5 sm:px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors flex items-center gap-1.5 text-xs flex-shrink-0">
+                    <span class="hidden sm:inline">Enviar</span>
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </form>
+            <p class="text-[10px] text-slate-400 text-center mt-1.5">
+                Cálculos feitos diretamente nos recibos do Firebase · Modo somente leitura (não altera dados)
+            </p>
+        </div>
+    </main>
+
+    <!-- MODAL CONFIGURAÇÃO DA CHAVE GEMINI -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                        <i data-lucide="key-round" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-sm">Chave do Google AI Studio</h3>
+                        <p class="text-[11px] text-slate-400">Salva apenas neste navegador</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 text-[11px] text-slate-600 space-y-1">
+                <p class="font-bold text-slate-700">Como pegar sua chave (gratuito):</p>
+                <p>1. Acesse <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="text-indigo-600 font-bold underline">aistudio.google.com/apikey</a></p>
+                <p>2. Clique em <strong>Criar chave de API</strong> (Create API key)</p>
+                <p>3. Copie a chave (começa com <code>AIza...</code>) e cole abaixo</p>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label for="apiKeyInput" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Chave da API (Gemini)</label>
+                    <input id="apiKeyInput" type="password" autocomplete="off" placeholder="AIza..." class="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-400 focus:bg-white font-mono">
+                </div>
+
+                <div>
+                    <label for="modelSelect" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Modelo de IA</label>
+                    <select id="modelSelect" class="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-400 focus:bg-white font-semibold text-slate-700">
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recomendado — rápido e gratuito)</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro (Análises mais complexas)</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash (Alternativo)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 mt-5">
+                <button type="button" onclick="clearApiKey()" class="text-xs font-bold text-rose-500 hover:text-rose-700 px-3 py-2 rounded-xl hover:bg-rose-50 transition-colors">
+                    Remover chave
+                </button>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeSettingsModal()" class="text-xs font-semibold text-slate-500 hover:text-slate-700 px-3.5 py-2 rounded-xl">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="saveSettings()" class="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl shadow-sm transition-colors">
+                        Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { requireAuth, hasAnyPermission } from './js/auth.js';
+
+        // ============================================================
+        // CONFIGURAÇÕES E ESTADO
+        // ============================================================
+        const STORAGE_KEY_API = 'assistente_reg655_gemini_key';
+        const STORAGE_KEY_MODEL = 'assistente_reg655_gemini_model';
+
+        let recibosData = [];
+        let igrejasData = [];
+        let isDataLoaded = false;
+        let isThinking = false;
+        let conversationContents = []; // histórico no formato Gemini
+
+        const chatMessagesEl = document.getElementById('chatMessages');
+        const welcomeScreenEl = document.getElementById('welcomeScreen');
+        const userInputEl = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatForm = document.getElementById('chatForm');
+        const dbStatusBadge = document.getElementById('dbStatusBadge');
+        const keyStatusDot = document.getElementById('keyStatusDot');
+        const missingKeyBanner = document.getElementById('missingKeyBanner');
+        const settingsModal = document.getElementById('settingsModal');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const modelSelect = document.getElementById('modelSelect');
+
+        // ============================================================
+        // AUTENTICAÇÃO (somente usuários autorizados do financeiro)
+        // ============================================================
+        await requireAuth();
+        const allowed = await hasAnyPermission(['admin', 'secretario', 'superintendente', 'dash_recibos', 'recibos']);
+        if (!allowed) {
+            alert('Você não tem permissão para acessar o Assistente Financeiro.');
+            window.location.href = 'index.html';
+        }
+
+        // ============================================================
+        // UTILITÁRIOS
+        // ============================================================
+        function normalizeText(s) {
+            return String(s || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim();
+        }
+
+        function round2(n) {
+            return Math.round((Number(n) || 0) * 100) / 100;
+        }
+
+        function formatBRL(v) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
+        }
+
+        function escHtml(s) {
+            return String(s || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function parseMonthYear(str) {
+            if (!str) return { mes: '', ano: '', mmYyyy: '' };
+            const s = String(str).trim();
+            // DD/MM/YYYY
+            let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+            if (m) return { mes: m[2], ano: m[3], mmYyyy: `${m[2]}/${m[3]}` };
+            // MM/YYYY
+            m = s.match(/^(\d{2})\/(\d{4})$/);
+            if (m) return { mes: m[1], ano: m[2], mmYyyy: `${m[1]}/${m[2]}` };
+            // YYYY-MM
+            m = s.match(/^(\d{4})-(\d{2})/);
+            if (m) return { mes: m[2], ano: m[1], mmYyyy: `${m[2]}/${m[1]}` };
+            return { mes: '', ano: '', mmYyyy: '' };
+        }
+
+        function getReciboPeriod(r, tipoData = 'referencia') {
+            if (tipoData === 'emissao') {
+                const p = parseMonthYear(r.dataEmissao);
+                if (p.ano) return p;
+                return parseMonthYear(r.referenceDate);
+            }
+            const p = parseMonthYear(r.referenceDate);
+            if (p.ano) return p;
+            return parseMonthYear(r.dataEmissao);
+        }
+
+        function getReciboTotalPago(r) {
+            const somaTaxas =
+                (parseFloat(r.regionalTax) || 0) +
+                (parseFloat(r.coordinatorFeeParsed) || 0) +
+                (parseFloat(r.insuranceTotal) || 0) +
+                (parseFloat(r.otherValueParsed) || 0);
+            if (somaTaxas > 0) return round2(somaTaxas);
+            return round2(parseFloat(r.total) || 0);
+        }
+
+        function matchIgreja(r, filtroIgreja) {
+            if (!filtroIgreja) return true;
+            const q = normalizeText(filtroIgreja);
+            if (!q || q === 'todas' || q === 'todas as igrejas') return true;
+
+            const cod = normalizeText(r.igrejaCodigo);
+            const nome = normalizeText(r.igrejaNome);
+            const fmt = normalizeText(r.igrejaFormatada);
+
+            if (cod && (cod === q || q === cod)) return true;
+            if (fmt.includes(q) || nome.includes(q)) return true;
+
+            // Remove prefixos comuns ("ieq", "igreja") para melhorar o casamento
+            const qClean = q.replace(/\b(ieq|igreja|quadrangular)\b/g, '').replace(/\s+/g, ' ').trim();
+            if (qClean && (fmt.includes(qClean) || nome.includes(qClean))) return true;
+
+            // Todos os tokens significativos presentes
+            const tokens = qClean.split(' ').filter(t => t.length >= 2);
+            if (tokens.length > 0 && tokens.every(t => fmt.includes(t))) return true;
+
+            return false;
+        }
+
+        function filterRecibos({ igreja, ano, mes, tipoData = 'referencia', buscaTexto }) {
+            let mesNorm = '';
+            let anoNorm = ano ? String(ano).trim() : '';
+
+            if (mes) {
+                const ms = String(mes).trim();
+                const parsed = parseMonthYear(ms);
+                if (parsed.mmYyyy) {
+                    mesNorm = parsed.mes;
+                    if (!anoNorm) anoNorm = parsed.ano;
+                } else if (/^\d{1,2}$/.test(ms)) {
+                    mesNorm = ms.padStart(2, '0');
+                }
+            }
+
+            const qTexto = normalizeText(buscaTexto);
+
+            return recibosData.filter(r => {
+                if (!matchIgreja(r, igreja)) return false;
+
+                const per = getReciboPeriod(r, tipoData);
+                if (anoNorm && per.ano !== anoNorm) return false;
+                if (mesNorm && per.mes !== mesNorm) return false;
+
+                if (qTexto) {
+                    const haystack = normalizeText(
+                        `${r.codigoRecibo || ''} ${r.igrejaFormatada || ''} ${r.pastor || ''} ${r.otherDesc || ''} ${r.referenceDate || ''} ${r.dataEmissao || ''}`
+                    );
+                    if (!haystack.includes(qTexto)) return false;
+                }
+
+                return true;
+            });
+        }
+
+        function summarizeRecibos(lista) {
+            let somaSubtotalEntradas = 0;
+            let somaTaxaRegional = 0;
+            let somaTaxaCoordenadoria = 0;
+            let somaSeguroVida = 0;
+            let totalVidasSeguro = 0;
+            let somaOutros = 0;
+            let somaTotalPago = 0;
+
+            for (const r of lista) {
+                somaSubtotalEntradas += parseFloat(r.incomeValue) || 0;
+                somaTaxaRegional += parseFloat(r.regionalTax) || 0;
+                somaTaxaCoordenadoria += parseFloat(r.coordinatorFeeParsed) || 0;
+                somaSeguroVida += parseFloat(r.insuranceTotal) || 0;
+                totalVidasSeguro += parseInt(r.insuranceCount, 10) || 0;
+                somaOutros += parseFloat(r.otherValueParsed) || 0;
+                somaTotalPago += getReciboTotalPago(r);
+            }
+
+            const qtd = lista.length;
+            return {
+                quantidadeRecibos: qtd,
+                somaSubtotalEntradas: round2(somaSubtotalEntradas),
+                somaTaxaRegional: round2(somaTaxaRegional),
+                somaTaxaCoordenadoria: round2(somaTaxaCoordenadoria),
+                somaSeguroVida: round2(somaSeguroVida),
+                totalVidasSeguro,
+                somaOutros: round2(somaOutros),
+                somaTotalPago: round2(somaTotalPago),
+                mediaSubtotalEntradas: qtd > 0 ? round2(somaSubtotalEntradas / qtd) : 0,
+                mediaTotalPago: qtd > 0 ? round2(somaTotalPago / qtd) : 0
+            };
+        }
+
+        // ============================================================
+        // CARREGAMENTO SOMENTE LEITURA DO FIRESTORE
+        // ============================================================
+        window.syncDatabase = async function() {
+            const syncBtn = document.getElementById('syncBtn');
+            syncBtn.disabled = true;
+            dbStatusBadge.innerText = 'Sincronizando...';
+
+            try {
+                const [snapRecibos, snapIgrejas] = await Promise.all([
+                    getDocs(collection(db, 'recibos')),
+                    getDocs(collection(db, 'igrejas'))
+                ]);
+
+                recibosData = [];
+                snapRecibos.forEach(d => {
+                    const data = d.data();
+                    recibosData.push({
+                        id: d.id,
+                        ...data,
+                        igrejaFormatada: data.igrejaFormatada || `${data.igrejaCodigo || 'S/C'} - ${data.igrejaNome || 'Desconhecida'}`
+                    });
+                });
+
+                igrejasData = [];
+                snapIgrejas.forEach(d => {
+                    const data = d.data();
+                    if (data.nome) {
+                        const cod = String(data.codigo || '');
+                        igrejasData.push({
+                            id: d.id,
+                            codigo: cod,
+                            nome: data.nome,
+                            formatada: cod ? `${cod} - ${data.nome}` : data.nome,
+                            pastor: data.pastor || '',
+                            endereco: data.endereco || '',
+                            isRegiao: cod === '655' || data.nome.toUpperCase().includes('REGIÃO')
+                        });
+                    }
+                });
+
+                isDataLoaded = true;
+                dbStatusBadge.innerText = `${recibosData.length} recibos · ${igrejasData.length} igrejas`;
+            } catch (err) {
+                console.error(err);
+                dbStatusBadge.innerText = 'Erro ao carregar dados';
+                appendMessage('assistant', `Não consegui carregar os dados do Firebase agora (${err.message}). Tente clicar em **Sincronizar** novamente.`);
+            } finally {
+                syncBtn.disabled = false;
+            }
+        };
+
+        // ============================================================
+        // FERRAMENTAS LOCAIS (EXECUTADAS EM JAVASCRIPT COM 100% DE PRECISÃO)
+        // ============================================================
+        const TOOL_DECLARATIONS = [
+            {
+                name: 'listar_igrejas',
+                description: 'Lista as igrejas cadastradas e/ou presentes nos recibos. Use sempre que precisar confirmar o nome ou código exato de uma igreja.',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        busca: { type: 'STRING', description: 'Parte do nome ou código da igreja (opcional).' }
+                    }
+                }
+            },
+            {
+                name: 'consultar_resumo_financeiro',
+                description: 'Calcula com precisão somas, médias e quantidades de recibos (subtotal de entradas/incomeValue, taxa regional 4%, taxa coordenadoria, seguro de vida, outros e total pago). Pode filtrar por igreja, ano e mês, e agrupar por igreja, mês ou ano.',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        igreja: { type: 'STRING', description: 'Nome ou código da igreja (opcional; omita para considerar todas).' },
+                        ano: { type: 'STRING', description: 'Ano com 4 dígitos, ex: "2026" (opcional).' },
+                        mes: { type: 'STRING', description: 'Mês de "01" a "12" ou "MM/YYYY" (opcional).' },
+                        tipoData: {
+                            type: 'STRING',
+                            enum: ['referencia', 'emissao'],
+                            description: 'Usar mês de referência/competência ("referencia", padrão) ou data de emissão ("emissao").'
+                        },
+                        agruparPor: {
+                            type: 'STRING',
+                            enum: ['geral', 'igreja', 'mes', 'ano'],
+                            description: 'Como agrupar o resultado. Padrão: "geral".'
+                        }
+                    }
+                }
+            },
+            {
+                name: 'listar_recibos',
+                description: 'Lista recibos individuais filtrados por igreja, ano, mês ou texto livre (ex: descrição em Outros ou nome do pastor). Ideal para detalhar lançamentos, encontrar maiores/menores recibos ou ver recibos específicos.',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        igreja: { type: 'STRING', description: 'Nome ou código da igreja (opcional).' },
+                        ano: { type: 'STRING', description: 'Ano com 4 dígitos, ex: "2026" (opcional).' },
+                        mes: { type: 'STRING', description: 'Mês "01" a "12" ou "MM/YYYY" (opcional).' },
+                        tipoData: { type: 'STRING', enum: ['referencia', 'emissao'], description: 'Padrão: "referencia".' },
+                        buscaTexto: { type: 'STRING', description: 'Texto livre para buscar em descrição de Outros, pastor, código do recibo, etc.' },
+                        ordenarPor: {
+                            type: 'STRING',
+                            enum: ['data_desc', 'data_asc', 'maior_entrada', 'maior_total', 'menor_total'],
+                            description: 'Ordenação da lista. Padrão: "data_desc".'
+                        },
+                        limite: { type: 'INTEGER', description: 'Máximo de recibos a retornar (padrão 25, máximo 50).' }
+                    }
+                }
+            },
+            {
+                name: 'verificar_igrejas_sem_recibo',
+                description: 'Verifica quais igrejas cadastradas NÃO possuem recibo lançado em um determinado mês e/ou ano.',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        ano: { type: 'STRING', description: 'Ano com 4 dígitos, ex: "2026".' },
+                        mes: { type: 'STRING', description: 'Mês de "01" a "12" (opcional; se omitido verifica o ano todo).' },
+                        tipoData: { type: 'STRING', enum: ['referencia', 'emissao'], description: 'Padrão: "referencia".' }
+                    },
+                    required: ['ano']
+                }
+            },
+            {
+                name: 'comparar_periodos',
+                description: 'Compara dois períodos (dois anos como "2025" e "2026", ou dois meses como "02/2026" e "03/2026") para uma igreja ou para toda a região, calculando diferença em reais e variação percentual.',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        igreja: { type: 'STRING', description: 'Nome ou código da igreja (opcional; omita para toda a região).' },
+                        periodo1: { type: 'STRING', description: 'Primeiro período: "YYYY" ou "MM/YYYY".' },
+                        periodo2: { type: 'STRING', description: 'Segundo período: "YYYY" ou "MM/YYYY".' },
+                        tipoData: { type: 'STRING', enum: ['referencia', 'emissao'], description: 'Padrão: "referencia".' }
+                    },
+                    required: ['periodo1', 'periodo2']
+                }
+            }
+        ];
+
+        function executeTool(name, args = {}) {
+            if (name === 'listar_igrejas') {
+                const q = normalizeText(args.busca);
+                const map = new Map();
+
+                for (const ig of igrejasData) {
+                    if (ig.isRegiao) continue;
+                    map.set(ig.codigo || ig.nome, {
+                        codigo: ig.codigo,
+                        nome: ig.nome,
+                        formatada: ig.formatada,
+                        pastor: ig.pastor
+                    });
+                }
+                for (const r of recibosData) {
+                    const key = String(r.igrejaCodigo || r.igrejaNome || '');
+                    if (key && !map.has(key)) {
+                        map.set(key, {
+                            codigo: String(r.igrejaCodigo || ''),
+                            nome: r.igrejaNome || '',
+                            formatada: r.igrejaFormatada,
+                            pastor: r.pastor || ''
+                        });
+                    }
+                }
+
+                let list = Array.from(map.values());
+                if (q) {
+                    const qClean = q.replace(/\b(ieq|igreja|quadrangular)\b/g, '').trim();
+                    list = list.filter(i => {
+                        const txt = normalizeText(`${i.codigo} ${i.nome} ${i.pastor}`);
+                        return txt.includes(q) || (qClean && txt.includes(qClean));
+                    });
+                }
+                list.sort((a, b) => (parseInt(a.codigo) || 999999) - (parseInt(b.codigo) || 999999));
+                return { totalEncontradas: list.length, igrejas: list.slice(0, 80) };
+            }
+
+            if (name === 'consultar_resumo_financeiro') {
+                const tipoData = args.tipoData || 'referencia';
+                const agruparPor = args.agruparPor || 'geral';
+                const filtrados = filterRecibos({
+                    igreja: args.igreja,
+                    ano: args.ano,
+                    mes: args.mes,
+                    tipoData
+                });
+
+                const resumoGeral = summarizeRecibos(filtrados);
+                const igrejasEncontradas = [...new Set(filtrados.map(r => r.igrejaFormatada))];
+
+                const result = {
+                    filtrosAplicados: {
+                        igreja: args.igreja || 'Todas',
+                        ano: args.ano || 'Todos',
+                        mes: args.mes || 'Todos',
+                        tipoData
+                    },
+                    igrejasIncluidasNoCalculo: igrejasEncontradas.slice(0, 20),
+                    totalIgrejasDistintas: igrejasEncontradas.length,
+                    resumoGeral
+                };
+
+                if (agruparPor !== 'geral') {
+                    const groups = new Map();
+                    for (const r of filtrados) {
+                        const per = getReciboPeriod(r, tipoData);
+                        let key = 'Sem informação';
+                        if (agruparPor === 'igreja') key = r.igrejaFormatada;
+                        else if (agruparPor === 'mes') key = per.mmYyyy || 'Sem data';
+                        else if (agruparPor === 'ano') key = per.ano || 'Sem ano';
+
+                        if (!groups.has(key)) groups.set(key, []);
+                        groups.get(key).push(r);
+                    }
+
+                    const detalhamento = Array.from(groups.entries()).map(([grupo, itens]) => ({
+                        grupo,
+                        ...summarizeRecibos(itens)
+                    }));
+
+                    if (agruparPor === 'mes') {
+                        detalhamento.sort((a, b) => {
+                            const pa = parseMonthYear(a.grupo);
+                            const pb = parseMonthYear(b.grupo);
+                            return `${pa.ano}-${pa.mes}`.localeCompare(`${pb.ano}-${pb.mes}`);
+                        });
+                    } else if (agruparPor === 'ano') {
+                        detalhamento.sort((a, b) => a.grupo.localeCompare(b.grupo));
+                    } else {
+                        detalhamento.sort((a, b) => b.somaSubtotalEntradas - a.somaSubtotalEntradas);
+                    }
+
+                    result.detalhamento = detalhamento;
+                }
+
+                return result;
+            }
+
+            if (name === 'listar_recibos') {
+                const tipoData = args.tipoData || 'referencia';
+                const limite = Math.min(Math.max(parseInt(args.limite, 10) || 25, 1), 50);
+                const filtrados = filterRecibos({
+                    igreja: args.igreja,
+                    ano: args.ano,
+                    mes: args.mes,
+                    tipoData,
+                    buscaTexto: args.buscaTexto
+                });
+
+                const ordenarPor = args.ordenarPor || 'data_desc';
+                const sorted = [...filtrados].sort((a, b) => {
+                    if (ordenarPor === 'maior_entrada') return (parseFloat(b.incomeValue) || 0) - (parseFloat(a.incomeValue) || 0);
+                    if (ordenarPor === 'maior_total') return getReciboTotalPago(b) - getReciboTotalPago(a);
+                    if (ordenarPor === 'menor_total') return getReciboTotalPago(a) - getReciboTotalPago(b);
+                    const pa = parseMonthYear(a.dataEmissao);
+                    const pb = parseMonthYear(b.dataEmissao);
+                    const ka = `${pa.ano}-${pa.mes}-${(a.dataEmissao || '').slice(0, 2)}`;
+                    const kb = `${pb.ano}-${pb.mes}-${(b.dataEmissao || '').slice(0, 2)}`;
+                    return ordenarPor === 'data_asc' ? ka.localeCompare(kb) : kb.localeCompare(ka);
+                });
+
+                return {
+                    totalEncontrados: sorted.length,
+                    exibindo: Math.min(sorted.length, limite),
+                    recibos: sorted.slice(0, limite).map(r => ({
+                        codigoRecibo: r.codigoRecibo || '',
+                        igreja: r.igrejaFormatada,
+                        pastor: r.pastor || '',
+                        referencia: r.referenceDate || '',
+                        dataEmissao: r.dataEmissao || '',
+                        subtotalEntradas: round2(r.incomeValue),
+                        taxaRegional: round2(r.regionalTax),
+                        taxaCoordenadoria: round2(r.coordinatorFeeParsed),
+                        seguroVida: round2(r.insuranceTotal),
+                        vidasSeguro: parseInt(r.insuranceCount, 10) || 0,
+                        outrosValor: round2(r.otherValueParsed),
+                        outrosDesc: r.otherDesc || '',
+                        totalPago: getReciboTotalPago(r)
+                    }))
+                };
+            }
+
+            if (name === 'verificar_igrejas_sem_recibo') {
+                const tipoData = args.tipoData || 'referencia';
+                const filtrados = filterRecibos({ ano: args.ano, mes: args.mes, tipoData });
+
+                const codigosComRecibo = new Set(filtrados.map(r => normalizeText(r.igrejaCodigo)).filter(Boolean));
+                const nomesComRecibo = new Set(filtrados.map(r => normalizeText(r.igrejaNome)).filter(Boolean));
+
+                const elegiveis = igrejasData.filter(ig => !ig.isRegiao);
+                const semRecibo = elegiveis.filter(ig => {
+                    const hasByCode = ig.codigo && codigosComRecibo.has(normalizeText(ig.codigo));
+                    const hasByName = nomesComRecibo.has(normalizeText(ig.nome));
+                    return !hasByCode && !hasByName;
+                });
+
+                return {
+                    periodo: args.mes ? `${String(args.mes).padStart(2, '0')}/${args.ano}` : String(args.ano),
+                    tipoData,
+                    totalIgrejasCadastradas: elegiveis.length,
+                    totalComRecibo: elegiveis.length - semRecibo.length,
+                    totalSemRecibo: semRecibo.length,
+                    igrejasSemRecibo: semRecibo.map(ig => ({
+                        codigo: ig.codigo,
+                        nome: ig.nome,
+                        formatada: ig.formatada,
+                        pastor: ig.pastor
+                    }))
+                };
+            }
+
+            if (name === 'comparar_periodos') {
+                const tipoData = args.tipoData || 'referencia';
+                const parsePeriodArg = (p) => {
+                    const s = String(p || '').trim();
+                    if (/^\d{4}$/.test(s)) return { ano: s, mes: '' };
+                    const parsed = parseMonthYear(s);
+                    return { ano: parsed.ano, mes: parsed.mes };
+                };
+
+                const p1 = parsePeriodArg(args.periodo1);
+                const p2 = parsePeriodArg(args.periodo2);
+
+                const r1 = summarizeRecibos(filterRecibos({ igreja: args.igreja, ano: p1.ano, mes: p1.mes, tipoData }));
+                const r2 = summarizeRecibos(filterRecibos({ igreja: args.igreja, ano: p2.ano, mes: p2.mes, tipoData }));
+
+                const diffEntradas = round2(r2.somaSubtotalEntradas - r1.somaSubtotalEntradas);
+                const pctEntradas = r1.somaSubtotalEntradas > 0
+                    ? round2((diffEntradas / r1.somaSubtotalEntradas) * 100)
+                    : null;
+
+                const diffTotal = round2(r2.somaTotalPago - r1.somaTotalPago);
+                const pctTotal = r1.somaTotalPago > 0
+                    ? round2((diffTotal / r1.somaTotalPago) * 100)
+                    : null;
+
+                return {
+                    igreja: args.igreja || 'Todas',
+                    tipoData,
+                    periodo1: { label: args.periodo1, ...r1 },
+                    periodo2: { label: args.periodo2, ...r2 },
+                    variacaoSubtotalEntradas: { diferencaReais: diffEntradas, variacaoPercentual: pctEntradas },
+                    variacaoTotalPago: { diferencaReais: diffTotal, variacaoPercentual: pctTotal }
+                };
+            }
+
+            return { erro: `Ferramenta desconhecida: ${name}` };
+        }
+
+        // ============================================================
+        // INTEGRAÇÃO COM A API DO GOOGLE GEMINI
+        // ============================================================
+        function getSystemInstruction() {
+            const hoje = new Date();
+            const dataHoje = hoje.toLocaleDateString('pt-BR');
+            const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+            const anoAtual = String(hoje.getFullYear());
+
+            return `Você é o Assistente Financeiro da IEQ Região 655 (Londrina/PR), operando em modo SOMENTE LEITURA sobre a base real de recibos e igrejas no Firebase.
+Hoje é ${dataHoje} (mês atual: ${mesAtual}/${anoAtual}).
+
+REGRAS IMPORTANTES:
+1. NUNCA invente números nem faça somas de cabeça. SEMPRE chame as ferramentas disponíveis para consultar e calcular os valores exatos.
+2. Vocabulário do sistema de recibos da Região 655:
+   - "Subtotal de entradas" / "entradas da igreja" = campo subtotalEntradas (incomeValue)
+   - "Taxa Regional (4%)" = campo taxaRegional (regionalTax)
+   - "Taxa Coordenadoria" = campo taxaCoordenadoria (coordinatorFeeParsed)
+   - "Seguro de Vida" = campo seguroVida (insuranceTotal) e vidasSeguro (insuranceCount)
+   - "Outros" = campo outrosValor (otherValueParsed) e outrosDesc
+   - "Total Pago" / "arrecadado pela região" = campo totalPago (soma das taxas pagas pela igreja à região)
+3. Quando o usuário citar o nome de uma igreja e houver qualquer chance de variação de nome (ou retornar 0 recibos), use listar_igrejas para confirmar o nome/código exato antes de responder que não há dados.
+4. Por padrão, considere o período pelo mês de referência (tipoData: "referencia"), a menos que o usuário mencione explicitamente "data de emissão" ou "emitidos em". Sempre informe brevemente na resposta qual critério foi usado (ex: "considerando mês de referência") e quantos recibos entraram no cálculo.
+5. Formate valores monetários em reais brasileiros (ex: R$ 12.345,67). Seja claro, objetivo, educado e direto em português do Brasil. Use tabelas ou listas curtas quando facilitar a leitura.`;
+        }
+
+        async function callGeminiAPI(contents) {
+            const apiKey = localStorage.getItem(STORAGE_KEY_API) || '';
+            const model = localStorage.getItem(STORAGE_KEY_MODEL) || 'gemini-2.5-flash';
+
+            if (!apiKey) {
+                throw new Error('CHAVE_AUSENTE');
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    systemInstruction: { parts: [{ text: getSystemInstruction() }] },
+                    contents,
+                    tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+                    generationConfig: {
+                        temperature: 0.1
+                    }
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                const msg = data?.error?.message || `Erro HTTP ${res.status}`;
+                throw new Error(msg);
+            }
+
+            return data;
+        }
+
+        async function handleUserQuestion(question) {
+            if (!question.trim() || isThinking) return;
+
+            const apiKey = localStorage.getItem(STORAGE_KEY_API) || '';
+            if (!apiKey) {
+                openSettingsModal();
+                return;
+            }
+
+            if (!isDataLoaded) {
+                await syncDatabase();
+            }
+
+            welcomeScreenEl.classList.add('hidden');
+            appendMessage('user', question);
+
+            isThinking = true;
+            sendBtn.disabled = true;
+            const thinkingEl = appendThinkingIndicator('Analisando sua pergunta...');
+
+            conversationContents.push({
+                role: 'user',
+                parts: [{ text: question }]
+            });
+
+            try {
+                let finalReply = '';
+                const maxSteps = 6;
+
+                for (let step = 0; step < maxSteps; step++) {
+                    const response = await callGeminiAPI(conversationContents);
+                    const candidate = response?.candidates?.[0];
+                    const parts = candidate?.content?.parts || [];
+
+                    if (!parts.length) {
+                        throw new Error('A IA não retornou resposta. Tente reformular a pergunta.');
+                    }
+
+                    // Salva a resposta do modelo no histórico
+                    conversationContents.push({ role: 'model', parts });
+
+                    const functionCalls = parts.filter(p => p.functionCall);
+                    if (functionCalls.length > 0) {
+                        updateThinkingLabel(thinkingEl, 'Consultando recibos no Firebase...');
+                        const functionResponses = functionCalls.map(p => {
+                            const { name, args } = p.functionCall;
+                            const toolResult = executeTool(name, args || {});
+                            return {
+                                functionResponse: {
+                                    name,
+                                    response: { result: toolResult }
+                                }
+                            };
+                        });
+
+                        conversationContents.push({
+                            role: 'user',
+                            parts: functionResponses
+                        });
+                        continue;
+                    }
+
+                    finalReply = parts.map(p => p.text || '').join('\n').trim();
+                    break;
+                }
+
+                thinkingEl.remove();
+                appendMessage('assistant', finalReply || 'Não consegui montar a resposta. Tente perguntar novamente.');
+            } catch (err) {
+                thinkingEl.remove();
+                // Remove a última mensagem do usuário do histórico se falhou antes de completar
+                conversationContents.pop();
+                console.error(err);
+
+                let friendlyError = `Ocorreu um erro ao consultar a IA: ${err.message}`;
+                if (err.message === 'CHAVE_AUSENTE') {
+                    friendlyError = 'Configure sua chave do Google AI Studio para começar.';
+                    openSettingsModal();
+                } else if (/API key not valid|API_KEY_INVALID|401|403/i.test(err.message)) {
+                    friendlyError = 'Sua chave do Google AI Studio parece inválida ou sem permissão. Clique em **Chave IA** no topo para verificar.';
+                } else if (/quota|429|RESOURCE_EXHAUSTED/i.test(err.message)) {
+                    friendlyError = 'Limite temporário da cota gratuita do Gemini atingido. Aguarde alguns segundos e tente novamente.';
+                }
+                appendMessage('assistant', friendlyError, true);
+            } finally {
+                isThinking = false;
+                sendBtn.disabled = false;
+                userInputEl.focus();
+            }
+        }
+
+        // ============================================================
+        // RENDERIZAÇÃO DO CHAT (MARKDOWN SEGURO E LIMPO)
+        // ============================================================
+        function renderSimpleMarkdown(md) {
+            const lines = String(md || '').replace(/\r\n/g, '\n').split('\n');
+            let html = '';
+            let inList = null; // 'ul' | 'ol'
+            let inTable = false;
+            let tableRows = [];
+
+            const formatInline = (txt) => {
+                let s = escHtml(txt);
+                s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+                s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+                return s;
+            };
+
+            const flushList = () => {
+                if (inList) {
+                    html += `</${inList}>`;
+                    inList = null;
+                }
+            };
+
+            const flushTable = () => {
+                if (!inTable || tableRows.length === 0) return;
+                const cleanRow = (r) => r.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+                const headers = cleanRow(tableRows[0]);
+                const bodyRows = tableRows.slice(1).filter(r => !/^[\|\s:\-]+$/.test(r)).map(cleanRow);
+
+                html += '<div class="md-table-wrap"><table><thead><tr>';
+                headers.forEach(h => { html += `<th>${formatInline(h)}</th>`; });
+                html += '</tr></thead><tbody>';
+                bodyRows.forEach(row => {
+                    html += '<tr>';
+                    row.forEach(cell => { html += `<td>${formatInline(cell)}</td>`; });
+                    html += '</tr>';
+                });
+                html += '</tbody></table></div>';
+                inTable = false;
+                tableRows = [];
+            };
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+
+                // Tabela markdown
+                if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+                    flushList();
+                    inTable = true;
+                    tableRows.push(trimmed);
+                    continue;
+                } else if (inTable) {
+                    flushTable();
+                }
+
+                if (!trimmed) {
+                    flushList();
+                    continue;
+                }
+
+                // Títulos
+                if (/^#{1,4}\s+/.test(trimmed)) {
+                    flushList();
+                    const text = trimmed.replace(/^#{1,4}\s+/, '');
+                    html += `<h4>${formatInline(text)}</h4>`;
+                    continue;
+                }
+
+                // Lista não ordenada
+                if (/^[-*•]\s+/.test(trimmed)) {
+                    if (inList !== 'ul') {
+                        flushList();
+                        html += '<ul>';
+                        inList = 'ul';
+                    }
+                    html += `<li>${formatInline(trimmed.replace(/^[-*•]\s+/, ''))}</li>`;
+                    continue;
+                }
+
+                // Lista ordenada
+                if (/^\d+\.\s+/.test(trimmed)) {
+                    if (inList !== 'ol') {
+                        flushList();
+                        html += '<ol>';
+                        inList = 'ol';
+                    }
+                    html += `<li>${formatInline(trimmed.replace(/^\d+\.\s+/, ''))}</li>`;
+                    continue;
+                }
+
+                flushList();
+                html += `<p>${formatInline(trimmed)}</p>`;
+            }
+
+            flushList();
+            flushTable();
+            return html;
+        }
+
+        function appendMessage(role, text, isError = false) {
+            const wrapper = document.createElement('div');
+            wrapper.className = role === 'user'
+                ? 'flex justify-end'
+                : 'flex justify-start';
+
+            if (role === 'user') {
+                wrapper.innerHTML = `
+                    <div class="max-w-[85%] sm:max-w-[75%] bg-indigo-600 text-white px-4 py-2.5 rounded-2xl rounded-br-md shadow-sm text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">${escHtml(text)}</div>
+                `;
+            } else {
+                const cardClass = isError
+                    ? 'bg-rose-50 border-rose-200 text-rose-800'
+                    : 'bg-white border-slate-200 text-slate-700';
+
+                wrapper.innerHTML = `
+                    <div class="max-w-[92%] sm:max-w-[82%] ${cardClass} border px-4 py-3 rounded-2xl rounded-bl-md shadow-sm text-xs sm:text-sm leading-relaxed">
+                        <div class="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b ${isError ? 'border-rose-200/70' : 'border-slate-100'}">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider ${isError ? 'text-rose-600' : 'text-indigo-600'} flex items-center gap-1">
+                                <i data-lucide="${isError ? 'alert-triangle' : 'sparkles'}" class="w-3 h-3"></i>
+                                Assistente Região 655
+                            </span>
+                            ${!isError ? `
+                            <button type="button" class="copy-reply-btn text-[10px] font-semibold text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition-colors">
+                                <i data-lucide="copy" class="w-3 h-3"></i>
+                                <span>Copiar</span>
+                            </button>` : ''}
+                        </div>
+                        <div class="md-content">${renderSimpleMarkdown(text)}</div>
+                    </div>
+                `;
+
+                const copyBtn = wrapper.querySelector('.copy-reply-btn');
+                if (copyBtn) {
+                    copyBtn.addEventListener('click', async () => {
+                        try {
+                            await navigator.clipboard.writeText(text);
+                            copyBtn.innerHTML = '<i data-lucide="check" class="w-3 h-3 text-emerald-600"></i><span class="text-emerald-600">Copiado</span>';
+                            if (window.lucide) window.lucide.createIcons();
+                            setTimeout(() => {
+                                copyBtn.innerHTML = '<i data-lucide="copy" class="w-3 h-3"></i><span>Copiar</span>';
+                                if (window.lucide) window.lucide.createIcons();
+                            }, 1800);
+                        } catch {}
+                    });
+                }
+            }
+
+            chatMessagesEl.appendChild(wrapper);
+            if (window.lucide) window.lucide.createIcons();
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }
+
+        function appendThinkingIndicator(label) {
+            const div = document.createElement('div');
+            div.className = 'flex justify-start';
+            div.innerHTML = `
+                <div class="bg-white border border-slate-200 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm flex items-center gap-3">
+                    <div class="flex items-center gap-1">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </div>
+                    <span class="thinking-label text-xs text-slate-500 font-medium">${escHtml(label)}</span>
+                </div>
+            `;
+            chatMessagesEl.appendChild(div);
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            return div;
+        }
+
+        function updateThinkingLabel(el, label) {
+            const span = el.querySelector('.thinking-label');
+            if (span) span.textContent = label;
+        }
+
+        // ============================================================
+        // MODAL DE CHAVE E AÇÕES DA INTERFACE
+        // ============================================================
+        function refreshKeyUI() {
+            const hasKey = Boolean(localStorage.getItem(STORAGE_KEY_API));
+            keyStatusDot.classList.toggle('bg-emerald-500', hasKey);
+            keyStatusDot.classList.toggle('bg-amber-400', !hasKey);
+            missingKeyBanner.classList.toggle('hidden', hasKey);
+        }
+
+        window.openSettingsModal = function() {
+            apiKeyInput.value = localStorage.getItem(STORAGE_KEY_API) || '';
+            modelSelect.value = localStorage.getItem(STORAGE_KEY_MODEL) || 'gemini-2.5-flash';
+            settingsModal.classList.remove('hidden');
+            setTimeout(() => apiKeyInput.focus(), 50);
+        };
+
+        window.closeSettingsModal = function() {
+            settingsModal.classList.add('hidden');
+        };
+
+        window.saveSettings = function() {
+            const key = apiKeyInput.value.trim();
+            const model = modelSelect.value;
+            if (!key) {
+                alert('Cole sua chave do Google AI Studio antes de salvar.');
+                return;
+            }
+            localStorage.setItem(STORAGE_KEY_API, key);
+            localStorage.setItem(STORAGE_KEY_MODEL, model);
+            refreshKeyUI();
+            closeSettingsModal();
+        };
+
+        window.clearApiKey = function() {
+            localStorage.removeItem(STORAGE_KEY_API);
+            apiKeyInput.value = '';
+            refreshKeyUI();
+            closeSettingsModal();
+        };
+
+        window.resetChat = function() {
+            if (isThinking) return;
+            conversationContents = [];
+            Array.from(chatMessagesEl.children).forEach(child => {
+                if (child.id !== 'welcomeScreen') child.remove();
+            });
+            welcomeScreenEl.classList.remove('hidden');
+            userInputEl.focus();
+        };
+
+        window.askSuggestion = function(btn) {
+            const text = btn.innerText.trim();
+            userInputEl.value = '';
+            handleUserQuestion(text);
+        };
+
+        // Eventos do formulário e textarea auto-expansível
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = userInputEl.value.trim();
+            if (!text) return;
+            userInputEl.value = '';
+            userInputEl.style.height = 'auto';
+            handleUserQuestion(text);
+        });
+
+        userInputEl.addEventListener('input', () => {
+            userInputEl.style.height = 'auto';
+            userInputEl.style.height = Math.min(userInputEl.scrollHeight, 128) + 'px';
+        });
+
+        userInputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.requestSubmit();
+            }
+        });
+
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) closeSettingsModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !settingsModal.classList.contains('hidden')) {
+                closeSettingsModal();
+            }
+        });
+
+        // Inicialização
+        refreshKeyUI();
+        if (window.lucide) window.lucide.createIcons();
+        syncDatabase();
+    </script>
+</body>
+</html>
