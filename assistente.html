@@ -1155,10 +1155,10 @@
                 // Ordena eventos do mais recente para o mais antigo (YYYY-MM-DD)
                 const eventosOrdenados = [...eventosData].sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
 
-                // Filtra eventos pelo nome/ano/mês
+                const STOP_WORDS = new Set(['de', 'da', 'do', 'das', 'dos', 'em', 'na', 'no', 'nas', 'nos', 'para', 'com', 'por', 'a', 'o', 'e']);
                 let eventosAlvo = eventosOrdenados.filter(ev => {
                     if (fEvento) {
-                        const tokens = fEvento.split(/\s+/).filter(t => t.length >= 2);
+                        const tokens = fEvento.split(/\s+/).filter(t => t.length >= 2 && !STOP_WORDS.has(t));
                         const evTxt = normalizeText(`${ev.nome || ''} ${ev.id || ''}`);
                         if (!evTxt.includes(fEvento) && !(tokens.length > 0 && tokens.every(t => evTxt.includes(t)))) {
                             return false;
