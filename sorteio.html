@@ -85,12 +85,7 @@
             top: -10px;
             z-index: 100;
             animation: confetti 3s linear forwards;
-        }
-
-        @media (max-width: 380px) {
-            .roulette-container { width: 260px; height: 260px; }
-            #wheel { border-width: 4px; }
-            .pointer { width: 26px; height: 26px; top: -14px; }
+            pointer-events: none;
         }
     </style>
 </head>
@@ -127,9 +122,14 @@
         
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
             
-            <!-- COLUNA ESQUERDA: Roleta -->
-            <div class="lg:col-span-3">
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 md:p-8">
+            <!-- COLUNA ESQUERDA: Roleta e Histórico -->
+            <div class="lg:col-span-3 space-y-4 sm:space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 md:p-8 relative">
+                    <!-- Botão Som / Mudo -->
+                    <button id="muteBtn" type="button" onclick="toggleMute()" title="Ativar/Desativar som" class="absolute top-4 right-4 w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center transition-colors">
+                        <i data-lucide="volume-2" class="w-4 h-4"></i>
+                    </button>
+
                     <div class="flex flex-col items-center">
                         <div class="text-center mb-4 sm:mb-6">
                             <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Gire a Roleta</p>
@@ -145,10 +145,40 @@
                             Sortear Agora
                         </button>
 
-                        <p id="wheelHint" class="text-[9px] sm:text-[10px] text-slate-400 mt-3 sm:mt-4 text-center px-2">
+                        <!-- Opção de não repetir -->
+                        <label class="mt-3.5 flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
+                            <input type="checkbox" id="autoRemoveCheckbox" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span>Desmarcar automaticamente a igreja sorteada (não repetir)</span>
+                        </label>
+
+                        <p id="wheelHint" class="text-[9px] sm:text-[10px] text-slate-400 mt-2.5 text-center px-2">
                             <span class="lg:hidden">Selecione as igrejas participantes abaixo e clique para sortear</span>
                             <span class="hidden lg:inline">Selecione as igrejas participantes ao lado e clique para sortear</span>
                         </p>
+                    </div>
+                </div>
+
+                <!-- HISTÓRICO DE SORTEIOS -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                                <i data-lucide="history" class="w-4 h-4 text-indigo-600"></i>
+                                Histórico de Sorteios
+                            </h3>
+                            <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5">Salvo automaticamente neste dispositivo</p>
+                        </div>
+                        <div class="flex gap-1.5">
+                            <button id="resetCycleBtn" type="button" onclick="resetCycle()" class="text-[9px] sm:text-[10px] font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                                Reiniciar ciclo
+                            </button>
+                            <button id="clearHistoryBtn" type="button" onclick="clearHistory()" class="text-[9px] sm:text-[10px] font-bold bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 px-2.5 py-1.5 rounded-lg uppercase transition-colors hidden">
+                                Limpar
+                            </button>
+                        </div>
+                    </div>
+                    <div id="historyList" class="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                        <p class="text-xs text-slate-400 text-center py-4">Nenhum sorteio registrado ainda.</p>
                     </div>
                 </div>
             </div>
@@ -156,7 +186,7 @@
             <!-- COLUNA DIREITA: Lista de Igrejas -->
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:p-5">
-                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                    <div class="flex items-center justify-between mb-3">
                         <div>
                             <h3 class="font-bold text-slate-800 text-xs sm:text-sm">Igrejas Participantes</h3>
                             <p class="text-[9px] sm:text-[10px] text-slate-400 mt-0.5">
@@ -164,9 +194,18 @@
                             </p>
                         </div>
                         <div class="flex gap-1.5">
-                            <button onclick="toggleAll(true)" class="text-[9px] sm:text-[10px] font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg uppercase transition-colors">Ativar</button>
-                            <button onclick="toggleAll(false)" class="text-[9px] sm:text-[10px] font-bold bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 px-2.5 py-1.5 rounded-lg uppercase transition-colors">Limpar</button>
+                            <button id="btnActivateAll" type="button" onclick="toggleAll(true)" class="text-[9px] sm:text-[10px] font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Ativar</button>
+                            <button id="btnClearAll" type="button" onclick="toggleAll(false)" class="text-[9px] sm:text-[10px] font-bold bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 px-2.5 py-1.5 rounded-lg uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Limpar</button>
                         </div>
+                    </div>
+
+                    <!-- Campo de busca -->
+                    <div class="relative mb-3">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <input id="churchSearch" type="text" placeholder="Buscar igreja por nome ou código..." class="w-full pl-8 pr-8 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all">
+                        <button id="clearSearchBtn" type="button" onclick="clearSearch()" title="Limpar busca" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
                     </div>
                     
                     <div id="churchListContainer" class="max-h-[360px] sm:max-h-[480px] overflow-y-auto pr-1 space-y-1">
@@ -183,21 +222,55 @@
 
     <!-- MODAL VENCEDOR -->
     <div id="winnerModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
-        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl transform transition-all scale-110">
-            <div class="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <i data-lucide="sparkles" class="w-8 h-8 sm:w-10 sm:h-10"></i>
+        <div id="winnerModalCard" class="bg-white rounded-3xl p-5 sm:p-7 max-w-sm w-full text-center shadow-2xl transform transition-all">
+            <div class="w-14 h-14 sm:w-16 sm:h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="sparkles" class="w-7 h-7 sm:w-8 sm:h-8"></i>
             </div>
-            <h3 class="text-slate-500 font-bold uppercase text-[9px] sm:text-[10px] tracking-widest mb-2">Igreja Sorteada!</h3>
+            <h3 class="text-slate-500 font-bold uppercase text-[9px] sm:text-[10px] tracking-widest mb-1.5">Igreja Sorteada!</h3>
             <h2 id="modalWinnerName" class="text-lg sm:text-xl font-extrabold text-slate-800 mb-1 leading-tight"></h2>
-            <p id="modalWinnerAddress" class="text-slate-500 text-[11px] sm:text-xs mb-0.5"></p>
-            <p class="text-indigo-600 font-bold text-xs sm:text-sm mb-5 sm:mb-6">Sexta-feira · 22:30h às 23:30h</p>
+            <p id="modalWinnerAddress" class="text-slate-500 text-[11px] sm:text-xs mb-2"></p>
+
+            <!-- Data e horário com edição opcional -->
+            <div class="mb-4">
+                <p id="modalMeetingSummary" class="text-indigo-600 font-bold text-xs sm:text-sm"></p>
+                <button type="button" onclick="toggleScheduleEdit()" id="toggleScheduleBtn" class="mt-1 text-[11px] text-slate-400 hover:text-indigo-600 font-semibold inline-flex items-center gap-1 transition-colors">
+                    <i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i>
+                    <span>Alterar data ou horário</span>
+                </button>
+                <div id="scheduleEditBox" class="hidden mt-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl text-left space-y-2">
+                    <div>
+                        <label for="meetingDateInput" class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Data</label>
+                        <input id="meetingDateInput" type="date" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-400">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label for="meetingStartInput" class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Início</label>
+                            <input id="meetingStartInput" type="time" value="22:30" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-400">
+                        </div>
+                        <div>
+                            <label for="meetingEndInput" class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Fim</label>
+                            <input id="meetingEndInput" type="time" value="23:30" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-400">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aviso de remoção automática com opção de desfazer -->
+            <div id="autoRemovedBanner" class="hidden mb-4 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-2 text-left">
+                <span class="text-[11px] text-amber-800 font-medium">Desmarcada da próxima rodada.</span>
+                <button type="button" onclick="undoAutoRemove()" class="text-[11px] font-bold text-amber-700 hover:text-amber-900 underline whitespace-nowrap">Manter ativa</button>
+            </div>
             
-            <div class="space-y-2.5 sm:space-y-3">
-                <button onclick="shareToWhatsApp()" class="w-full py-3 sm:py-3.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 text-xs sm:text-sm">
+            <div class="space-y-2">
+                <button type="button" onclick="shareToWhatsApp()" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 text-xs sm:text-sm">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
                     Compartilhar no WhatsApp
                 </button>
-                <button onclick="closeModal()" class="w-full py-2.5 sm:py-3 text-slate-400 font-semibold hover:text-slate-600 transition-colors text-xs sm:text-sm">
+                <button id="copyMsgBtn" type="button" onclick="copyMessage()" class="w-full py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    <span>Copiar mensagem</span>
+                </button>
+                <button type="button" onclick="closeModal()" class="w-full py-2 text-slate-400 font-semibold hover:text-slate-600 transition-colors text-xs sm:text-sm">
                     Fechar
                 </button>
             </div>
@@ -208,27 +281,127 @@
         import { db } from './firebase-config.js';
         import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+        const STORAGE_KEYS = {
+            inactiveIds: 'sorteio_reg655_inactive_ids',
+            history: 'sorteio_reg655_history',
+            autoRemove: 'sorteio_reg655_auto_remove',
+            muted: 'sorteio_reg655_muted'
+        };
+
         let churches = [];
-        let lastWinner = "";
-        let lastWinnerAddress = "";
+        let lastWinner = null;
+        let lastWinnerAutoRemoved = false;
+        let lastHistoryEntryId = null;
+        let searchTerm = '';
+        let history = loadJson(STORAGE_KEYS.history, []);
+        let isMuted = loadJson(STORAGE_KEYS.muted, false);
+        let audioCtx = null;
 
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
         const spinBtn = document.getElementById('spinBtn');
+        const btnActivateAll = document.getElementById('btnActivateAll');
+        const btnClearAll = document.getElementById('btnClearAll');
+        const resetCycleBtn = document.getElementById('resetCycleBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const autoRemoveCheckbox = document.getElementById('autoRemoveCheckbox');
+        const churchSearchEl = document.getElementById('churchSearch');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
         const churchListEl = document.getElementById('churchList');
         const churchLoadingEl = document.getElementById('churchLoading');
+        const historyListEl = document.getElementById('historyList');
         const activeCountEl = document.getElementById('activeCount');
         const totalCountEl = document.getElementById('totalCount');
         const winnerModal = document.getElementById('winnerModal');
         const modalWinnerName = document.getElementById('modalWinnerName');
         const modalWinnerAddress = document.getElementById('modalWinnerAddress');
+        const modalMeetingSummary = document.getElementById('modalMeetingSummary');
+        const scheduleEditBox = document.getElementById('scheduleEditBox');
+        const meetingDateInput = document.getElementById('meetingDateInput');
+        const meetingStartInput = document.getElementById('meetingStartInput');
+        const meetingEndInput = document.getElementById('meetingEndInput');
+        const autoRemovedBanner = document.getElementById('autoRemovedBanner');
+        const copyMsgBtn = document.getElementById('copyMsgBtn');
 
         let currentRotation = 0;
         let isSpinning = false;
 
+        function loadJson(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw !== null ? JSON.parse(raw) : fallback;
+            } catch {
+                return fallback;
+            }
+        }
+
+        function saveJson(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+            } catch {}
+        }
+
+        function saveInactiveState() {
+            const inactiveIds = churches.filter(c => !c.locked && !c.active).map(c => c.id);
+            saveJson(STORAGE_KEYS.inactiveIds, inactiveIds);
+        }
+
+        function randomFloat() {
+            if (window.crypto && window.crypto.getRandomValues) {
+                const arr = new Uint32Array(1);
+                window.crypto.getRandomValues(arr);
+                return arr[0] / 4294967296;
+            }
+            return Math.random();
+        }
+
+        function randomInt(max) {
+            if (max <= 1) return 0;
+            if (window.crypto && window.crypto.getRandomValues) {
+                const limit = Math.floor(4294967296 / max) * max;
+                const arr = new Uint32Array(1);
+                let val;
+                do {
+                    window.crypto.getRandomValues(arr);
+                    val = arr[0];
+                } while (val >= limit);
+                return val % max;
+            }
+            return Math.floor(Math.random() * max);
+        }
+
+        function unlockAudio() {
+            if (isMuted) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                if (!audioCtx) audioCtx = new AudioCtx();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(() => {});
+                }
+            } catch {}
+        }
+
+        function updateMuteButton() {
+            muteBtn.innerHTML = `<i data-lucide="${isMuted ? 'volume-x' : 'volume-2'}" class="w-4 h-4"></i>`;
+            muteBtn.classList.toggle('text-rose-500', isMuted);
+            muteBtn.classList.toggle('text-slate-500', !isMuted);
+            muteBtn.title = isMuted ? 'Som desativado (clique para ativar)' : 'Som ativado (clique para silenciar)';
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        window.toggleMute = function() {
+            isMuted = !isMuted;
+            saveJson(STORAGE_KEYS.muted, isMuted);
+            if (!isMuted) unlockAudio();
+            updateMuteButton();
+        };
+
         async function loadChurches() {
             try {
                 const snap = await getDocs(collection(db, "igrejas"));
+                const savedInactive = new Set(loadJson(STORAGE_KEYS.inactiveIds, []));
                 const loaded = [];
                 snap.forEach(doc => {
                     const d = doc.data();
@@ -243,9 +416,9 @@
                             name: nome,
                             fullName: cod ? `${cod} - ${nome}` : nome,
                             address: endereco,
-                            active: !isRegiao,
+                            active: !isRegiao && !savedInactive.has(doc.id),
                             locked: isRegiao,
-                            color: `hsl(${(loaded.length * 360) / Math.max(loaded.length + 1, 1)}, 65%, 50%)`
+                            color: '#4f46e5'
                         });
                     }
                 });
@@ -265,15 +438,16 @@
                 renderList();
                 drawWheel();
                 updateCount();
+                renderHistory();
             } catch (e) {
-                churchLoadingEl.innerHTML = `<p class="text-rose-500 text-xs">Erro ao carregar igrejas: ${e.message}</p>`;
+                churchLoadingEl.innerHTML = `<p class="text-rose-500 text-xs">Erro ao carregar igrejas: ${escHtml(e.message)}</p>`;
             }
         }
 
         function getNextFridayMeetingDate() {
             const now = new Date();
-            const target = new Date();
-            target.setDate(now.getDate() + (7 + 5 - now.getDay()) % 7);
+            const target = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            target.setDate(target.getDate() + (7 + 5 - target.getDay()) % 7);
             const limitTime = new Date(target);
             limitTime.setHours(22, 35, 0, 0);
             if (now.getTime() > limitTime.getTime()) {
@@ -282,16 +456,57 @@
             return target;
         }
 
+        function toDateInputValue(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getSelectedSchedule() {
+            const rawDate = meetingDateInput.value;
+            let dateObj;
+            if (rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+                const [y, m, d] = rawDate.split('-').map(Number);
+                dateObj = new Date(y, m - 1, d);
+            } else {
+                dateObj = getNextFridayMeetingDate();
+            }
+            const startTime = meetingStartInput.value || '22:30';
+            const endTime = meetingEndInput.value || '23:30';
+            const weekday = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+            const weekdayCap = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+            const shortDate = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            return { dateObj, startTime, endTime, weekdayCap, shortDate };
+        }
+
+        function updateMeetingSummary() {
+            const s = getSelectedSchedule();
+            modalMeetingSummary.innerText = `${s.weekdayCap}, ${s.shortDate} · ${s.startTime}h às ${s.endTime}h`;
+        }
+
+        window.toggleScheduleEdit = function() {
+            scheduleEditBox.classList.toggle('hidden');
+        };
+
         function playVictorySound() {
+            if (isMuted) return;
             try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (!audioCtx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioCtx) return;
+                    audioCtx = new AudioCtx();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(() => {});
+                }
                 function playNote(freq, startTime, duration) {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(freq, startTime);
                     gain.gain.setValueAtTime(0, startTime);
-                    gain.gain.linearRampToValueAtTime(0.1, startTime + 0.05);
+                    gain.gain.linearRampToValueAtTime(0.12, startTime + 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
@@ -299,16 +514,30 @@
                     osc.stop(startTime + duration);
                 }
                 const now = audioCtx.currentTime;
-                playNote(261.63, now, 0.5);
-                playNote(329.63, now + 0.1, 0.5);
-                playNote(392.00, now + 0.2, 0.5);
-                playNote(523.25, now + 0.3, 0.8);
-            } catch(e) {}
+                playNote(261.63, now, 0.45);
+                playNote(329.63, now + 0.1, 0.45);
+                playNote(392.00, now + 0.2, 0.45);
+                playNote(523.25, now + 0.3, 0.75);
+            } catch {}
+        }
+
+        function normalizeText(s) {
+            return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         }
 
         function renderList() {
             churchListEl.innerHTML = '';
-            churches.forEach(church => {
+            const term = normalizeText(searchTerm.trim());
+            const filtered = term
+                ? churches.filter(c => normalizeText(c.fullName).includes(term) || normalizeText(c.address).includes(term))
+                : churches;
+
+            if (filtered.length === 0 && churches.length > 0) {
+                churchListEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">Nenhuma igreja encontrada para "${escHtml(searchTerm)}".</p>`;
+                return;
+            }
+
+            filtered.forEach(church => {
                 const locked = church.locked;
                 const clickable = !locked && !isSpinning;
                 const div = document.createElement('div');
@@ -332,6 +561,56 @@
             });
         }
 
+        function renderHistory() {
+            clearHistoryBtn.classList.toggle('hidden', history.length === 0);
+            if (history.length === 0) {
+                historyListEl.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Nenhum sorteio registrado ainda.</p>';
+                return;
+            }
+            historyListEl.innerHTML = history.map((item, idx) => `
+                <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                    <div class="min-w-0">
+                        <div class="text-xs font-bold text-slate-700 truncate">${escHtml(item.fullName)}</div>
+                        <div class="text-[10px] text-slate-400">${escHtml(item.drawnAt)}</div>
+                    </div>
+                    <button type="button" onclick="removeHistoryItem(${idx})" title="Remover do histórico" class="text-slate-300 hover:text-rose-500 transition-colors p-1 flex-shrink-0">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            `).join('');
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        window.removeHistoryItem = function(idx) {
+            history.splice(idx, 1);
+            saveJson(STORAGE_KEYS.history, history);
+            renderHistory();
+        };
+
+        window.clearHistory = function() {
+            if (history.length === 0) return;
+            if (!confirm('Limpar todo o histórico de sorteios?')) return;
+            history = [];
+            saveJson(STORAGE_KEYS.history, history);
+            renderHistory();
+        };
+
+        window.resetCycle = function() {
+            if (isSpinning) return;
+            churches.forEach(c => { if (!c.locked) c.active = true; });
+            saveInactiveState();
+            renderList();
+            drawWheel();
+            updateCount();
+        };
+
+        window.clearSearch = function() {
+            searchTerm = '';
+            churchSearchEl.value = '';
+            clearSearchBtn.classList.add('hidden');
+            renderList();
+        };
+
         function escHtml(s) {
             if (!s) return '';
             return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -342,6 +621,7 @@
             const church = churches.find(c => c.id === id);
             if (!church || church.locked) return;
             church.active = !church.active;
+            saveInactiveState();
             renderList();
             drawWheel();
             updateCount();
@@ -350,6 +630,7 @@
         window.toggleAll = function(status) {
             if (isSpinning) return;
             churches.forEach(c => { if (!c.locked) c.active = status; });
+            saveInactiveState();
             renderList();
             drawWheel();
             updateCount();
@@ -357,9 +638,13 @@
 
         function updateCount() {
             const active = churches.filter(c => c.active);
+            const eligible = churches.filter(c => !c.locked);
             activeCountEl.innerText = active.length;
-            totalCountEl.innerText = churches.length;
-            spinBtn.disabled = active.length === 0;
+            totalCountEl.innerText = eligible.length;
+            spinBtn.disabled = isSpinning || active.length === 0;
+            btnActivateAll.disabled = isSpinning;
+            btnClearAll.disabled = isSpinning;
+            resetCycleBtn.disabled = isSpinning;
         }
 
         function drawWheel() {
@@ -416,37 +701,90 @@
             const activeChurches = churches.filter(c => c.active);
             if (activeChurches.length === 0) return;
 
+            unlockAudio();
+
             isSpinning = true;
-            spinBtn.disabled = true;
-            
-            const extraDegrees = 2880 + Math.floor(Math.random() * 360);
-            currentRotation += extraDegrees;
+            updateCount();
+            renderList();
+
+            // Sorteio 100% uniforme do índice vencedor + parada sempre dentro da fatia (longe das bordas)
+            const winnerIndex = randomInt(activeChurches.length);
+            const winner = activeChurches[winnerIndex];
+            const sliceSize = 360 / activeChurches.length;
+            const offsetInSlice = 0.2 + randomFloat() * 0.6; // entre 20% e 80% da fatia
+            const targetAngleInWheel = (winnerIndex + offsetInSlice) * sliceSize;
+
+            const currentMod = ((currentRotation % 360) + 360) % 360;
+            const targetMod = ((270 - targetAngleInWheel) % 360 + 360) % 360;
+            const delta = (targetMod - currentMod + 360) % 360;
+
+            currentRotation += 2880 + delta;
             canvas.style.transform = `rotate(${currentRotation}deg)`;
 
             setTimeout(() => {
                 isSpinning = false;
-                spinBtn.disabled = false;
-                
-                const actualDegrees = (currentRotation % 360);
-                const sliceSize = 360 / activeChurches.length;
-                let index = Math.floor(((360 - actualDegrees + 270) % 360) / sliceSize);
-                index = index % activeChurches.length;
-                
-                const winner = activeChurches[index];
-                lastWinner = winner.fullName;
-                lastWinnerAddress = winner.address || '';
-                showWinner(winner.fullName, winner.address);
+                lastWinner = winner;
+                lastWinnerAutoRemoved = false;
+
+                // Registra no histórico local
+                const nowStr = new Date().toLocaleString('pt-BR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+                lastHistoryEntryId = Date.now();
+                history.unshift({
+                    entryId: lastHistoryEntryId,
+                    churchId: winner.id,
+                    fullName: winner.fullName,
+                    address: winner.address || '',
+                    drawnAt: `Sorteado em ${nowStr}`
+                });
+                if (history.length > 50) history = history.slice(0, 50);
+                saveJson(STORAGE_KEYS.history, history);
+                renderHistory();
+
+                // Desmarca automaticamente se a opção estiver ativa
+                if (autoRemoveCheckbox.checked && !winner.locked) {
+                    winner.active = false;
+                    lastWinnerAutoRemoved = true;
+                    saveInactiveState();
+                }
+
+                renderList();
+                drawWheel();
+                updateCount();
+                showWinner(winner);
             }, 6000);
         };
 
-        function showWinner(name, address) {
-            modalWinnerName.innerText = name;
-            modalWinnerAddress.innerText = address || '';
+        function showWinner(winner) {
+            modalWinnerName.innerText = winner.fullName;
+            modalWinnerAddress.innerText = winner.address || '';
+
+            // Reseta data/horário padrão para a próxima sexta-feira
+            meetingDateInput.value = toDateInputValue(getNextFridayMeetingDate());
+            meetingStartInput.value = '22:30';
+            meetingEndInput.value = '23:30';
+            scheduleEditBox.classList.add('hidden');
+            updateMeetingSummary();
+
+            autoRemovedBanner.classList.toggle('hidden', !lastWinnerAutoRemoved);
             winnerModal.classList.remove('hidden');
             playVictorySound();
             const isMobile = window.innerWidth < 640;
-            for(let i = 0; i < (isMobile ? 20 : 50); i++) createConfetti();
+            for (let i = 0; i < (isMobile ? 20 : 50); i++) createConfetti();
         }
+
+        window.undoAutoRemove = function() {
+            if (!lastWinner || lastWinner.locked) return;
+            lastWinner.active = true;
+            lastWinnerAutoRemoved = false;
+            saveInactiveState();
+            autoRemovedBanner.classList.add('hidden');
+            renderList();
+            drawWheel();
+            updateCount();
+        };
 
         window.closeModal = function() {
             winnerModal.classList.add('hidden');
@@ -464,31 +802,82 @@
             setTimeout(() => confetti.remove(), 4000);
         }
 
-        window.shareToWhatsApp = function() {
-            const meetingDate = getNextFridayMeetingDate();
-            const dataFormatada = meetingDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-            const cleanChurchName = lastWinner.split(' - ').slice(1).join(' - ') || lastWinner;
+        function buildShareMessage() {
+            if (!lastWinner) return '';
+            const { dateObj, startTime, endTime, weekdayCap, shortDate } = getSelectedSchedule();
+            const cleanChurchName = lastWinner.name || lastWinner.fullName;
+            const address = lastWinner.address || '';
 
-            const year = meetingDate.getFullYear();
-            const month = String(meetingDate.getMonth() + 1).padStart(2, '0');
-            const day = String(meetingDate.getDate()).padStart(2, '0');
-            const startStr = `${year}${month}${day}T223000`;
-            const endStr = `${year}${month}${day}T233000`;
-            
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const [sH, sM] = startTime.split(':');
+            const [eH, eM] = endTime.split(':');
+            const startStr = `${year}${month}${day}T${sH}${sM}00`;
+            const endStr = `${year}${month}${day}T${eH}${eM}00`;
+
             const gCalTitle = encodeURIComponent(`Oração Região 655 - ${cleanChurchName}`);
-            const gCalLocation = encodeURIComponent(lastWinnerAddress || cleanChurchName);
-            const gCalDetails = encodeURIComponent(`Reunião Regional de Oração — Região 655\nLocal: ${cleanChurchName}${lastWinnerAddress ? ' — ' + lastWinnerAddress : ''}`);
+            const gCalLocation = encodeURIComponent(address || cleanChurchName);
+            const gCalDetails = encodeURIComponent(`Reunião Regional de Oração — Região 655\nLocal: ${cleanChurchName}${address ? ' — ' + address : ''}`);
 
-            const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${gCalTitle}&dates=${startStr}/${endStr}&details=${gCalDetails}&location=${gCalLocation}&sf=true&output=xml`;
+            const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${gCalTitle}&dates=${startStr}/${endStr}&ctz=America/Sao_Paulo&details=${gCalDetails}&location=${gCalLocation}&sf=true&output=xml`;
 
-            const addressLine = lastWinnerAddress ? `\n📍 *Endereço:* ${lastWinnerAddress}` : '';
-            const message = `🙌 *REUNIÃO DE ORAÇÃO* 🙌\n\nOlá, Pastores! Conforme sorteio regional, a nossa oração desta semana (${dataFormatada}) será na:\n\n⛪ *${cleanChurchName}*${addressLine}\n⏰ *Horário: 22:30h às 23:30h*\n\n📅 *Adicionar à sua agenda:*\n${calendarUrl}\n\nAguardamos todos vocês para este momento de comunhão!`;
-            
+            const addressLine = address ? `\n📍 *Endereço:* ${address}` : '';
+            return `🙌 *REUNIÃO DE ORAÇÃO* 🙌\n\nOlá, Pastores! Conforme sorteio regional, a nossa oração (${weekdayCap}, ${shortDate}) será na:\n\n⛪ *${cleanChurchName}*${addressLine}\n⏰ *Horário: ${startTime}h às ${endTime}h*\n\n📅 *Adicionar à sua agenda:*\n${calendarUrl}\n\nAguardamos todos vocês para este momento de comunhão!`;
+        }
+
+        window.shareToWhatsApp = function() {
+            const message = buildShareMessage();
+            if (!message) return;
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
         };
 
-        document.getElementById('spinBtn').addEventListener('click', () => window.spin());
+        window.copyMessage = async function() {
+            const message = buildShareMessage();
+            if (!message) return;
+            try {
+                await navigator.clipboard.writeText(message);
+                const originalHtml = copyMsgBtn.innerHTML;
+                copyMsgBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-emerald-600"></i><span class="text-emerald-700">Mensagem copiada!</span>';
+                if (window.lucide) window.lucide.createIcons();
+                setTimeout(() => {
+                    copyMsgBtn.innerHTML = originalHtml;
+                    if (window.lucide) window.lucide.createIcons();
+                }, 2000);
+            } catch {
+                alert('Não foi possível copiar automaticamente.');
+            }
+        };
 
+        // Eventos
+        spinBtn.addEventListener('click', () => window.spin());
+
+        autoRemoveCheckbox.checked = loadJson(STORAGE_KEYS.autoRemove, true);
+        autoRemoveCheckbox.addEventListener('change', () => {
+            saveJson(STORAGE_KEYS.autoRemove, autoRemoveCheckbox.checked);
+        });
+
+        churchSearchEl.addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            clearSearchBtn.classList.toggle('hidden', !searchTerm);
+            renderList();
+        });
+
+        meetingDateInput.addEventListener('change', updateMeetingSummary);
+        meetingStartInput.addEventListener('change', updateMeetingSummary);
+        meetingEndInput.addEventListener('change', updateMeetingSummary);
+
+        // Fechar modal ao clicar fora ou pressionar Esc
+        winnerModal.addEventListener('click', (e) => {
+            if (e.target === winnerModal) window.closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !winnerModal.classList.contains('hidden')) {
+                window.closeModal();
+            }
+        });
+
+        updateMuteButton();
         loadChurches();
         if (window.lucide) window.lucide.createIcons();
 
