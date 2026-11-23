@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assistente Inteligente Financeiro — Região 655</title>
+    <title>Assistente Inteligente — Região 655</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@0.300.0"></script>
 
@@ -204,7 +204,7 @@
                 </button>
             </form>
             <p class="text-[10px] text-slate-400 text-center mt-1.5">
-                Cálculos feitos diretamente nos recibos do Firebase · Modo somente leitura (não altera dados)
+                Consulta em tempo real · Portal Região 655
             </p>
         </div>
     </main>
@@ -536,7 +536,7 @@
                 pendenciasContabeisData = readDocs(8);
 
                 isDataLoaded = true;
-                dbStatusBadge.innerText = `Base completa (${recibosData.length} rec · ${saldosData.length} saldos)`;
+                dbStatusBadge.innerText = 'Sincronizado';
                 dbStatusBadge.title = `Recibos: ${recibosData.length} | Igrejas: ${igrejasData.length} | Saldos/Ceia: ${saldosData.length} | Agenda: ${agendaData.length} | Pastores: ${pastoresData.length} | Presenças: ${presencasData.length} | Pendências: ${pendenciasManuaisData.length + pendenciasContabeisData.length}`;
             } catch (err) {
                 console.error(err);
@@ -1439,7 +1439,7 @@ REGRAS IMPORTANTES:
 
                     const functionCalls = parts.filter(p => p.functionCall);
                     if (functionCalls.length > 0) {
-                        updateThinkingLabel(thinkingEl, 'Consultando recibos no Firebase...');
+                        updateThinkingLabel(thinkingEl, 'Consultando dados do portal...');
                         const functionResponses = functionCalls.map(p => {
                             const { name, args } = p.functionCall;
                             const toolResult = executeTool(name, args || {});
