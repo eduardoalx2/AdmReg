@@ -665,11 +665,11 @@
             },
             {
                 name: 'consultar_pastores',
-                description: 'Consulta o cadastro de Pastores da Região 655 (nome, função, categoria, se é coordenador, igreja(s) vinculadas, telefone, e-mail, data de início na igreja).',
+                description: 'Consulta o cadastro completo de Pastores da Região 655 (nome, função, categoria, prontuário, CPF, endereço, se é coordenador, igreja(s) vinculadas, telefone, e-mail e data de início na igreja).',
                 parameters: {
                     type: 'OBJECT',
                     properties: {
-                        busca: { type: 'STRING', description: 'Parte do nome, telefone ou e-mail do pastor (opcional).' },
+                        busca: { type: 'STRING', description: 'Parte do nome, prontuário, CPF, telefone, e-mail ou endereço do pastor (opcional).' },
                         igreja: { type: 'STRING', description: 'Nome ou código da igreja vinculada (opcional).' },
                         funcao: { type: 'STRING', description: 'Função do pastor, ex: "Titular", "Auxiliar" (opcional).' },
                         apenasCoordenadores: { type: 'BOOLEAN', description: 'Se true, filtra apenas pastores que são coordenadores.' }
@@ -1113,7 +1113,7 @@
                         if (!normIgr.includes(fIgreja) && !(cleanIgr && normIgr.includes(cleanIgr))) return false;
                     }
                     if (q) {
-                        const txt = normalizeText(`${p.nome || ''} ${p.telefone || ''} ${p.email || ''} ${igrejasStr} ${p.funcao || ''} ${p.categoria || ''}`);
+                        const txt = normalizeText(`${p.nome || ''} ${p.prontuario || ''} ${p.cpf || ''} ${p.telefone || ''} ${p.email || ''} ${p.endereco || ''} ${igrejasStr} ${p.funcao || ''} ${p.categoria || ''}`);
                         if (!txt.includes(q)) return false;
                     }
                     return true;
@@ -1127,10 +1127,13 @@
                         nome: p.nome || '',
                         funcao: p.funcao || '',
                         categoria: p.categoria || '',
+                        prontuario: p.prontuario || '',
+                        cpf: p.cpf || '',
                         coordenador: Boolean(p.coordenador),
                         igreja: Array.isArray(p.igreja) ? p.igreja.join(', ') : (p.igreja || ''),
                         telefone: p.telefone || '',
                         email: p.email || '',
+                        endereco: p.endereco || '',
                         dataInicioIgreja: p.dataInicioIgreja || ''
                     }))
                 };
