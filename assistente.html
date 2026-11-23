@@ -886,8 +886,14 @@ REGRAS IMPORTANTES:
                 const msg = data?.error?.message || `Erro HTTP ${res.status}`;
                 lastError = new Error(msg);
                 const isModelUnavailable = res.status === 404 || /no longer available|not found|not supported/i.test(msg);
-                if (!isModelUnavailable) {
+                const isTemporaryOverload = res.status === 503 || res.status === 429 || /high demand|overloaded|unavailable|try again later/i.test(msg);
+                if (!isModelUnavailable && !isTemporaryOverload) {
                     throw lastError;
+                }
+                // Só salva troca definitiva no localStorage se o modelo anterior foi descontinuado
+                if (isModelUnavailable && model === preferred) {
+                    const nextCandidate = candidates.find(m => m !== model);
+                    if (nextCandidate) localStorage.setItem(STORAGE_KEY_MODEL, nextCandidate);
                 }
             }
 
