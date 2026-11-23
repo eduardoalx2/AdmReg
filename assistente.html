@@ -83,9 +83,14 @@
         }
         .typing-dot:nth-child(2) { animation-delay: 0.15s; }
         .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+        html, body {
+            height: 100%;
+            height: 100dvh;
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
+<body class="flex flex-col overflow-hidden">
 
     <!-- CABEÇALHO -->
     <header class="w-full shadow-sm bg-white border-b flex-shrink-0 z-30">
@@ -140,9 +145,9 @@
     </header>
 
     <!-- ÁREA DO CHAT -->
-    <main class="flex-1 flex flex-col max-w-5xl w-full mx-auto overflow-hidden px-3 sm:px-4">
+    <main class="flex-1 min-h-0 flex flex-col max-w-5xl w-full mx-auto overflow-hidden px-3 sm:px-4">
         <!-- Aviso de chave pendente -->
-        <div id="missingKeyBanner" class="hidden mt-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div id="missingKeyBanner" class="hidden mt-3 flex-shrink-0 bg-amber-50 border border-amber-200 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div class="flex items-start gap-2.5">
                 <i data-lucide="key-round" class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0"></i>
                 <p class="text-xs text-amber-900">
@@ -155,7 +160,7 @@
         </div>
 
         <!-- Mensagens -->
-        <div id="chatMessages" class="flex-1 overflow-y-auto chat-scroll py-4 space-y-4">
+        <div id="chatMessages" class="flex-1 min-h-0 overflow-y-auto chat-scroll py-4 space-y-4">
             <!-- Estado inicial / Boas-vindas -->
             <div id="welcomeScreen" class="max-w-2xl mx-auto text-center pt-4 sm:pt-8 pb-4">
                 <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
@@ -190,10 +195,10 @@
         </div>
 
         <!-- Barra de digitação -->
-        <div class="pb-3 sm:pb-4 pt-2 flex-shrink-0">
-            <form id="chatForm" class="bg-white border border-slate-200 rounded-2xl shadow-sm p-1.5 sm:p-2 flex items-end gap-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
-                <textarea id="userInput" rows="1" placeholder="Digite sua pergunta sobre recibos, taxas, igrejas ou períodos..." class="flex-1 resize-none bg-transparent px-2.5 py-2 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none max-h-32"></textarea>
-                <button id="sendBtn" type="submit" class="h-9 sm:h-10 px-3.5 sm:px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors flex items-center gap-1.5 text-xs flex-shrink-0">
+        <div class="pt-2 pb-3 sm:pb-4 flex-shrink-0" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+            <form id="chatForm" class="bg-white border-2 border-slate-300 rounded-2xl shadow-md p-1.5 sm:p-2 flex items-end gap-2 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                <textarea id="userInput" rows="1" placeholder="Digite sua pergunta aqui..." class="flex-1 resize-none bg-transparent px-2.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none max-h-32"></textarea>
+                <button id="sendBtn" type="submit" class="h-10 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors flex items-center gap-1.5 text-xs flex-shrink-0">
                     <span class="hidden sm:inline">Enviar</span>
                     <i data-lucide="send" class="w-4 h-4"></i>
                 </button>
