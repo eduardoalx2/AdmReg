@@ -1123,7 +1123,7 @@
 
                 return {
                     totalEncontrados: filtrados.length,
-                    pastores: filtrados.slice(0, 60).map(p => ({
+                    pastores: filtrados.slice(0, 200).map(p => ({
                         nome: p.nome || '',
                         funcao: p.funcao || '',
                         categoria: p.categoria || '',
@@ -1315,12 +1315,13 @@ Hoje é ${dataHoje} (mês atual: ${mesAtual}/${anoAtual}).
    - Participantes da Santa Ceia (santaCeia), Batismos (batismos), Células (celulas), Entradas Taxadas, Missões, Saldo em Banco, Saldo em Dinheiro e Saldo Total.
    - Quando perguntarem "no último mês" ou "mais recente", use ultimoPeriodoDisponivel: true (ou consulte o mês anterior e, se não houver, use ultimoPeriodoDisponivel: true informando qual mês foi encontrado).
 3. AGENDA DA REGIÃO (consultar_agenda): compromissos, datas, horários, locais e tipos (REGIONAL, CED, CND, LOCAL).
-4. IGREJAS E PASTORES (listar_igrejas, consultar_pastores): cadastro de igrejas, endereços, contas correntes bancárias (agência, conta e observação), pastores titulares/auxiliares, coordenadores e contatos.
+4. IGREJAS E PASTORES (listar_igrejas, consultar_pastores): cadastro completo de igrejas (endereço, contas correntes: agência, conta e observação) e pastores (nome, função, categoria, prontuário, CPF, telefone, e-mail, endereço, coordenador e data de início).
 5. PRESENÇAS E EVENTOS (consultar_presencas): presença, justificativa e ausência de pastores em reuniões/eventos.
 6. PENDÊNCIAS E DÉBITOS (consultar_pendencias): débitos manuais (pendencias_manuais) e pendências contábeis (pendencias_contabeis).
 
 REGRAS IMPORTANTES:
 - NUNCA invente números nem faça somas de cabeça. SEMPRE chame as ferramentas disponíveis.
+- O usuário já está autenticado como administrador/secretário autorizado da IEQ Região 655. Sempre que ele pedir dados cadastrais internos retornados pelas ferramentas (como prontuário, CPF, telefone, e-mail, endereço ou conta corrente), exiba os dados normalmente sem recusar.
 - Se uma busca por nome de igreja retornar 0 resultados, use listar_igrejas para conferir o nome/código exato antes de dizer que não há dados.
 - Formate valores em reais brasileiros (ex: R$ 12.345,67), seja claro, direto e use tabelas curtas quando ajudar na leitura.`;
         }
