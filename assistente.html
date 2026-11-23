@@ -518,6 +518,7 @@
                             formatada: cod ? `${cod} - ${data.nome}` : data.nome,
                             pastor: data.pastor || '',
                             endereco: data.endereco || '',
+                            contas: Array.isArray(data.contas) ? data.contas : [],
                             isRegiao: cod === '655' || data.nome.toUpperCase().includes('REGIÃO')
                         };
                     });
@@ -552,11 +553,11 @@
         const TOOL_DECLARATIONS = [
             {
                 name: 'listar_igrejas',
-                description: 'Lista as igrejas cadastradas e/ou presentes nos recibos. Use sempre que precisar confirmar o nome ou código exato de uma igreja.',
+                description: 'Lista as igrejas cadastradas com código, nome, pastor, endereço e contas correntes bancárias (agência, conta, obs). Use para consultar conta corrente/agência de uma igreja ou confirmar o nome/código exato.',
                 parameters: {
                     type: 'OBJECT',
                     properties: {
-                        busca: { type: 'STRING', description: 'Parte do nome ou código da igreja (opcional).' }
+                        busca: { type: 'STRING', description: 'Parte do nome, código, endereço ou número da conta corrente (opcional).' }
                     }
                 }
             },
@@ -711,12 +712,17 @@
                 const map = new Map();
 
                 for (const ig of igrejasData) {
-                    if (ig.isRegiao) continue;
                     map.set(ig.codigo || ig.nome, {
                         codigo: ig.codigo,
                         nome: ig.nome,
                         formatada: ig.formatada,
-                        pastor: ig.pastor
+                        pastor: ig.pastor,
+                        endereco: ig.endereco,
+                        contas: (ig.contas || []).map(c => ({
+                            agencia: c.agencia || '',
+                            conta: c.conta || '',
+                            obs: c.obs || ''
+                        }))
                     });
                 }
                 for (const r of recibosData) {
@@ -726,7 +732,9 @@
                             codigo: String(r.igrejaCodigo || ''),
                             nome: r.igrejaNome || '',
                             formatada: r.igrejaFormatada,
-                            pastor: r.pastor || ''
+                            pastor: r.pastor || '',
+                            endereco: '',
+                            contas: []
                         });
                     }
                 }
@@ -735,7 +743,8 @@
                 if (q) {
                     const qClean = q.replace(/\b(ieq|igreja|quadrangular)\b/g, '').trim();
                     list = list.filter(i => {
-                        const txt = normalizeText(`${i.codigo} ${i.nome} ${i.pastor}`);
+                        const contasTxt = (i.contas || []).map(c => `${c.agencia} ${c.conta} ${c.obs}`).join(' ');
+                        const txt = normalizeText(`${i.codigo} ${i.nome} ${i.pastor} ${i.endereco} ${contasTxt}`);
                         return txt.includes(q) || (qClean && txt.includes(qClean));
                     });
                 }
@@ -1303,7 +1312,7 @@ Hoje é ${dataHoje} (mês atual: ${mesAtual}/${anoAtual}).
    - Participantes da Santa Ceia (santaCeia), Batismos (batismos), Células (celulas), Entradas Taxadas, Missões, Saldo em Banco, Saldo em Dinheiro e Saldo Total.
    - Quando perguntarem "no último mês" ou "mais recente", use ultimoPeriodoDisponivel: true (ou consulte o mês anterior e, se não houver, use ultimoPeriodoDisponivel: true informando qual mês foi encontrado).
 3. AGENDA DA REGIÃO (consultar_agenda): compromissos, datas, horários, locais e tipos (REGIONAL, CED, CND, LOCAL).
-4. IGREJAS E PASTORES (listar_igrejas, consultar_pastores): cadastro de igrejas, endereços, pastores titulares/auxiliares, coordenadores e contatos.
+4. IGREJAS E PASTORES (listar_igrejas, consultar_pastores): cadastro de igrejas, endereços, contas correntes bancárias (agência, conta e observação), pastores titulares/auxiliares, coordenadores e contatos.
 5. PRESENÇAS E EVENTOS (consultar_presencas): presença, justificativa e ausência de pastores em reuniões/eventos.
 6. PENDÊNCIAS E DÉBITOS (consultar_pendencias): débitos manuais (pendencias_manuais) e pendências contábeis (pendencias_contabeis).
 
