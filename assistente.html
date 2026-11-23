@@ -128,7 +128,7 @@
                         <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
                     </div>
                     <h1 class="text-xs sm:text-sm font-bold text-white tracking-wide uppercase truncate">
-                        Assistente Financeiro — Somente Leitura
+                        Assistente Inteligente — Região 655
                     </h1>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
@@ -167,10 +167,10 @@
                     <i data-lucide="bot" class="w-7 h-7"></i>
                 </div>
                 <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 mb-1">
-                    Pergunte sobre os Recibos e o Financeiro
+                    Pergunte sobre qualquer área da Região 655
                 </h2>
                 <p class="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto mb-5">
-                    Eu consulto diretamente a base de recibos e igrejas da Região 655 e faço todas as contas com precisão. <strong>Modo somente leitura:</strong> nada no banco é alterado.
+                    Consulto <strong>Recibos, Saldos de Virada (Santa Ceia, Batismos, Células), Igrejas, Pastores, Agenda, Presenças e Pendências</strong>. Modo somente leitura.
                 </p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
@@ -179,16 +179,16 @@
                         <span>Qual a soma do subtotal de entradas da IEQ Central em 2026?</span>
                     </button>
                     <button type="button" onclick="askSuggestion(this)" class="p-3 bg-white hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-300 rounded-xl text-xs text-slate-700 font-medium transition-all shadow-sm flex items-start gap-2">
-                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5"></i>
-                        <span>Qual foi o total arrecadado pela região em 2026, mês a mês?</span>
+                        <i data-lucide="users" class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5"></i>
+                        <span>Quantas pessoas participaram da Santa Ceia no último mês por igreja?</span>
                     </button>
                     <button type="button" onclick="askSuggestion(this)" class="p-3 bg-white hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-300 rounded-xl text-xs text-slate-700 font-medium transition-all shadow-sm flex items-start gap-2">
-                        <i data-lucide="trophy" class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5"></i>
-                        <span>Quais são as 5 igrejas com maior subtotal de entradas em 2026?</span>
+                        <i data-lucide="calendar" class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5"></i>
+                        <span>Quais são os próximos compromissos da agenda da região?</span>
                     </button>
                     <button type="button" onclick="askSuggestion(this)" class="p-3 bg-white hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-300 rounded-xl text-xs text-slate-700 font-medium transition-all shadow-sm flex items-start gap-2">
                         <i data-lucide="alert-circle" class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5"></i>
-                        <span>Quais igrejas não tiveram recibo no mês passado?</span>
+                        <span>Quais igrejas têm pendências ou débitos em aberto?</span>
                     </button>
                 </div>
             </div>
@@ -282,6 +282,13 @@
         let cachedApiKey = localStorage.getItem(STORAGE_KEY_API) || '';
         let recibosData = [];
         let igrejasData = [];
+        let saldosData = [];
+        let agendaData = [];
+        let pastoresData = [];
+        let eventosData = [];
+        let presencasData = [];
+        let pendenciasManuaisData = [];
+        let pendenciasContabeisData = [];
         let isDataLoaded = false;
         let isThinking = false;
         let conversationContents = []; // histórico no formato Gemini
@@ -472,40 +479,64 @@
             dbStatusBadge.innerText = 'Sincronizando...';
 
             try {
-                const [snapRecibos, snapIgrejas] = await Promise.all([
-                    getDocs(collection(db, 'recibos')),
-                    getDocs(collection(db, 'igrejas'))
-                ]);
+                const colecoes = [
+                    'recibos',
+                    'igrejas',
+                    'saldos_virada',
+                    'agenda',
+                    'pastores',
+                    'eventos',
+                    'presencas',
+                    'pendencias_manuais',
+                    'pendencias_contabeis'
+                ];
+                const results = await Promise.allSettled(
+                    colecoes.map(nome => getDocs(collection(db, nome)))
+                );
 
-                recibosData = [];
-                snapRecibos.forEach(d => {
-                    const data = d.data();
-                    recibosData.push({
-                        id: d.id,
-                        ...data,
-                        igrejaFormatada: data.igrejaFormatada || `${data.igrejaCodigo || 'S/C'} - ${data.igrejaNome || 'Desconhecida'}`
-                    });
-                });
+                const readDocs = (idx) => {
+                    const r = results[idx];
+                    if (r.status !== 'fulfilled') return [];
+                    const list = [];
+                    r.value.forEach(d => list.push({ id: d.id, ...d.data() }));
+                    return list;
+                };
 
-                igrejasData = [];
-                snapIgrejas.forEach(d => {
-                    const data = d.data();
-                    if (data.nome) {
+                recibosData = readDocs(0).map(data => ({
+                    ...data,
+                    igrejaFormatada: data.igrejaFormatada || `${data.igrejaCodigo || 'S/C'} - ${data.igrejaNome || 'Desconhecida'}`
+                }));
+
+                igrejasData = readDocs(1)
+                    .filter(data => data.nome)
+                    .map(data => {
                         const cod = String(data.codigo || '');
-                        igrejasData.push({
-                            id: d.id,
+                        return {
+                            id: data.id,
                             codigo: cod,
                             nome: data.nome,
                             formatada: cod ? `${cod} - ${data.nome}` : data.nome,
                             pastor: data.pastor || '',
                             endereco: data.endereco || '',
                             isRegiao: cod === '655' || data.nome.toUpperCase().includes('REGIÃO')
-                        });
-                    }
-                });
+                        };
+                    });
+
+                saldosData = readDocs(2).map(data => ({
+                    ...data,
+                    igrejaFormatada: data.igrejaFormatada || `${data.igrejaCodigo || 'S/C'} - ${data.igrejaNome || 'Desconhecida'}`
+                }));
+
+                agendaData = readDocs(3);
+                pastoresData = readDocs(4);
+                eventosData = readDocs(5);
+                presencasData = readDocs(6);
+                pendenciasManuaisData = readDocs(7);
+                pendenciasContabeisData = readDocs(8);
 
                 isDataLoaded = true;
-                dbStatusBadge.innerText = `${recibosData.length} recibos · ${igrejasData.length} igrejas`;
+                dbStatusBadge.innerText = `Base completa (${recibosData.length} rec · ${saldosData.length} saldos)`;
+                dbStatusBadge.title = `Recibos: ${recibosData.length} | Igrejas: ${igrejasData.length} | Saldos/Ceia: ${saldosData.length} | Agenda: ${agendaData.length} | Pastores: ${pastoresData.length} | Presenças: ${presencasData.length} | Pendências: ${pendenciasManuaisData.length + pendenciasContabeisData.length}`;
             } catch (err) {
                 console.error(err);
                 dbStatusBadge.innerText = 'Erro ao carregar dados';
@@ -596,6 +627,80 @@
                         tipoData: { type: 'STRING', enum: ['referencia', 'emissao'], description: 'Padrão: "referencia".' }
                     },
                     required: ['periodo1', 'periodo2']
+                }
+            },
+            {
+                name: 'consultar_saldos_virada',
+                description: 'Consulta os lançamentos de Saldos de Virada das igrejas, que incluem: participantes da Santa Ceia (santaCeia), Batismos (batismos), Células (celulas), Entradas Taxadas, Missões, Total de Entradas, Saldo em Banco, Saldo em Dinheiro e Saldo Total. Use para qualquer pergunta sobre Santa Ceia, batismos, células ou saldos de virada.',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        igreja: { type: 'STRING', description: 'Nome ou código da igreja (opcional; omita para todas).' },
+                        ano: { type: 'STRING', description: 'Ano com 4 dígitos, ex: "2026" (opcional).' },
+                        mes: { type: 'STRING', description: 'Mês de "01" a "12" ou "MM/YYYY" (opcional).' },
+                        ultimoPeriodoDisponivel: { type: 'BOOLEAN', description: 'Se true, retorna automaticamente o mês/período mais recente lançado (para a igreja informada ou para a região).' },
+                        agruparPor: {
+                            type: 'STRING',
+                            enum: ['nenhum', 'igreja', 'mes', 'ano'],
+                            description: 'Agrupamento dos totais. Padrão: "nenhum" (retorna resumo geral + lançamentos).'
+                        }
+                    }
+                }
+            },
+            {
+                name: 'consultar_agenda',
+                description: 'Consulta compromissos e eventos da Agenda da Região 655 (data, horário, duração, tipo REGIONAL/CED/CND/LOCAL, ministério, local e endereço).',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        busca: { type: 'STRING', description: 'Texto para buscar em nome do evento, local, ministério ou endereço (opcional).' },
+                        tipo: { type: 'STRING', enum: ['REGIONAL', 'CED', 'CND', 'LOCAL'], description: 'Filtro por tipo de evento (opcional).' },
+                        ano: { type: 'STRING', description: 'Ano com 4 dígitos, ex: "2026" (opcional).' },
+                        mes: { type: 'STRING', description: 'Mês de "01" a "12" ou "MM/YYYY" (opcional).' },
+                        apenasFuturos: { type: 'BOOLEAN', description: 'Se true, retorna apenas compromissos de hoje em diante.' },
+                        limite: { type: 'INTEGER', description: 'Máximo de eventos a retornar (padrão 30, máximo 60).' }
+                    }
+                }
+            },
+            {
+                name: 'consultar_pastores',
+                description: 'Consulta o cadastro de Pastores da Região 655 (nome, função, categoria, se é coordenador, igreja(s) vinculadas, telefone, e-mail, data de início na igreja).',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        busca: { type: 'STRING', description: 'Parte do nome, telefone ou e-mail do pastor (opcional).' },
+                        igreja: { type: 'STRING', description: 'Nome ou código da igreja vinculada (opcional).' },
+                        funcao: { type: 'STRING', description: 'Função do pastor, ex: "Titular", "Auxiliar" (opcional).' },
+                        apenasCoordenadores: { type: 'BOOLEAN', description: 'Se true, filtra apenas pastores que são coordenadores.' }
+                    }
+                }
+            },
+            {
+                name: 'consultar_presencas',
+                description: 'Consulta registros de Presenças e Eventos da Região 655 (quem esteve Presente, Justificado ou Ausente em reuniões/eventos, motivo da justificativa, taxa de presença).',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        evento: { type: 'STRING', description: 'Nome ou parte do nome do evento (opcional).' },
+                        nome: { type: 'STRING', description: 'Nome do pastor/participante (opcional).' },
+                        igreja: { type: 'STRING', description: 'Nome ou código da igreja (opcional).' },
+                        status: { type: 'STRING', enum: ['Presente', 'Justificado', 'Ausente'], description: 'Filtro por status de presença (opcional).' },
+                        ano: { type: 'STRING', description: 'Ano com 4 dígitos (opcional).' },
+                        mes: { type: 'STRING', description: 'Mês "01" a "12" ou "MM/YYYY" (opcional).' },
+                        agruparPor: { type: 'STRING', enum: ['nenhum', 'evento', 'igreja', 'nome'], description: 'Agrupamento dos resultados. Padrão: "nenhum".' }
+                    }
+                }
+            },
+            {
+                name: 'consultar_pendencias',
+                description: 'Consulta Pendências/Débitos Manuais (pendencias_manuais) e Pendências Contábeis (pendencias_contabeis) das igrejas, valores em aberto, descrições e status.',
+                parameters: {
+                    type: 'OBJECT',
+                    properties: {
+                        igreja: { type: 'STRING', description: 'Nome ou código da igreja (opcional; omita para todas).' },
+                        tipo: { type: 'STRING', enum: ['todas', 'manuais', 'contabeis'], description: 'Tipo de pendência. Padrão: "todas".' },
+                        apenasAbertas: { type: 'BOOLEAN', description: 'Se true (padrão), mostra apenas pendências em aberto / não pagas / não resolvidas.' }
+                    }
                 }
             }
         ];
@@ -807,6 +912,369 @@
                 };
             }
 
+            if (name === 'consultar_saldos_virada') {
+                const MESES_PT = {
+                    janeiro: '01', fevereiro: '02', marco: '03', abril: '04',
+                    maio: '05', junho: '06', julho: '07', agosto: '08',
+                    setembro: '09', outubro: '10', novembro: '11', dezembro: '12'
+                };
+                const getSaldoPeriod = (s) => {
+                    if (s.periodoChave && /^\d{4}-\d{2}$/.test(String(s.periodoChave))) {
+                        const [y, m] = String(s.periodoChave).split('-');
+                        return { ano: y, mes: m, chave: `${y}-${m}`, mmYyyy: `${m}/${y}` };
+                    }
+                    const pRef = parseMonthYear(s.mesReferencia || s.periodo || '');
+                    if (pRef.ano) return { ano: pRef.ano, mes: pRef.mes, chave: `${pRef.ano}-${pRef.mes}`, mmYyyy: pRef.mmYyyy };
+                    const lbl = normalizeText(s.periodoLabel || s.periodo || '');
+                    const mLbl = lbl.match(/([a-z]+)[\/\s-]+(\d{4})/);
+                    if (mLbl && MESES_PT[mLbl[1]]) {
+                        const m = MESES_PT[mLbl[1]];
+                        const y = mLbl[2];
+                        return { ano: y, mes: m, chave: `${y}-${m}`, mmYyyy: `${m}/${y}` };
+                    }
+                    return { ano: '', mes: '', chave: '', mmYyyy: '' };
+                };
+
+                let mesNorm = '';
+                let anoNorm = args.ano ? String(args.ano).trim() : '';
+                if (args.mes) {
+                    const ms = String(args.mes).trim();
+                    const parsed = parseMonthYear(ms);
+                    if (parsed.mmYyyy) {
+                        mesNorm = parsed.mes;
+                        if (!anoNorm) anoNorm = parsed.ano;
+                    } else if (/^\d{1,2}$/.test(ms)) {
+                        mesNorm = ms.padStart(2, '0');
+                    }
+                }
+
+                let filtrados = saldosData.filter(s => {
+                    if (!matchIgreja(s, args.igreja)) return false;
+                    const per = getSaldoPeriod(s);
+                    if (anoNorm && per.ano !== anoNorm) return false;
+                    if (mesNorm && per.mes !== mesNorm) return false;
+                    return true;
+                });
+
+                if (args.ultimoPeriodoDisponivel && filtrados.length > 0) {
+                    const chaves = filtrados.map(s => getSaldoPeriod(s).chave).filter(Boolean).sort();
+                    const ultimaChave = chaves[chaves.length - 1];
+                    if (ultimaChave) {
+                        filtrados = filtrados.filter(s => getSaldoPeriod(s).chave === ultimaChave);
+                    }
+                }
+
+                const summarizeSaldos = (lista) => {
+                    let santaCeia = 0, batismos = 0, celulas = 0;
+                    let entradasTaxadas = 0, missoes = 0, totalEntradas = 0;
+                    let saldoBanco = 0, saldoDinheiro = 0, saldoTotal = 0;
+                    for (const s of lista) {
+                        santaCeia += parseInt(s.santaCeia, 10) || 0;
+                        batismos += parseInt(s.batismos, 10) || 0;
+                        celulas += parseInt(s.celulas, 10) || 0;
+                        entradasTaxadas += parseFloat(s.entradasTaxadas) || 0;
+                        missoes += parseFloat(s.missoes) || 0;
+                        totalEntradas += parseFloat(s.totalEntradas) || 0;
+                        saldoBanco += parseFloat(s.saldoBanco) || 0;
+                        saldoDinheiro += parseFloat(s.saldoDinheiro) || 0;
+                        saldoTotal += parseFloat(s.saldoTotal) || 0;
+                    }
+                    return {
+                        quantidadeRegistros: lista.length,
+                        somaSantaCeia: santaCeia,
+                        mediaSantaCeia: lista.length ? round2(santaCeia / lista.length) : 0,
+                        somaBatismos: batismos,
+                        somaCelulas: celulas,
+                        somaEntradasTaxadas: round2(entradasTaxadas),
+                        somaMissoes: round2(missoes),
+                        somaTotalEntradas: round2(totalEntradas),
+                        somaSaldoBanco: round2(saldoBanco),
+                        somaSaldoDinheiro: round2(saldoDinheiro),
+                        somaSaldoTotal: round2(saldoTotal)
+                    };
+                };
+
+                filtrados.sort((a, b) => getSaldoPeriod(b).chave.localeCompare(getSaldoPeriod(a).chave));
+
+                const res = {
+                    filtros: {
+                        igreja: args.igreja || 'Todas',
+                        ano: anoNorm || 'Todos',
+                        mes: mesNorm || 'Todos',
+                        ultimoPeriodoDisponivel: Boolean(args.ultimoPeriodoDisponivel)
+                    },
+                    resumoGeral: summarizeSaldos(filtrados)
+                };
+
+                const agruparPor = args.agruparPor || 'nenhum';
+                if (agruparPor !== 'nenhum') {
+                    const groups = new Map();
+                    for (const s of filtrados) {
+                        const per = getSaldoPeriod(s);
+                        let key = 'Sem informação';
+                        if (agruparPor === 'igreja') key = s.igrejaFormatada;
+                        else if (agruparPor === 'mes') key = per.mmYyyy || s.periodoLabel || 'Sem data';
+                        else if (agruparPor === 'ano') key = per.ano || 'Sem ano';
+                        if (!groups.has(key)) groups.set(key, []);
+                        groups.get(key).push(s);
+                    }
+                    const det = Array.from(groups.entries()).map(([grupo, itens]) => ({
+                        grupo,
+                        ...summarizeSaldos(itens)
+                    }));
+                    if (agruparPor === 'igreja') det.sort((a, b) => b.somaSantaCeia - a.somaSantaCeia);
+                    res.detalhamento = det;
+                } else {
+                    res.registros = filtrados.slice(0, 40).map(s => {
+                        const per = getSaldoPeriod(s);
+                        return {
+                            igreja: s.igrejaFormatada,
+                            pastor: s.pastor || '',
+                            periodo: per.mmYyyy || s.periodoLabel || s.periodo || '',
+                            santaCeia: parseInt(s.santaCeia, 10) || 0,
+                            batismos: parseInt(s.batismos, 10) || 0,
+                            celulas: parseInt(s.celulas, 10) || 0,
+                            entradasTaxadas: round2(s.entradasTaxadas),
+                            missoes: round2(s.missoes),
+                            totalEntradas: round2(s.totalEntradas),
+                            saldoBanco: round2(s.saldoBanco),
+                            saldoDinheiro: round2(s.saldoDinheiro),
+                            saldoTotal: round2(s.saldoTotal)
+                        };
+                    });
+                }
+                return res;
+            }
+
+            if (name === 'consultar_agenda') {
+                const hojeIso = new Date().toISOString().slice(0, 10);
+                const q = normalizeText(args.busca);
+                const tipoFiltro = args.tipo ? String(args.tipo).toUpperCase() : '';
+                const anoNorm = args.ano ? String(args.ano).trim() : '';
+                let mesNorm = '';
+                if (args.mes) {
+                    const parsed = parseMonthYear(args.mes);
+                    mesNorm = parsed.mes || (/^\d{1,2}$/.test(String(args.mes).trim()) ? String(args.mes).trim().padStart(2, '0') : '');
+                }
+                const limite = Math.min(Math.max(parseInt(args.limite, 10) || 30, 1), 60);
+
+                let filtrados = agendaData.filter(ev => {
+                    const dataStr = String(ev.data || '');
+                    if (args.apenasFuturos && dataStr && dataStr < hojeIso) return false;
+                    if (tipoFiltro && String(ev.tipo || '').toUpperCase() !== tipoFiltro) return false;
+                    if (anoNorm && !dataStr.startsWith(anoNorm)) return false;
+                    if (mesNorm && dataStr.slice(5, 7) !== mesNorm) return false;
+                    if (q) {
+                        const txt = normalizeText(`${ev.evento || ''} ${ev.local || ''} ${ev.ministerio || ''} ${ev.endereco || ''} ${ev.tipo || ''}`);
+                        if (!txt.includes(q)) return false;
+                    }
+                    return true;
+                });
+
+                filtrados.sort((a, b) => `${a.data || ''} ${a.horario || ''}`.localeCompare(`${b.data || ''} ${b.horario || ''}`));
+
+                return {
+                    totalEncontrados: filtrados.length,
+                    exibindo: Math.min(filtrados.length, limite),
+                    eventos: filtrados.slice(0, limite).map(ev => ({
+                        evento: ev.evento || '',
+                        data: ev.data || '',
+                        horario: ev.horario || '',
+                        duracao: ev.duracao || '',
+                        tipo: ev.tipo || '',
+                        ministerio: ev.ministerio || '',
+                        local: ev.local || '',
+                        endereco: ev.endereco || ''
+                    }))
+                };
+            }
+
+            if (name === 'consultar_pastores') {
+                const q = normalizeText(args.busca);
+                const fIgreja = normalizeText(args.igreja);
+                const fFuncao = normalizeText(args.funcao);
+
+                let filtrados = pastoresData.filter(p => {
+                    if (args.apenasCoordenadores && !p.coordenador) return false;
+                    if (fFuncao && !normalizeText(p.funcao).includes(fFuncao)) return false;
+                    const igrejasStr = Array.isArray(p.igreja) ? p.igreja.join(', ') : String(p.igreja || '');
+                    if (fIgreja) {
+                        const cleanIgr = fIgreja.replace(/\b(ieq|igreja|quadrangular)\b/g, '').trim();
+                        const normIgr = normalizeText(igrejasStr);
+                        if (!normIgr.includes(fIgreja) && !(cleanIgr && normIgr.includes(cleanIgr))) return false;
+                    }
+                    if (q) {
+                        const txt = normalizeText(`${p.nome || ''} ${p.telefone || ''} ${p.email || ''} ${igrejasStr} ${p.funcao || ''} ${p.categoria || ''}`);
+                        if (!txt.includes(q)) return false;
+                    }
+                    return true;
+                });
+
+                filtrados.sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || '')));
+
+                return {
+                    totalEncontrados: filtrados.length,
+                    pastores: filtrados.slice(0, 60).map(p => ({
+                        nome: p.nome || '',
+                        funcao: p.funcao || '',
+                        categoria: p.categoria || '',
+                        coordenador: Boolean(p.coordenador),
+                        igreja: Array.isArray(p.igreja) ? p.igreja.join(', ') : (p.igreja || ''),
+                        telefone: p.telefone || '',
+                        email: p.email || '',
+                        dataInicioIgreja: p.dataInicioIgreja || ''
+                    }))
+                };
+            }
+
+            if (name === 'consultar_presencas') {
+                const fEvento = normalizeText(args.evento);
+                const fNome = normalizeText(args.nome);
+                const fIgreja = normalizeText(args.igreja);
+                const fStatus = normalizeText(args.status);
+                const anoNorm = args.ano ? String(args.ano).trim() : '';
+                let mesNorm = '';
+                if (args.mes) {
+                    const parsed = parseMonthYear(args.mes);
+                    mesNorm = parsed.mes || (/^\d{1,2}$/.test(String(args.mes).trim()) ? String(args.mes).trim().padStart(2, '0') : '');
+                }
+
+                const filtrados = presencasData.filter(pr => {
+                    if (fEvento && !normalizeText(`${pr.tipoEvento || ''} ${pr.eventoId || ''}`).includes(fEvento)) return false;
+                    if (fNome && !normalizeText(pr.nome).includes(fNome)) return false;
+                    if (fIgreja) {
+                        const cleanIgr = fIgreja.replace(/\b(ieq|igreja|quadrangular)\b/g, '').trim();
+                        const normIgr = normalizeText(pr.igreja);
+                        if (!normIgr.includes(fIgreja) && !(cleanIgr && normIgr.includes(cleanIgr))) return false;
+                    }
+                    if (fStatus && normalizeText(pr.status) !== fStatus) return false;
+                    if (anoNorm || mesNorm) {
+                        const per = parseMonthYear(pr.dataEvento || pr.dataPostagem || '');
+                        if (anoNorm && per.ano !== anoNorm) return false;
+                        if (mesNorm && per.mes !== mesNorm) return false;
+                    }
+                    return true;
+                });
+
+                const countStatus = (lista) => {
+                    let presentes = 0, justificados = 0, ausentes = 0;
+                    for (const p of lista) {
+                        const st = normalizeText(p.status);
+                        if (st === 'presente') presentes++;
+                        else if (st === 'justificado') justificados++;
+                        else if (st === 'ausente') ausentes++;
+                    }
+                    return {
+                        total: lista.length,
+                        presentes,
+                        justificados,
+                        ausentes,
+                        taxaPresencaPct: lista.length > 0 ? round2((presentes / lista.length) * 100) : 0
+                    };
+                };
+
+                const res = {
+                    eventosCadastrados: eventosData.slice(0, 20).map(e => ({ nome: e.nome || '', data: e.data || '', status: e.status || '' })),
+                    resumoGeral: countStatus(filtrados)
+                };
+
+                const agruparPor = args.agruparPor || 'nenhum';
+                if (agruparPor !== 'nenhum') {
+                    const groups = new Map();
+                    for (const p of filtrados) {
+                        let key = 'Sem informação';
+                        if (agruparPor === 'evento') key = `${p.tipoEvento || 'Evento'} (${p.dataEvento || 'S/D'})`;
+                        else if (agruparPor === 'igreja') key = p.igreja || 'Sem igreja';
+                        else if (agruparPor === 'nome') key = p.nome || 'Sem nome';
+                        if (!groups.has(key)) groups.set(key, []);
+                        groups.get(key).push(p);
+                    }
+                    res.detalhamento = Array.from(groups.entries())
+                        .map(([grupo, itens]) => ({ grupo, ...countStatus(itens) }))
+                        .sort((a, b) => b.total - a.total);
+                } else {
+                    res.registros = filtrados.slice(0, 50).map(p => ({
+                        nome: p.nome || '',
+                        igreja: p.igreja || '',
+                        evento: p.tipoEvento || '',
+                        dataEvento: p.dataEvento || '',
+                        status: p.status || '',
+                        motivo: p.motivo || ''
+                    }));
+                }
+                return res;
+            }
+
+            if (name === 'consultar_pendencias') {
+                const tipo = args.tipo || 'todas';
+                const apenasAbertas = args.apenasAbertas !== false;
+                const fIgreja = normalizeText(args.igreja);
+
+                const matchesIgrejaStr = (str) => {
+                    if (!fIgreja || fIgreja === 'todas') return true;
+                    const norm = normalizeText(str);
+                    const clean = fIgreja.replace(/\b(ieq|igreja|quadrangular)\b/g, '').trim();
+                    return norm.includes(fIgreja) || (clean && norm.includes(clean));
+                };
+
+                const res = { filtroIgreja: args.igreja || 'Todas', apenasAbertas };
+
+                if (tipo === 'todas' || tipo === 'manuais') {
+                    const manuais = pendenciasManuaisData.filter(d => {
+                        const igr = `${d.igrejaCodigo || ''} - ${d.igrejaNome || ''}`;
+                        if (!matchesIgrejaStr(igr)) return false;
+                        const st = normalizeText(d.status);
+                        const emAberto = st !== 'pago' && st !== 'quitado' && st !== 'resolvido' && st !== 'cancelado';
+                        if (apenasAbertas && !emAberto) return false;
+                        return true;
+                    });
+                    const totalValor = round2(manuais.reduce((s, d) => s + (parseFloat(d.valorTotal) || 0), 0));
+                    const totalPago = round2(manuais.reduce((s, d) => s + (parseFloat(d.valorPago) || 0), 0));
+                    res.debitosManuais = {
+                        quantidade: manuais.length,
+                        valorTotal: totalValor,
+                        valorPago: totalPago,
+                        saldoEmAberto: round2(totalValor - totalPago),
+                        itens: manuais.slice(0, 40).map(d => ({
+                            igreja: `${d.igrejaCodigo || ''} - ${d.igrejaNome || ''}`.trim(),
+                            pastor: d.pastor || '',
+                            descricao: d.descricao || '',
+                            dataReferencia: d.dataReferencia || '',
+                            valorTotal: round2(d.valorTotal),
+                            valorPago: round2(d.valorPago),
+                            saldoAberto: round2((parseFloat(d.valorTotal) || 0) - (parseFloat(d.valorPago) || 0)),
+                            status: d.status || ''
+                        }))
+                    };
+                }
+
+                if (tipo === 'todas' || tipo === 'contabeis') {
+                    const contabeis = pendenciasContabeisData.filter(c => {
+                        if (!matchesIgrejaStr(c.igreja || '')) return false;
+                        const st = normalizeText(c.status);
+                        const emAberto = st !== 'resolvido' && st !== 'resolvida' && st !== 'pago' && st !== 'concluido' && st !== 'concluida';
+                        if (apenasAbertas && !emAberto) return false;
+                        return true;
+                    });
+                    const totalVal = round2(contabeis.reduce((s, c) => s + (parseFloat(c.valor) || 0), 0));
+                    res.pendenciasContabeis = {
+                        quantidade: contabeis.length,
+                        valorTotal: totalVal,
+                        itens: contabeis.slice(0, 40).map(c => ({
+                            igreja: c.igreja || '',
+                            competencia: c.competencia || '',
+                            descricao: c.descricao || '',
+                            valor: round2(c.valor),
+                            quantidade: parseInt(c.quantidade, 10) || 0,
+                            status: c.status || '',
+                            ciente: Boolean(c.ciente)
+                        }))
+                    };
+                }
+
+                return res;
+            }
+
             return { erro: `Ferramenta desconhecida: ${name}` };
         }
 
@@ -819,21 +1287,30 @@
             const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
             const anoAtual = String(hoje.getFullYear());
 
-            return `Você é o Assistente Financeiro da IEQ Região 655 (Londrina/PR), operando em modo SOMENTE LEITURA sobre a base real de recibos e igrejas no Firebase.
+            return `Você é o Assistente Inteligente da IEQ Região 655 (Londrina/PR), operando em modo SOMENTE LEITURA sobre a base completa do portal no Firebase.
 Hoje é ${dataHoje} (mês atual: ${mesAtual}/${anoAtual}).
 
+ÁREAS CONECTADAS E FERRAMENTAS:
+1. RECIBOS / FINANCEIRO (consultar_resumo_financeiro, listar_recibos, verificar_igrejas_sem_recibo, comparar_periodos):
+   - "Subtotal de entradas" = subtotalEntradas (incomeValue)
+   - "Taxa Regional (4%)" = taxaRegional (regionalTax)
+   - "Taxa Coordenadoria" = taxaCoordenadoria (coordinatorFeeParsed)
+   - "Seguro de Vida" = seguroVida (insuranceTotal) e vidasSeguro (insuranceCount)
+   - "Outros" = outrosValor (otherValueParsed) e outrosDesc
+   - "Total Pago" / "arrecadado pela região" = totalPago
+   - Por padrão use tipoData: "referencia" (a menos que peçam explicitamente "data de emissão").
+2. SALDOS DE VIRADA / SANTA CEIA / BATISMOS / CÉLULAS (consultar_saldos_virada):
+   - Participantes da Santa Ceia (santaCeia), Batismos (batismos), Células (celulas), Entradas Taxadas, Missões, Saldo em Banco, Saldo em Dinheiro e Saldo Total.
+   - Quando perguntarem "no último mês" ou "mais recente", use ultimoPeriodoDisponivel: true (ou consulte o mês anterior e, se não houver, use ultimoPeriodoDisponivel: true informando qual mês foi encontrado).
+3. AGENDA DA REGIÃO (consultar_agenda): compromissos, datas, horários, locais e tipos (REGIONAL, CED, CND, LOCAL).
+4. IGREJAS E PASTORES (listar_igrejas, consultar_pastores): cadastro de igrejas, endereços, pastores titulares/auxiliares, coordenadores e contatos.
+5. PRESENÇAS E EVENTOS (consultar_presencas): presença, justificativa e ausência de pastores em reuniões/eventos.
+6. PENDÊNCIAS E DÉBITOS (consultar_pendencias): débitos manuais (pendencias_manuais) e pendências contábeis (pendencias_contabeis).
+
 REGRAS IMPORTANTES:
-1. NUNCA invente números nem faça somas de cabeça. SEMPRE chame as ferramentas disponíveis para consultar e calcular os valores exatos.
-2. Vocabulário do sistema de recibos da Região 655:
-   - "Subtotal de entradas" / "entradas da igreja" = campo subtotalEntradas (incomeValue)
-   - "Taxa Regional (4%)" = campo taxaRegional (regionalTax)
-   - "Taxa Coordenadoria" = campo taxaCoordenadoria (coordinatorFeeParsed)
-   - "Seguro de Vida" = campo seguroVida (insuranceTotal) e vidasSeguro (insuranceCount)
-   - "Outros" = campo outrosValor (otherValueParsed) e outrosDesc
-   - "Total Pago" / "arrecadado pela região" = campo totalPago (soma das taxas pagas pela igreja à região)
-3. Quando o usuário citar o nome de uma igreja e houver qualquer chance de variação de nome (ou retornar 0 recibos), use listar_igrejas para confirmar o nome/código exato antes de responder que não há dados.
-4. Por padrão, considere o período pelo mês de referência (tipoData: "referencia"), a menos que o usuário mencione explicitamente "data de emissão" ou "emitidos em". Sempre informe brevemente na resposta qual critério foi usado (ex: "considerando mês de referência") e quantos recibos entraram no cálculo.
-5. Formate valores monetários em reais brasileiros (ex: R$ 12.345,67). Seja claro, objetivo, educado e direto em português do Brasil. Use tabelas ou listas curtas quando facilitar a leitura.`;
+- NUNCA invente números nem faça somas de cabeça. SEMPRE chame as ferramentas disponíveis.
+- Se uma busca por nome de igreja retornar 0 resultados, use listar_igrejas para conferir o nome/código exato antes de dizer que não há dados.
+- Formate valores em reais brasileiros (ex: R$ 12.345,67), seja claro, direto e use tabelas curtas quando ajudar na leitura.`;
         }
 
         const DEFAULT_MODEL = 'gemini-3.8-flash';
